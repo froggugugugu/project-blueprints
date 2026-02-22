@@ -1,0 +1,88 @@
+{
+  "_comment": [
+    "This file is a template for .claude/settings.local.json.",
+    "Customize it according to your project-config.md contents",
+    "and place it as .claude/settings.local.json.",
+    "",
+    "Customization points:",
+    "- Build tool: Change npm (default) to yarn / pnpm / bun as needed",
+    "  → Refer to _comment_pkg_manager and swap the corresponding lines in allow",
+    "- Quality tool: Change biome (default) to eslint + prettier as needed",
+    "  → Refer to _comment_quality_tools and swap the corresponding lines in allow",
+    "- Test tool: Change vitest (default) to jest as needed",
+    "- MCP: Change according to the MCP plugins you use"
+  ],
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Edit(**/*.{css,js,ts,tsx,json,md})",
+      "Write(**/*.{css,js,ts,tsx,json,md})",
+      "Read(**/*)",
+
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm view:*)",
+      "Bash(npm ls:*)",
+
+      "Bash(npx vitest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx biome:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npx depcruise:*)",
+      "Bash(npx lint-staged:*)",
+      "Bash(npx husky:*)",
+
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)",
+      "Bash(git mv:*)",
+      "Bash(git reset:*)",
+      "Bash(git restore:*)",
+      "Bash(git remote:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh repo:*)",
+
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "mcp__plugin_playwright_playwright__*"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(rm -r /)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  },
+  "_comment_pkg_manager": [
+    "Switching package managers — swap the npm/npx block in allow",
+    "",
+    "yarn: Bash(yarn:*), Bash(yarn run:*), Bash(yarn add:*), Bash(yarn remove:*)",
+    "pnpm: Bash(pnpm run:*), Bash(pnpm add:*), Bash(pnpm remove:*), Bash(pnpm dlx:*)",
+    "bun:  Bash(bun run:*), Bash(bun add:*), Bash(bun remove:*), Bash(bunx:*)"
+  ],
+  "_comment_quality_tools": [
+    "Switching quality tools — swap the npx biome line in allow",
+    "",
+    "eslint + prettier: Bash(npx eslint:*), Bash(npx prettier:*)",
+    "jest (alternative to vitest): Bash(npx jest:*)"
+  ],
+  "enableAllProjectMcpServers": true,
+  "teammateMode": "in-process"
+}
