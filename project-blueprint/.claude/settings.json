@@ -1,0 +1,9 @@
+{
+  "language": "ja",
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "draw.io@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true
+  }
+}
