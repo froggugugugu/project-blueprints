@@ -234,6 +234,7 @@ The following apply to all projects:
 
 - Always validate user input
 - Regularly check dependency package vulnerabilities
+- **Hook-based safety mechanism**: PreToolUse hooks in `.claude/hooks/` block dangerous Bash commands and writes to sensitive files. These hooks remain active even with `--dangerously-skip-permissions` (defense in depth)
 
 ## Git Operations Policy
 

@@ -251,10 +251,11 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 │  汎用（そのまま再利用）                                   │
 │                                                         │
 │  .claude/CLAUDE.md ............ 開発ガイド（横断）       │
+│  .claude/hooks/ ............... 安全フック（多層防御）    │
 │  .claude/skills/ .............. 11個のスキル定義         │
 │  .claude/teams/ ............... 5チーム定義              │
 │  .claude/tasks/ ............... タスク指示書テンプレート  │
-│  .claude/settings.json ........ プラグイン設定           │
+│  .claude/settings.json ........ プラグイン・フック設定   │
 │  .claude/settings.local.json .. 権限設定テンプレート     │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -294,8 +295,12 @@ project-blueprint/
 │
 ├── .claude/
 │   ├── CLAUDE.md                          ← [汎用] 開発ガイド
-│   ├── settings.json                      ← [汎用] プラグイン設定
+│   ├── settings.json                      ← [汎用] プラグイン・フック設定
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
+│   │
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御）
+│   │   ├── safety-check.sh                  危険コマンドブロック
+│   │   └── protect-files.sh                 機密ファイル保護
 │   │
 │   ├── skills/                            ← [汎用] 11スキル定義
 │   │   ├── plan/SKILL.md                    設計・計画

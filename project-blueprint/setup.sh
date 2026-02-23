@@ -85,6 +85,12 @@ cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
+# ── フックスクリプトを実行可能に設定 ─────────────────────────
+if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
+    chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
+    info "フックスクリプトを実行可能に設定"
+fi
+
 # ── CLAUDE.md をプロジェクトルートに移動 ────────────────────
 if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
     mv "$TARGET_DIR/.claude/CLAUDE.md" "$TARGET_DIR/CLAUDE.md"

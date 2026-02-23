@@ -252,10 +252,11 @@ Teams focused on specific phases are also available. All arguments are optional:
 |  Generic (reusable as-is across projects)                 |
 |                                                           |
 |  .claude/CLAUDE.md ............ Development guide         |
+|  .claude/hooks/ ............... Safety hooks (defense)    |
 |  .claude/skills/ .............. 11 skill definitions      |
 |  .claude/teams/ ............... 5 team definitions        |
 |  .claude/tasks/ ............... Task instruction templates |
-|  .claude/settings.json ........ Plugin configuration      |
+|  .claude/settings.json ........ Plugin & hook config      |
 |  .claude/settings.local.json .. Permission settings       |
 |                                                           |
 +-----------------------------------------------------------+
@@ -295,8 +296,12 @@ project-blueprint-en/
 |
 +-- .claude/
 |   +-- CLAUDE.md                          <-- [Generic] Development guide
-|   +-- settings.json                      <-- [Generic] Plugin configuration
+|   +-- settings.json                      <-- [Generic] Plugin & hook configuration
 |   +-- settings.local.json.template       <-- [Customizable] Permission settings template
+|   |
+|   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth)
+|   |   +-- safety-check.sh                  Blocks dangerous commands
+|   |   +-- protect-files.sh                 Protects sensitive files
 |   |
 |   +-- skills/                            <-- [Generic] 11 skill definitions
 |   |   +-- plan/SKILL.md                    Planning & design
