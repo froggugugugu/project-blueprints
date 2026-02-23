@@ -16,58 +16,31 @@ project-config.md       →  TDD実装・テスト・コードレビュー
 
 **1ファイル設定 + 11スキル + 5チーム + 5品質ゲート** で、個人開発からチーム開発まで対応。
 
-## はじめかた
-
-```
-新規プロジェクト？ ─── Yes ──→ setup.sh で1コマンドセットアップ
-       │
-       No（既存プロジェクト）
-       │
-       ▼
-  setup.sh で導入（既存 .claude/ は自動バックアップ）
-       │
-       ▼
-  project-config.md を記入（§1〜§3, §6 の4セクション）
-       │
-       ▼
-  Claude Code で /plan を実行して動作確認
-       │
-       ▼
-  開発開始！（/prd → /architecture → /implementing-features）
-```
-
-### 1コマンドセットアップ
+## はじめかた（5分）
 
 ```bash
+# 1. コピー
 git clone https://github.com/your-org/project-blueprints.git
 cd project-blueprints
 bash project-blueprint/setup.sh /path/to/your-project
+
+# 2. project-config.md の §1〜§3 だけ記入（プロジェクト名・技術スタック・コマンド）
+
+# 3. Claude Code で試す
+/plan ログイン機能の設計
 ```
 
-### 手動セットアップ
+**これだけで動く。** 残り9セクションは空欄のまま段階的に追記すればよい。
 
-```bash
-cp -r project-blueprint/.claude /path/to/new-project/.claude
-cp -r project-blueprint/docs /path/to/new-project/docs
-cp -r project-blueprint/input /path/to/new-project/input
-cp -r project-blueprint/output /path/to/new-project/output
-cp -r project-blueprint/testreport /path/to/new-project/testreport
-cp project-blueprint/project-config.md /path/to/new-project/project-config.md
+### 段階的に広げる
 
-# CLAUDE.md をプロジェクトルートに移動
-mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
-```
+| ステップ | 記入セクション | できるようになること |
+| --- | --- | --- |
+| **ミニマル** | §1 + §2 + §3 | `/prd`, `/plan` で設計・分析 |
+| **推奨** | + §4（アーキテクチャ） | `/implementing-features`, 全チーム利用 |
+| **フル** | 全12セクション | `/security-scan`, `/legal-check` 等の全スキル |
 
-### project-config.md を記入（最低4セクション）
-
-| セクション | 内容 |
-| --- | --- |
-| §1 プロジェクト基本情報 | 名前・概要・言語 |
-| §2 技術スタック | フレームワーク・ライブラリ |
-| §3 コマンド | dev / build / test / lint |
-| §6 品質基準 | カバレッジ目標・TDD有無 |
-
-> 記入例: [project-config.sample.md](project-blueprint/project-config.sample.md)（タスク管理アプリを題材にした全セクション記入済みサンプル）
+> §6（品質基準）はTDD・カバレッジ目標の有効化に使用。スキルの前提条件ではないため空欄でも動作する。
 
 ### 開発開始
 
@@ -81,7 +54,7 @@ mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
 /implementing-features output/tasks/TASK_auth.md
 ```
 
-詳細なセットアップ手順・段階的記入ガイド・既存プロジェクトへの導入方法は [project-blueprint/README.md](project-blueprint/README.md) を参照。
+> 記入例: [project-config.sample.md](project-blueprint/project-config.sample.md) / 詳細: [project-blueprint/README.md](project-blueprint/README.md)
 
 ## 特徴
 

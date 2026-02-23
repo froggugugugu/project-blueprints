@@ -7,7 +7,58 @@ and let AI automatically generate and maintain design artifacts such as routing 
 
 ---
 
-## Setup Instructions
+## Minimal Start (5 minutes)
+
+You don't need to use every section, team, or skill. **Get started in 3 steps.**
+
+### Step 1: Copy
+
+```bash
+bash setup.sh /path/to/your-project
+```
+
+### Step 2: Fill in just 3 sections of project-config.md
+
+```markdown
+## S1. Project Basics
+Project name: MyApp
+Description: TODO app
+Language: English
+
+## S2. Tech Stack
+- React 19 + TypeScript 5
+- Vite 6
+
+## S3. Commands
+- dev: npm run dev
+- test: npm run test
+- build: npm run build
+```
+
+> The remaining 9 sections can be left blank — everything still works. Add them incrementally as needed.
+
+### Step 3: Try one skill
+
+```text
+/plan Design a login feature
+```
+
+That's it. AI reads `project-config.md` and generates a structured design document.
+
+### Scale up gradually
+
+| When you want to... | Next step |
+|---|---|
+| Let AI handle everything from PRD to implementation | Add `project-config.md` S4 → `.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md` |
+| Get help with implementation only | `/implementing-features Add a login feature` |
+| Get a code review | `/code-review src/features/auth/` |
+| Run team-based quality assurance | `.claude/teams/TEAM_QA.md src/` |
+
+> For detailed setup instructions and the full feature set, see the sections below.
+
+---
+
+## Setup Instructions (Detailed)
 
 ### Method A: One-command setup with setup.sh (recommended)
 
@@ -46,13 +97,13 @@ mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
 | 1. Project Basics | Name, description, language |
 | 2. Tech Stack | Frameworks and libraries in use |
 | 3. Commands | Dev, test, and build commands |
-| 6. Quality Standards | Coverage target, TDD on/off |
 
 **Recommended sections** (filling these in improves output quality):
 
 | Section | Content |
 | --- | --- |
 | 4. Architecture | Patterns, dependency rules |
+| 6. Quality Standards | Coverage target, TDD on/off |
 | 7. Design System | Design guide references |
 | 11. Known Pitfalls | Framework-specific gotchas (AI can also append here) |
 

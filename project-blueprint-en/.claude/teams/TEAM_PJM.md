@@ -8,7 +8,7 @@ Humans simply place memos in `input/` and review deliverables in `output/`, and 
 ## Usage
 
 ```text
-.claude/teams/TEAM_PJM.md <requirement-note-file-path or instruction> [--auto]
+.claude/teams/TEAM_PJM.md <requirement-note-file-path or instruction> [--auto] [--parallel]
 ```
 
 Arguments are optional. When omitted, the PL checks `input/requirements/` and identifies the target file.
@@ -28,6 +28,17 @@ In autonomous mode, PJM auto-passes gates based on these criteria:
 
 When criteria are not met, human judgment is sought even in autonomous mode.
 
+### Implementation Mode
+
+| Mode | Specification | Phase 4 Behavior |
+| --- | --- | --- |
+| **Sequential (Default)** | No flag | A single developer implements tasks sequentially |
+| **Parallel** | Add `--parallel` | Delegates independent task groups to TEAM_FEATURE in parallel |
+
+Parallel mode prerequisites:
+- Phase 3 deliverables must specify changed files and dependencies
+- At least 2 independent Feature Bundles must be identifiable (falls back to sequential mode if only 1)
+
 ### Examples
 
 ```text
@@ -42,6 +53,12 @@ When criteria are not met, human judgment is sought even in autonomous mode.
 
 # Start from mid-phase
 .claude/teams/TEAM_PJM.md Start from Phase 3. PRD and design docs already in output/
+
+# Parallel implementation mode
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --parallel
+
+# Autonomous + parallel
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --auto --parallel
 
 # Quality audit only + autonomous mode
 .claude/teams/TEAM_PJM.md Implementation done. Run Phase 5 only --auto
@@ -104,6 +121,11 @@ output/
 - Present deliverables to human at each gate point and wait for approval
 - Verify consistency between members
 - Create phase task lists with TaskCreate
+- **Additional responsibilities in parallel mode**:
+  - Identify Feature Bundles from task breakdown deliverables (analyze changed-file overlaps)
+  - Separate shared layer change tasks and manage their sequential execution
+  - Generate TASK files for each Bundle in `output/tasks/`
+  - Launch TEAM_FEATURE in parallel for each Bundle, track progress, and aggregate results
 - **Do not create documents or write code yourself**
 
 ### Analyst
@@ -161,7 +183,28 @@ Phase 3: Task Breakdown
   🚏 Gate 3: Normal=Present to human→Wait for approval / Autonomous=PJM judges by quality criteria
 
 Phase 4: Implementation
-  Developer: Create plan → PJM approval → Implement with /implementing-features + /ui-ux-design
+  ┌─ Sequential mode (default) ────────────────────
+  │ Developer: Create plan → PJM approval → Implement with /implementing-features + /ui-ux-design
+  └────────────────────────────────────────────────
+
+  ┌─ Parallel mode (--parallel) ───────────────────
+  │ Phase 4a: Parallelization Prep (PJM)
+  │   Analyze changed-file overlaps in task breakdown deliverables
+  │   Identify independent Feature Bundles
+  │   Separate shared layer change tasks
+  │
+  │ Phase 4b: Shared Layer Changes (sequential, when applicable)
+  │   Developer implements shared layer changes sequentially
+  │
+  │ Phase 4c: Feature Bundle Parallel Implementation
+  │   PJM: Generate TASK files for each Bundle in output/tasks/
+  │   PJM: Launch TEAM_FEATURE in parallel for each Bundle
+  │   PJM: Track progress with TaskCreate/TaskUpdate
+  │
+  │ Phase 4d: Integration Verification
+  │   After all TEAM_FEATURE instances complete, run integration tests
+  │   Re-run failed Bundles or report to human
+  └────────────────────────────────────────────────
   🚏 Gate 4: Normal=Present to human / Autonomous=Auto-pass on all tests pass + coverage met
 
 Phase 5: Verification (Parallel Execution)
@@ -211,6 +254,55 @@ PJM can skip unnecessary phases at their discretion:
 - [ ] Tester: Performance measurement complete
 - [ ] PJM: All phases confirmed complete, all deliverables in output/
 - [ ] PJM: Final report presented to human (required even in autonomous mode)
+- [ ] **Parallel mode only**: PJM: All Bundle TEAM_FEATURE instances completed
+- [ ] **Parallel mode only**: PJM: Integration verification checklist all passed (no file conflicts, all tests pass, all type checks pass, zero static analysis errors)
+
+## Parallel Mode Details
+
+### Feature Bundle Identification Rules
+
+PJM analyzes Phase 3 deliverables (`output/tasks/`) and identifies Feature Bundles based on these criteria:
+
+1. **No changed-file overlap**: Changed files must not overlap between Bundles
+2. **Shared layer exclusion**: Changes to shared layer files are excluded from Bundles and processed sequentially in Phase 4b
+3. **Respect dependencies**: When inter-task dependencies exist, group them in the same Bundle or make the dependency source a preceding Bundle
+
+### Shared Layer Definition
+
+The following paths are treated as the shared layer and excluded from parallel Bundles:
+
+- `src/shared/`, `src/stores/`, `src/types/`, `src/lib/`, `src/utils/`
+- Shared paths defined in `project-config.md` §4 (Architecture)
+
+### Bundle TASK File Generation Convention
+
+- File name: `TASK_BUNDLE_<name>.md` (e.g., `TASK_BUNDLE_auth.md`)
+- Format: `TASK_TEMPLATE.md` compliant + Bundle metadata (Bundle ID, source task breakdown, included task IDs, prerequisites)
+- Output destination: `output/tasks/`
+
+### TEAM_FEATURE Invocation Format
+
+```text
+.claude/teams/TEAM_FEATURE.md output/tasks/TASK_BUNDLE_<name>.md
+```
+
+Each TEAM_FEATURE instance works only within the scope of its assigned Bundle.
+PJM tracks each Bundle's progress with TaskCreate/TaskUpdate.
+
+### Failure Recovery
+
+- Preserve successful Bundle results
+- Analyze the cause of failed Bundles and attempt re-execution
+- Escalate to human if re-execution does not resolve the issue
+
+### Integration Verification Checklist
+
+After all TEAM_FEATURE instances complete, PJM verifies the following:
+
+- [ ] No file conflicts between Bundles
+- [ ] All tests pass
+- [ ] All type checks pass
+- [ ] Zero static analysis errors
 
 ## Tech Stack Reference
 

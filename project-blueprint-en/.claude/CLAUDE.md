@@ -175,6 +175,7 @@ Gate passage criteria:
 - Make dependencies between parallel tasks explicit and minimize blocking
 - When using Agent Teams, follow team templates under `.claude/teams/` (all team arguments are optional; when omitted, the PL confirms interactively)
   - Full lifecycle → `TEAM_PJM.md <requirement-note-file or instruction>` (all 11 skills, recommended)
+  - Full lifecycle (parallel) → `TEAM_PJM.md <requirement-note-file or instruction> --parallel` (delegates independent task groups to TEAM_FEATURE in parallel; combinable with `--auto`)
   - Feature development → `TEAM_FEATURE.md <task-file or implementation-instruction>`
   - Quality assurance → `TEAM_QA.md <target-scope or QA-instruction>`
   - Design phase → `TEAM_PLANNING.md <requirement-note-file or design-instruction>`

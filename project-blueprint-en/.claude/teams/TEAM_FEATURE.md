@@ -139,3 +139,12 @@ All team members must read `.claude/CLAUDE.md` and follow the project's tech sta
 - When the task file has an "Ambiguity" section, PL makes the judgment and instructs members
 - When the task file has an Implementation Order, follow that order
 - When the task file has a Testing Strategy, testers follow it
+
+## Sub-team Invocation from PJM Team
+
+When launched from TEAM_PJM's parallel mode (`--parallel`), follow these constraints:
+
+- Implement only within the scope of the assigned TASK file (`TASK_BUNDLE_<name>.md`)
+- Only modify files listed in the target files/directories section (changes to out-of-scope files are prohibited)
+- Do not coordinate directly with other TEAM_FEATURE instances (PJM manages integration)
+- Report completion to PJM upon finishing (PJM manages progress via TaskUpdate)
