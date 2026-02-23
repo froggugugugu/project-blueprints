@@ -7,7 +7,58 @@ Claude Codeプロジェクトの AI協調開発環境テンプレート。
 
 ---
 
-## セットアップ手順
+## ミニマルスタート（5分で試す）
+
+すべてのセクション・チーム・スキルを使う必要はない。**3ステップで今すぐ始められる。**
+
+### Step 1: コピー
+
+```bash
+bash setup.sh /path/to/your-project
+```
+
+### Step 2: project-config.md に3セクションだけ記入
+
+```markdown
+## §1. プロジェクト基本情報
+プロジェクト名: MyApp
+概要: TODOアプリ
+言語: 日本語
+
+## §2. 技術スタック
+- React 19 + TypeScript 5
+- Vite 6
+
+## §3. コマンド
+- dev: npm run dev
+- test: npm run test
+- build: npm run build
+```
+
+> 残り9セクションは空欄のままで動作する。必要に応じて段階的に追記すればよい。
+
+### Step 3: スキルを1つ試す
+
+```text
+/plan ログイン機能の設計
+```
+
+これだけで AI が `project-config.md` を読み取り、構造化された設計ドキュメントを生成する。
+
+### 段階的に広げる
+
+| やりたくなったこと | 次のステップ |
+|---|---|
+| PRD → 設計 → 実装まで全部 AI に任せたい | `project-config.md` §4 を追記 → `.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md` |
+| 実装だけ手伝ってほしい | `/implementing-features ログイン機能を追加` |
+| コードレビューしてほしい | `/code-review src/features/auth/` |
+| チームで品質保証したい | `.claude/teams/TEAM_QA.md src/` |
+
+> 詳細なセットアップ手順・全機能については以降のセクションを参照。
+
+---
+
+## セットアップ手順（詳細）
 
 ### 方法A: setup.sh で1コマンドセットアップ（推奨）
 
@@ -46,13 +97,13 @@ mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
 | 1. プロジェクト基本情報 | 名前・概要・言語 |
 | 2. 技術スタック | 使用するフレームワーク・ライブラリ |
 | 3. コマンド | 開発・テスト・ビルドコマンド |
-| 6. 品質基準 | カバレッジ目標・TDD有無 |
 
 **推奨セクション**（記入すると品質が向上する）:
 
 | セクション | 内容 |
 | --- | --- |
 | 4. アーキテクチャ | パターン・依存ルール |
+| 6. 品質基準 | カバレッジ目標・TDD有無 |
 | 7. デザインシステム | 参照するデザインガイド |
 | 11. 注意事項 | フレームワーク固有の落とし穴（AIも追記） |
 
@@ -200,10 +251,11 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 │  汎用（そのまま再利用）                                   │
 │                                                         │
 │  .claude/CLAUDE.md ............ 開発ガイド（横断）       │
+│  .claude/hooks/ ............... 安全フック（多層防御）    │
 │  .claude/skills/ .............. 11個のスキル定義         │
 │  .claude/teams/ ............... 5チーム定義              │
 │  .claude/tasks/ ............... タスク指示書テンプレート  │
-│  .claude/settings.json ........ プラグイン設定           │
+│  .claude/settings.json ........ プラグイン・フック設定   │
 │  .claude/settings.local.json .. 権限設定テンプレート     │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -243,8 +295,12 @@ project-blueprint/
 │
 ├── .claude/
 │   ├── CLAUDE.md                          ← [汎用] 開発ガイド
-│   ├── settings.json                      ← [汎用] プラグイン設定
+│   ├── settings.json                      ← [汎用] プラグイン・フック設定
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
+│   │
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御）
+│   │   ├── safety-check.sh                  危険コマンドブロック
+│   │   └── protect-files.sh                 機密ファイル保護
 │   │
 │   ├── skills/                            ← [汎用] 11スキル定義
 │   │   ├── plan/SKILL.md                    設計・計画

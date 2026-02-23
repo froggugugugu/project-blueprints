@@ -63,8 +63,12 @@ input/ に                   Phase 1: 要件分析
                             🚏 ゲート3                  ◀── 承認
 
                             Phase 4: 実装
-                              開発者: /implementing-features
-                                      /ui-ux-design
+                              逐次: 開発者が順次実装
+                                開発者: /implementing-features
+                                        /ui-ux-design
+                              並行(--parallel): TEAM_FEATURE × N
+                                PJM: Bundle特定 → 共有レイヤー逐次実装
+                                    → TEAM_FEATURE 並行起動 → 統合確認
                             🚏 ゲート4（テスト・カバレッジ）
 
                             Phase 5: 検証（並行）
@@ -77,6 +81,68 @@ input/ に                   Phase 1: 要件分析
                             🚏 ゲート5                  ◀── 承認
 
                             Phase 6: 完了 ──────────────▶ 完了報告
+```
+
+### ワークフロー図（mermaid）
+
+```mermaid
+flowchart TD
+    A[input/requirements/\n要求メモ配置] --> P1
+
+    subgraph PJM["PJM チーム"]
+        P1["Phase 1: 要件分析\nアナリスト: /prd"]
+        G1{{"🚏 ゲート1"}}
+        P2["Phase 2: アーキテクチャ設計\nアナリスト: /architecture"]
+        G2{{"🚏 ゲート2"}}
+        P3["Phase 3: タスク分解\nプランナー: /plan"]
+        G3{{"🚏 ゲート3"}}
+        P4["Phase 4: 実装"]
+        G4{{"🚏 ゲート4"}}
+        P5["Phase 5: 検証\nレビュー + テスト"]
+        G5{{"🚏 ゲート5"}}
+        P6["Phase 6: 完了報告"]
+
+        P1 --> G1 --> P2 --> G2 --> P3 --> G3 --> P4 --> G4 --> P5 --> G5 --> P6
+    end
+
+    P6 --> Z["output/\n成果物レビュー"]
+```
+
+### Phase 4 詳細: 逐次モード vs 並行モード
+
+```mermaid
+flowchart TD
+    Start["Phase 4 開始\nゲート3 通過済み"]
+    Check{"--parallel\n指定あり?"}
+
+    Start --> Check
+
+    %% 逐次モード
+    Check -- "No（デフォルト）" --> SEQ["開発者が順次実装\n/implementing-features\n/ui-ux-design"]
+    SEQ --> G4A{{"🚏 ゲート4"}}
+
+    %% 並行モード
+    Check -- "Yes" --> P4A["Phase 4a: 並行化準備\nPJM: 変更ファイル重複分析\nFeature Bundle 特定\n共有レイヤー分離"]
+    P4A --> HasShared{"共有レイヤー\n変更あり?"}
+
+    HasShared -- "Yes" --> P4B["Phase 4b: 共有レイヤー変更\n開発者が逐次実装"]
+    HasShared -- "No" --> P4C
+    P4B --> P4C
+
+    P4C["Phase 4c: Bundle 並行実装"]
+
+    P4C --> F1["TEAM_FEATURE\nBundle A"]
+    P4C --> F2["TEAM_FEATURE\nBundle B"]
+    P4C --> F3["TEAM_FEATURE\nBundle ..."]
+
+    F1 --> P4D["Phase 4d: 統合確認\nファイル競合チェック\nテスト全パス確認"]
+    F2 --> P4D
+    F3 --> P4D
+
+    P4D --> IntOK{"統合OK?"}
+    IntOK -- "Yes" --> G4B{{"🚏 ゲート4"}}
+    IntOK -- "No" --> Retry["失敗Bundle再実行\nor 人間にエスカレーション"]
+    Retry --> P4D
 ```
 
 ## インプット/アウトプット構造
@@ -146,11 +212,14 @@ project-root/
 ```text
 .claude/teams/TEAM_PJM.md input/requirements/REQ_001.md
 .claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --auto
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --parallel
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --auto --parallel
 .claude/teams/TEAM_PJM.md Phase 3から開始。PRDと設計書はoutput/に作成済み
 .claude/teams/TEAM_PJM.md 実装済み。Phase 5のみ実行 --auto
 ```
 
 `--auto`: 自律モード。ゲート承認をPJMに委任し、最終報告のみ人間に提示する。
+`--parallel`: 並行実装モード。Phase 4 で独立タスク群を Feature Bundle に分離し、複数の TEAM_FEATURE を並行起動する。
 
 ### 機能開発チーム
 

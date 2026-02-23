@@ -8,7 +8,7 @@
 ## 使い方
 
 ```text
-.claude/teams/TEAM_PJM.md <要求メモファイルパス or 指示> [--auto]
+.claude/teams/TEAM_PJM.md <要求メモファイルパス or 指示> [--auto] [--parallel]
 ```
 
 引数は省略可能。省略時はPLが `input/requirements/` を確認し、対象ファイルを特定する。
@@ -28,6 +28,17 @@
 
 基準を満たさない場合は自律モードでも人間に判断を仰ぐ。
 
+### 実装モード
+
+| モード | 指定方法 | Phase 4 動作 |
+| --- | --- | --- |
+| **逐次（デフォルト）** | 指定なし | 単一の開発者がタスクを順次実装 |
+| **並行** | `--parallel` を付与 | 独立タスク群をTEAM_FEATUREに並行委任 |
+
+並行モードの前提条件:
+- Phase 3 の成果物に変更ファイル・依存関係が明記されていること
+- 独立した Feature Bundle が2つ以上特定できること（1つのみの場合は逐次モードにフォールバック）
+
 ### 例
 
 ```text
@@ -42,6 +53,12 @@
 
 # 途中フェーズから開始
 .claude/teams/TEAM_PJM.md Phase 3から開始。PRDと設計書はoutput/に作成済み
+
+# 並行実装モード
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --parallel
+
+# 自律 + 並行
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --auto --parallel
 
 # 品質監査のみ + 自律モード
 .claude/teams/TEAM_PJM.md 実装済み。Phase 5のみ実行 --auto
@@ -104,6 +121,11 @@ output/
 - 各ゲートポイントで成果物を人間に提示し、承認を待つ
 - メンバー間の整合性を確認する
 - TaskCreateでフェーズごとのタスクリストを作成する
+- **並行モード時の追加責務**:
+  - タスク分解成果物から Feature Bundle を特定する（変更ファイル重複分析）
+  - 共有レイヤー変更タスクを分離し、逐次実行を管理する
+  - Bundle ごとの TASK ファイルを `output/tasks/` に生成する
+  - 各 Bundle に対して TEAM_FEATURE を並行起動し、進捗追跡・結果集約を行う
 - **自分でドキュメント作成・コード実装を行わない**
 
 ### アナリスト
@@ -161,7 +183,28 @@ Phase 3: タスク分解
   🚏 ゲート3: 通常=人間に提示→承認待ち / 自律=PJMが品質基準で判定
 
 Phase 4: 実装
-  開発者: 計画作成 → PJM承認 → /implementing-features + /ui-ux-design で実装
+  ┌─ 逐次モード（デフォルト）─────────────────────
+  │ 開発者: 計画作成 → PJM承認 → /implementing-features + /ui-ux-design で実装
+  └────────────────────────────────────────────
+
+  ┌─ 並行モード（--parallel）──────────────────
+  │ Phase 4a: 並行化準備（PJM）
+  │   タスク分解成果物の変更ファイル重複を分析
+  │   独立 Feature Bundle を特定
+  │   共有レイヤー変更タスクを分離
+  │
+  │ Phase 4b: 共有レイヤー変更（逐次・該当時のみ）
+  │   開発者が共有レイヤーを逐次実装
+  │
+  │ Phase 4c: Feature Bundle 並行実装
+  │   PJM: 各 Bundle の TASK ファイルを output/tasks/ に生成
+  │   PJM: 各 Bundle に対して TEAM_FEATURE を並行起動
+  │   PJM: TaskCreate/TaskUpdate で進捗追跡
+  │
+  │ Phase 4d: 統合確認
+  │   全 TEAM_FEATURE 完了後、統合テスト実行
+  │   失敗 Bundle は再実行 or 人間に報告
+  └────────────────────────────────────────────
   🚏 ゲート4: 通常=人間に提示 / 自律=テスト全パス+カバレッジ達成で自動通過
 
 Phase 5: 検証（並行実行）
@@ -211,6 +254,55 @@ PJMの判断で不要なフェーズをスキップできる:
 - [ ] テスター: パフォーマンス計測完了
 - [ ] PJM: 全フェーズ完了確認、output/に全成果物が揃っている
 - [ ] PJM: 最終報告を人間に提示（自律モードでも必須）
+- [ ] **並行モード時追加**: PJM: 全 Bundle の TEAM_FEATURE が完了している
+- [ ] **並行モード時追加**: PJM: 統合確認チェックリスト全項目パス（ファイル競合なし、テスト全パス、型チェック全パス、静的解析エラー0件）
+
+## 並行モード詳細
+
+### Feature Bundle 特定ルール
+
+PJM は Phase 3 の成果物（`output/tasks/`）を分析し、以下の基準で Feature Bundle を特定する:
+
+1. **変更ファイル非重複**: Bundle 間で変更対象ファイルが重複しないこと
+2. **共有レイヤー除外**: 共有レイヤーに属するファイルの変更は Bundle に含めず、Phase 4b で逐次処理する
+3. **依存関係尊重**: タスク間に依存関係がある場合、同一 Bundle にまとめるか、依存元を先行 Bundle とする
+
+### 共有レイヤーの定義
+
+以下のパスは共有レイヤーとして扱い、並行 Bundle の対象外とする:
+
+- `src/shared/`, `src/stores/`, `src/types/`, `src/lib/`, `src/utils/`
+- `project-config.md` §4（アーキテクチャ）で定義された共有パス
+
+### Bundle TASK ファイルの生成規約
+
+- ファイル名: `TASK_BUNDLE_<名前>.md`（例: `TASK_BUNDLE_auth.md`）
+- 形式: `TASK_TEMPLATE.md` 準拠 + Bundle メタデータ（Bundle ID、元タスク分解、含まれるタスクID、前提条件）
+- 出力先: `output/tasks/`
+
+### TEAM_FEATURE 起動形式
+
+```text
+.claude/teams/TEAM_FEATURE.md output/tasks/TASK_BUNDLE_<名前>.md
+```
+
+各 TEAM_FEATURE インスタンスは割り当てられた Bundle のスコープ内のみで作業する。
+PJM が TaskCreate/TaskUpdate で各 Bundle の進捗を追跡する。
+
+### 失敗時リカバリ
+
+- 成功した Bundle の成果は保持する
+- 失敗した Bundle は原因を分析し、再実行を試みる
+- 再実行でも解決しない場合は人間にエスカレーションする
+
+### 統合確認チェックリスト
+
+全 TEAM_FEATURE 完了後、PJM は以下を確認する:
+
+- [ ] Bundle 間でファイル競合が発生していないこと
+- [ ] テストが全パスすること
+- [ ] 型チェックが全パスすること
+- [ ] 静的解析エラーが0件であること
 
 ## 技術スタック参照
 

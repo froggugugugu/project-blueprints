@@ -10,7 +10,12 @@
     "- Quality tool: Change biome (default) to eslint + prettier as needed",
     "  → Refer to _comment_quality_tools and swap the corresponding lines in allow",
     "- Test tool: Change vitest (default) to jest as needed",
-    "- MCP: Change according to the MCP plugins you use"
+    "- MCP: Change according to the MCP plugins you use",
+    "",
+    "Safety mechanism (defense in depth):",
+    "- Layer 1: PreToolUse hooks (defined in settings.json, active even with --dangerously-skip-permissions)",
+    "- Layer 2: deny rules (settings.json + this file, active in normal permission mode)",
+    "- Layer 3: allow rules (this file, active in normal permission mode)"
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
@@ -63,11 +68,15 @@
       "mcp__plugin_playwright_playwright__*"
     ],
     "deny": [
-      "Bash(rm -rf *)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -rf /*)",
       "Bash(rm -r /)",
+      "Bash(rm -fr:*)",
       "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git reset --hard:*)"
+      "Bash(git push -f :*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(sudo :*)"
     ]
   },
   "_comment_pkg_manager": [

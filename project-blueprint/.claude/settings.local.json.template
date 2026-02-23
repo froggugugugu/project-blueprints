@@ -10,7 +10,12 @@
     "- 品質ツール: biome（デフォルト）/ eslint + prettier に合わせて変更",
     "  → _comment_quality_tools を参照して allow 内の該当行を入れ替え",
     "- テストツール: vitest（デフォルト）/ jest に合わせて変更",
-    "- MCP: 使用するMCPプラグインに合わせて変更"
+    "- MCP: 使用するMCPプラグインに合わせて変更",
+    "",
+    "安全機構（多層防御）:",
+    "- Layer 1: PreToolUse フック（settings.json で定義、--dangerously-skip-permissions でも有効）",
+    "- Layer 2: deny ルール（settings.json + このファイル、通常モード時に有効）",
+    "- Layer 3: allow ルール（このファイル、通常モード時に有効）"
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
@@ -63,11 +68,15 @@
       "mcp__plugin_playwright_playwright__*"
     ],
     "deny": [
-      "Bash(rm -rf *)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -rf /*)",
       "Bash(rm -r /)",
+      "Bash(rm -fr:*)",
       "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git reset --hard:*)"
+      "Bash(git push -f :*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(sudo :*)"
     ]
   },
   "_comment_pkg_manager": [

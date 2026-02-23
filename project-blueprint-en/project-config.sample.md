@@ -113,7 +113,7 @@ src/
 
 ---
 
-## 6. Quality Standards <!-- Required -->
+## 6. Quality Standards <!-- Recommended -->
 
 | Field | Value |
 | --- | --- |

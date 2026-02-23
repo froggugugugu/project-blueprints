@@ -3,6 +3,7 @@
 > **Purpose**: Copy this file for each feature (or part of a feature) and save it as `TASKXX_<feature-name>.md`
 > **Audience**: Developers and testers (team members read this file to perform their work)
 > **Note**: This file is a specification for "what to build." "Who does what and how" is defined in team definitions under `.claude/teams/`.
+> **Parallel mode**: When PJM generates this as `TASK_BUNDLE_<name>.md`, Bundle metadata is added to the Basic Information section.
 
 ---
 
@@ -15,6 +16,10 @@
 | Related Team Definition | <!-- e.g., TEAM_FEATURE.md --> |
 | Target Screen / URL | <!-- e.g., /login --> |
 | Priority | High / Medium / Low |
+| Bundle ID | <!-- Parallel mode only. e.g., BUNDLE_01 (auto-set by PJM) --> |
+| Source Task Breakdown | <!-- Parallel mode only. e.g., output/tasks/PLAN_xxx.md --> |
+| Included Task IDs | <!-- Parallel mode only. e.g., T3, T4, T5 --> |
+| Prerequisites | <!-- Parallel mode only. e.g., Shared layer changes complete --> |
 
 ---
 

@@ -63,8 +63,12 @@ notes in input/  ──────────▶  Analyst: /prd
                             🚏 Gate 3                   ◀── Approve
 
                             Phase 4: Implementation
-                              Developer: /implementing-features
-                                         /ui-ux-design
+                              Sequential: Developer implements sequentially
+                                Developer: /implementing-features
+                                           /ui-ux-design
+                              Parallel(--parallel): TEAM_FEATURE × N
+                                PJM: Identify Bundles → Sequential shared layer
+                                    → Parallel TEAM_FEATURE launch → Integration check
                             🚏 Gate 4 (Tests & Coverage)
 
                             Phase 5: Verification (Parallel)
@@ -77,6 +81,68 @@ notes in input/  ──────────▶  Analyst: /prd
                             🚏 Gate 5                   ◀── Approve
 
                             Phase 6: Completion ─────────▶ Final Report
+```
+
+### Workflow Diagram (mermaid)
+
+```mermaid
+flowchart TD
+    A["input/requirements/\nPlace requirement notes"] --> P1
+
+    subgraph PJM["PJM Team"]
+        P1["Phase 1: Requirements Analysis\nAnalyst: /prd"]
+        G1{{"🚏 Gate 1"}}
+        P2["Phase 2: Architecture Design\nAnalyst: /architecture"]
+        G2{{"🚏 Gate 2"}}
+        P3["Phase 3: Task Breakdown\nPlanner: /plan"]
+        G3{{"🚏 Gate 3"}}
+        P4["Phase 4: Implementation"]
+        G4{{"🚏 Gate 4"}}
+        P5["Phase 5: Verification\nReview + Testing"]
+        G5{{"🚏 Gate 5"}}
+        P6["Phase 6: Final Report"]
+
+        P1 --> G1 --> P2 --> G2 --> P3 --> G3 --> P4 --> G4 --> P5 --> G5 --> P6
+    end
+
+    P6 --> Z["output/\nReview deliverables"]
+```
+
+### Phase 4 Detail: Sequential vs Parallel Mode
+
+```mermaid
+flowchart TD
+    Start["Phase 4 Start\nGate 3 passed"]
+    Check{"--parallel\nspecified?"}
+
+    Start --> Check
+
+    %% Sequential mode
+    Check -- "No (default)" --> SEQ["Developer implements sequentially\n/implementing-features\n/ui-ux-design"]
+    SEQ --> G4A{{"🚏 Gate 4"}}
+
+    %% Parallel mode
+    Check -- "Yes" --> P4A["Phase 4a: Parallelization Prep\nPJM: Analyze changed-file overlaps\nIdentify Feature Bundles\nSeparate shared layer"]
+    P4A --> HasShared{"Shared layer\nchanges?"}
+
+    HasShared -- "Yes" --> P4B["Phase 4b: Shared Layer Changes\nDeveloper implements sequentially"]
+    HasShared -- "No" --> P4C
+    P4B --> P4C
+
+    P4C["Phase 4c: Bundle Parallel Implementation"]
+
+    P4C --> F1["TEAM_FEATURE\nBundle A"]
+    P4C --> F2["TEAM_FEATURE\nBundle B"]
+    P4C --> F3["TEAM_FEATURE\nBundle ..."]
+
+    F1 --> P4D["Phase 4d: Integration Verification\nFile conflict check\nAll tests pass"]
+    F2 --> P4D
+    F3 --> P4D
+
+    P4D --> IntOK{"Integration\nOK?"}
+    IntOK -- "Yes" --> G4B{{"🚏 Gate 4"}}
+    IntOK -- "No" --> Retry["Re-run failed Bundle\nor escalate to human"]
+    Retry --> P4D
 ```
 
 ## Input/Output Structure
@@ -146,11 +212,14 @@ All teams: Arguments (file path or instruction) are optional. When omitted, the 
 ```text
 .claude/teams/TEAM_PJM.md input/requirements/REQ_001.md
 .claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --auto
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --parallel
+.claude/teams/TEAM_PJM.md input/requirements/REQ_001.md --auto --parallel
 .claude/teams/TEAM_PJM.md Start from Phase 3. PRD and design docs already in output/
 .claude/teams/TEAM_PJM.md Implementation done. Run Phase 5 only --auto
 ```
 
 `--auto`: Autonomous mode. Delegates gate approvals to PJM, presenting only the final report to human.
+`--parallel`: Parallel implementation mode. In Phase 4, separates independent task groups into Feature Bundles and launches multiple TEAM_FEATURE instances in parallel.
 
 ### Feature Development Team
 

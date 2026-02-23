@@ -15,6 +15,49 @@
 
 ---
 
+## Section-by-Section Adoption Guide
+
+**You don't need to fill in everything at once.** Add sections incrementally based on the skills you want to use.
+
+```mermaid
+flowchart LR
+    subgraph MINIMAL["Minimal (S1+S2+S3)"]
+        S1["S1 Project Basics"]
+        S2["S2 Tech Stack"]
+        S3["S3 Commands"]
+    end
+
+    subgraph RECOMMEND["Recommended (+S4)"]
+        S4["S4 Architecture"]
+    end
+
+    subgraph FULL["Full (+remaining)"]
+        S5["S5 Data Persistence"]
+        S6["S6 Quality Standards"]
+        S7["S7 Design System"]
+        S8["S8 E2E Test Environment"]
+        S9["S9 Git Policy"]
+        S10["S10 Security Policy"]
+        S11["S11 Known Pitfalls"]
+        S12["S12 Plugin Config"]
+    end
+
+    MINIMAL -- "+add S4" --> RECOMMEND
+    RECOMMEND -- "as needed" --> FULL
+```
+
+| Step | Sections to Fill | Skills & Features Unlocked |
+| --- | --- | --- |
+| **Minimal** | S1 + S2 + S3 | `/prd`, `/plan`, `/code-review` — design, analysis, review |
+| **Recommended** | + S4 | `/architecture`, `/implementing-features`, `/refactoring`, all teams — implementation, refactoring |
+| **Full** | Add sections as needed | `/security-scan`(S10), `/legal-check`, `/e2e-testing`(S8), `/performance`, etc. |
+
+> **S6 (Quality Standards)** controls TDD, coverage targets, and quality gate activation. It's not a prerequisite for any skill — everything works with it blank — but filling it in enables automated quality management.
+>
+> **Blank sections** are simply skipped during skill execution. They do not cause errors.
+
+---
+
 ## 1. Project Basics <!-- Required -->
 
 | Field | Value |
@@ -226,7 +269,7 @@ Dependency direction rule examples:
 
 ---
 
-## 6. Quality Standards <!-- Required -->
+## 6. Quality Standards <!-- Recommended -->
 
 | Field | Value |
 | --- | --- |
