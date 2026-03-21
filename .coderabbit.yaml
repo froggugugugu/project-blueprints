@@ -5,6 +5,7 @@ tone_instructions: "簡潔で具体的に。Markdownテンプレートの品質�
 reviews:
   profile: "assertive"
   high_level_summary: true
+  request_changes_workflow: true
   auto_review:
     enabled: true
     drafts: false
