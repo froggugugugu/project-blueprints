@@ -20,6 +20,11 @@ if [[ ! -f "$PROJECT_DIR/project-config.md" ]]; then
     warnings+=("project-config.md が見つかりません。project-config.sample.md をコピーして作成してください。")
 fi
 
+# --- Check docs/ directory exists ---
+if [[ ! -d "$PROJECT_DIR/docs" ]]; then
+    warnings+=("docs/ ディレクトリが存在しません。セットアップ手順を確認してください。")
+fi
+
 # --- Check docs/ stubs ---
 for doc in project.md architecture.md data-model.md development-patterns.md; do
     doc_path="$PROJECT_DIR/docs/$doc"
