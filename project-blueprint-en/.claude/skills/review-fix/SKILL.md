@@ -15,6 +15,14 @@ analyzes and classifies the feedback, then executes fix → test → commit & pu
 The goal is to eliminate the manual effort of reading review comments one by one and fixing them by hand.
 It accurately understands the reviewer's intent and applies fixes following the project's quality standards (`CLAUDE.md`).
 
+## Principles
+
+- Accurately understand the reviewer's intent and fix accordingly
+- Do not change areas not flagged in comments (maintain scope)
+- Do not over-fix (minimum changes necessary to address the feedback)
+- Do not break existing tests
+- Do not double-fix already-resolved issues (always cross-reference with current code)
+
 ## Usage
 
 ```text
@@ -184,7 +192,13 @@ Only commit modified source files. Do not include untracked files.
 
 ### Phase 7: Result Report
 
-Report the following at the end:
+Report results using the format defined in "Output Contract" below.
+
+## Output Contract
+
+### Result Report Format
+
+Report in the following format at Phase 7:
 
 ```markdown
 ## Fix Complete
@@ -206,6 +220,14 @@ Report the following at the end:
 ### Items Requiring Manual Action
 - Add trailing newline to .env.example (skipped as protected file)
 ```
+
+### Required Sections
+
+| Section | Required | Constraints |
+| ------- | -------- | ----------- |
+| Fix Summary | ✅ | Category-level counts and actions. Keep rows even if 0 |
+| Test Results | ✅ | Tests, lint, commit hash |
+| Items Requiring Manual Action | Conditional | Only when there are comments excluded from auto-fix |
 
 ## Out of Scope (Not Auto-Fixed)
 

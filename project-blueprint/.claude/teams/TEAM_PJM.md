@@ -155,7 +155,7 @@ output/
 ### レビュアー
 
 - 実装完了後にコードレビュー・セキュリティスキャン・法務チェックを実施
-- 使用スキル: `/code-review`, `/security-scan`, `/legal-check`
+- 使用スキル: `/code-review`, `/security-scan`, `/legal-check`, `/hig-compliance`
 - レポートを`output/reports/`の各サブディレクトリに出力する
 - 具体的なフィードバックを開発者に送る
 - **ソースコードは変更しない**

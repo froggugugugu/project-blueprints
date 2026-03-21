@@ -89,7 +89,7 @@ text-3xl = 56px
 
 ```
 button-height-sm  = space-6         (32px相当)
-button-height-md  = space-7         (40px相当)
+button-height-md  = space-7         (48px相当)
 button-height-lg  = space-7         (48px相当)
 button-padding-x  = space-4 〜 5    (16〜24px)
 
