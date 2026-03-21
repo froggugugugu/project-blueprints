@@ -1,0 +1,98 @@
+# .coderabbit.yaml
+language: "ja"
+tone_instructions: "簡潔で具体的に。Markdownテンプレートの品質・構造・整合性を重視"
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  request_changes_workflow: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  path_instructions:
+    # --- JP Blueprint ---
+    - path: "project-blueprint/.claude/skills/*/SKILL.md"
+      instructions: |
+        スキルファイルのレビュー観点:
+        - frontmatter(name, description)が正確か
+        - 「前提条件」「基本姿勢」「使い方」「ワークフロー」「出力契約」「禁止事項」の構造を維持しているか
+        - 他スキルとの連携（前工程/後工程）が正しく定義されているか
+        - 出力先ディレクトリが規約に沿っているか（output/reports/, docs/等）
+        - project-config.mdのセクション番号参照が正しいか
+        - 日本語で記述されているか
+    - path: "project-blueprint/.claude/teams/TEAM_*.md"
+      instructions: |
+        チームテンプレートのレビュー観点:
+        - チーム構成表のスキル名がskills/配下に存在するか
+        - スキルカバレッジ表とチーム構成表のスキル名が一致しているか
+        - ワークフローの依存関係が論理的に正しいか
+        - 完了条件が各役割の責務と対応しているか
+        - 役割間の棲み分けが明確か
+        - 日本語で記述されているか
+    - path: "project-blueprint/.claude/CLAUDE.md"
+      instructions: |
+        開発ガイドのレビュー観点:
+        - スキル一覧がskills/配下の全スキルを網羅しているか
+        - スキル選定基準が全スキルをカバーしているか
+        - チームテンプレート一覧がteams/配下の全チームを網羅しているか
+        - ドキュメント管理方針の更新責務テーブルが最新か
+        - 日本語で記述されているか
+    - path: "project-blueprint/project-config.md"
+      instructions: |
+        プロジェクト設定テンプレートのレビュー観点:
+        - 12セクション(§1〜§12)の番号が連続しているか
+        - スキルから参照されるセクション番号が正しいか
+        - テンプレートとしての汎用性が保たれているか（特定プロジェクト固有の値が混入していないか）
+    - path: "project-blueprint/docs/**"
+      instructions: |
+        ドキュメントスタブのレビュー観点:
+        - テンプレートとしての構造が明確か
+        - AIが埋めるべきセクションが分かりやすいか
+    # --- EN Blueprint ---
+    - path: "project-blueprint-en/.claude/skills/*/SKILL.md"
+      instructions: |
+        Skill file review criteria:
+        - Frontmatter (name, description) is accurate
+        - Maintains structure: Prerequisites, Principles, Usage, Workflow, Output Contract, Prohibitions
+        - Skill dependencies (upstream/downstream) are correctly defined
+        - Output directories follow conventions (output/reports/, docs/, etc.)
+        - Section number references to project-config.md are correct
+        - Written in English
+    - path: "project-blueprint-en/.claude/teams/TEAM_*.md"
+      instructions: |
+        Team template review criteria:
+        - Skill names in team composition table exist under skills/
+        - Skill names match between skill coverage table and team composition table
+        - Workflow dependencies are logically correct
+        - Completion criteria correspond to each role's responsibilities
+        - Clear separation of concerns between roles
+        - Written in English
+    - path: "project-blueprint-en/.claude/CLAUDE.md"
+      instructions: |
+        Development guide review criteria:
+        - Skill list covers all skills under skills/
+        - Skill selection criteria cover all skills
+        - Team template list covers all teams under teams/
+        - Document management policy responsibility table is up to date
+        - Written in English
+    - path: "project-blueprint-en/project-config.md"
+      instructions: |
+        Project configuration template review criteria:
+        - Section numbers (§1-§12) are sequential
+        - Section numbers referenced from skills are correct
+        - Maintains generality as a template (no project-specific values leaked)
+    - path: "project-blueprint-en/docs/**"
+      instructions: |
+        Document stub review criteria:
+        - Structure as a template is clear
+        - Sections to be filled by AI are easy to identify
+    # --- Common ---
+    - path: "**/*.md"
+      instructions: |
+        Markdown共通:
+        - テーブルの列数がヘッダーと一致しているか
+        - 内部リンク（相対パス）の参照先が存在するか
+        - コードブロックに言語指定があるか

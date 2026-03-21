@@ -2,8 +2,8 @@
 name: ui-ux-design
 description: >
   Reviews and implements UI/UX following project design systems.
-  Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design.
-  Covers: visual consistency, design system compliance, accessibility, responsive design, and dark mode.
+  Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design, design consistency audit, system-wide consistency.
+  Covers: visual consistency, design system compliance, accessibility, responsive design, dark mode, and system-wide design consistency audit.
   Takes optional argument: /ui-ux-design <target-file or instruction>
 ---
 
@@ -41,12 +41,16 @@ When a file path is specified, read its contents to determine the review/impleme
 /ui-ux-design Improve the dashboard layout
 /ui-ux-design src/features/dashboard/pages/DashboardPage.tsx
 /ui-ux-design output/tasks/TASK_ui_redesign.md
+/ui-ux-design Audit system-wide design consistency
+/ui-ux-design --audit                    # Explicitly invoke system consistency audit mode
+/ui-ux-design --audit --fix              # Audit + auto-fix
 ```
 
 ### Output Destination
 
 - Review mode: Present report in conversation (can also output to `output/reports/review/`)
 - Implementation mode: Directly modify components under `src/`
+- System consistency audit mode: Output to `output/reports/review/DESIGN_AUDIT_{YYYYMMDD}.md`
 
 ### Integration with Other Skills
 
@@ -62,7 +66,9 @@ The mode is automatically determined based on the following criteria:
 
 | Condition | Selected Mode |
 | --------- | ------------- |
-| Task contains "review", "check", "inspect", "audit", "evaluate" | Review mode |
+| Arguments contain `--audit` | System consistency audit mode |
+| Task contains "consistency", "unify", "coherence", "cross-cutting", "system-wide", "audit" | System consistency audit mode |
+| Task contains "review", "check", "inspect", "evaluate" | Review mode |
 | Assigned as a reviewer within a team | Review mode |
 | Task file states `role: review` | Review mode |
 | Task contains "implement", "create", "fix", "add", "improve", "change" | Implementation mode |
@@ -89,6 +95,79 @@ Used when implementing or modifying UI.
 3. **Implementation** — Use semantic colors/tokens; no hardcoding
 4. **Dark Mode Support** — Verify behavior in both light/dark modes
 5. **Verification** — Confirm build and lint pass
+
+### System Consistency Audit Mode
+
+Scans across the entire system to detect and correct design inconsistencies between features and components.
+When the `--fix` flag is provided, auto-fixes are also applied (`--fix` omitted = report only).
+
+#### Audit Execution Steps
+
+**Phase 1: Information Gathering** (executed in parallel via subagents)
+
+Execute the following scans in parallel:
+
+| Scan Target | Method | Detected Issues |
+| ----------- | ------ | --------------- |
+| Hardcoded color values | Grep `.tsx` `.ts` `.css` files under `src/` for `#[0-9a-fA-F]{3,8}` `rgb\(` `rgba\(` `hsl\(` patterns | DS token non-usage |
+| Inline styles | Grep for `style={{` `style=\{` patterns | Magic numbers outside tokens |
+| Tailwind arbitrary values | Grep for `\-\[.*\]` patterns (`text-[#...]` `p-[13px]`, etc.) | Values outside DS scale |
+| Component usage patterns | Tally common components (Button, Card, Dialog, Sheet, Input, etc.) used in each feature's Page/Container | Implementation variance of same UI types |
+| Responsive patterns | Grep to tally `useMediaQuery` `md:` `lg:` `sm:` breakpoint usage | Breakpoint inconsistency |
+| a11y patterns | Grep to tally `role=` `aria-` `tabIndex`, detect `<div onClick` as button substitutes | a11y deficiencies |
+| Icon usage | Grep to tally imports from `lucide-react` | Icon usage consistency |
+| Empty/loading states | Check for `isLoading` `isEmpty` `empty` patterns in each page | Missing UX states |
+
+**Phase 2: Pattern Analysis**
+
+Analyze the collected data as follows:
+
+1. **Color token usage rate**: Token usage rate defined in `src/index.css` vs remaining hardcoded values
+2. **Component consistency matrix**: Comparison table of how each feature uses common UI components
+   - e.g., Whether Button variant/size usage is unified across features
+   - e.g., Whether Dialog/Sheet usage criteria are consistent
+3. **Spacing statistics**: Distribution of spacing values used (within Tailwind scale vs arbitrary values)
+4. **Responsive strategy consistency**: Whether mobile/PC switching approaches are consistent across features
+5. **Interaction pattern consistency**: Whether loading, error, and empty state representations are unified
+
+**Phase 3: Inconsistency Classification & Prioritization**
+
+Classify detected inconsistencies by the following criteria:
+
+| Classification | Criteria | Priority |
+| -------------- | -------- | -------- |
+| **Token violation** | Not using tokens defined in the DS | HIGH |
+| **Pattern mismatch** | Same type of UI element implemented differently across features | MEDIUM |
+| **Gap** | UX states (empty states, etc.) present in other features but missing | MEDIUM |
+| **a11y deficiency** | Non-semantic HTML, missing ARIA | HIGH |
+| **Minor difference** | Trivial differences that don't affect behavior but should be unified | LOW |
+
+**Phase 4: Report Output or Auto-Fix**
+
+- Without `--fix`: Output audit report to `output/reports/review/DESIGN_AUDIT_{YYYYMMDD}.md`
+- With `--fix`: Auto-fix in HIGH → MEDIUM order, then output fix summary
+  - Auto-fix targets: Token violations (hardcoded color values → semantic colors), Tailwind arbitrary values → scale values
+  - Auto-fix exclusions: Pattern mismatches (require design decisions), gaps (require new implementation)
+  - After fixes, run build/lint/tests to confirm no breaking changes
+
+#### Audit Scope Control
+
+By default, the entire `src/` directory is scanned, but scope can be narrowed:
+
+```text
+/ui-ux-design --audit                          # Entire src/
+/ui-ux-design --audit src/features/touring/    # Specific feature only
+/ui-ux-design --audit --fix                    # Entire + auto-fix
+```
+
+#### Auto-Fix Rules
+
+Auto-fix only applies changes that meet the following safety criteria:
+
+1. **Mechanically unambiguous conversion**: 1:1 mapping such as `#ffffff` → `bg-background`
+2. **Visually equivalent**: No visual difference before and after the fix
+3. **Tests pass**: All tests pass after the fix
+4. **Skip when judgment needed**: When multiple candidates exist or the context is dependent, document in the report and leave to humans
 
 ## Review Perspectives
 
@@ -157,6 +236,17 @@ Used when implementing or modifying UI.
 | Dark Mode Verification | OK / NG | ✅ | When NG, state specific issue |
 | Build Result | pass / fail | ✅ | |
 
+### System Consistency Audit Mode Output Specification
+
+| Section | Required | Constraints |
+| ------- | -------- | ----------- |
+| Audit Overview | ✅ | Scan scope, file count, feature count |
+| Token Usage Statistics | ✅ | Semantic color usage rate, hardcoded value count |
+| Cross-Feature Consistency Matrix | ✅ | Component usage pattern comparison table |
+| Inconsistency List | ✅ | In HIGH → MEDIUM → LOW order. Keep headings even when 0 items |
+| Fix Summary (`--fix` only) | Conditional | Fixed file count, fix content, test results |
+| Recommended Actions | ✅ | List of items requiring human judgment |
+
 ### Severity Definitions
 
 | Level | Criteria | Examples |
@@ -216,6 +306,93 @@ Used when implementing or modifying UI.
 
 ## Overall Verdict
 - **Approved** / **Conditionally Approved (After MUST Fixes)** / **Needs Revision**
+```
+
+## Report Format (System Consistency Audit Mode)
+
+```markdown
+# Design Consistency Audit Report: {YYYY-MM-DD}
+
+## Audit Overview
+- Scan Scope: {entire src/ or specific directory}
+- Scanned Files: X
+- Features: Y
+- Execution Time: {ISO 8601}
+
+## Token Usage Statistics
+
+### Color Tokens
+| Metric | Value |
+| ------ | ----- |
+| Semantic color usage locations | X |
+| Remaining hardcoded color values | Y |
+| Token usage rate | Z% |
+
+### Hardcoded Color Value Details
+| File | Line | Value | Recommended Token |
+| ---- | ---- | ----- | ----------------- |
+| `path/to/file.tsx` | 42 | `#ffffff` | `bg-background` |
+
+### Spacing
+| Metric | Value |
+| ------ | ----- |
+| Within Tailwind scale | X locations |
+| Arbitrary values (`-[Npx]`) | Y locations |
+
+## Cross-Feature Consistency Matrix
+
+### Component Usage Patterns
+| Component | auth | map-editor | routes | touring | stamps | bikes | settings | admin |
+| --------- | ---- | ---------- | ------ | ------- | ------ | ----- | -------- | ----- |
+| Button    | ✅   | ✅         | ✅     | ✅      | ✅     | ✅    | ✅       | ✅    |
+| Card      | —    | —          | ✅     | ✅      | ✅     | ✅    | —        | —     |
+| Dialog    | —    | ✅         | —      | ✅      | —      | ✅    | ✅       | ✅    |
+| Sheet     | —    | ✅         | —      | ✅      | —      | —     | —        | —     |
+
+### Responsive Strategy
+| Feature | SP/PC Switch Method | Breakpoint | Notes |
+| ------- | ------------------- | ---------- | ----- |
+| map-editor | useMediaQuery | 768px | — |
+| touring | useMediaQuery | 768px | — |
+
+### UX State Implementation Status
+| Feature | Loading | Error | Empty State |
+| ------- | ------- | ----- | ----------- |
+| map-editor | ✅ | ✅ | ✅ |
+| touring | ✅ | ✅ | ✅ |
+
+## Inconsistency List
+
+### HIGH (Token Violations / a11y Deficiencies)
+- [ ] `file:line` Inconsistency description. **Detection Pattern**: Detection method. **Fix Suggestion**: Specific fix.
+
+### MEDIUM (Pattern Mismatches / Gaps)
+- [ ] `file:line` Inconsistency description. **Comparison Target**: Implementation in other features. **Fix Suggestion**: Unification method.
+
+### LOW (Minor Differences)
+- [ ] `file:line` Inconsistency description. **Recommendation**: Unification suggestion.
+
+## Fix Summary (--fix execution only)
+- Fixed Files: X
+- Fix Content:
+  - [Fix 1 summary]
+  - [Fix 2 summary]
+- Build Result: pass / fail
+- Test Result: X passed, Y failed
+
+## Recommended Actions
+Items requiring human judgment:
+1. [Description of inconsistency requiring design decisions and options]
+2. [Description of gap requiring new implementation]
+
+## Score
+| Aspect | Score | Rating |
+| ------ | ----- | ------ |
+| Token Compliance | X/100 | — |
+| Cross-Feature Consistency | X/100 | — |
+| a11y Adequacy | X/100 | — |
+| UX State Coverage | X/100 | — |
+| **Overall** | **X/100** | — |
 ```
 
 ## Implementation Guidelines

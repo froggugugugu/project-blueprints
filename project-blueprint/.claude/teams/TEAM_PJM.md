@@ -93,10 +93,10 @@ output/
 | **アナリスト** | general-purpose, mode: plan | Sonnet | `prd`, `architecture` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **プランナー** | general-purpose, mode: plan | Sonnet | `plan` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **開発者** | general-purpose | Sonnet | `implementing-features`, `ui-ux-design`, `refactoring` | plan必須（PJMが承認） |
-| **レビュアー** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check` | plan必須（PJMが承認）、ソースコード変更不可 |
+| **レビュアー** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check`, `hig-compliance` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **テスター** | general-purpose | Sonnet | `e2e-testing`, `performance` | テストファイルのみ変更可 |
 
-### スキルカバレッジ（全11スキル）
+### スキルカバレッジ（全12スキル）
 
 | スキル | 担当 |
 | --- | --- |
@@ -109,6 +109,7 @@ output/
 | `code-review` | レビュアー |
 | `security-scan` | レビュアー |
 | `legal-check` | レビュアー |
+| `hig-compliance` | レビュアー |
 | `e2e-testing` | テスター |
 | `performance` | テスター |
 
@@ -154,7 +155,7 @@ output/
 ### レビュアー
 
 - 実装完了後にコードレビュー・セキュリティスキャン・法務チェックを実施
-- 使用スキル: `/code-review`, `/security-scan`, `/legal-check`
+- 使用スキル: `/code-review`, `/security-scan`, `/legal-check`, `/hig-compliance`
 - レポートを`output/reports/`の各サブディレクトリに出力する
 - 具体的なフィードバックを開発者に送る
 - **ソースコードは変更しない**

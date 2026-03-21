@@ -16,6 +16,8 @@
   - `/plan <説明 or ファイルパス>` — 設計ドキュメント生成（読み取り専用、実装不可）
   - `/implementing-features <タスクファイル or 指示>` — TDDによる機能実装・バグ修正
   - `/ui-ux-design <対象ファイル or 指示>` — デザインシステム準拠のUI/UX設計・レビュー・実装
+  - `/hig-compliance <対象ディレクトリ or 指示>` — Apple HIG準拠のシステム横断UI一貫性チェック・補正
+  - `/design-system-audit <対象ディレクトリ or 指示>` — デザイントークン整合性監査・標準化
   - `/e2e-testing <対象機能 or 指示>` — Playwright E2Eテスト作成
   - `/code-review <対象ファイル or 指示>` — コードレビュー（読み取り専用）
   - `/performance <対象 or 指示>` — 計測ファーストのパフォーマンス最適化
@@ -24,9 +26,11 @@
   - `/security-scan <対象範囲 or 指示>` — セキュリティスキャン・脆弱性レポート（読み取り専用）
   - `/prd <ファイルパス>` — 要求メモからPRD生成（読み取り専用）
   - `/architecture <ファイルパス>` — 要求メモからアーキテクチャ設計（読み取り専用）
+  - `/review-fix <PR番号>` — GitHub PRレビュー指摘の自動修正・コミット・プッシュ
 - スキル選定の判断基準:
   - 新機能実装 → `/implementing-features <タスクファイル>`
   - UI調整・ダークモード・a11y → `/ui-ux-design <対象ファイル>`
+  - ボタン・アイコン・用語の画面間統一、HIG準拠チェック → `/hig-compliance <対象>`
   - 大きな変更の事前設計 → `/plan <説明>`
   - PR前の品質確認 → `/code-review <対象ファイル>`
   - ユーザーフローの自動テスト → `/e2e-testing <対象機能>`
@@ -34,8 +38,10 @@
   - 大規模コード再構成・責務移動 → `/refactoring <対象ディレクトリ>`
   - OSSライセンス・プライバシー・知的財産の法務チェック → `/legal-check <対象範囲>`
   - 脆弱性スキャン・OWASP ZAP・依存パッケージ監査 → `/security-scan <対象範囲>`
+  - デザイントークン整合性・余白・タイポグラフィの横断監査 → `/design-system-audit <対象>`
   - 要求メモ・要件メモからPRD作成 → `/prd <ファイルパス>`
   - 要求メモからシステムアーキテクチャ設計 → `/architecture <ファイルパス>`
+  - CodeRabbit/Copilotレビュー指摘の一括修正 → `/review-fix <PR番号>`
 
 ## ドキュメント管理方針
 
