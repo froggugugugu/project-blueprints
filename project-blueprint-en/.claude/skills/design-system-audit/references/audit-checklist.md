@@ -79,7 +79,7 @@
 
 ## Audit Scoring (Optional)
 
-```
+```text
 Category Score: 0 (unchecked) / 1 (issues found) / 2 (acceptable) / 3 (compliant)
 
 Total Score = Sum ÷ (Check Count × 3) × 100 %

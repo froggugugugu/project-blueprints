@@ -7,7 +7,7 @@
 
 - The General Affairs department manages equipment with an Excel ledger, but the process is falling apart
 - Monthly inventory checks take an entire day, crowding out regular work
-- There's talk of wanting to improve this by next fiscal year (starting April)
+- There's talk of wanting to improve this by the fiscal year starting in April [YYYY]
 
 ## Current Problems
 
@@ -35,7 +35,7 @@
 - Internal network access only is fine (no need for external access)
 - We want to migrate data from the existing Excel ledger (~500 records)
 - Budget is limited. Ideally it would run on our existing servers
-- At minimum, check-out management should be running by next fiscal year's inventory check (April)
+- At minimum, check-out management should be running by the April [YYYY] inventory check
 
 ## Undecided Items
 

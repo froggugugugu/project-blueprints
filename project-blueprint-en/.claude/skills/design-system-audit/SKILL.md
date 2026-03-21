@@ -90,7 +90,7 @@ text-3xl = 56px
 ```
 button-height-sm  = space-6         (approx. 32px)
 button-height-md  = space-7         (approx. 40px)
-button-height-lg  = space-8         (approx. 48px)
+button-height-lg  = space-7         (approx. 48px)
 button-padding-x  = space-4 to 5    (16-24px)
 
 input-height      = align with button-height-md

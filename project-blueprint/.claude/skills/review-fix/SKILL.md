@@ -104,7 +104,7 @@ CodeRabbit は修正済みコメントに「✅ Addressed in commit XXXXXXX」�
 
 修正を開始する前に、以下の形式で方針を提示する:
 
-```
+```markdown
 ## レビュー指摘修正方針
 
 全 N 件中: 要修正 N件 / 確認済み N件 / スキップ N件
@@ -170,7 +170,7 @@ pnpm run depcruise
 
 コミットメッセージ形式:
 
-```
+```text
 fix: CodeRabbit/Copilotレビュー指摘を修正
 
 - <修正内容1行サマリー>
@@ -186,7 +186,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 
 最終的に以下を報告する:
 
-```
+```markdown
 ## 修正完了
 
 ### 修正サマリー

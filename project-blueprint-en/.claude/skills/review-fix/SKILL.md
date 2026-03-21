@@ -104,7 +104,7 @@ Classification hints:
 
 Before starting fixes, present the plan in the following format:
 
-```
+```markdown
 ## Review Comment Fix Plan
 
 Total N items: Needs fix N / Confirmed N / Skip N
@@ -170,7 +170,7 @@ Once all verification passes, commit and push.
 
 Commit message format:
 
-```
+```text
 fix: address CodeRabbit/Copilot review comments
 
 - <one-line fix summary>
@@ -186,7 +186,7 @@ Only commit modified source files. Do not include untracked files.
 
 Report the following at the end:
 
-```
+```markdown
 ## Fix Complete
 
 ### Fix Summary
