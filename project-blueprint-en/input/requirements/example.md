@@ -1,5 +1,14 @@
 # We Need a Better Equipment Management System
 
+> This is a sample. Use it as a reference when writing requirement notes.
+> Any format is fine — bullet points, pasted meeting notes, etc.
+
+## Background
+
+- The General Affairs department manages equipment with an Excel ledger, but the process is falling apart
+- Monthly inventory checks take an entire day, crowding out regular work
+- There's talk of wanting to improve this by next fiscal year (starting April)
+
 ## Current Problems
 
 - We track equipment inventory in Excel, but we lose track of who has what
@@ -21,12 +30,18 @@
 - General Affairs administrators (3 people): Register, dispose of, and inventory equipment
 - Department heads (~10 people): View their department's usage status
 
-## Concerns
+## Constraints & Conditions
 
-- Does it need to be accessible from outside the office? Probably internal-only is fine
+- Internal network access only is fine (no need for external access)
 - We want to migrate data from the existing Excel ledger (~500 records)
 - Budget is limited. Ideally it would run on our existing servers
-- Barcode or QR code scanning for equipment would be convenient, but not essential
+- At minimum, check-out management should be running by next fiscal year's inventory check (April)
+
+## Undecided Items
+
+- Barcode or QR code scanning for equipment might be convenient, but it's not essential
+- Whether a native mobile app is needed, or browser-based is sufficient
+- Whether a supervisor approval flow is needed for check-outs
 
 ## Priorities
 
