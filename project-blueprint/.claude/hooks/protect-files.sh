@@ -49,13 +49,14 @@ PROTECTED_BASENAMES=(
     "id_dsa"
     "credentials.json"
     "service-account.json"
-    "settings.json"
 )
 
 # Regex patterns on full path
 PROTECTED_PATH_PATTERNS=(
     '\.env\.'
     '/\.git/'
+    '/\.claude/settings\.json$'
+    '/\.claude/settings\.local\.json$'
     '\.pem$'
     '\.key$'
     '\.p12$'

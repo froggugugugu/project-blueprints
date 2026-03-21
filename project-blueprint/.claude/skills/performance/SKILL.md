@@ -1,10 +1,12 @@
 ---
 name: performance
+version: 1.0.0
 description: >
-  Measures and optimizes application performance using a measurement-first approach.
-  Triggers: performance, optimize, slow, bundle size, re-render, memory, profiler, lazy load, memoize.
-  Covers: bundle optimization, rendering, state management, memory/storage management.
+  This skill should be used when the user asks to "optimize performance", "reduce bundle size", "fix slow rendering",
+  or mentions "パフォーマンス", "最適化", "バンドルサイズ", "メモリリーク", "再レンダリング".
+  Measurement-first approach. Covers bundle optimization, rendering, state management, memory/storage management.
   Takes optional argument: /performance <target-component or instruction>
+argument-hint: "<対象コンポーネント or 指示>"
 ---
 
 # Performance Optimization

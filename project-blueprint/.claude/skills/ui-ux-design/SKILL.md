@@ -1,10 +1,12 @@
 ---
 name: ui-ux-design
+version: 1.0.0
 description: >
-  Reviews and implements UI/UX following project design systems.
-  Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design, design consistency audit, system-wide consistency, デザイン整合性.
-  Covers: visual consistency, design system compliance, accessibility, responsive design, dark mode, and system-wide design consistency audit.
+  This skill should be used when the user asks to "review UI design", "improve styling", "add dark mode",
+  "fix accessibility", "make responsive", or mentions "デザインレビュー", "UI改善", "デザイン整合性".
+  Covers visual consistency, design system compliance, accessibility, responsive design, dark mode, and system-wide design consistency audit.
   Takes optional argument: /ui-ux-design <target-file or instruction>
+argument-hint: "<対象ファイル or 指示>"
 ---
 
 # UI/UX Design

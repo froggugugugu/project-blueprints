@@ -1,10 +1,12 @@
 ---
 name: e2e-testing
+version: 1.0.0
 description: >
-  Creates and maintains Playwright E2E tests for SPAs.
-  Triggers: E2E test, scenario test, user flow, cross-feature, Playwright.
-  Covers: Page Object design, test data management, stability patterns, and reporting.
+  This skill should be used when the user asks to "create E2E tests", "write scenario tests", "test user flow",
+  or mentions "E2Eテスト", "シナリオテスト", "Playwright".
+  Creates and maintains Playwright E2E tests. Covers Page Object design, test data management, stability patterns, and reporting.
   Takes optional argument: /e2e-testing <target-feature or instruction>
+argument-hint: "<対象機能 or 指示>"
 ---
 
 # E2E Testing

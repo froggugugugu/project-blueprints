@@ -1,10 +1,12 @@
 ---
 name: review-fix
+version: 1.0.0
 description: >
-  GitHub PRのCodeRabbit/Copilotレビュー指摘を自動取得・分析し、修正→テスト→コミット&プッシュまで一気に実行する。
-  Triggers: review-fix, レビュー修正, レビュー指摘修正, CodeRabbitレビュー修正, Copilotレビュー修正, PRレビュー対応, レビューコメント修正, review comments fix.
-  PRのレビューが付いた後に「レビュー直して」「指摘を修正して」「review-fix」と言われたら必ずこのスキルを使う。
-  Takes optional argument: /review-fix <PR番号>
+  This skill should be used when the user asks to "fix review comments", "address PR feedback", "fix CodeRabbit issues",
+  or mentions "レビュー修正", "レビュー指摘修正", "PRレビュー対応", "review-fix".
+  Auto-fetches CodeRabbit/Copilot review comments from GitHub PRs, analyzes, and executes fix, test, commit, and push.
+  Takes optional argument: /review-fix <PR-number>
+argument-hint: "<PR番号>"
 ---
 
 # Review Fix

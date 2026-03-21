@@ -1,10 +1,12 @@
 ---
 name: implementing-features
+version: 1.0.0
 description: >
-  Implements features, fixes bugs, and refactors code following TDD workflow.
-  Triggers: implement, create, fix, modify, add, refactor, build, develop, change functionality.
-  Covers: components, stores, schemas, utilities, styling, docs/ and project-config.md synchronization.
+  This skill should be used when the user asks to "implement a feature", "fix a bug", "create a component",
+  or mentions "実装", "機能追加", "バグ修正", "コンポーネント作成".
+  Follows TDD workflow. Covers components, stores, schemas, utilities, styling, docs/ and project-config.md synchronization.
   Takes optional argument: /implementing-features <task-file or instruction>
+argument-hint: "<タスクファイル or 指示>"
 ---
 
 # Implementing Features
