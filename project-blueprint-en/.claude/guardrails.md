@@ -24,6 +24,42 @@ Provides a unified view of rules that are otherwise distributed across various s
 - **Fail-open policy**: If JSON parsing fails, the operation is allowed (don't block work)
 - Hooks remain active even with `--dangerously-skip-permissions` (defense in depth)
 
+### Hook Type Selection
+
+| Type | Purpose | Example |
+| ---- | ------- | ------- |
+| `command` | Execute shell scripts. Deterministic checks like pattern matching and file inspection | safety-check.sh, protect-files.sh |
+| `prompt` | Delegate judgment to AI via prompt. For context-dependent flexible decisions | "Evaluate if this Bash command is safe for production" |
+
+- Default to `command` type (deterministic and fast)
+- Use `prompt` type only when context-dependent judgment is needed (consumes tokens)
+- Both types can coexist on the same event (command → prompt evaluation order)
+
+### Extensible Hook Events
+
+Not used in this template, but available for project-specific additions:
+
+| Event | Timing | Use Case |
+| ----- | ------ | -------- |
+| `SubagentStart` | When a subagent starts | DB connection setup, environment variable injection |
+| `SubagentStop` | When a subagent finishes | Resource cleanup, result aggregation |
+| `InstructionsLoaded` | When CLAUDE.md/rules are loaded | Observation and logging (cannot block) |
+
+Add to `settings.json` in this format:
+
+```json
+{
+  "SubagentStart": [
+    {
+      "matcher": "db-agent",
+      "hooks": [
+        { "type": "command", "command": "./scripts/setup-db.sh", "timeout": 10 }
+      ]
+    }
+  ]
+}
+```
+
 ---
 
 ## Deny Rules (settings.json)

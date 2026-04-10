@@ -24,6 +24,42 @@
 - **fail-open ポリシー**: JSON パース失敗時は操作を許可（安全側に倒さず、作業を止めない）
 - フックは `--dangerously-skip-permissions` モードでも有効（多層防御）
 
+### フックタイプの使い分け
+
+| タイプ | 用途 | 例 |
+| ------ | ---- | -- |
+| `command` | シェルスクリプトを実行。パターンマッチ・ファイル検査等の決定論的チェック | safety-check.sh, protect-files.sh |
+| `prompt` | AIに判断を委ねるプロンプトを実行。文脈依存の柔軟な判定が必要な場合 | 「このBashコマンドは本番環境で安全か評価せよ」 |
+
+- デフォルトは `command` タイプを推奨（決定論的で高速）
+- `prompt` タイプはコンテキスト依存の判断が必要な場合のみ使用（トークンを消費する）
+- 両タイプを同一イベントに併用可能（command → prompt の順で評価）
+
+### 拡張可能なフックイベント
+
+本テンプレートで使用していないが、プロジェクト固有に追加可能なフックイベント:
+
+| イベント | タイミング | 用途例 |
+| -------- | ---------- | ------ |
+| `SubagentStart` | サブエージェント起動時 | DB接続セットアップ、環境変数注入 |
+| `SubagentStop` | サブエージェント終了時 | リソースクリーンアップ、結果集約 |
+| `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | 観測・ログ記録（ブロック不可） |
+
+`settings.json` に追加する形式:
+
+```json
+{
+  "SubagentStart": [
+    {
+      "matcher": "db-agent",
+      "hooks": [
+        { "type": "command", "command": "./scripts/setup-db.sh", "timeout": 10 }
+      ]
+    }
+  ]
+}
+```
+
 ---
 
 ## Deny ルール（settings.json）

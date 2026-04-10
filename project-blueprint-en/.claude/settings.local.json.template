@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "_comment": [
     "This file is a template for .claude/settings.local.json.",
     "Customize it according to your project-config.md contents",
@@ -13,9 +14,18 @@
     "- MCP: Change according to the MCP plugins you use",
     "",
     "Safety mechanism (defense in depth):",
-    "- Layer 1: PreToolUse hooks (defined in settings.json, active even with --dangerously-skip-permissions)",
-    "- Layer 2: deny rules (settings.json + this file, active in normal permission mode)",
-    "- Layer 3: allow rules (this file, active in normal permission mode)"
+    "- Layer 1: PreToolUse + PostToolUse + SessionStart hooks (defined in settings.json, active even with --dangerously-skip-permissions)",
+    "- Layer 2: deny rules (defined in settings.json. Do not override in this file)",
+    "- Layer 3: allow rules (this file, active in normal permission mode)",
+    "",
+    "teammateMode: Controls Agent Teams execution mode",
+    "- 'in-process': Run in same process (default, fast)",
+    "- 'worktree': Run in git worktree isolation (recommended for parallel development)",
+    "",
+    "enableAllProjectMcpServers: Auto-enable MCP servers defined in project .mcp.json",
+    "",
+    "env: Environment variable settings",
+    "- CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: Enable Agent Teams ('1' to enable)"
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
@@ -65,18 +75,8 @@
 
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "mcp__plugin_playwright_playwright__*"
-    ],
-    "deny": [
-      "Bash(rm -rf:*)",
-      "Bash(rm -rf /*)",
-      "Bash(rm -r /)",
-      "Bash(rm -fr:*)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f :*)",
-      "Bash(git reset --hard:*)",
-      "Bash(git clean -f:*)",
-      "Bash(sudo :*)"
+      "mcp__plugin_playwright_playwright__*",
+      "WebFetch(domain:*)"
     ]
   },
   "_comment_pkg_manager": [

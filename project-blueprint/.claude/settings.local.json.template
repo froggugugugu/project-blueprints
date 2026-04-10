@@ -22,8 +22,14 @@
     "- 'in-process': 同一プロセス内で実行（デフォルト、高速）",
     "- 'worktree': git worktree で分離実行（並行開発時に推奨）",
     "",
-    "enableAllProjectMcpServers: プロジェクトの .mcp.json で定義されたMCPサーバーを自動有効化する"
+    "enableAllProjectMcpServers: プロジェクトの .mcp.json で定義されたMCPサーバーを自動有効化する",
+    "",
+    "env: 環境変数の設定",
+    "- CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: Agent Teams 機能の有効化（'1' で有効）"
   ],
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "allow": [
       "Edit(**/*.{css,js,ts,tsx,json,md})",

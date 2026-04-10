@@ -132,6 +132,7 @@ Restrict dependency directions between layers. Rule details are defined in `proj
 - For large feature additions, pre-decompose tasks with the `/plan` skill and identify parallelizable units
 - Make dependencies between parallel tasks explicit and minimize blocking
 - When using Agent Teams, follow team templates under `.claude/teams/` (all team arguments are optional; when omitted, the PL confirms interactively)
+- **teammateMode selection**: Use `in-process` (fast) when members don't touch the same files; use `worktree` (git worktree isolation) when parallel branches are needed. Configure in `settings.local.json`
   - Full lifecycle → `TEAM_PJM.md <requirement-note-file or instruction>` (all skills covered, recommended)
   - Full lifecycle (parallel) → `TEAM_PJM.md <requirement-note-file or instruction> --parallel` (delegates independent task groups to TEAM_FEATURE in parallel; combinable with `--auto`)
   - Feature development → `TEAM_FEATURE.md <task-file or implementation-instruction>`
@@ -237,6 +238,8 @@ Recommended loading order: `project-config.md` (human decisions) → `docs/` (AI
 @docs/architecture.md          <!-- Directory structure, test list, document responsibilities -->
 @docs/data-model.md            <!-- Schema definitions, field specs, validation -->
 @docs/development-patterns.md  <!-- Code conventions, pitfalls, design system -->
+
+> **Fallback**: If the above files do not exist (e.g., right after setup), refer directly to the corresponding sections in `project-config.md`. Same applies when files are in stub state (fewer than 5 lines).
 
 ## Workflow Control
 
