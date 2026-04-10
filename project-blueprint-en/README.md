@@ -302,6 +302,7 @@ project-blueprint-en/
 |   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth)
 |   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
 |   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
+|   |   +-- session-start.sh                 Session readiness check (SessionStart)
 |   |   +-- commit-quality.sh                Commit quality check (PostToolUse)
 |   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
 |   |
@@ -368,7 +369,7 @@ project-blueprint-en/
 
 | Template | Purpose | Members | Skills |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **15/15** |
+| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **14/15** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |

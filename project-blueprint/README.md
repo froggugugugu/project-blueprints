@@ -301,6 +301,7 @@ project-blueprint/
 │   ├── hooks/                             ← [汎用] 安全フック（多層防御）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
+│   │   ├── session-start.sh                 セッション開始チェック（SessionStart）
 │   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
 │   │   └── console-warn.sh                  デバッグコード検出（PostToolUse）
 │   │
@@ -367,7 +368,7 @@ project-blueprint/
 
 | テンプレート | 用途 | メンバー | スキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **15/15** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **14/15** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |

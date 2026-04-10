@@ -31,10 +31,16 @@ fi
 WARNINGS=()
 
 # --- 1. Conventional Commits format check ---
-# Extract the commit message from the command
+# PostToolUse runs after git commit completes, so use git log as primary source.
 COMMIT_MSG=""
-if echo "$CMD" | grep -qE '\-m\s'; then
-    # Extract message from -m flag
+
+# Primary: get the last commit message (works for all commit styles)
+if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
+    COMMIT_MSG="$(git log -1 --format=%s 2>/dev/null || true)"
+fi
+
+# Fallback: extract from -m flag in command string
+if [[ -z "$COMMIT_MSG" ]] && echo "$CMD" | grep -qE '\-m\s'; then
     COMMIT_MSG="$(echo "$CMD" | sed -n "s/.*-m\s*[\"']\(.*\)[\"'].*/\1/p" | head -1)"
     if [[ -z "$COMMIT_MSG" ]]; then
         COMMIT_MSG="$(echo "$CMD" | sed -n 's/.*-m\s*\([^ ]*\).*/\1/p' | head -1)"
@@ -42,7 +48,6 @@ if echo "$CMD" | grep -qE '\-m\s'; then
 fi
 
 if [[ -n "$COMMIT_MSG" ]]; then
-    # Check first line against Conventional Commits
     FIRST_LINE="$(echo "$COMMIT_MSG" | head -1)"
     if ! echo "$FIRST_LINE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?!?:\s'; then
         WARNINGS+=("コミットメッセージが Conventional Commits 形式ではありません: '$FIRST_LINE'")
@@ -50,9 +55,9 @@ if [[ -n "$COMMIT_MSG" ]]; then
     fi
 fi
 
-# --- 2. Secret detection in staged files ---
+# --- 2. Secret detection in committed files ---
+# PostToolUse runs after commit, so check the last commit's diff instead of staged files.
 if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
-    # Check staged file contents for secret patterns
     SECRET_PATTERNS=(
         'API_KEY\s*='
         'API_SECRET\s*='
@@ -66,12 +71,12 @@ if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null
         'password\s*=\s*["\x27][^"\x27]{8,}'
     )
 
-    STAGED_FILES="$(git diff --cached --name-only 2>/dev/null || true)"
-    if [[ -n "$STAGED_FILES" ]]; then
+    COMMIT_DIFF="$(git diff HEAD~1..HEAD -U0 2>/dev/null || true)"
+    if [[ -n "$COMMIT_DIFF" ]]; then
         for pattern in "${SECRET_PATTERNS[@]}"; do
-            MATCHES="$(git diff --cached -U0 2>/dev/null | grep -nE "^\+" | grep -iE "$pattern" | head -3 || true)"
+            MATCHES="$(echo "$COMMIT_DIFF" | grep -E "^\+" | grep -iE "$pattern" | head -3 || true)"
             if [[ -n "$MATCHES" ]]; then
-                WARNINGS+=("ステージング済みファイルにシークレットの可能性があるパターンを検出: $pattern")
+                WARNINGS+=("コミット済みファイルにシークレットの可能性があるパターンを検出: $pattern")
                 break
             fi
         done
