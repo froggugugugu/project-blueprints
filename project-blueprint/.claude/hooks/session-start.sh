@@ -30,7 +30,8 @@ for doc in project.md architecture.md data-model.md development-patterns.md; do
     doc_path="$PROJECT_DIR/docs/$doc"
     if [[ -f "$doc_path" ]]; then
         # Check if still a stub (< 5 non-empty lines = likely stub)
-        content_lines=$(grep -c '[^[:space:]]' "$doc_path" 2>/dev/null || echo "0")
+        content_lines=$(grep -c '[^[:space:]]' "$doc_path" 2>/dev/null || true)
+        content_lines=${content_lines:-0}
         if [[ "$content_lines" -lt 5 ]]; then
             warnings+=("docs/$doc はスタブ状態です。実装進行に伴い内容を生成してください。")
         fi

@@ -369,7 +369,7 @@ project-blueprint/
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
 | `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 |
-| `TEAM_DESIGN.md` | デザイン・UI一貫性 | — | — |
+| `TEAM_DESIGN.md` | デザイン・UI一貫性 | 5名 | 4 |
 
 チーム選定ガイド・ワークフロー詳細・起動パターン・スキルカバレッジは `.claude/teams/README.md` を参照。
 
