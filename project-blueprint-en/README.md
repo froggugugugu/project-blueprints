@@ -254,7 +254,7 @@ Teams focused on specific phases are also available. All arguments are optional:
 |  .claude/CLAUDE.md ............ Development guide         |
 |  .claude/hooks/ ............... Safety hooks (defense)    |
 |  .claude/skills/ .............. 15 skill definitions      |
-|  .claude/teams/ ............... 5 team definitions        |
+|  .claude/teams/ ............... 6 team definitions        |
 |  .claude/tasks/ ............... Task instruction templates |
 |  .claude/settings.json ........ Plugin & hook config      |
 |  .claude/settings.local.json .. Permission settings       |

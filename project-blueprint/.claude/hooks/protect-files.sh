@@ -73,8 +73,8 @@ TOOLCHAIN_CONFIGS=(
 PROTECTED_PATH_PATTERNS=(
     '\.env\.'
     '/\.git/'
-    '/\.claude/settings\.json$'
-    '/\.claude/settings\.local\.json$'
+    '(^|/)\.claude/settings\.json$'
+    '(^|/)\.claude/settings\.local\.json$'
     '\.pem$'
     '\.key$'
     '\.p12$'

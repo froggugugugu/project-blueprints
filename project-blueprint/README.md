@@ -252,7 +252,7 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 │                                                         │
 │  .claude/CLAUDE.md ............ 開発ガイド（横断）       │
 │  .claude/hooks/ ............... 安全フック（多層防御）    │
-│  .claude/skills/ .............. 14個のスキル定義         │
+│  .claude/skills/ .............. 15個のスキル定義         │
 │  .claude/teams/ ............... 6チーム定義              │
 │  .claude/tasks/ ............... タスク指示書テンプレート  │
 │  .claude/settings.json ........ プラグイン・フック設定   │

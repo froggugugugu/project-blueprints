@@ -33,6 +33,16 @@ in a form that future developers (human or AI) can understand.
 
 ---
 
+## Principles
+
+- **Always document the rationale** — "it seemed right" or "it's common" is not acceptable. State concrete reasons
+- **Always consider alternatives** — Compare at least 2 options and explicitly state rejection reasons
+- **Write for future readers** — Include enough detail for developers without context to evaluate the decision's validity
+- **Maintain consistency with existing ADRs** — Use Superseded to explicitly update contradicting decisions
+- Only present options to the user when judgment is genuinely uncertain
+
+---
+
 ## Usage
 
 ```text

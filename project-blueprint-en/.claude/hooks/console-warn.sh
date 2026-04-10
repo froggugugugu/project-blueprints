@@ -63,7 +63,7 @@ for entry in "${DEBUG_PATTERNS[@]}"; do
     # Search the file for the pattern (limit to first 3 matches)
     MATCHES="$(grep -nE "$PATTERN" "$FILE_PATH" 2>/dev/null | head -3 || true)"
     if [[ -n "$MATCHES" ]]; then
-        WARNINGS+=("$DESC を検出:")
+        WARNINGS+=("$DESC detected:")
         while IFS= read -r line; do
             WARNINGS+=("  $FILE_PATH:$line")
         done <<< "$MATCHES"
@@ -72,7 +72,7 @@ done
 
 # --- Output warnings ---
 if [[ ${#WARNINGS[@]} -gt 0 ]]; then
-    echo "⚠ デバッグステートメント検出（コミット前に削除を検討してください）:" >&2
+    echo "⚠ Debug statements detected (consider removing before commit):" >&2
     for w in "${WARNINGS[@]}"; do
         echo "  $w" >&2
     done

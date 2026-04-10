@@ -45,8 +45,8 @@ if [[ -n "$COMMIT_MSG" ]]; then
     # Check first line against Conventional Commits
     FIRST_LINE="$(echo "$COMMIT_MSG" | head -1)"
     if ! echo "$FIRST_LINE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?!?:\s'; then
-        WARNINGS+=("コミットメッセージが Conventional Commits 形式ではありません: '$FIRST_LINE'")
-        WARNINGS+=("期待形式: <type>: <description> (例: feat: 新機能を追加)")
+        WARNINGS+=("Commit message does not follow Conventional Commits format: '$FIRST_LINE'")
+        WARNINGS+=("Expected format: <type>: <description> (e.g., feat: add new feature)")
     fi
 fi
 
@@ -71,7 +71,7 @@ if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null
         for pattern in "${SECRET_PATTERNS[@]}"; do
             MATCHES="$(git diff --cached -U0 2>/dev/null | grep -nE "^\+" | grep -iE "$pattern" | head -3 || true)"
             if [[ -n "$MATCHES" ]]; then
-                WARNINGS+=("ステージング済みファイルにシークレットの可能性があるパターンを検出: $pattern")
+                WARNINGS+=("Detected potential secret pattern in staged files: $pattern")
                 break
             fi
         done
@@ -80,7 +80,7 @@ fi
 
 # --- Output warnings ---
 if [[ ${#WARNINGS[@]} -gt 0 ]]; then
-    echo "⚠ commit-quality チェック:" >&2
+    echo "⚠ commit-quality check:" >&2
     for w in "${WARNINGS[@]}"; do
         echo "  - $w" >&2
     done

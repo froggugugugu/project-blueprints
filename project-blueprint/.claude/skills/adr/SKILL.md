@@ -2,10 +2,11 @@
 name: adr
 version: 1.0.0
 description: >
-  This skill should be used when the user asks to "record a design decision", "create an ADR", "document architecture decisions",
-  or mentions "ADR", "設計判断記録", "アーキテクチャ決定記録", "設計の経緯", "なぜこの設計にしたか".
-  Creates and manages Architecture Decision Records (ADRs) to capture the context, rationale, and consequences of architectural decisions.
-  Takes optional argument: /adr <decision title or instruction>
+  「設計判断を記録して」「ADRを作成して」「アーキテクチャ決定を記録して」などの依頼、
+  または「ADR」「設計判断記録」「アーキテクチャ決定記録」「設計の経緯」「なぜこの設計にしたか」
+  というキーワードが含まれる場合にこのスキルを使用する。
+  Architecture Decision Records (ADR) を作成・管理し、設計判断のコンテキスト・根拠・影響を記録する。
+  引数は省略可能: /adr <判断タイトル or 指示>
 argument-hint: "<判断タイトル or 指示>"
 ---
 
@@ -30,6 +31,16 @@ argument-hint: "<判断タイトル or 指示>"
 | `project-config.md` §4 | アーキテクチャ基本方針 |
 | `docs/architecture.md` | 現行のアーキテクチャ構成 |
 | `output/design/` | `/architecture` スキルの出力（あれば） |
+
+---
+
+## 基本姿勢
+
+- **判断の根拠を必ず明文化する** — 「なんとなく」「一般的だから」は禁止。具体的な理由を記述する
+- **代替案を必ず検討する** — 最低2案を比較し、不採用理由を明示する
+- **将来の読み手を意識する** — コンテキストを知らない開発者が読んでも判断の妥当性を評価できる詳細さ
+- **既存ADRとの整合性を保つ** — 矛盾する判断はSupersededで明示的に更新する
+- 判断に迷う場合のみユーザーに選択肢を提示する
 
 ---
 
