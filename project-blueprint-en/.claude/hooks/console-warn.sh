@@ -43,7 +43,7 @@ DEBUG_PATTERNS=(
     'console\.log\b|console.log (JavaScript/TypeScript)'
     'console\.debug\b|console.debug (JavaScript/TypeScript)'
     '\bdebugger\b|debugger statement (JavaScript/TypeScript)'
-    '\bprint\s*(\s*f?\s*["\x27]|print() (Python)'
+    '\bprint\s*\(\s*f?\s*["\x27]|print() (Python)'
     '\bpp\s\b|pp (Ruby)'
     '\bdd\s*\(|dd() (PHP/Laravel)'
     '\bvar_dump\s*\(|var_dump() (PHP)'

@@ -253,7 +253,7 @@ Teams focused on specific phases are also available. All arguments are optional:
 |                                                           |
 |  .claude/CLAUDE.md ............ Development guide         |
 |  .claude/hooks/ ............... Safety hooks (defense)    |
-|  .claude/skills/ .............. 11 skill definitions      |
+|  .claude/skills/ .............. 15 skill definitions      |
 |  .claude/teams/ ............... 5 team definitions        |
 |  .claude/tasks/ ............... Task instruction templates |
 |  .claude/settings.json ........ Plugin & hook config      |
@@ -300,10 +300,12 @@ project-blueprint-en/
 |   +-- settings.local.json.template       <-- [Customizable] Permission settings template
 |   |
 |   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth)
-|   |   +-- safety-check.sh                  Blocks dangerous commands
-|   |   +-- protect-files.sh                 Protects sensitive files
+|   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
+|   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
+|   |   +-- commit-quality.sh                Commit quality check (PostToolUse)
+|   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
 |   |
-|   +-- skills/                            <-- [Generic] 11 skill definitions
+|   +-- skills/                            <-- [Generic] 15 skill definitions
 |   |   +-- plan/SKILL.md                    Planning & design
 |   |   +-- implementing-features/SKILL.md   TDD implementation
 |   |   +-- ui-ux-design/SKILL.md            UI/UX design
@@ -317,6 +319,12 @@ project-blueprint-en/
 |   |   |   +-- SETUP_GUIDE.md                 Tool setup guide
 |   |   +-- prd/SKILL.md                     PRD generation
 |   |   +-- architecture/SKILL.md            Architecture design
+|   |   +-- hig-compliance/SKILL.md          HIG compliance check
+|   |   +-- design-system-audit/             Design token audit
+|   |   |   +-- SKILL.md
+|   |   |   +-- references/                    Audit checklist & ratio reference
+|   |   +-- review-fix/SKILL.md              PR review auto-fix
+|   |   +-- adr/SKILL.md                     Architecture Decision Records
 |   |
 |   +-- teams/                             <-- [Generic] 6 team definitions
 |   |   +-- README.md                        Team usage guide

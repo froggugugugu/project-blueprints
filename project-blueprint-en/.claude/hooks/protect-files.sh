@@ -49,7 +49,6 @@ PROTECTED_BASENAMES=(
     "id_dsa"
     "credentials.json"
     "service-account.json"
-    "settings.json"
 )
 
 # Linter/formatter/toolchain config files (warn + block)
@@ -84,7 +83,7 @@ PROTECTED_PATH_PATTERNS=(
     '\.keystore$'
 )
 
-# Toolchain config regex patterns on basename
+# Toolchain config regex patterns on basename or full path
 TOOLCHAIN_PATH_PATTERNS=(
     '^eslint\.config\.'
     '^prettier\.config\.'
