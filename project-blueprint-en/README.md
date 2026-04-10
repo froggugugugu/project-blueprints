@@ -360,7 +360,7 @@ project-blueprint-en/
 
 | Template | Purpose | Members | Skills |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **14/14** |
+| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **15/15** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
@@ -369,7 +369,7 @@ project-blueprint-en/
 
 For team selection guidance, workflow details, launch patterns, and skill coverage, see `.claude/teams/README.md`.
 
-### Skills (all 14)
+### Skills (all 15)
 
 All skills accept optional arguments. When omitted, the user is prompted interactively.
 Read-only skills use `context: fork` (executed on a copy of the conversation context).
@@ -390,6 +390,7 @@ Read-only skills use `context: fork` (executed on a copy of the conversation con
 | Security Scan | `/security-scan <scope or instructions>` | Read-only | -- |
 | Legal Check | `/legal-check <scope or instructions>` | Read-only | -- |
 | Review Fix | `/review-fix <PR-number>` | Read/Write | -- |
+| ADR | `/adr <decision-title or instruction>` | Read/Write | -- |
 
 Skill pipeline: `/prd` -> `/architecture` -> `/plan` -> `/implementing-features` -> `/code-review` + `/security-scan` + `/e2e-testing` + `/performance`
 

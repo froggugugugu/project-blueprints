@@ -52,16 +52,43 @@ PROTECTED_BASENAMES=(
     "settings.json"
 )
 
+# Linter/formatter/toolchain config files (warn + block)
+TOOLCHAIN_CONFIGS=(
+    "biome.json"
+    "biome.jsonc"
+    ".eslintrc.js"
+    ".eslintrc.cjs"
+    ".eslintrc.json"
+    ".eslintrc.yml"
+    ".eslintrc.yaml"
+    ".prettierrc"
+    ".prettierrc.js"
+    ".prettierrc.cjs"
+    ".prettierrc.json"
+    ".prettierrc.yml"
+    ".prettierrc.yaml"
+    ".editorconfig"
+)
+
 # Regex patterns on full path
 PROTECTED_PATH_PATTERNS=(
     '\.env\.'
     '/\.git/'
+    '/\.claude/settings\.json$'
+    '/\.claude/settings\.local\.json$'
     '\.pem$'
     '\.key$'
     '\.p12$'
     '\.pfx$'
     '\.jks$'
     '\.keystore$'
+)
+
+# Toolchain config regex patterns on basename
+TOOLCHAIN_PATH_PATTERNS=(
+    '^eslint\.config\.'
+    '^prettier\.config\.'
+    '^tsconfig(\..+)?\.json$'
 )
 
 # --- Check exact basename matches ---
@@ -80,6 +107,26 @@ for pattern in "${PROTECTED_PATH_PATTERNS[@]}"; do
         echo "BLOCKED: Writing to protected path pattern: '$FILE_PATH'" >&2
         echo "This file may contain secrets or critical configuration." >&2
         echo "If you need to modify this file, ask the user to do it manually." >&2
+        exit 2
+    fi
+done
+
+# --- Check toolchain config basename matches ---
+for protected in "${TOOLCHAIN_CONFIGS[@]}"; do
+    if [[ "$BASENAME" == "$protected" ]]; then
+        echo "BLOCKED: Writing to toolchain config file: '$FILE_PATH'" >&2
+        echo "Linter/formatter settings should not be modified by AI." >&2
+        echo "If this change is intentional, ask the user to modify it manually." >&2
+        exit 2
+    fi
+done
+
+# --- Check toolchain config path patterns ---
+for pattern in "${TOOLCHAIN_PATH_PATTERNS[@]}"; do
+    if echo "$BASENAME" | grep -qE "$pattern"; then
+        echo "BLOCKED: Writing to toolchain config file: '$FILE_PATH'" >&2
+        echo "Linter/formatter/TypeScript settings should not be modified by AI." >&2
+        echo "If this change is intentional, ask the user to modify it manually." >&2
         exit 2
     fi
 done

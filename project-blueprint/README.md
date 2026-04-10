@@ -299,10 +299,12 @@ project-blueprint/
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
 │   │
 │   ├── hooks/                             ← [汎用] 安全フック（多層防御）
-│   │   ├── safety-check.sh                  危険コマンドブロック
-│   │   └── protect-files.sh                 機密ファイル保護
+│   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
+│   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
+│   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
+│   │   └── console-warn.sh                  デバッグコード検出（PostToolUse）
 │   │
-│   ├── skills/                            ← [汎用] 14スキル定義
+│   ├── skills/                            ← [汎用] 15スキル定義
 │   │   ├── plan/SKILL.md                    設計・計画
 │   │   ├── implementing-features/SKILL.md   TDD実装
 │   │   ├── ui-ux-design/SKILL.md            UI/UX設計
@@ -320,7 +322,8 @@ project-blueprint/
 │   │   ├── design-system-audit/             デザイントークン監査
 │   │   │   ├── SKILL.md
 │   │   │   └── references/                    監査チェックリスト・比率参照
-│   │   └── review-fix/SKILL.md              PRレビュー指摘自動修正
+│   │   ├── review-fix/SKILL.md              PRレビュー指摘自動修正
+│   │   └── adr/SKILL.md                    設計判断記録（ADR）
 │   │
 │   ├── teams/                             ← [汎用] 6チーム定義
 │   │   ├── README.md                        チーム利用ガイド
@@ -364,7 +367,7 @@ project-blueprint/
 
 | テンプレート | 用途 | メンバー | スキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **14/14** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **15/15** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
@@ -373,7 +376,7 @@ project-blueprint/
 
 チーム選定ガイド・ワークフロー詳細・起動パターン・スキルカバレッジは `.claude/teams/README.md` を参照。
 
-### スキル一覧（全14スキル）
+### スキル一覧（全15スキル）
 
 全スキルは引数を省略可能。省略時はユーザーに対話的に確認する。
 読み取り専用スキルは`context: fork`（会話コンテキストのコピーで実行）かつ`allowed-tools`でツール制限済み。
@@ -394,6 +397,7 @@ project-blueprint/
 | Security Scan | `/security-scan <対象範囲 or 指示>` | 読み取り専用 | — |
 | Legal Check | `/legal-check <対象範囲 or 指示>` | 読み取り専用 | — |
 | Review Fix | `/review-fix <PR番号>` | 読み書き | — |
+| ADR | `/adr <判断タイトル or 指示>` | 読み書き | — |
 
 スキルパイプライン: `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/e2e-testing` + `/performance`
 

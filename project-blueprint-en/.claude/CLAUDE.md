@@ -26,6 +26,7 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
   - `/security-scan <target-scope or instruction>` — Security scan and vulnerability report (read-only)
   - `/prd <file-path>` — PRD generation from requirement notes (read-only)
   - `/architecture <file-path>` — Architecture design from requirement notes (read-only)
+  - `/adr <decision-title or instruction>` — Architecture Decision Records creation & management
   - `/review-fix <PR-number>` — Auto-fix GitHub PR review comments, commit & push
 - Skill selection criteria:
   - New feature implementation → `/implementing-features <task-file>`
@@ -41,6 +42,7 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
   - Design token consistency, spacing, typography cross-cutting audit → `/design-system-audit <target>`
   - PRD creation from requirement/feature notes → `/prd <file-path>`
   - System architecture design from requirement notes → `/architecture <file-path>`
+  - Record design decision rationale and context → `/adr <decision-title>`
   - Auto-fix CodeRabbit/Copilot review comments → `/review-fix <PR-number>`
 
 ## Document Management Policy
@@ -186,12 +188,15 @@ Verify before submitting design or code:
 
 ## Security Hardening
 
+@.claude/guardrails.md  <!-- Hook inventory, deny rules, protected files, prohibited operations, 3-layer defense model -->
+
 Security policy details are defined in `project-config.md` section 10.
 The following apply to all projects:
 
 - Always validate user input
 - Regularly check dependency package vulnerabilities
-- **Hook-based safety mechanism**: PreToolUse hooks in `.claude/hooks/` block dangerous Bash commands and writes to sensitive files. These hooks remain active even with `--dangerously-skip-permissions` (defense in depth)
+- **3-layer defense**: Hooks (Layer 1) → Deny rules (Layer 2) → Allow rules (Layer 3) multi-layer architecture
+- **Hook-based safety mechanism**: PreToolUse hooks block dangerous Bash commands and sensitive file writes. PostToolUse hooks warn about commit quality and debug statement leftovers. Active even with `--dangerously-skip-permissions`
 - **SessionStart hook**: Automatically checks for `project-config.md` existence, `docs/` stub detection, and `settings.local.json` presence at session start
 
 ## Git Operations Policy
@@ -242,35 +247,43 @@ Recommended loading order: `project-config.md` (human decisions) → `docs/` (AI
 - Include verification steps in the plan (design confirmation procedures, not just implementation)
 - Write detailed specifications upfront to reduce ambiguity
 
-### 2. Subagent Strategy
+### 2. Research First
+
+- **Always investigate before implementing** — check existing code, patterns, and official docs before writing
+- Existing implementation check: Use Glob/Grep to find similar features, utilities, and patterns
+- Official docs reference: Fetch latest info via WebFetch → Context7 priority order
+- Summarize research findings concisely before starting implementation
+- Prevent "reinventing the wheel" — reuse existing functions and components
+
+### 3. Subagent Strategy
 
 - Actively use subagents to avoid overloading the main context
 - Delegate research, exploration, and parallel analysis to subagents
 - Concentrate computational resources on complex problems via subagents
 - 1 subagent = 1 task, execute with focused scope
 
-### 3. Self-Improvement Loop
+### 4. Self-Improvement Loop
 
 - When receiving corrections from users, record lessons in the `.claude/tasks/LESSONS_TEMPLATE.md` format
 - Write your own rules to avoid repeating the same mistakes
 - Iteratively improve lessons until the error rate decreases
 - Review relevant project lessons at the start of each session
 
-### 4. Pre-Completion Verification
+### 5. Pre-Completion Verification
 
 - Do not mark a task as complete without proving it works
 - Compare diffs with the main branch as needed
 - Ask yourself: "Would a senior engineer approve this?"
 - Run tests, check logs, and demonstrate correctness
 
-### 5. Pursuit of Elegance (Balanced)
+### 6. Pursuit of Elegance (Balanced)
 
 - For non-trivial changes, pause and ask "Is there a more elegant way?"
 - If a fix feels hacky, "implement an elegant solution with full knowledge"
 - Do not apply this to simple, obvious fixes — avoid over-engineering
 - Critically review your own deliverables before submission
 
-### 6. Autonomous Bug Fixing
+### 7. Autonomous Bug Fixing
 
 - When receiving a bug report, fix it independently without asking for step-by-step guidance
 - Identify logs, errors, and failing tests, then resolve them
