@@ -261,6 +261,11 @@ Recommended loading order: `project-config.md` (human decisions) → `docs/` (AI
 - Delegate research, exploration, and parallel analysis to subagents
 - Concentrate computational resources on complex problems via subagents
 - 1 subagent = 1 task, execute with focused scope
+- Ad-hoc delegation patterns (outside team context):
+  - Architecture review → pass `/architecture` prerequisites and evaluation criteria to a subagent
+  - Security investigation → pass `/security-scan` checklist items to a subagent
+  - Parallel file investigation → split file groups across multiple subagents
+  - Design decision validation → delegate ADR consistency check against existing ADRs to a subagent
 
 ### 4. Self-Improvement Loop
 
