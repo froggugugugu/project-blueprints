@@ -43,15 +43,15 @@ DEBUG_PATTERNS=(
     'console\.log\b|console.log (JavaScript/TypeScript)'
     'console\.debug\b|console.debug (JavaScript/TypeScript)'
     '\bdebugger\b|debugger statement (JavaScript/TypeScript)'
-    '\bprint\s*\(|print() (Python)'
-    '\bpp[\s(]|pp (Ruby)'
-    '\bdd\s*\(|dd() (PHP/Laravel)'
-    '\bvar_dump\s*\(|var_dump() (PHP)'
-    '\bputs[\s(]|puts (Ruby)'
-    '\bNSLog\s*\(|NSLog() (Swift/ObjC)'
+    '\bprint[[:space:]]*\(|print() (Python)'
+    '\bpp([[:space:]]|\()|pp (Ruby)'
+    '\bdd[[:space:]]*\(|dd() (PHP/Laravel)'
+    '\bvar_dump[[:space:]]*\(|var_dump() (PHP)'
+    '\bputs([[:space:]]|\()|puts (Ruby)'
+    '\bNSLog[[:space:]]*\(|NSLog() (Swift/ObjC)'
     '\bSystem\.out\.print|System.out.print (Java)'
     '\bfmt\.Print|fmt.Print (Go)'
-    '\bprintln!\s*\(|println!() (Rust)'
+    '\bprintln![[:space:]]*\(|println!() (Rust)'
 )
 
 WARNINGS=()

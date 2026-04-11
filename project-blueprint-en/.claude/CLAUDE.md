@@ -222,6 +222,8 @@ The following apply to all projects:
 | `test:` | Test additions/fixes | none |
 | `chore:` | Build/config/CI etc. | none |
 | `ci:` | CI configuration changes | none |
+| `build:` | Build system and dependency changes | none |
+| `revert:` | Revert a previous commit | none |
 
 **Rules:**
 - Format: `<type>: <concise description>` (e.g., `feat: add dashboard page`)

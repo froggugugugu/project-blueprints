@@ -87,6 +87,11 @@ case "$event_type" in
       curl -s -d "$message" "$NTFY_URL" >/dev/null 2>&1 || true
     else
       # ブロッキング: リクエストID付き通知 + 応答待ち
+      if ! command -v jq &>/dev/null; then
+        echo "jq is required for --wait mode but not found. Falling back to fire-and-forget." >&2
+        curl -s -d "$message" "$NTFY_URL" >/dev/null 2>&1 || true
+        exit 0
+      fi
       request_id=$(generate_request_id)
       tagged_message="[${request_id}] ${message}"
 
