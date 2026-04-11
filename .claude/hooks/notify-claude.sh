@@ -30,7 +30,11 @@ if [ ! -f "$TOPIC_FILE" ]; then
   exit 0
 fi
 
-NTFY_TOPIC="$(head -1 "$TOPIC_FILE" | tr -d '[:space:]')"
+NTFY_TOPIC="$(head -1 "$TOPIC_FILE" | tr -d '\r\n')"
+if [ -z "$NTFY_TOPIC" ]; then
+  echo "ntfy-topic.txt is empty. Skipping notification." >&2
+  exit 0
+fi
 NTFY_URL="https://ntfy.sh/${NTFY_TOPIC}"
 RESPONSE_TOPIC="${NTFY_TOPIC}-res"
 RESPONSE_URL="https://ntfy.sh/${RESPONSE_TOPIC}"
@@ -44,7 +48,7 @@ generate_request_id() {
 get_timeout_fallback() {
   local fallback_file="${SCRIPT_DIR}/ntfy-timeout-fallback.txt"
   if [ -f "$fallback_file" ]; then
-    head -1 "$fallback_file" | tr -d '[:space:]'
+    head -1 "$fallback_file" | tr -d '\r\n'
   else
     echo "timeout"
   fi
@@ -130,7 +134,7 @@ case "$event_type" in
           matched=true
           break
         fi
-      done < <(timeout "$wait_timeout" curl -s -N "${RESPONSE_URL}/json?since=now" 2>/dev/null)
+      done < <(curl -s -N --max-time "$wait_timeout" "${RESPONSE_URL}/json?since=now" 2>/dev/null)
 
       if [ "$matched" = false ]; then
         get_timeout_fallback

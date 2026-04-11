@@ -19,9 +19,9 @@ INPUT="$(cat)"
 if command -v jq &>/dev/null; then
     FILE_PATH="$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)"
 else
-    FILE_PATH="$(echo "$INPUT" | sed -n 's/.*"file_path"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
+    FILE_PATH="$(echo "$INPUT" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
     if [[ -z "$FILE_PATH" ]]; then
-        FILE_PATH="$(echo "$INPUT" | sed -n 's/.*"filePath"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
+        FILE_PATH="$(echo "$INPUT" | sed -n 's/.*"filePath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
     fi
 fi
 
@@ -61,7 +61,7 @@ for entry in "${DEBUG_PATTERNS[@]}"; do
     DESC="${entry##*|}"
 
     # Search the file for the pattern (limit to first 3 matches)
-    MATCHES="$(grep -nE "$PATTERN" "$FILE_PATH" 2>/dev/null | head -3 || true)"
+    MATCHES="$(grep -nE -- "$PATTERN" "$FILE_PATH" 2>/dev/null | head -3 || true)"
     if [[ -n "$MATCHES" ]]; then
         WARNINGS+=("$DESC detected:")
         while IFS= read -r line; do
