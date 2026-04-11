@@ -58,7 +58,7 @@ event_type="${1:-notify}"
 
 case "$event_type" in
   stop)
-    curl -s -d "Claude Code: タスクが完了しました" "$NTFY_URL" >/dev/null 2>&1 || true
+    curl -s --data-raw "Claude Code: タスクが完了しました" "$NTFY_URL" >/dev/null 2>&1 || true
     ;;
 
   notify)
@@ -88,12 +88,12 @@ case "$event_type" in
 
     if [ "$wait_mode" = false ]; then
       # fire-and-forget: 通知のみ
-      curl -s -d "$message" "$NTFY_URL" >/dev/null 2>&1 || true
+      curl -s --data-raw "$message" "$NTFY_URL" >/dev/null 2>&1 || true
     else
       # ブロッキング: リクエストID付き通知 + 応答待ち
       if ! command -v jq &>/dev/null; then
         echo "jq is required for --wait mode but not found. Falling back to fire-and-forget." >&2
-        curl -s -d "$message" "$NTFY_URL" >/dev/null 2>&1 || true
+        curl -s --data-raw "$message" "$NTFY_URL" >/dev/null 2>&1 || true
         exit 0
       fi
       request_id=$(generate_request_id)
@@ -119,7 +119,7 @@ case "$event_type" in
           ]
         }')
 
-      curl -s -d "$payload" "$NTFY_URL" >/dev/null 2>&1
+      curl -s -H "Content-Type: application/json" --data-raw "$payload" "$NTFY_URL" >/dev/null 2>&1
 
       # JSON stream で応答待ち（リクエストID照合）
       matched=false
@@ -144,6 +144,6 @@ case "$event_type" in
     ;;
 
   *)
-    curl -s -d "Claude Code: ${event_type}" "$NTFY_URL" >/dev/null 2>&1 || true
+    curl -s --data-raw "Claude Code: ${event_type}" "$NTFY_URL" >/dev/null 2>&1 || true
     ;;
 esac

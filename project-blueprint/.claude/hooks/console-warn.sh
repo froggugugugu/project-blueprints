@@ -40,18 +40,18 @@ esac
 # --- Debug statement patterns ---
 # Each entry: "pattern|description"
 DEBUG_PATTERNS=(
-    'console\.log\b|console.log (JavaScript/TypeScript)'
-    'console\.debug\b|console.debug (JavaScript/TypeScript)'
-    '\bdebugger\b|debugger statement (JavaScript/TypeScript)'
-    '\bprint[[:space:]]*\(|print() (Python)'
-    '\bpp([[:space:]]|\()|pp (Ruby)'
-    '\bdd[[:space:]]*\(|dd() (PHP/Laravel)'
-    '\bvar_dump[[:space:]]*\(|var_dump() (PHP)'
-    '\bputs([[:space:]]|\()|puts (Ruby)'
-    '\bNSLog[[:space:]]*\(|NSLog() (Swift/ObjC)'
-    '\bSystem\.out\.print|System.out.print (Java)'
-    '\bfmt\.Print|fmt.Print (Go)'
-    '\bprintln![[:space:]]*\(|println!() (Rust)'
+    'console\.log([[:space:]]|\()|console.log (JavaScript/TypeScript)'
+    'console\.debug([[:space:]]|\()|console.debug (JavaScript/TypeScript)'
+    '(^|[^[:alnum:]_])debugger([^[:alnum:]_]|$)|debugger statement (JavaScript/TypeScript)'
+    '(^|[^[:alnum:]_])print[[:space:]]*\(|print() (Python)'
+    '(^|[^[:alnum:]_])pp([[:space:]]|\()|pp (Ruby)'
+    '(^|[^[:alnum:]_])dd[[:space:]]*\(|dd() (PHP/Laravel)'
+    '(^|[^[:alnum:]_])var_dump[[:space:]]*\(|var_dump() (PHP)'
+    '(^|[^[:alnum:]_])puts([[:space:]]|\()|puts (Ruby)'
+    'NSLog[[:space:]]*\(|NSLog() (Swift/ObjC)'
+    'System\.out\.print|System.out.print (Java)'
+    'fmt\.Print|fmt.Print (Go)'
+    'println![[:space:]]*\(|println!() (Rust)'
 )
 
 WARNINGS=()
