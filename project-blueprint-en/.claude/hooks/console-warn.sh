@@ -57,7 +57,7 @@ DEBUG_PATTERNS=(
 WARNINGS=()
 
 for entry in "${DEBUG_PATTERNS[@]}"; do
-    PATTERN="${entry%%|*}"
+    PATTERN="${entry%|*}"
     DESC="${entry##*|}"
 
     # Search the file for the pattern (limit to first 3 matches)

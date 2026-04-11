@@ -40,7 +40,7 @@ RESPONSE_TOPIC="${NTFY_TOPIC}-res"
 RESPONSE_URL="https://ntfy.sh/${RESPONSE_TOPIC}"
 
 generate_request_id() {
-  od -An -tx1 -N2 /dev/urandom | tr -d ' \n'
+  od -An -tx1 -N8 /dev/urandom | tr -d ' \n'
 }
 
 # タイムアウト時のフォールバック値を取得
@@ -134,7 +134,8 @@ case "$event_type" in
           matched=true
           break
         fi
-      done < <(curl -s -N --max-time "$wait_timeout" "${RESPONSE_URL}/json?since=now" 2>/dev/null)
+      unix_now=$(date +%s)
+      done < <(curl -s -N --max-time "$wait_timeout" "${RESPONSE_URL}/json?since=${unix_now}" 2>/dev/null)
 
       if [ "$matched" = false ]; then
         get_timeout_fallback
