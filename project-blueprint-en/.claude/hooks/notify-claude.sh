@@ -120,7 +120,7 @@ case "$event_type" in
 
         msg=$(echo "$line" | jq -r '.message // empty' 2>/dev/null)
         if [[ "$msg" == "${request_id}:"* ]]; then
-          answer="${msg#${request_id}:}"
+          answer="${msg#"${request_id}":}"
           echo "$answer"
           matched=true
           break
