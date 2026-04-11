@@ -7,7 +7,7 @@
 #   notify-claude.sh notify --wait [秒]   — 通知送信 + 応答待ち（デフォルト120秒）
 #
 # --wait モードの応答フロー:
-#   1. リクエストID(4文字hex)を生成し、メッセージ先頭に [ID] を付与
+#   1. リクエストID(16桁hex（8バイト）)を生成し、メッセージ先頭に [ID] を付与
 #   2. Yes/No/Reply の3アクションボタン付きで通知送信
 #   3. 応答トピック({TOPIC}-res)をJSON streamで購読
 #   4. リクエストIDで照合し、一致した応答をstdoutに出力
@@ -123,6 +123,7 @@ case "$event_type" in
 
       # JSON stream で応答待ち（リクエストID照合）
       matched=false
+      unix_now=$(date +%s)
       while IFS= read -r line; do
         event=$(echo "$line" | jq -r '.event // empty' 2>/dev/null)
         [ "$event" = "message" ] || continue
@@ -134,7 +135,6 @@ case "$event_type" in
           matched=true
           break
         fi
-      unix_now=$(date +%s)
       done < <(curl -s -N --max-time "$wait_timeout" "${RESPONSE_URL}/json?since=${unix_now}" 2>/dev/null)
 
       if [ "$matched" = false ]; then
