@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "language": "ja",
   "hooks": {
     "Stop": [
@@ -7,7 +8,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh stop"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh stop",
+            "timeout": 15
           }
         ]
       }
@@ -18,7 +20,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh notify"          
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh notify",
+            "timeout": 15
           }
         ]
       }
@@ -29,7 +32,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/safety-check.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/safety-check.sh",
+            "timeout": 10
           }
         ]
       },
@@ -38,7 +42,42 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/commit-quality.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/console-warn.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh",
+            "timeout": 10
           }
         ]
       }
@@ -46,14 +85,14 @@
   },
   "permissions": {
     "deny": [
-      "Bash(rm -rf:*)",
+      "Bash(rm -rf *)",
       "Bash(rm -rf /*)",
-      "Bash(rm -fr:*)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f :*)",
-      "Bash(git reset --hard:*)",
-      "Bash(git clean -f:*)",
-      "Bash(sudo :*)"
+      "Bash(rm -fr *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean -f *)",
+      "Bash(sudo *)"
     ]
   },
   "enabledPlugins": {

@@ -7,7 +7,7 @@
 #   notify-claude.sh notify --wait [秒]   — 通知送信 + 応答待ち（デフォルト120秒）
 #
 # --wait モードの応答フロー:
-#   1. リクエストID(4文字hex)を生成し、メッセージ先頭に [ID] を付与
+#   1. リクエストID(16桁hex（8バイト）)を生成し、メッセージ先頭に [ID] を付与
 #   2. Yes/No/Reply の3アクションボタン付きで通知送信
 #   3. 応答トピック({TOPIC}-res)をJSON streamで購読
 #   4. リクエストIDで照合し、一致した応答をstdoutに出力
@@ -30,13 +30,17 @@ if [ ! -f "$TOPIC_FILE" ]; then
   exit 0
 fi
 
-NTFY_TOPIC="$(head -1 "$TOPIC_FILE" | tr -d '[:space:]')"
+NTFY_TOPIC="$(head -1 "$TOPIC_FILE" | tr -d '\r\n')"
+if [ -z "$NTFY_TOPIC" ]; then
+  echo "ntfy-topic.txt is empty. Skipping notification." >&2
+  exit 0
+fi
 NTFY_URL="https://ntfy.sh/${NTFY_TOPIC}"
 RESPONSE_TOPIC="${NTFY_TOPIC}-res"
 RESPONSE_URL="https://ntfy.sh/${RESPONSE_TOPIC}"
 
 generate_request_id() {
-  od -An -tx1 -N2 /dev/urandom | tr -d ' \n'
+  od -An -tx1 -N8 /dev/urandom | tr -d ' \n'
 }
 
 # タイムアウト時のフォールバック値を取得
@@ -44,7 +48,7 @@ generate_request_id() {
 get_timeout_fallback() {
   local fallback_file="${SCRIPT_DIR}/ntfy-timeout-fallback.txt"
   if [ -f "$fallback_file" ]; then
-    head -1 "$fallback_file" | tr -d '[:space:]'
+    head -1 "$fallback_file" | tr -d '\r\n'
   else
     echo "timeout"
   fi
@@ -54,7 +58,7 @@ event_type="${1:-notify}"
 
 case "$event_type" in
   stop)
-    curl -s -d "Claude Code: タスクが完了しました" "$NTFY_URL" >/dev/null 2>&1 || true
+    curl -s --data-raw "Claude Code: タスクが完了しました" "$NTFY_URL" >/dev/null 2>&1 || true
     ;;
 
   notify)
@@ -84,9 +88,14 @@ case "$event_type" in
 
     if [ "$wait_mode" = false ]; then
       # fire-and-forget: 通知のみ
-      curl -s -d "$message" "$NTFY_URL" >/dev/null 2>&1 || true
+      curl -s --data-raw "$message" "$NTFY_URL" >/dev/null 2>&1 || true
     else
       # ブロッキング: リクエストID付き通知 + 応答待ち
+      if ! command -v jq &>/dev/null; then
+        echo "jq is required for --wait mode but not found. Falling back to fire-and-forget." >&2
+        curl -s --data-raw "$message" "$NTFY_URL" >/dev/null 2>&1 || true
+        exit 0
+      fi
       request_id=$(generate_request_id)
       tagged_message="[${request_id}] ${message}"
 
@@ -110,10 +119,11 @@ case "$event_type" in
           ]
         }')
 
-      curl -s -d "$payload" "$NTFY_URL" >/dev/null 2>&1
+      curl -s -H "Content-Type: application/json" --data-raw "$payload" "$NTFY_URL" >/dev/null 2>&1
 
       # JSON stream で応答待ち（リクエストID照合）
       matched=false
+      unix_now=$(date +%s)
       while IFS= read -r line; do
         event=$(echo "$line" | jq -r '.event // empty' 2>/dev/null)
         [ "$event" = "message" ] || continue
@@ -125,7 +135,7 @@ case "$event_type" in
           matched=true
           break
         fi
-      done < <(timeout "$wait_timeout" curl -s -N "${RESPONSE_URL}/json?since=now" 2>/dev/null)
+      done < <(curl -s -N --max-time "$wait_timeout" "${RESPONSE_URL}/json?since=${unix_now}" 2>/dev/null)
 
       if [ "$matched" = false ]; then
         get_timeout_fallback
@@ -135,6 +145,6 @@ case "$event_type" in
     ;;
 
   *)
-    curl -s -d "Claude Code: ${event_type}" "$NTFY_URL" >/dev/null 2>&1 || true
+    curl -s --data-raw "Claude Code: ${event_type}" "$NTFY_URL" >/dev/null 2>&1 || true
     ;;
 esac

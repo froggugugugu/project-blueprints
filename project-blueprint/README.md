@@ -252,8 +252,8 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 │                                                         │
 │  .claude/CLAUDE.md ............ 開発ガイド（横断）       │
 │  .claude/hooks/ ............... 安全フック（多層防御）    │
-│  .claude/skills/ .............. 11個のスキル定義         │
-│  .claude/teams/ ............... 5チーム定義              │
+│  .claude/skills/ .............. 15個のスキル定義         │
+│  .claude/teams/ ............... 6チーム定義              │
 │  .claude/tasks/ ............... タスク指示書テンプレート  │
 │  .claude/settings.json ........ プラグイン・フック設定   │
 │  .claude/settings.local.json .. 権限設定テンプレート     │
@@ -299,10 +299,13 @@ project-blueprint/
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
 │   │
 │   ├── hooks/                             ← [汎用] 安全フック（多層防御）
-│   │   ├── safety-check.sh                  危険コマンドブロック
-│   │   └── protect-files.sh                 機密ファイル保護
+│   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
+│   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
+│   │   ├── session-start.sh                 セッション開始チェック（SessionStart）
+│   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
+│   │   └── console-warn.sh                  デバッグコード検出（PostToolUse）
 │   │
-│   ├── skills/                            ← [汎用] 11スキル定義
+│   ├── skills/                            ← [汎用] 15スキル定義
 │   │   ├── plan/SKILL.md                    設計・計画
 │   │   ├── implementing-features/SKILL.md   TDD実装
 │   │   ├── ui-ux-design/SKILL.md            UI/UX設計
@@ -315,15 +318,22 @@ project-blueprint/
 │   │   │   ├── SKILL.md
 │   │   │   └── SETUP_GUIDE.md                 ツール導入ガイド
 │   │   ├── prd/SKILL.md                     PRD生成
-│   │   └── architecture/SKILL.md            アーキテクチャ設計
+│   │   ├── architecture/SKILL.md            アーキテクチャ設計
+│   │   ├── hig-compliance/SKILL.md          HIG準拠チェック
+│   │   ├── design-system-audit/             デザイントークン監査
+│   │   │   ├── SKILL.md
+│   │   │   └── references/                    監査チェックリスト・比率参照
+│   │   ├── review-fix/SKILL.md              PRレビュー指摘自動修正
+│   │   └── adr/SKILL.md                    設計判断記録（ADR）
 │   │
-│   ├── teams/                             ← [汎用] 5チーム定義
+│   ├── teams/                             ← [汎用] 6チーム定義
 │   │   ├── README.md                        チーム利用ガイド
 │   │   ├── TEAM_PJM.md                      フルライフサイクル管理
 │   │   ├── TEAM_FEATURE.md                  機能開発
 │   │   ├── TEAM_QA.md                       品質保証
 │   │   ├── TEAM_PLANNING.md                 設計フェーズ
-│   │   └── TEAM_REFACTOR.md                 リファクタリング
+│   │   ├── TEAM_REFACTOR.md                 リファクタリング
+│   │   └── TEAM_DESIGN.md                   デザインチーム
 │   │
 │   └── tasks/                             ← [汎用] タスクテンプレート
 │       ├── TASK_TEMPLATE.md                 機能開発指示書
@@ -358,18 +368,19 @@ project-blueprint/
 
 | テンプレート | 用途 | メンバー | スキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **11/11** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **14/15** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
 | `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 |
+| `TEAM_DESIGN.md` | デザイン・UI一貫性 | 5名 | 4 |
 
 チーム選定ガイド・ワークフロー詳細・起動パターン・スキルカバレッジは `.claude/teams/README.md` を参照。
 
-### スキル一覧（全11スキル）
+### スキル一覧（全15スキル）
 
 全スキルは引数を省略可能。省略時はユーザーに対話的に確認する。
-読み取り専用スキルは `context: fork`（会話コンテキストのコピーで実行）。
+読み取り専用スキルは`context: fork`（会話コンテキストのコピーで実行）かつ`allowed-tools`でツール制限済み。
 
 | スキル | コマンド | モード | project-config.md更新 |
 | ------ | -------- | ------ | ---------------------- |
@@ -378,12 +389,16 @@ project-blueprint/
 | Plan | `/plan <説明 or ファイルパス>` | 読み取り専用 | §11を更新可 |
 | Implementing Features | `/implementing-features <タスクファイル or 指示>` | 読み書き | §2, §3, §11を更新 |
 | UI/UX Design | `/ui-ux-design <対象ファイル or 指示>` | レビュー/実装 | — |
+| HIG Compliance | `/hig-compliance <対象ディレクトリ or 指示>` | 読み書き | — |
+| Design System Audit | `/design-system-audit <対象ディレクトリ or 指示>` | 読み書き | — |
 | Code Review | `/code-review <対象ファイル or 指示>` | 読み取り専用 | — |
 | E2E Testing | `/e2e-testing <対象機能 or 指示>` | 読み書き | — |
-| Performance | `/performance <対象 or 指示>` | 読み書き | §11を更新 |
+| Performance | `/performance <対象コンポーネント or 指示>` | 読み書き | §11を更新 |
 | Refactoring | `/refactoring <対象ディレクトリ or 指示>` | 読み書き | — |
 | Security Scan | `/security-scan <対象範囲 or 指示>` | 読み取り専用 | — |
 | Legal Check | `/legal-check <対象範囲 or 指示>` | 読み取り専用 | — |
+| Review Fix | `/review-fix <PR番号>` | 読み書き | — |
+| ADR | `/adr <判断タイトル or 指示>` | 読み書き | — |
 
 スキルパイプライン: `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/e2e-testing` + `/performance`
 

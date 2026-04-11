@@ -2,8 +2,8 @@
 
 ## 概要
 
-プロジェクトの活動フェーズに応じた5つの専門チームテンプレートを提供する。
-各チームは`.claude/skills/`配下の11スキルにマッピングされている。
+プロジェクトの活動フェーズに応じた6つの専門チームテンプレートを提供する。
+各チームは`.claude/skills/`配下のスキルにマッピングされている。
 
 ## クイックスタート
 
@@ -23,10 +23,11 @@
 
 | テンプレート | 用途 | メンバー | カバーするスキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理** | **6名** | **11/11（全スキル）** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理** | **6名** | **全スキル網羅** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
+| `TEAM_DESIGN.md` | デザインシステム | 5名 | 4 |
 | `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 |
 
 ### チーム選定ガイド
@@ -39,6 +40,8 @@
 | PRD・設計書を作りたい | `TEAM_PLANNING.md` |
 | PR前に品質チェックしたい | `TEAM_QA.md` |
 | セキュリティ・法務監査をしたい | `TEAM_QA.md` |
+| デザインシステムを整備したい | `TEAM_DESIGN.md` |
+| UI横断の整合性を監査したい | `TEAM_DESIGN.md` |
 | コードの構造を改善したい | `TEAM_REFACTOR.md` |
 
 ## ワークフロー全体像（PJMチーム）
@@ -168,7 +171,7 @@ project-root/
 │
 ├── project-config.md              人間が記入する設定ファイル
 ├── .claude/teams/                 チーム定義
-└── .claude/skills/                スキル定義（11個）
+└── .claude/skills/                スキル定義
 ```
 
 ### 各ディレクトリの役割
@@ -187,21 +190,23 @@ project-root/
 
 ## スキルカバレッジ
 
-全11スキルの各チームへのマッピング:
+全スキルの各チームへのマッピング:
 
-| スキル | PJM | Feature | QA | Planning | Refactor |
-| --- | :---: | :---: | :---: | :---: | :---: |
-| `plan` | Planner | PL | — | Planner | PL |
-| `implementing-features` | Developer | Developer | — | — | Refactorer |
-| `ui-ux-design` | Developer | UI/UX | — | — | — |
-| `code-review` | Reviewer | Reviewer | Reviewer | — | Reviewer |
-| `e2e-testing` | Tester | Tester | Tester | — | Tester |
-| `performance` | Tester | — | Perf Eng | — | — |
-| `refactoring` | Developer | — | — | — | Refactorer |
-| `security-scan` | Reviewer | — | Security | — | — |
-| `legal-check` | Reviewer | — | Security | — | — |
-| `prd` | Analyst | — | — | Analyst | — |
-| `architecture` | Analyst | — | — | Architect | — |
+| スキル | PJM | Feature | QA | Planning | Design | Refactor |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `plan` | Planner | PL | — | Planner | — | PL |
+| `implementing-features` | Developer | Developer | — | — | — | Refactorer |
+| `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |
+| `hig-compliance` | — | — | — | — | HIG | — |
+| `design-system-audit` | — | — | — | — | DS Eng | — |
+| `code-review` | Reviewer | Reviewer | Reviewer | — | Reviewer | Reviewer |
+| `e2e-testing` | Tester | Tester | Tester | — | — | Tester |
+| `performance` | Tester | — | Perf Eng | — | — | — |
+| `refactoring` | Developer | — | — | — | — | Refactorer |
+| `security-scan` | Reviewer | — | Security | — | — | — |
+| `legal-check` | Reviewer | — | Security | — | — | — |
+| `prd` | Analyst | — | — | Analyst | — | — |
+| `architecture` | Analyst | — | — | Architect | — | — |
 
 ## 起動パターン
 
@@ -237,6 +242,13 @@ project-root/
 
 ```text
 .claude/teams/TEAM_QA.md src/features/assignment/
+```
+
+### デザインシステムチーム
+
+```text
+.claude/teams/TEAM_DESIGN.md システム全体のデザイン整合性を監査・修正
+.claude/teams/TEAM_DESIGN.md src/features/touring/ のUIをデザインシステムに準拠させる
 ```
 
 ### リファクタリングチーム

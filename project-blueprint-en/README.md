@@ -253,8 +253,8 @@ Teams focused on specific phases are also available. All arguments are optional:
 |                                                           |
 |  .claude/CLAUDE.md ............ Development guide         |
 |  .claude/hooks/ ............... Safety hooks (defense)    |
-|  .claude/skills/ .............. 11 skill definitions      |
-|  .claude/teams/ ............... 5 team definitions        |
+|  .claude/skills/ .............. 15 skill definitions      |
+|  .claude/teams/ ............... 6 team definitions        |
 |  .claude/tasks/ ............... Task instruction templates |
 |  .claude/settings.json ........ Plugin & hook config      |
 |  .claude/settings.local.json .. Permission settings       |
@@ -300,10 +300,13 @@ project-blueprint-en/
 |   +-- settings.local.json.template       <-- [Customizable] Permission settings template
 |   |
 |   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth)
-|   |   +-- safety-check.sh                  Blocks dangerous commands
-|   |   +-- protect-files.sh                 Protects sensitive files
+|   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
+|   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
+|   |   +-- session-start.sh                 Session readiness check (SessionStart)
+|   |   +-- commit-quality.sh                Commit quality check (PostToolUse)
+|   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
 |   |
-|   +-- skills/                            <-- [Generic] 11 skill definitions
+|   +-- skills/                            <-- [Generic] 15 skill definitions
 |   |   +-- plan/SKILL.md                    Planning & design
 |   |   +-- implementing-features/SKILL.md   TDD implementation
 |   |   +-- ui-ux-design/SKILL.md            UI/UX design
@@ -317,13 +320,20 @@ project-blueprint-en/
 |   |   |   +-- SETUP_GUIDE.md                 Tool setup guide
 |   |   +-- prd/SKILL.md                     PRD generation
 |   |   +-- architecture/SKILL.md            Architecture design
+|   |   +-- hig-compliance/SKILL.md          HIG compliance check
+|   |   +-- design-system-audit/             Design token audit
+|   |   |   +-- SKILL.md
+|   |   |   +-- references/                    Audit checklist & ratio reference
+|   |   +-- review-fix/SKILL.md              PR review auto-fix
+|   |   +-- adr/SKILL.md                     Architecture Decision Records
 |   |
-|   +-- teams/                             <-- [Generic] 5 team definitions
+|   +-- teams/                             <-- [Generic] 6 team definitions
 |   |   +-- README.md                        Team usage guide
 |   |   +-- TEAM_PJM.md                      Full lifecycle management
 |   |   +-- TEAM_FEATURE.md                  Feature development
 |   |   +-- TEAM_QA.md                       Quality assurance
 |   |   +-- TEAM_PLANNING.md                 Design phase
+|   |   +-- TEAM_DESIGN.md                   Design system
 |   |   +-- TEAM_REFACTOR.md                 Refactoring
 |   |
 |   +-- tasks/                             <-- [Generic] Task templates
@@ -359,15 +369,16 @@ project-blueprint-en/
 
 | Template | Purpose | Members | Skills |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **11/11** |
+| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **14/15** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
+| `TEAM_DESIGN.md` | Design system / UI consistency | 5 | 4 |
 | `TEAM_REFACTOR.md` | Refactoring | 4 | 5 |
 
 For team selection guidance, workflow details, launch patterns, and skill coverage, see `.claude/teams/README.md`.
 
-### Skills (all 11)
+### Skills (all 15)
 
 All skills accept optional arguments. When omitted, the user is prompted interactively.
 Read-only skills use `context: fork` (executed on a copy of the conversation context).
@@ -379,12 +390,16 @@ Read-only skills use `context: fork` (executed on a copy of the conversation con
 | Plan | `/plan <description or file-path>` | Read-only | May update S11 |
 | Implementing Features | `/implementing-features <task-file or instructions>` | Read/Write | Updates S2, S3, S11 |
 | UI/UX Design | `/ui-ux-design <target-file or instructions>` | Review/Implement | -- |
+| HIG Compliance | `/hig-compliance <target-directory or instructions>` | Review/Implement | -- |
+| Design System Audit | `/design-system-audit <target-directory or instructions>` | Read-only | -- |
 | Code Review | `/code-review <target-file or instructions>` | Read-only | -- |
 | E2E Testing | `/e2e-testing <target-feature or instructions>` | Read/Write | -- |
 | Performance | `/performance <target or instructions>` | Read/Write | Updates S11 |
 | Refactoring | `/refactoring <target-directory or instructions>` | Read/Write | -- |
 | Security Scan | `/security-scan <scope or instructions>` | Read-only | -- |
 | Legal Check | `/legal-check <scope or instructions>` | Read-only | -- |
+| Review Fix | `/review-fix <PR-number>` | Read/Write | -- |
+| ADR | `/adr <decision-title or instruction>` | Read/Write | -- |
 
 Skill pipeline: `/prd` -> `/architecture` -> `/plan` -> `/implementing-features` -> `/code-review` + `/security-scan` + `/e2e-testing` + `/performance`
 

@@ -1,11 +1,14 @@
 ---
 name: security-scan
+version: 1.0.0
 description: >
-  Runs security scanning tools and generates structured vulnerability reports.
-  Triggers: security scan, vulnerability, OWASP, ZAP, npm audit, DAST, SAST, secret detection, dependency check, CVE.
+  This skill should be used when the user asks to "run security scan", "check vulnerabilities", "audit dependencies",
+  or mentions "セキュリティスキャン", "脆弱性", "OWASP", "npm audit", "シークレット検出", "CVE".
   Source-code read-only — never modifies source code or test files.
   Outputs scan report to output/reports/security/ and raw data to testreport/security/ (requires Write permission to both).
   Takes optional argument: /security-scan <target-scope or instruction>
+argument-hint: "<対象範囲 or 指示>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), Write(testreport/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 

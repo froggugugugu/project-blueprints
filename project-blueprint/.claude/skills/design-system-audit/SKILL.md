@@ -1,6 +1,12 @@
 ---
 name: design-system-audit
-description: UIシステム全体のデザイン整合性を確認・標準化するスキル。新規画面の設計ガイドライン参照、既存画面の整合性監査、Claude Codeへの設計指示テンプレート生成に使う。ボタン・余白・タイポグラフィ・カラーなどの数値体系（デザイントークン）を黄金比・白銀比などの比率原則に基づいて定義・検証する。「デザインがバラバラ」「余白の基準を統一したい」「画面ごとにタイトル位置がずれている」「比率を適用してUIを整えたい」と感じたときは必ずこのスキルを使う。技術スタック非依存（Web/Qt/QML/モバイル問わず適用可能）。
+version: 1.0.0
+description: >
+  This skill should be used when the user asks to "audit design tokens", "unify spacing", "standardize typography",
+  or mentions "デザイントークン", "余白統一", "デザインがバラバラ", "比率", "デザイン整合性監査".
+  Validates design tokens (spacing, typography, color) against ratio principles (golden/silver ratio).
+  Tech-stack agnostic (Web/Qt/QML/mobile). Takes optional argument: /design-system-audit <target-directory or instruction>
+argument-hint: "<対象ディレクトリ or 指示>"
 ---
 
 # Design System Audit スキル

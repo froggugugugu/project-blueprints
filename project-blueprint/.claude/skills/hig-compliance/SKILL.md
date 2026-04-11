@@ -1,11 +1,12 @@
 ---
 name: hig-compliance
+version: 1.0.0
 description: >
-  Apple Human Interface Guidelines (HIG) に基づくシステム全体のUI一貫性チェック・補正スキル。
-  Triggers: HIG, ヒューマンインターフェースガイドライン, UI一貫性, ボタン統一, アイコン統一,
-  キャプション, ラベル統一, 用語統一, 画面間の整合性, UIずれ, UI補正, HIG準拠, Apple準拠,
-  ガイドライン適合, システム全体UI, 横断UIチェック.
-  Takes optional argument: /hig-compliance <対象ディレクトリ or 指示>
+  This skill should be used when the user asks to "check HIG compliance", "unify button labels", "fix icon consistency",
+  or mentions "HIG準拠", "UI一貫性", "ボタン統一", "アイコン統一", "用語統一", "画面間の整合性", "横断UIチェック".
+  Apple Human Interface Guidelines (HIG) based system-wide UI consistency check and correction.
+  Takes optional argument: /hig-compliance <target-directory or instruction>
+argument-hint: "<対象ディレクトリ or 指示>"
 ---
 
 # HIG Compliance — Apple Human Interface Guidelines 準拠チェック・補正

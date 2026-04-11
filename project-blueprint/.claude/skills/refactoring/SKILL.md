@@ -1,10 +1,13 @@
 ---
 name: refactoring
+version: 1.0.0
 description: >
+  This skill should be used when the user asks to "refactor code", "restructure", "extract component", "split store",
+  or mentions "リファクタリング", "再構成", "責務分離", "コンポーネント分割".
   Executes safe, incremental refactoring with rollback capability.
-  Triggers: refactor, restructure, extract, consolidate, decompose, move, rename, split, merge, reorganize.
-  Covers: feature responsibility migration, store split/merge, component decomposition, utility extraction, type consolidation, dependency rule fixes.
+  Covers feature responsibility migration, store split/merge, component decomposition, utility extraction, type consolidation, dependency rule fixes.
   Takes optional argument: /refactoring <target-directory or instruction>
+argument-hint: "<対象ディレクトリ or 指示>"
 ---
 
 # Safe Refactoring
