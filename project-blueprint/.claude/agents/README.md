@@ -10,7 +10,7 @@ Claude Code は各 agent の `description` フィールドを解析して自動�
 | ----- | ---- | ------ | ----- | ------------ |
 | `explorer` | コードベースの広範な探索 | Haiku 4.5 | Read / Grep / Glob | なし |
 | `planner` | 実装前の設計計画立案 | Sonnet 4.6 | Read / Grep / Glob | なし |
-| `security-reviewer` | OWASP 準拠のセキュリティ監査 | Opus 4.7 | Read / Grep / Glob / Bash(grep *) | なし |
+| `security-reviewer` | OWASP 準拠のセキュリティ監査 | Opus 4.7 | Read / Grep / Glob | なし |
 | `performance-analyst` | 計測ファーストのボトルネック分析 | Sonnet 4.6 | Read / Grep / Glob / Bash | なし |
 | `doc-synchronizer` | `docs/` 配下の自動同期更新 | Haiku 4.5 | Read / Edit / Write / Grep / Glob | `docs/` のみ |
 | `test-writer` | ユニット・E2E テスト作成 | Sonnet 4.6 | Read / Edit / Write / Grep / Glob / Bash | テストファイルのみ |
@@ -45,7 +45,7 @@ Task({
 各 agent の `tools` フィールドは**役割に必要な最小セット**に絞る。
 
 - 探索系（`explorer`, `planner`）は書き込みを一切持たない
-- 監査系（`security-reviewer`, `performance-analyst`）は読取＋必要最低限の Bash のみ
+- 監査系は読取中心。Bash を持つのは計測コマンド実行が必要な `performance-analyst` のみ（`security-reviewer` は完全読み取り専用）
 - 書き込み系（`doc-synchronizer`, `test-writer`）は対象パスを役割でスコープする
 
 これにより、親セッションが広い権限を持っていても、agent 側では意図せぬファイル変更が起きない。

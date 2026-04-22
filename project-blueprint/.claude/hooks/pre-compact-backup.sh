@@ -16,8 +16,13 @@ set -uo pipefail
 
 # --- Paths ---
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-BACKUP_DIR="$PROJECT_DIR/.claude/transcripts"
-SESSION_ID="${CLAUDE_SESSION_ID:-$(date +%Y%m%d%H%M%S)}"
+# Store under testreport/ (already gitignored by the blueprint's setup.sh)
+# so that transcripts containing potentially sensitive context don't leak into git.
+BACKUP_DIR="$PROJECT_DIR/testreport/transcripts"
+# Sanitize SESSION_ID to prevent path traversal (reject `/`, `..`, etc.)
+SESSION_ID_RAW="${CLAUDE_SESSION_ID:-$(date +%Y%m%d%H%M%S)}"
+SESSION_ID="$(printf '%s' "$SESSION_ID_RAW" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-64)"
+[[ -z "$SESSION_ID" ]] && SESSION_ID="$(date +%Y%m%d%H%M%S)"
 
 # --- Read stdin JSON ---
 INPUT="$(cat)"

@@ -16,7 +16,10 @@ set -uo pipefail
 # --- Paths ---
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 LOG_DIR="$PROJECT_DIR/testreport/failures"
-SESSION_ID="${CLAUDE_SESSION_ID:-$(date +%Y%m%d)}"
+# Sanitize SESSION_ID to prevent path traversal (reject `/`, `..`, etc.)
+SESSION_ID_RAW="${CLAUDE_SESSION_ID:-$(date +%Y%m%d)}"
+SESSION_ID="$(printf '%s' "$SESSION_ID_RAW" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-64)"
+[[ -z "$SESSION_ID" ]] && SESSION_ID="$(date +%Y%m%d)"
 LOG_FILE="$LOG_DIR/$SESSION_ID.jsonl"
 
 # --- Read stdin JSON ---
@@ -27,22 +30,28 @@ if [[ -z "$INPUT" ]]; then
     exit 0
 fi
 
-# --- Check if this is actually a failure ---
-IS_ERROR="false"
+# --- Check if this is actually a failure (fail-secure for audit) ---
+# Default to "unknown" so that parse errors and malformed payloads are still
+# recorded rather than silently dropped (prevents audit evasion).
+IS_ERROR="unknown"
 if command -v jq &>/dev/null; then
-    IS_ERROR="$(echo "$INPUT" | jq -r '.tool_result.is_error // .tool_response.is_error // false' 2>/dev/null)"
+    IS_ERROR="$(echo "$INPUT" | jq -r '.tool_result.is_error // .tool_response.is_error // "unknown"' 2>/dev/null)"
+    [[ -z "$IS_ERROR" ]] && IS_ERROR="unknown"
 fi
 
-# Only log actual failures
-if [[ "$IS_ERROR" != "true" ]]; then
-    exit 0
-fi
+# Only skip when we are CERTAIN the tool call was NOT an error.
+# Unknown / ambiguous / truthy values all fall through to recording.
+case "$IS_ERROR" in
+    false|False|0) exit 0 ;;
+esac
 
 # --- Extract fields ---
 if command -v jq &>/dev/null; then
     TOOL_NAME="$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null)"
-    ERROR_MSG="$(echo "$INPUT" | jq -r '.tool_result.error // .tool_result.content[0].text // "unknown"' 2>/dev/null | head -c 500)"
-    TOOL_INPUT_SUMMARY="$(echo "$INPUT" | jq -c '.tool_input' 2>/dev/null | head -c 500)"
+    # jq's .[0:500] is a character-based slice (multibyte-safe), unlike `head -c 500`
+    # which splits on bytes and corrupts UTF-8 (e.g. Japanese error messages).
+    ERROR_MSG="$(echo "$INPUT" | jq -r '(.tool_result.error // .tool_result.content[0].text // "unknown") | tostring | .[0:500]' 2>/dev/null)"
+    TOOL_INPUT_SUMMARY="$(echo "$INPUT" | jq -c '.tool_input | tostring | .[0:500]' 2>/dev/null)"
 else
     TOOL_NAME="$(echo "$INPUT" | sed -n 's/.*"tool_name"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
     ERROR_MSG="unknown"

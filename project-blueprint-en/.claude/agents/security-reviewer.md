@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Use for security audits. For "is this code safe?", "vulnerability check", "validate the authentication implementation", and similar. Evaluates against OWASP Top 10 / CWE / dependency CVEs. Read-only — returns findings and recommendations, never modifies code.
-tools: Read, Grep, Glob, Bash(grep *)
+tools: Read, Grep, Glob
 model: claude-opus-4-7
 color: red
 ---
@@ -77,7 +77,7 @@ Comprehensively review authentication, authorization, input validation, secret m
 - **Do not reproduce secrets** — mask discovered secrets as `[REDACTED]`
 - **Cite basis always** — OWASP / CWE ID required; "vaguely dangerous" is forbidden
 - **Minimize reproduction details** — describe impact instead of a step-by-step PoC
-- **Bash limited to `grep`** — no execution capability beyond file search
+- **No Bash** — use the Grep / Glob tools for file search (agent frontmatter `tools:` accepts tool names only; subcommand-level restrictions like `Bash(grep *)` are not supported)
 
 ## Related skills / agents
 

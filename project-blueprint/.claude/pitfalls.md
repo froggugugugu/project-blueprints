@@ -114,13 +114,13 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **原因** | 更新責務が曖昧。複数 skill が同じ情報を別の場所に書く |
 | **対策** | CLAUDE.md §「docs/ 更新の競合防止」の責務テーブルを守る。一次更新者は `/implementing-features` |
 
-### 14. `@` import の相対パス誤り
+### 14. `@` import のパス誤り
 
 | 項目 | 内容 |
 | ---- | ---- |
-| **現象** | `@.claude/pitfalls.md` が見つからず、`CLAUDE.md` の参照が壊れる |
-| **原因** | `@` import はリポジトリルート相対ではなく、ファイル自身からの相対 |
-| **対策** | CLAUDE.md の `@` 参照先は CLAUDE.md 自身からの相対パス。`project-blueprint/.claude/CLAUDE.md` → `@.claude/pitfalls.md` は NG、`@pitfalls.md` が正しい（同階層）。既存の `@docs/*.md` パターンはプロジェクトルートからの相対（Claude Code がよしなに解決）。迷ったら `ls` で確認 |
+| **現象** | `@.claude/pitfalls.md` が見つからず、CLAUDE.md の参照が壊れる |
+| **原因** | `@` import は Claude Code がリポジトリルートからのパスとして解決する。CLAUDE.md 自身のディレクトリからの相対ではない |
+| **対策** | 既存の `@docs/*.md` / `@.claude/*.md` パターンに倣う（ルート相対）。迷ったら `ls` で存在を確認 |
 
 ### 15. Git フック迂回の誘惑
 

@@ -2,8 +2,8 @@
 
 ## Overview
 
-Provides 5 specialized team templates for different project activity phases.
-Each team is mapped to the 11 skills under `.claude/skills/`.
+Provides 6 specialized team templates for different project activity phases.
+Each team is mapped to the 15 skills under `.claude/skills/`.
 
 ## Quick Start
 
@@ -23,10 +23,11 @@ Each team is mapped to the 11 skills under `.claude/skills/`.
 
 | Template | Purpose | Members | Skill Coverage |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management** | **6** | **11/11 (all skills)** |
+| **`TEAM_PJM.md`** | **Full lifecycle management** | **6** | **All skills covered** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
+| `TEAM_DESIGN.md` | Design system integration | 5 | 4 |
 | `TEAM_REFACTOR.md` | Refactoring | 4 | 5 |
 
 ### Team Selection Guide
@@ -39,6 +40,8 @@ Each team is mapped to the 11 skills under `.claude/skills/`.
 | Create PRD and design docs | `TEAM_PLANNING.md` |
 | Quality check before PR | `TEAM_QA.md` |
 | Security and legal audit | `TEAM_QA.md` |
+| Build / audit design system | `TEAM_DESIGN.md` |
+| Cross-screen UI consistency audit | `TEAM_DESIGN.md` |
 | Improve code structure | `TEAM_REFACTOR.md` |
 
 ## Full Workflow Overview (PJM Team)
@@ -168,7 +171,7 @@ project-root/
 │
 ├── project-config.md              Human-authored config file
 ├── .claude/teams/                 Team definitions
-└── .claude/skills/                Skill definitions (11)
+└── .claude/skills/                Skill definitions
 ```
 
 ### Directory Roles
@@ -187,21 +190,23 @@ project-root/
 
 ## Skill Coverage
 
-Mapping of all 11 skills across teams:
+Mapping of all skills across teams:
 
-| Skill | PJM | Feature | QA | Planning | Refactor |
-| --- | :---: | :---: | :---: | :---: | :---: |
-| `plan` | Planner | PL | — | Planner | PL |
-| `implementing-features` | Developer | Developer | — | — | Refactorer |
-| `ui-ux-design` | Developer | UI/UX | — | — | — |
-| `code-review` | Reviewer | Reviewer | Reviewer | — | Reviewer |
-| `e2e-testing` | Tester | Tester | Tester | — | Tester |
-| `performance` | Tester | — | Perf Eng | — | — |
-| `refactoring` | Developer | — | — | — | Refactorer |
-| `security-scan` | Reviewer | — | Security | — | — |
-| `legal-check` | Reviewer | — | Security | — | — |
-| `prd` | Analyst | — | — | Analyst | — |
-| `architecture` | Analyst | — | — | Architect | — |
+| Skill | PJM | Feature | QA | Planning | Design | Refactor |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `plan` | Planner | PL | — | Planner | — | PL |
+| `implementing-features` | Developer | Developer | — | — | — | Refactorer |
+| `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |
+| `hig-compliance` | — | — | — | — | HIG | — |
+| `design-system-audit` | — | — | — | — | DS Eng | — |
+| `code-review` | Reviewer | Reviewer | Reviewer | — | Reviewer | Reviewer |
+| `e2e-testing` | Tester | Tester | Tester | — | — | Tester |
+| `performance` | Tester | — | Perf Eng | — | — | — |
+| `refactoring` | Developer | — | — | — | — | Refactorer |
+| `security-scan` | Reviewer | — | Security | — | — | — |
+| `legal-check` | Reviewer | — | Security | — | — | — |
+| `prd` | Analyst | — | — | Analyst | — | — |
+| `architecture` | Analyst | — | — | Architect | — | — |
 
 ## Invocation Patterns
 
@@ -237,6 +242,13 @@ All teams: Arguments (file path or instruction) are optional. When omitted, the 
 
 ```text
 .claude/teams/TEAM_QA.md src/features/assignment/
+```
+
+### Design System Team
+
+```text
+.claude/teams/TEAM_DESIGN.md Audit system-wide design consistency and apply fixes
+.claude/teams/TEAM_DESIGN.md Align src/features/touring/ UI with the design system
 ```
 
 ### Refactoring Team

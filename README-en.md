@@ -128,16 +128,22 @@ Each skill can be used standalone, as part of a team (multi-agent), or delegated
 project-blueprint-en/
 +-- README.md                      Setup instructions & detailed guide
 +-- setup.sh                       One-command setup script
-+-- project-config.md              [Human+AI] Config file (12 sections)
++-- project-config.md              [Human+AI] Config file (13 sections)
 +-- project-config.sample.md       Filled sample (task management app)
 +-- input/requirements/            [Human] Requirement notes
 +-- output/                        [AI-generated] PRD, design, tasks, quality reports
 +-- docs/                          [AI-generated] Technical docs (auto-maintained)
 +-- testreport/                    [AI-generated] Raw tool output (.gitignore target)
++-- .mcp.json.template             Shared MCP server configuration template
++-- .github/workflows/             Claude Code PR review workflow template
 +-- .claude/
     +-- CLAUDE.md                  Development guide (moved to root during setup)
-    +-- skills/                    11 skill definitions
-    +-- teams/                     5 team definitions
+    +-- skills/                    15 skill definitions
+    +-- teams/                     6 team definitions
+    +-- agents/                    6 subagent definitions
+    +-- rules/                     Language/path-specific rule extensions
+    +-- hooks/                     9 hook scripts
+    +-- pitfalls.md                Common pitfalls in AI-collaborative dev
     +-- tasks/                     Task instruction templates
 ```
 

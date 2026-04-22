@@ -15,8 +15,8 @@ Provides a unified view of rules that are otherwise distributed across various s
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | Warn | Conventional Commits format check and secret detection |
 | `console-warn.sh` | PostToolUse | Edit\|Write | Warn | Detects leftover debug statements (console.log, etc.) |
 | `post-failure-log.sh` | PostToolUse | All tools | Observe | Structured error logs on tool failure (`testreport/failures/`) |
-| `subagent-audit.sh` | SubagentStart / SubagentStop | — | Observe | Subagent lifecycle records (`testreport/agents/`) |
-| `pre-compact-backup.sh` | PreCompact | — | Observe | Transcript backup before compact (`.claude/transcripts/`) |
+| `subagent-audit.sh` | SubagentStop | — | Observe | Subagent completion records (`testreport/agents/`) |
+| `pre-compact-backup.sh` | PreCompact | — | Observe | Transcript backup before compact (`testreport/transcripts/`) |
 | `notify-claude.sh` | Stop / Notification | — | Notify | External notification on task completion (ntfy) |
 
 ### Hook Behavior Principles
@@ -45,20 +45,21 @@ Hook events **not** implemented in this template but available for project-speci
 | Event | Timing | Use Case |
 | ----- | ------ | -------- |
 | `UserPromptSubmit` | When user input is submitted | Pre-send secret inspection, prompt enhancement |
-| `PermissionRequest` | When permission approval dialog is shown | Auto-approval rules for safe commands |
-| `InstructionsLoaded` | When CLAUDE.md/rules are loaded | Observation and logging (cannot block) |
+| `SessionEnd` | When a session ends | Usage aggregation, metrics submission |
+| `PreToolUse` (matcher: `"Task"`) | Subagent invocation | Capture start events, inject env vars |
 
-> As of 2026-04, `SubagentStart` / `SubagentStop` / `PreCompact` / `PostToolUse (failure handling)` are implemented (see the Hook Inventory above).
+> As of 2026-04, `SubagentStop` / `PreCompact` / `PostToolUse (failure handling)` are implemented (see the Hook Inventory above).
+> The official hook events are `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` (9 total). `SubagentStart` / `InstructionsLoaded` / `PermissionRequest` are not part of the official spec.
 
 Add to `settings.json` in this format:
 
 ```json
 {
-  "SubagentStart": [
+  "UserPromptSubmit": [
     {
-      "matcher": "db-agent",
+      "matcher": "",
       "hooks": [
-        { "type": "command", "command": "./scripts/setup-db.sh", "timeout": 10 }
+        { "type": "command", "command": "./scripts/prompt-audit.sh", "timeout": 10 }
       ]
     }
   ]

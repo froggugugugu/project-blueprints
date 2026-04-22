@@ -30,7 +30,7 @@ bash project-blueprint/setup.sh /path/to/your-project
 /plan ログイン機能の設計
 ```
 
-**これだけで動く。** 残り9セクションは空欄のまま段階的に追記すればよい。
+**これだけで動く。** 残り10セクションは空欄のまま段階的に追記すればよい。
 
 ### 段階的に広げる
 
@@ -38,7 +38,7 @@ bash project-blueprint/setup.sh /path/to/your-project
 | --- | --- | --- |
 | **ミニマル** | §1 + §2 + §3 | `/prd`, `/plan` で設計・分析 |
 | **推奨** | + §4（アーキテクチャ） | `/implementing-features`, 全チーム利用 |
-| **フル** | 全12セクション | `/security-scan`, `/legal-check` 等の全スキル |
+| **フル** | 全13セクション | `/security-scan`, `/legal-check` 等の全スキル(§13でモデル選定戦略) |
 
 > §6（品質基準）はTDD・カバレッジ目標の有効化に使用。スキルの前提条件ではないため空欄でも動作する。
 
@@ -99,16 +99,22 @@ bash project-blueprint/setup.sh /path/to/your-project
 project-blueprint/
 ├── README.md                      セットアップ手順・詳細ガイド
 ├── setup.sh                       1コマンドセットアップスクリプト
-├── project-config.md              [人間+AI] 設定ファイル（12セクション）
+├── project-config.md              [人間+AI] 設定ファイル（13セクション）
 ├── project-config.sample.md       記入済みサンプル（タスク管理アプリ）
 ├── input/requirements/            [人間] 要求メモ
 ├── output/                        [AI生成] PRD・設計書・タスク・品質レポート
 ├── docs/                          [AI生成] 技術ドキュメント（自動メンテナンス）
 ├── testreport/                    [AI生成] ツール直接出力（.gitignore対象）
+├── .mcp.json.template             プロジェクト共有MCP設定テンプレート
+├── .github/workflows/             Claude Code PR レビューワークフロー
 └── .claude/
     ├── CLAUDE.md                  開発ガイド（セットアップ時にルートへ移動）
-    ├── skills/                    11スキル定義
-    ├── teams/                     5チーム定義
+    ├── skills/                    15スキル定義
+    ├── teams/                     6チーム定義
+    ├── agents/                    6サブエージェント定義
+    ├── rules/                     言語別/パス別ルール拡張ポイント
+    ├── hooks/                     9フックスクリプト
+    ├── pitfalls.md                AI協調開発の落とし穴集
     └── tasks/                     タスク指示書テンプレート
 ```
 
