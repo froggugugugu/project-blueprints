@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "_comment_usage": "Template for project-shared MCP server definitions. Copy and rename this file to `.mcp.json` to activate. Credentials must be injected via environment variables; never hard-code them. Remove blocks for servers you don't use.",
+  "mcpServers": {
+    "context7": {
+      "_comment": "Official documentation / API reference retrieval. Complement WebFetch when needed",
+      "command": "npx",
+      "args": ["-y", "@context7/mcp-server"]
+    },
+    "playwright": {
+      "_comment": "Browser automation / E2E test debugging",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"]
+    },
+    "fetch": {
+      "_comment": "Unauthenticated HTTP GET. Used for fetching external docs",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "github": {
+      "_comment": "GitHub API (Issues / PR / Actions). Export $GITHUB_TOKEN first. Keep scopes minimal (repo:status, public_repo)",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  },
+  "_comment_security": [
+    "MCP servers can execute arbitrary commands. Use only trusted sources",
+    "Inject credentials via environment variables (${VAR_NAME}); never hard-code them in JSON",
+    "In settings.local.json permissions.allow, explicitly allow MCP(server:<name>)",
+    "For write-capable servers like postgres, deny by default and enable only read-only access"
+  ],
+  "_comment_optional_servers": {
+    "postgres": {
+      "_warning": "Direct DB access is high risk. Use read-only only; never point to a production DSN",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
+      }
+    },
+    "sentry": {
+      "_warning": "Useful for production error investigation. Export $SENTRY_AUTH_TOKEN first",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@sentry/mcp-server"],
+        "env": { "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}" }
+      }
+    },
+    "slack": {
+      "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-slack"],
+        "env": { "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}" }
+      }
+    }
+  }
+}

@@ -1,0 +1,65 @@
+# TypeScript-Specific Rules (sample)
+
+> This file is a sample with the `.example` extension. Activate by copying without the extension:
+> ```bash
+> cp .claude/rules/language-typescript.md.example .claude/rules/language-typescript.md
+> ```
+>
+> Edit to fit your project. Delete sections you don't need.
+
+## Type strategy
+
+- `any` is forbidden. Use `unknown` + type guards when unavoidable
+- Minimize `as` casts; prefer `satisfies`
+- Function args and return types **must** be annotated (no inference-only)
+- Use discriminated unions (`kind: "a" | "b"`) for tagged variants
+
+## null / undefined
+
+- Assume `strictNullChecks: true`
+- Optional values as `T | undefined` (avoid `null`, except from external APIs)
+- Use nullish coalescing (`??`) and optional chaining (`?.`)
+
+## Error handling
+
+- Only throw Error instances (no `throw "string"`)
+- Custom errors: `class FooError extends Error` with consistent naming
+- Async code must handle errors via `try/catch` or `.catch()`
+- No silent swallowing. Either log, rethrow, or explicitly recover
+
+## Naming conventions
+
+- Types / interfaces: `PascalCase`
+- Functions / variables: `camelCase`
+- Constants: `UPPER_SNAKE_CASE` (only for true module-scope constants)
+- Boolean prefix: `is / has / can / should`
+
+## File organization
+
+- 1 file, 1 responsibility. Consider splitting beyond 300 lines
+- Type definitions go in the feature directory's `types.ts` or near usage
+- `index.ts` is re-exports only (no logic)
+
+## Forbidden patterns
+
+- `any`, `Function`, `Object`, `{}` types
+- `@ts-ignore` (use `@ts-expect-error` + reason comment instead)
+- `eval`, `Function constructor`
+- Leftover `console.log` in production code (detected by `console-warn.sh`)
+
+## Tests
+
+- Test files as `*.test.ts(x)` or under `__tests__/`
+- `describe` / `it` may use the project's default language
+- Minimize mocks; don't depend on implementation details
+
+## Recommended tools
+
+- Biome (lint + format) or ESLint + Prettier
+- tsconfig: `strict: true`, `noUncheckedIndexedAccess: true`
+
+## Concept alignment
+
+- Project-wide conventions live in `project-config.md` §2 / §6
+- This file contains TypeScript-specific details only (no language mixing)
+- Violation-detection commands go in `project-config.md` §3

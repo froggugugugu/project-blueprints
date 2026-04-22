@@ -1,0 +1,80 @@
+# Python-Specific Rules (sample)
+
+> This file is a sample with the `.example` extension. Activate by copying without the extension:
+> ```bash
+> cp .claude/rules/language-python.md.example .claude/rules/language-python.md
+> ```
+>
+> Edit to fit your project. Delete sections you don't need.
+
+## Python version
+
+- Python 3.11+ assumed
+- Actively use `match`, type parameter syntax, and exception groups
+- Don't pre-fetch new features via `from __future__ import annotations` (3.11+ doesn't need it)
+
+## Type hints
+
+- Mandatory on all functions and methods
+- Include `-> None` explicitly
+- `typing.Any` is forbidden; use `object` or `TypeVar`
+- Use builtin generics (`list[int]`, `dict[str, int]`) — 3.9+
+- Prefer `T | None` over `Optional[T]` — 3.10+
+
+## Error handling
+
+- Catch specific exceptions (`ValueError`, custom ones); `except Exception` is last resort
+- Bare `except:` is forbidden
+- Chain exceptions: `raise NewError(...) from original`
+- Never swallow exceptions in `finally`
+
+## Naming conventions
+
+- Modules / functions / variables: `snake_case`
+- Classes: `PascalCase`
+- Constants: `UPPER_SNAKE_CASE`
+- Private: `_leading_underscore` (not exported)
+- `__double_underscore__` only for special methods
+
+## File organization
+
+- 1 module, 1 responsibility. Consider splitting beyond 500 lines
+- `__init__.py` is re-exports only (no side effects)
+- Tests live under `tests/` or match `test_*.py`
+
+## Forbidden patterns
+
+- `eval` / `exec` (absolutely forbidden for user-controlled input)
+- Global mutable state (module-level `list = []`, etc.)
+- Leftover `print` debugging in production (use logger)
+- `time.sleep` for test synchronization (use `pytest-asyncio`, `tenacity`)
+
+## Logging
+
+- Standard `logging` module or `structlog` recommended
+- Levels: `DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL`
+- Never log PII (personal information)
+
+## Tests
+
+- Standardize on `pytest`
+- Setup/teardown via fixtures
+- Parameterized: `@pytest.mark.parametrize`
+- Async: `@pytest.mark.asyncio`
+- Coverage targets follow `project-config.md` §6
+
+## Recommended tools
+
+- `ruff` (lint + format, Black-compatible)
+- `mypy` or `pyright` for type checking
+- `uv` / `pip-tools` / `poetry` for dependency management
+
+## Dependency packages
+
+- Record new additions in `project-config.md` §2
+- Vulnerability scanning: `pip-audit` / `safety` run periodically (automated via `/security-scan` skill)
+
+## Concept alignment
+
+- Project-wide conventions live in `project-config.md` §2 / §6
+- This file contains Python-specific details only

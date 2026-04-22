@@ -375,3 +375,79 @@ output/reports/                ← 人間向けサマリー（Git管理）
 | draw.io           | yes  | アーキテクチャ図・フロー図作成             |
 | pr-review-toolkit | yes  | GitHub PR連携                              |
 | sentry            | no   | 本番エラー調査（必要に応じて有効化）       |
+
+---
+
+## 13. モデル選定戦略 <!-- 推奨 -->
+
+> Claude Opus / Sonnet / Haiku のどれを、どのスキル・チーム・エージェントで使うか。
+> コスト・品質・速度のトレードオフを明示する。未記入時はセッション既定モデルにフォールバック。
+
+### 13.1 Tier 定義
+
+| Tier | モデル（2026-04 時点） | 用途 | コスト感 |
+| ---- | ---------------------- | ---- | -------- |
+| **Critical** | `claude-opus-4-7` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
+| **Complex** | `claude-sonnet-4-6` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
+| **Operational** | `claude-haiku-4-5` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
+
+旧モデル（`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5` 等）は本テンプレートでは非推奨。
+
+### 13.2 スキル × モデル推奨マッピング
+
+| スキル | 推奨 Tier | 根拠 |
+| ------ | --------- | ---- |
+| `/prd` | Complex | 要件構造化。推論量は中程度 |
+| `/architecture` | Critical | システム設計の判断ミスが後工程に波及 |
+| `/plan` | Complex | タスク分解・依存関係把握 |
+| `/implementing-features` | Complex | TDD 実装の主力 |
+| `/ui-ux-design` | Complex | デザインシステム準拠判断 |
+| `/hig-compliance` | Complex | 画面間整合性の横断判定 |
+| `/design-system-audit` | Complex | 比率・トークン計算 |
+| `/code-review` | Critical | 指摘の質が品質を左右 |
+| `/security-scan` | Critical | 脆弱性見逃しの影響大 |
+| `/legal-check` | Complex | ライセンス・GDPR の条文照合 |
+| `/e2e-testing` | Complex | Page Object 設計・安定性 |
+| `/performance` | Complex | 計測データ解釈 |
+| `/refactoring` | Critical | 構造変更のリスク管理 |
+| `/adr` | Operational | 定型フォーマット記録 |
+| `/review-fix` | Complex | 指摘の意図を正しく汲む必要あり |
+
+### 13.3 チーム × モデル推奨マッピング
+
+| チーム | PJM | アナリスト | プランナー | 開発者 | レビュアー | テスター |
+| ------ | --- | ---------- | ---------- | ------ | ---------- | -------- |
+| `TEAM_PJM` | Critical | Complex | Complex | Complex | Critical | Complex |
+| `TEAM_FEATURE` | — | — | Complex | Complex | Complex | Complex |
+| `TEAM_QA` | — | — | — | — | Critical | Complex |
+| `TEAM_PLANNING` | Critical | Complex | Complex | — | — | — |
+| `TEAM_DESIGN` | — | Complex | — | Complex | Complex | — |
+| `TEAM_REFACTOR` | — | — | Complex | Critical | Complex | Complex |
+
+PJM（リーダー）は判断精度が重要なので Critical を推奨。
+レビュアーは監査観点のズレが致命的なので Critical。
+
+### 13.4 サブエージェント × モデル推奨マッピング
+
+| agent | Tier | 理由 |
+| ----- | ---- | ---- |
+| `explorer` | Operational | Grep/Read の軽量反復 |
+| `planner` | Complex | 影響範囲判断 |
+| `security-reviewer` | Critical | 脆弱性見逃しの影響大 |
+| `performance-analyst` | Complex | 計測データ解釈 |
+| `doc-synchronizer` | Operational | 決定論的な差分更新 |
+| `test-writer` | Complex | エッジケース網羅 |
+
+### 13.5 コスト最適化の原則
+
+1. **Operational を積極活用**: 探索・同期・定型生成は Haiku で十分。Opus を使う必要はない
+2. **並行実行時はTier分散**: `TEAM_PJM --parallel` で全員 Opus にしない。役割に応じて Tier を混在
+3. **Subagent は Haiku 優先**: 単発の委譲は軽量運用。必要に応じて Critical に昇格
+4. **コスト上限を API キーに設定**: `@.claude/pitfalls.md` #6 参照
+5. **月次使用量レビュー**: Anthropic Console で確認。想定と乖離したら Tier を見直す
+
+### 13.6 未記入時の挙動
+
+- フロントマター `model:` を省略した skill / agent はセッション既定モデルを継承
+- 本セクションの表は**推奨値**であり、プロジェクト要件に応じてオーバーライド可能
+- 個人設定で常に Opus を使いたい場合は `~/.claude/settings.json` の `model` で指定

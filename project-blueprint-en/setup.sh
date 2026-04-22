@@ -85,6 +85,30 @@ cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
+# -- Place .mcp.json.template (rename to .mcp.json to activate) ----
+if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
+    cp "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template"
+    info "Placed .mcp.json.template (rename to .mcp.json to activate)"
+fi
+
+# -- Place .github/ workflow templates -----------------------------
+if [[ -d "$SCRIPT_DIR/.github" ]]; then
+    if [[ -d "$TARGET_DIR/.github" ]]; then
+        # If .github/ already exists, merge only workflows/ and top-level md (don't overwrite)
+        mkdir -p "$TARGET_DIR/.github/workflows"
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/workflows/*.template \
+              "$TARGET_DIR/.github/workflows/" 2>/dev/null || true
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/*.md \
+              "$TARGET_DIR/.github/" 2>/dev/null || true
+        info "Merged .github/ workflow templates (existing files preserved)"
+    else
+        cp -r "$SCRIPT_DIR/.github" "$TARGET_DIR/.github"
+        info "Placed .github/ (remove .template extension to activate workflows)"
+    fi
+fi
+
 # -- Make hook scripts executable -----------------------------------
 if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
     chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true

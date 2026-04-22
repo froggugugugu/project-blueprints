@@ -190,6 +190,7 @@ Verify before submitting design or code:
 ## Security Hardening
 
 @.claude/guardrails.md  <!-- Hook inventory, deny rules, protected files, prohibited operations, 3-layer defense model -->
+@.claude/pitfalls.md    <!-- Common failure patterns and mitigations in AI-assisted collaborative development -->
 
 Security policy details are defined in `project-config.md` section 10.
 The following apply to all projects:
@@ -261,6 +262,8 @@ Recommended loading order: `project-config.md` (human decisions) → `docs/` (AI
 - Prevent "reinventing the wheel" — reuse existing functions and components
 
 ### 3. Subagent Strategy
+
+@.claude/agents/README.md  <!-- Project default subagent definitions (explorer / planner / security-reviewer / etc.) and selection guide -->
 
 - Actively use subagents to avoid overloading the main context
 - Delegate research, exploration, and parallel analysis to subagents

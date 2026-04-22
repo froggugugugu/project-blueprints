@@ -1,0 +1,71 @@
+---
+# Claude Code Automated PR Review Workflow (template)
+#
+# How to enable:
+#   1. Copy: cp .github/workflows/claude-review.yml.template .github/workflows/claude-review.yml
+#   2. Add ANTHROPIC_API_KEY to GitHub repository Secrets
+#   3. See .github/CLAUDE_REVIEW_SETUP.md for full details
+#
+# Triggers: `@claude` mention in a PR comment, or on PR open (optional)
+#
+# Cost note: Configure monthly/daily spend limits on the API key (see SETUP.md)
+
+name: Claude Code Review
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  claude-review:
+    # Only run on @claude mentions or non-draft PR events
+    if: >
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+
+    # Least privilege: only PR-write and comment-add
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Model selection (cost / quality trade-off)
+          # - Opus 4.7: high-quality review, high cost
+          # - Sonnet 4.6: standard review (recommended)
+          # - Haiku 4.5: lightweight review, quick checks
+          model: claude-sonnet-4-6
+          # Cost guardrail: max turns
+          max_turns: 10
+          # Additional prompt (project-specific review perspectives)
+          direct_prompt: |
+            This repo follows the conventions in `.claude/CLAUDE.md` and `project-config.md`.
+            Review the PR on these axes:
+
+            1. **Design**: architecture violations, dependency-direction violations
+            2. **Security**: OWASP Top 10, leaked secrets, input validation
+            3. **Tests**: coverage, edge cases, TDD alignment
+            4. **Readability**: naming, comments, separation of concerns
+            5. **Known pitfalls**: any case matching `.claude/pitfalls.md`
+
+            Classify findings as CRITICAL / HIGH / MEDIUM / LOW / INFO,
+            and propose fixes as concrete diff suggestions.
+
+            The project's default language is English; return review comments in English.
