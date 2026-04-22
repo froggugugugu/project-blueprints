@@ -10,7 +10,7 @@ To invoke explicitly, use the `Task` tool with `subagent_type: <name>`.
 | ----- | ------- | ----- | ----- | ------------ |
 | `explorer` | Broad codebase exploration | Haiku 4.5 | Read / Grep / Glob | None |
 | `planner` | Pre-implementation design planning | Sonnet 4.6 | Read / Grep / Glob | None |
-| `security-reviewer` | OWASP-aligned security audit | Opus 4.7 | Read / Grep / Glob / Bash(grep *) | None |
+| `security-reviewer` | OWASP-aligned security audit | Opus 4.7 | Read / Grep / Glob | None |
 | `performance-analyst` | Measurement-first bottleneck analysis | Sonnet 4.6 | Read / Grep / Glob / Bash | None |
 | `doc-synchronizer` | Auto-sync updates to `docs/` | Haiku 4.5 | Read / Edit / Write / Grep / Glob | `docs/` only |
 | `test-writer` | Unit and E2E test creation | Sonnet 4.6 | Read / Edit / Write / Grep / Glob / Bash | Test files only |
@@ -45,7 +45,7 @@ Task({
 Each agent's `tools` field contains the **minimum set required for its role**.
 
 - Exploratory agents (`explorer`, `planner`) have no write access at all
-- Audit agents (`security-reviewer`, `performance-analyst`) have read + minimal Bash
+- Audit agents are read-focused. Only `performance-analyst` has Bash (for measurement commands); `security-reviewer` is fully read-only
 - Write-capable agents (`doc-synchronizer`, `test-writer`) are scoped to specific paths by role
 
 Even if the parent session has broad permissions, agents won't cause unintended file changes.

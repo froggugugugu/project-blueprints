@@ -35,7 +35,7 @@ Language: English
 - build: npm run build
 ```
 
-> The remaining 9 sections can be left blank — everything still works. Add them incrementally as needed.
+> The remaining 10 sections can be left blank — everything still works. Add them incrementally as needed.
 
 ### Step 3: Try one skill
 
@@ -271,7 +271,7 @@ project-blueprint-en/
 |
 +-- README.md                              <-- This file
 +-- setup.sh                               <-- One-command setup script
-+-- project-config.md                      <-- [Human+AI] Config file (12 sections)
++-- project-config.md                      <-- [Human+AI] Config file (13 sections)
 +-- project-config.sample.md               <-- Filled sample (task management app)
 |
 +-- input/                                 <-- [Human] Input

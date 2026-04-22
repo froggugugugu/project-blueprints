@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: セキュリティ観点の監査が必要なときに使用する。「このコードは安全か」「脆弱性チェック」「認証の実装検証」など。OWASP Top 10 / CWE / 依存 CVE の観点で評価する。読み取り専用で、指摘と改善提案のみ返す。
-tools: Read, Grep, Glob, Bash(grep *)
+tools: Read, Grep, Glob
 model: claude-opus-4-7
 color: red
 ---
@@ -77,7 +77,7 @@ color: red
 - **シークレットは転記しない** — 発見したシークレットは `[REDACTED]` で隠す。値は出力に含めない
 - **根拠必須** — OWASP / CWE の ID を付ける。「なんとなく危ない」禁止
 - **再現手順は最小限** — 攻撃方法を詳細に書かない（Proof of Concept の代わりに影響を説明）
-- **Bash は `grep` のみ** — ファイル検索以外の実行権限を持たない
+- **Bash なし** — ファイル検索は Grep / Glob ツールで実施(agent frontmatter の `tools:` はツール名のみ受付で、`Bash(grep *)` のようなサブコマンド絞り込みはできないため)
 
 ## 関連スキル / agent
 

@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# subagent-audit.sh — SubagentStart / SubagentStop hook
+# subagent-audit.sh — SubagentStop hook
 #
-# Records subagent lifecycle events as JSONL for observability in parallel
+# Records subagent completion events as JSONL for observability in parallel
 # team workflows (TEAM_PJM --parallel etc.).
 # Does NOT block subagent execution (observation only).
 #
-# Input:  JSON via stdin  {"hook_event":"SubagentStart|SubagentStop", ...}
+# Input:  JSON via stdin  {"hook_event":"SubagentStop", ...}
 # Output: appends one JSONL line to testreport/agents/<session>.jsonl
 #
 # Policy: fail-open (if parsing fails, the event is allowed to proceed)
+# Note:   `SubagentStart` is NOT an official Claude Code hook event (as of 2026-04).
+#         Invocation-start events can be captured via PreToolUse matcher="Task" instead.
 # ==============================================================================
 
 set -uo pipefail
@@ -17,7 +19,10 @@ set -uo pipefail
 # --- Paths ---
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 LOG_DIR="$PROJECT_DIR/testreport/agents"
-SESSION_ID="${CLAUDE_SESSION_ID:-$(date +%Y%m%d)}"
+# Sanitize SESSION_ID to prevent path traversal (reject `/`, `..`, etc.)
+SESSION_ID_RAW="${CLAUDE_SESSION_ID:-$(date +%Y%m%d)}"
+SESSION_ID="$(printf '%s' "$SESSION_ID_RAW" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-64)"
+[[ -z "$SESSION_ID" ]] && SESSION_ID="$(date +%Y%m%d)"
 LOG_FILE="$LOG_DIR/$SESSION_ID.jsonl"
 
 # --- Read stdin JSON ---
