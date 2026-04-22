@@ -16,7 +16,7 @@ project-config.md           ->  TDD Implementation, Tests, Code Review
   standards)
 ```
 
-**1 config file + 11 skills + 5 teams + 5 quality gates** -- scales from solo to team development.
+**1 config file + 15 skills + 6 teams + 5 quality gates + 9 hooks + subagent layer** -- scales from solo to team development.
 
 ## Getting Started
 
@@ -88,30 +88,38 @@ For detailed setup instructions, step-by-step configuration guide, and integrati
 ## Features
 
 - **Single config file**: Consolidate tech stack, quality standards, and policies in `project-config.md`. Fill in incrementally
-- **11 skills**: PRD generation, architecture design, TDD implementation, code review, E2E testing, security scanning, and more
-- **5 team templates**: From full lifecycle management to feature development, QA, and refactoring
+- **15 skills**: PRD / architecture / task breakdown / TDD implementation / UI/UX / HIG compliance / design-token audit / code review / E2E / performance / refactoring / security scan / legal check / ADR / review-fix
+- **6 team templates**: Full lifecycle (PJM) / feature / QA / planning / design / refactoring
+- **6 subagents**: explorer / planner / security-reviewer / performance-analyst / doc-synchronizer / test-writer (`.claude/agents/`)
 - **5 quality gates**: Checkpoints where humans can review and approve at each phase
+- **9 hooks**: Defense in depth (5 block + 3 observe + 1 notify). Active even with `--dangerously-skip-permissions`
 - **Input/Output separation**: Clear separation between human requirements (`input/`) and AI deliverables (`output/`)
+- **MCP / GitHub Actions templates**: Project-shared MCP (`.mcp.json.template`) and `@claude` PR review (`.github/workflows/`)
 
 ## Skill Pipeline
 
 ```
 /prd -> /architecture -> /plan -> /implementing-features -> /code-review
                                                          -> /security-scan
+                                                         -> /legal-check
                                                          -> /e2e-testing
                                                          -> /performance
+                                                         -> /refactoring
+
+Auxiliary: /ui-ux-design, /hig-compliance, /design-system-audit, /adr, /review-fix
 ```
 
-Each skill can be used standalone or as part of a team (multi-agent).
+Each skill can be used standalone, as part of a team (multi-agent), or delegated to a one-off subagent (`.claude/agents/`).
 
 ## Teams
 
 | Template | Purpose | Members | Skills |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **11/11** |
+| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **All skills covered** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
+| `TEAM_DESIGN.md` | Design system integration | 5 | 4 |
 | `TEAM_REFACTOR.md` | Refactoring | 4 | 5 |
 
 ## File Structure

@@ -14,6 +14,9 @@
 | `session-start.sh` | SessionStart | — | 警告 | project-config.md / docs/ / settings.local.json の存在チェック |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | 警告 | Conventional Commits 形式チェック・シークレット検出 |
 | `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント（console.log 等）の残存検出 |
+| `post-failure-log.sh` | PostToolUse | 全ツール | 観測 | ツール失敗時の構造化エラーログ（`testreport/failures/`） |
+| `subagent-audit.sh` | SubagentStart / SubagentStop | — | 観測 | サブエージェントのライフサイクル記録（`testreport/agents/`） |
+| `pre-compact-backup.sh` | PreCompact | — | 観測 | コンパクト直前の会話履歴バックアップ（`.claude/transcripts/`） |
 | `notify-claude.sh` | Stop / Notification | — | 通知 | タスク完了時の外部通知（ntfy） |
 
 ### フックの動作原則
@@ -37,13 +40,15 @@
 
 ### 拡張可能なフックイベント
 
-本テンプレートで使用していないが、プロジェクト固有に追加可能なフックイベント:
+本テンプレートで実装済み以外の、プロジェクト固有に追加可能なフックイベント:
 
 | イベント | タイミング | 用途例 |
 | -------- | ---------- | ------ |
-| `SubagentStart` | サブエージェント起動時 | DB接続セットアップ、環境変数注入 |
-| `SubagentStop` | サブエージェント終了時 | リソースクリーンアップ、結果集約 |
+| `UserPromptSubmit` | ユーザー入力送信時 | 秘密情報の送信前検査、プロンプト強化 |
+| `PermissionRequest` | 権限承認ダイアログ表示時 | 安全コマンドの自動承認ルール |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | 観測・ログ記録（ブロック不可） |
+
+> 2026-04 時点で `SubagentStart` / `SubagentStop` / `PreCompact` / `PostToolUse (失敗ハンドリング)` は実装済み（本ファイル冒頭のフック一覧参照）。
 
 `settings.json` に追加する形式:
 

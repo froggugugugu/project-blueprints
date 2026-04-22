@@ -85,6 +85,30 @@ cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
+# ── .mcp.json.template の配置（利用者が .mcp.json にリネームして有効化）────
+if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
+    cp "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template"
+    info ".mcp.json.template を配置（有効化するには .mcp.json にリネーム）"
+fi
+
+# ── .github/ ワークフローテンプレートの配置 ──────────────────
+if [[ -d "$SCRIPT_DIR/.github" ]]; then
+    if [[ -d "$TARGET_DIR/.github" ]]; then
+        # 既存 .github/ があれば workflows/ とトップレベルの md だけマージ（上書きしない）
+        mkdir -p "$TARGET_DIR/.github/workflows"
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/workflows/*.template \
+              "$TARGET_DIR/.github/workflows/" 2>/dev/null || true
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/*.md \
+              "$TARGET_DIR/.github/" 2>/dev/null || true
+        info ".github/ にワークフローテンプレートをマージ（既存ファイルは保持）"
+    else
+        cp -r "$SCRIPT_DIR/.github" "$TARGET_DIR/.github"
+        info ".github/ を配置（ワークフロー有効化には .template 拡張子を外す）"
+    fi
+fi
+
 # ── フックスクリプトを実行可能に設定 ─────────────────────────
 if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
     chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true

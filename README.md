@@ -14,7 +14,7 @@ project-config.md       →  TDD実装・テスト・コードレビュー
 （技術スタック・品質基準）  品質レポート・技術ドキュメント
 ```
 
-**1ファイル設定 + 11スキル + 5チーム + 5品質ゲート** で、個人開発からチーム開発まで対応。
+**1ファイル設定 + 15スキル + 6チーム + 5品質ゲート + 9フック + サブエージェント層** で、個人開発からチーム開発まで対応。
 
 ## はじめかた（5分）
 
@@ -59,30 +59,38 @@ bash project-blueprint/setup.sh /path/to/your-project
 ## 特徴
 
 - **設定1ファイル**: 技術スタック・品質基準・ポリシーを `project-config.md` に集約。段階的に記入可能
-- **11スキル**: PRD生成、アーキテクチャ設計、TDD実装、コードレビュー、E2Eテスト、セキュリティスキャン等
-- **5チームテンプレート**: フルライフサイクル管理から機能開発・品質保証・リファクタリングまで
+- **15スキル**: PRD生成 / アーキテクチャ設計 / タスク分解 / TDD実装 / UI/UX整備 / HIG準拠 / デザイントークン監査 / コードレビュー / E2Eテスト / パフォーマンス / リファクタリング / セキュリティスキャン / 法務チェック / ADR記録 / レビュー修正
+- **6チームテンプレート**: フルライフサイクル（PJM）/ 機能開発 / 品質保証 / 設計 / デザイン / リファクタリング
+- **6サブエージェント**: explorer / planner / security-reviewer / performance-analyst / doc-synchronizer / test-writer（`.claude/agents/`）
 - **5品質ゲート**: 各フェーズで人間がレビュー・承認できるチェックポイント
+- **9フック**: 多層防御（ブロック系5 + 観測系3 + 通知系1）。`--dangerously-skip-permissions` でも有効
 - **Input/Output分離**: 人間の要求（`input/`）とAIの成果物（`output/`）を明確に分離
+- **MCP / GitHub Actions テンプレート**: プロジェクト共有 MCP（`.mcp.json.template`）と @claude PR レビュー（`.github/workflows/`）
 
 ## スキルパイプライン
 
 ```
 /prd → /architecture → /plan → /implementing-features → /code-review
                                                       → /security-scan
+                                                      → /legal-check
                                                       → /e2e-testing
                                                       → /performance
+                                                      → /refactoring
+
+補助系: /ui-ux-design, /hig-compliance, /design-system-audit, /adr, /review-fix
 ```
 
-各スキルは単体でも、チーム（マルチエージェント）としても使用可能。
+各スキルは単体でも、チーム（マルチエージェント）としても、単発の subagent（`.claude/agents/`）にも委譲可能。
 
 ## チーム一覧
 
 | テンプレート | 用途 | メンバー | スキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **11/11** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **全スキル網羅** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
+| `TEAM_DESIGN.md` | デザインシステム整備 | 5名 | 4 |
 | `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 |
 
 ## ファイル構成

@@ -14,6 +14,9 @@ Provides a unified view of rules that are otherwise distributed across various s
 | `session-start.sh` | SessionStart | — | Warn | Checks existence of project-config.md / docs/ / settings.local.json |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | Warn | Conventional Commits format check and secret detection |
 | `console-warn.sh` | PostToolUse | Edit\|Write | Warn | Detects leftover debug statements (console.log, etc.) |
+| `post-failure-log.sh` | PostToolUse | All tools | Observe | Structured error logs on tool failure (`testreport/failures/`) |
+| `subagent-audit.sh` | SubagentStart / SubagentStop | — | Observe | Subagent lifecycle records (`testreport/agents/`) |
+| `pre-compact-backup.sh` | PreCompact | — | Observe | Transcript backup before compact (`.claude/transcripts/`) |
 | `notify-claude.sh` | Stop / Notification | — | Notify | External notification on task completion (ntfy) |
 
 ### Hook Behavior Principles
@@ -37,13 +40,15 @@ Provides a unified view of rules that are otherwise distributed across various s
 
 ### Extensible Hook Events
 
-Not used in this template, but available for project-specific additions:
+Hook events **not** implemented in this template but available for project-specific additions:
 
 | Event | Timing | Use Case |
 | ----- | ------ | -------- |
-| `SubagentStart` | When a subagent starts | DB connection setup, environment variable injection |
-| `SubagentStop` | When a subagent finishes | Resource cleanup, result aggregation |
+| `UserPromptSubmit` | When user input is submitted | Pre-send secret inspection, prompt enhancement |
+| `PermissionRequest` | When permission approval dialog is shown | Auto-approval rules for safe commands |
 | `InstructionsLoaded` | When CLAUDE.md/rules are loaded | Observation and logging (cannot block) |
+
+> As of 2026-04, `SubagentStart` / `SubagentStop` / `PreCompact` / `PostToolUse (failure handling)` are implemented (see the Hook Inventory above).
 
 Add to `settings.json` in this format:
 

@@ -1,0 +1,97 @@
+# `backend/**/*` Rules (sample)
+
+> This file is a sample with the `.example` extension. Activate by copying without the extension:
+> ```bash
+> cp .claude/rules/path-backend.md.example .claude/rules/path-backend.md
+> ```
+>
+> Edit to fit your project. Delete sections you don't need.
+
+## Scope
+
+These rules apply when editing files under `backend/**/*`.
+They do not apply to frontend or mobile code.
+
+## Layer structure
+
+Assumed layering (adjust to your project):
+
+```
+backend/
+├── api/          # HTTP handlers / routing
+├── services/     # Business logic
+├── repositories/ # Data access
+├── domain/       # Entities / value objects
+├── infra/        # DB connection, external services
+└── tests/        # Tests
+```
+
+## Dependency direction rules
+
+- `api` → `services` → `repositories` → `domain` + `infra`
+- Reverse dependencies are forbidden (`domain` must not call `services`)
+- Sibling dependencies within `infra` are forbidden
+- No circular dependencies
+
+Detection command examples (adjust per language):
+
+```bash
+# TypeScript
+npx depcruise backend --config
+
+# Python
+pydeps backend --show-deps
+```
+
+## API design
+
+- Endpoints follow REST conventions (`POST /resources`, `GET /resources/:id`, etc.)
+- JSON responses. Structured errors: `{ error: { code, message, details } }`
+- Cursor-based pagination (avoid offset/limit)
+- Version via URL path (`/v1/`, `/v2/`)
+
+## Authentication / authorization
+
+- Authentication at the API gateway layer (api)
+- Authorization at the use-case layer (services)
+- Tokens via headers. Never via query parameters
+- JWT secrets / API keys via env vars (`${JWT_SECRET}`)
+
+## Database
+
+- Migrations managed by a dedicated tool (Prisma / SQLAlchemy Alembic / Flyway)
+- Destructive production migrations (DROP COLUMN, etc.) run in two phases (1. stop writes → 2. drop)
+- Transaction boundaries explicit at the services layer
+
+## Error handling
+
+- Distinguish domain exceptions from technical exceptions
+- Convert to HTTP status codes at the api layer
+- Structured (JSON) log output
+- Stack traces are not included in production responses
+
+## Performance
+
+- Detect N+1 queries in dev mode
+- Timeouts mandatory for outbound service calls
+- Long-running work moves to async jobs (via queue)
+
+## Security
+
+- All input validated (at domain / services boundaries)
+- SQL is always parameterized
+- File uploads: size / type checks, path traversal prevention
+- See `@.claude/pitfalls.md` Security section for more
+
+## Tests
+
+- Unit: services / domain-focused
+- Integration: api-layer end-to-end with real DB (sqlite / testcontainers)
+- E2E: api + external service mocks
+- Coverage targets follow `project-config.md` §6
+
+## Concept alignment
+
+- This is a path-specific rule and does not affect frontend code
+- Project-wide architecture pattern lives in `project-config.md` §4
+- Concrete tech choices live in `project-config.md` §2
