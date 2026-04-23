@@ -92,9 +92,14 @@ if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
 fi
 
 # ── .github/ ワークフローテンプレートの配置 ──────────────────
+# マージ範囲（既存 .github/ がある場合）:
+#   - workflows/*.template（ブループリント提供のワークフローテンプレート）
+#   - トップレベルの *.md（CLAUDE_REVIEW_SETUP.md 等）
+# 既存ファイルは `cp -n` で保持される。
+# .github/ISSUE_TEMPLATE/, PULL_REQUEST_TEMPLATE.md, dependabot.yml 等を
+# 将来ブループリント側に追加する場合、この分岐に対応コピーの追加が必要。
 if [[ -d "$SCRIPT_DIR/.github" ]]; then
     if [[ -d "$TARGET_DIR/.github" ]]; then
-        # 既存 .github/ があれば workflows/ とトップレベルの md だけマージ（上書きしない）
         mkdir -p "$TARGET_DIR/.github/workflows"
         # shellcheck disable=SC2086
         cp -n "$SCRIPT_DIR"/.github/workflows/*.template \

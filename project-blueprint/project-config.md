@@ -389,7 +389,9 @@ output/reports/                ← 人間向けサマリー（Git管理）
 | ---- | ---------------------- | ---- | -------- |
 | **Critical** | `claude-opus-4-7` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
 | **Complex** | `claude-sonnet-4-6` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
-| **Operational** | `claude-haiku-4-5` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
+| **Operational** | `claude-haiku-4-5-20251001` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
+
+> **モデル ID の注記**: Opus 4.7 / Sonnet 4.6 はエイリアス（Anthropic 側で最新バージョンに自動更新される）。Haiku は具体的な日付付きバージョン ID。エイリアスが将来的に廃止される可能性があるため、本番運用では日付付き ID への固定を検討する。最新・正確な ID は [Anthropic Console の Models 一覧](https://console.anthropic.com/settings/models) で確認。
 
 旧モデル（`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5` 等）は本テンプレートでは非推奨。
 

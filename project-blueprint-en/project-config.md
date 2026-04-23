@@ -389,7 +389,9 @@ output/reports/                <- Human-readable summaries (Git-managed)
 | ---- | --------------------- | --- | ---------- |
 | **Critical** | `claude-opus-4-7` | Architecture decisions, security audits, complex refactors | High |
 | **Complex** | `claude-sonnet-4-6` | Design, implementation, code review, E2E authoring | Medium (recommended) |
-| **Operational** | `claude-haiku-4-5` | Exploration, doc sync, lightweight repetitive work | Low |
+| **Operational** | `claude-haiku-4-5-20251001` | Exploration, doc sync, lightweight repetitive work | Low |
+
+> **Model ID notes**: Opus 4.7 and Sonnet 4.6 are alias IDs (Anthropic auto-updates them to the latest revision). Haiku uses a date-pinned version ID. Since aliases can be retired, production deployments should consider pinning to a dated ID. Check the exact current IDs on the [Anthropic Console Models page](https://console.anthropic.com/settings/models).
 
 Older models (`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5`, etc.) are discouraged in this template.
 

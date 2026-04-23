@@ -11,7 +11,7 @@
 
 - Python 3.11 以上を前提
 - `match` 文、型パラメータ構文、exception groups を積極活用
-- 新機能は `from __future__ import annotations` で先取りしない（3.11 以降は不要）
+- 型ヒントの循環参照回避や遅延評価が必要な場合は `from __future__ import annotations` を使う（PEP 563 は PEP 649 に置き換えられ、Python 3.14 以降で動作が変わる予定。3.13 までは明示的に import すると遅延評価が有効化される）
 
 ## 型ヒント
 
