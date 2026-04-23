@@ -52,7 +52,7 @@ color: magenta
 
 ### テスト実行結果
 
-```
+```text
  ✓ src/features/auth/login.test.ts (12)
    ✓ ログイン > 正常系 (3)
    ✓ ログイン > 異常系 (5)
@@ -80,7 +80,7 @@ Test Files  1 passed (1)
 - **実装コード変更禁止** — `src/**/*.ts(x)` の非 test ファイルは変更しない
 - **`project-config.md` / `docs/` を変更しない** — 必要なら `doc-synchronizer` agent を呼ぶ
 - **テスト実行で破壊的コマンド禁止** — `safety-check.sh` フックが発動する
-- **テストが通ることを確認** — Bash で `<pm> run test` まで責任を持つ
+- **テストが通ることを確認** — Bash でプロジェクトのテストコマンドを実行する。`project-config.md` §3 で定義されたパッケージマネージャとテストコマンドを使う（例: `npm run test`, `pnpm run test`, `bun run test`）。本ファイル中の `<pm>` は §3 で定義されたパッケージマネージャのショートハンド
 
 ## 関連スキル
 

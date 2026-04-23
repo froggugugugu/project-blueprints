@@ -27,7 +27,7 @@ Each team is mapped to the 15 skills under `.claude/skills/`.
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
-| `TEAM_DESIGN.md` | Design system integration | 5 | 4 |
+| `TEAM_DESIGN.md` | Design system integration | 4 | 3 |
 | `TEAM_REFACTOR.md` | Refactoring | 4 | 5 |
 
 ### Team Selection Guide
@@ -190,14 +190,14 @@ project-root/
 
 ## Skill Coverage
 
-Mapping of all skills across teams:
+Mapping of team-routed skills across teams:
 
 | Skill | PJM | Feature | QA | Planning | Design | Refactor |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
 | `plan` | Planner | PL | — | Planner | — | PL |
 | `implementing-features` | Developer | Developer | — | — | — | Refactorer |
 | `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |
-| `hig-compliance` | — | — | — | — | HIG | — |
+| `hig-compliance` | Reviewer | — | — | — | — | — |
 | `design-system-audit` | — | — | — | — | DS Eng | — |
 | `code-review` | Reviewer | Reviewer | Reviewer | — | Reviewer | Reviewer |
 | `e2e-testing` | Tester | Tester | Tester | — | — | Tester |
@@ -207,6 +207,13 @@ Mapping of all skills across teams:
 | `legal-check` | Reviewer | — | Security | — | — | — |
 | `prd` | Analyst | — | — | Analyst | — | — |
 | `architecture` | Analyst | — | — | Architect | — | — |
+
+### Auxiliary skills (not mapped to any team)
+
+These skills are designed to be called standalone, outside team contexts:
+
+- **`/adr`**: Records architecture decisions. Called on-demand when a judgment call is made
+- **`/review-fix`**: Auto-fixes CodeRabbit / Copilot review comments on a given PR number
 
 ## Invocation Patterns
 

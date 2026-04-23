@@ -52,7 +52,7 @@ Follow existing test patterns (AAA / Arrange-Act-Assert, fixtures, Page Objects)
 
 ### Test run
 
-```
+```text
  ✓ src/features/auth/login.test.ts (12)
    ✓ login > happy (3)
    ✓ login > error (5)
@@ -80,7 +80,7 @@ Test Files  1 passed (1)
 - **No implementation changes** — non-test files under `src/**/*.ts(x)` are off-limits
 - **No changes to `project-config.md` or `docs/`** — delegate to `doc-synchronizer` if needed
 - **No destructive commands during test runs** — blocked by `safety-check.sh`
-- **Verify tests pass** — responsible through `<pm> run test` via Bash
+- **Verify tests pass** — run the project's test command via Bash. Use the package manager and test command defined in `project-config.md` §3 (e.g., `npm run test`, `pnpm run test`, `bun run test`). `<pm>` throughout this file is shorthand for that configured package manager
 
 ## Related skills
 

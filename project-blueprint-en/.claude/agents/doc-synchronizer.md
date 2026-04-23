@@ -47,7 +47,7 @@ Lightweight, fast, deterministic. Runs on Haiku.
 ## Constraints
 
 - **No source code changes** — no `src/`, `tests/`, or config changes
-- **`project-config.md` changes are limited** — human-managed; AI can modify only §2 (tech stack) / §3 (commands) / §11 (known pitfalls)
+- **`project-config.md` changes are limited** — human-managed. AI may only modify §2 (tech stack) / §3 (commands) / §11 (known pitfalls). Never touch §1 / §4–§10 / §12 / §13 (model-selection strategy), which are human-decided and AI-off-limits
 - **Never write `input/`** — human input domain
 - **Never write `output/reports/`** — quality reports belong to each skill
 
