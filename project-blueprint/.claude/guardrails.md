@@ -14,6 +14,9 @@
 | `session-start.sh` | SessionStart | — | 警告 | project-config.md / docs/ / settings.local.json の存在チェック |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | 警告 | Conventional Commits 形式チェック・シークレット検出 |
 | `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント（console.log 等）の残存検出 |
+| `post-failure-log.sh` | PostToolUse | 全ツール | 観測 | ツール失敗時の構造化エラーログ（`testreport/failures/`） |
+| `subagent-audit.sh` | SubagentStop | — | 観測 | サブエージェント完了の記録（`testreport/agents/`） |
+| `pre-compact-backup.sh` | PreCompact | — | 観測 | コンパクト直前の会話履歴バックアップ（`testreport/transcripts/`） |
 | `notify-claude.sh` | Stop / Notification | — | 通知 | タスク完了時の外部通知（ntfy） |
 
 ### フックの動作原則
@@ -37,23 +40,26 @@
 
 ### 拡張可能なフックイベント
 
-本テンプレートで使用していないが、プロジェクト固有に追加可能なフックイベント:
+本テンプレートで実装済み以外の、プロジェクト固有に追加可能なフックイベント:
 
 | イベント | タイミング | 用途例 |
 | -------- | ---------- | ------ |
-| `SubagentStart` | サブエージェント起動時 | DB接続セットアップ、環境変数注入 |
-| `SubagentStop` | サブエージェント終了時 | リソースクリーンアップ、結果集約 |
-| `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | 観測・ログ記録（ブロック不可） |
+| `UserPromptSubmit` | ユーザー入力送信時 | 秘密情報の送信前検査、プロンプト強化 |
+| `SessionEnd` | セッション終了時 | 使用量集計、メトリクス送信 |
+| `PreToolUse` (matcher: `"Task"`) | サブエージェント起動時 | 開始イベント捕捉、環境変数注入 |
+
+> 2026-04 時点で `SubagentStop` / `PreCompact` / `PostToolUse (失敗ハンドリング)` は実装済み（本ファイル冒頭のフック一覧参照）。
+> 公式の hook イベントは `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` の 9 種類。`SubagentStart` / `InstructionsLoaded` / `PermissionRequest` 等は公式仕様には存在しない。
 
 `settings.json` に追加する形式:
 
 ```json
 {
-  "SubagentStart": [
+  "UserPromptSubmit": [
     {
-      "matcher": "db-agent",
+      "matcher": "",
       "hooks": [
-        { "type": "command", "command": "./scripts/setup-db.sh", "timeout": 10 }
+        { "type": "command", "command": "./scripts/prompt-audit.sh", "timeout": 10 }
       ]
     }
   ]
@@ -117,13 +123,15 @@
 ## 3層防御モデル
 
 ```text
-Layer 1: フック（PreToolUse / PostToolUse / SessionStart）
+Layer 1: フック（PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact）
   ↓  --dangerously-skip-permissions でも有効
 Layer 2: Deny ルール（settings.json）
   ↓  通常モードで有効
 Layer 3: Allow ルール（settings.local.json）
   ↓  通常モードでのみ有効
 ```
+
+> Layer 1 にはブロック系（`safety-check.sh` / `protect-files.sh`）+ 観測系（`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`）+ 通知系（`notify-claude.sh`）が含まれる。観測系・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で防御機構の一部として機能する。
 
 - Layer 1 は常に有効。最も信頼性の高い防御層
 - Layer 2 は通常モードで自動適用

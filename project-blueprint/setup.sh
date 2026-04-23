@@ -85,6 +85,39 @@ cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
+# ── .mcp.json.template の配置（利用者が .mcp.json にリネームして有効化）────
+# 既存の .mcp.json.template がターゲットにある場合は保持する（利用者のカスタマイズ保護）
+if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
+    if cp -n "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template" 2>/dev/null; then
+        info ".mcp.json.template を配置（有効化するには .mcp.json にリネーム）"
+    else
+        info ".mcp.json.template は既に存在するため保持（上書きしない）"
+    fi
+fi
+
+# ── .github/ ワークフローテンプレートの配置 ──────────────────
+# マージ範囲（既存 .github/ がある場合）:
+#   - workflows/*.template（ブループリント提供のワークフローテンプレート）
+#   - トップレベルの *.md（CLAUDE_REVIEW_SETUP.md 等）
+# 既存ファイルは `cp -n` で保持される。
+# .github/ISSUE_TEMPLATE/, PULL_REQUEST_TEMPLATE.md, dependabot.yml 等を
+# 将来ブループリント側に追加する場合、この分岐に対応コピーの追加が必要。
+if [[ -d "$SCRIPT_DIR/.github" ]]; then
+    if [[ -d "$TARGET_DIR/.github" ]]; then
+        mkdir -p "$TARGET_DIR/.github/workflows"
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/workflows/*.template \
+              "$TARGET_DIR/.github/workflows/" 2>/dev/null || true
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/*.md \
+              "$TARGET_DIR/.github/" 2>/dev/null || true
+        info ".github/ にワークフローテンプレートをマージ（既存ファイルは保持）"
+    else
+        cp -r "$SCRIPT_DIR/.github" "$TARGET_DIR/.github"
+        info ".github/ を配置（ワークフロー有効化には .template 拡張子を外す）"
+    fi
+fi
+
 # ── フックスクリプトを実行可能に設定 ─────────────────────────
 if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
     chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true

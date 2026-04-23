@@ -85,6 +85,39 @@ cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
+# -- Place .mcp.json.template (rename to .mcp.json to activate) ----
+# Preserve existing .mcp.json.template in the target (protects user customizations).
+if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
+    if cp -n "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template" 2>/dev/null; then
+        info "Placed .mcp.json.template (rename to .mcp.json to activate)"
+    else
+        info ".mcp.json.template already exists, preserved (not overwritten)"
+    fi
+fi
+
+# -- Place .github/ workflow templates -----------------------------
+# Merge scope (when .github/ already exists):
+#   - workflows/*.template (blueprint-supplied workflow templates)
+#   - top-level *.md (e.g., CLAUDE_REVIEW_SETUP.md)
+# Existing files are preserved via `cp -n`.
+# If the blueprint later adds .github/ISSUE_TEMPLATE/, PULL_REQUEST_TEMPLATE.md,
+# dependabot.yml, etc., this branch must be extended to copy them explicitly.
+if [[ -d "$SCRIPT_DIR/.github" ]]; then
+    if [[ -d "$TARGET_DIR/.github" ]]; then
+        mkdir -p "$TARGET_DIR/.github/workflows"
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/workflows/*.template \
+              "$TARGET_DIR/.github/workflows/" 2>/dev/null || true
+        # shellcheck disable=SC2086
+        cp -n "$SCRIPT_DIR"/.github/*.md \
+              "$TARGET_DIR/.github/" 2>/dev/null || true
+        info "Merged .github/ workflow templates (existing files preserved)"
+    else
+        cp -r "$SCRIPT_DIR/.github" "$TARGET_DIR/.github"
+        info "Placed .github/ (remove .template extension to activate workflows)"
+    fi
+fi
+
 # -- Make hook scripts executable -----------------------------------
 if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
     chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true

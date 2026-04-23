@@ -35,7 +35,7 @@ bash setup.sh /path/to/your-project
 - build: npm run build
 ```
 
-> 残り9セクションは空欄のままで動作する。必要に応じて段階的に追記すればよい。
+> 残り10セクションは空欄のままで動作する。必要に応じて段階的に追記すればよい。
 
 ### Step 3: スキルを1つ試す
 
@@ -270,7 +270,7 @@ project-blueprint/
 │
 ├── README.md                              ← このファイル
 ├── setup.sh                               ← 1コマンドセットアップスクリプト
-├── project-config.md                      ← [人間+AI] 設定ファイル（12セクション）
+├── project-config.md                      ← [人間+AI] 設定ファイル（13セクション）
 ├── project-config.sample.md               ← 記入済みサンプル（タスク管理アプリ）
 │
 ├── input/                                 ← [人間] インプット

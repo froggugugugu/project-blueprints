@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "_comment_usage": "プロジェクト共有 MCP サーバー定義テンプレート。このファイルを `.mcp.json` にコピー・リネームして有効化する。認証情報は環境変数で注入し、ファイルに直書きしない。使わないサーバーはブロックごと削除する。",
+  "mcpServers": {
+    "context7": {
+      "_comment": "公式ドキュメント・API リファレンス取得。WebFetch で足りないときの補完",
+      "command": "npx",
+      "args": ["-y", "@context7/mcp-server"]
+    },
+    "playwright": {
+      "_comment": "ブラウザ自動化・E2E テストデバッグ",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"]
+    },
+    "fetch": {
+      "_comment": "認証不要の HTTP GET。外部ドキュメント取得に使う",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "github": {
+      "_comment": "GitHub API (Issues / PR / Actions)。$GITHUB_TOKEN を事前に export する。スコープは最小限 (repo:status, public_repo) に",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  },
+  "_comment_security": [
+    "MCP サーバーは任意のコマンド実行権限を持つ。信頼できるソースのみ使用",
+    "認証トークンは必ず環境変数経由 (${VAR_NAME})。JSON に直書きしない",
+    "settings.local.json の permissions.allow で MCP(server:<name>) を明示許可",
+    "postgres 等の書き込み可能サーバーは permissions.deny で拒否してから read-only 権限で有効化する"
+  ],
+  "_comment_optional_servers": {
+    "postgres": {
+      "_warning": "DB 直接接続はセキュリティリスク高。read-only で運用し、本番 DSN は厳禁",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
+      }
+    },
+    "sentry": {
+      "_warning": "本番エラー調査に有効。$SENTRY_AUTH_TOKEN を事前に export",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@sentry/mcp-server"],
+        "env": { "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}" }
+      }
+    },
+    "slack": {
+      "_warning": "チャット通知・共有。$SLACK_BOT_TOKEN が必要",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-slack"],
+        "env": { "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}" }
+      }
+    }
+  }
+}

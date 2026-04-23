@@ -27,7 +27,7 @@
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
-| `TEAM_DESIGN.md` | デザインシステム | 5名 | 4 |
+| `TEAM_DESIGN.md` | デザインシステム | 4名 | 3 |
 | `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 |
 
 ### チーム選定ガイド
@@ -190,14 +190,14 @@ project-root/
 
 ## スキルカバレッジ
 
-全スキルの各チームへのマッピング:
+チームに紐付くスキルのマッピング:
 
 | スキル | PJM | Feature | QA | Planning | Design | Refactor |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
 | `plan` | Planner | PL | — | Planner | — | PL |
 | `implementing-features` | Developer | Developer | — | — | — | Refactorer |
 | `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |
-| `hig-compliance` | — | — | — | — | HIG | — |
+| `hig-compliance` | Reviewer | — | — | — | — | — |
 | `design-system-audit` | — | — | — | — | DS Eng | — |
 | `code-review` | Reviewer | Reviewer | Reviewer | — | Reviewer | Reviewer |
 | `e2e-testing` | Tester | Tester | Tester | — | — | Tester |
@@ -207,6 +207,13 @@ project-root/
 | `legal-check` | Reviewer | — | Security | — | — | — |
 | `prd` | Analyst | — | — | Analyst | — | — |
 | `architecture` | Analyst | — | — | Architect | — | — |
+
+### 補助スキル（チームに紐付けない）
+
+以下のスキルはチーム外で単体呼び出しを想定する:
+
+- **`/adr`**: 設計判断の記録。判断タイミングでオンデマンド呼び出し
+- **`/review-fix`**: 指定 PR の CodeRabbit / Copilot レビュー指摘を自動修正
 
 ## 起動パターン
 

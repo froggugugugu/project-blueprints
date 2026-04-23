@@ -14,6 +14,9 @@ Provides a unified view of rules that are otherwise distributed across various s
 | `session-start.sh` | SessionStart | — | Warn | Checks existence of project-config.md / docs/ / settings.local.json |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | Warn | Conventional Commits format check and secret detection |
 | `console-warn.sh` | PostToolUse | Edit\|Write | Warn | Detects leftover debug statements (console.log, etc.) |
+| `post-failure-log.sh` | PostToolUse | All tools | Observe | Structured error logs on tool failure (`testreport/failures/`) |
+| `subagent-audit.sh` | SubagentStop | — | Observe | Subagent completion records (`testreport/agents/`) |
+| `pre-compact-backup.sh` | PreCompact | — | Observe | Transcript backup before compact (`testreport/transcripts/`) |
 | `notify-claude.sh` | Stop / Notification | — | Notify | External notification on task completion (ntfy) |
 
 ### Hook Behavior Principles
@@ -37,23 +40,26 @@ Provides a unified view of rules that are otherwise distributed across various s
 
 ### Extensible Hook Events
 
-Not used in this template, but available for project-specific additions:
+Hook events **not** implemented in this template but available for project-specific additions:
 
 | Event | Timing | Use Case |
 | ----- | ------ | -------- |
-| `SubagentStart` | When a subagent starts | DB connection setup, environment variable injection |
-| `SubagentStop` | When a subagent finishes | Resource cleanup, result aggregation |
-| `InstructionsLoaded` | When CLAUDE.md/rules are loaded | Observation and logging (cannot block) |
+| `UserPromptSubmit` | When user input is submitted | Pre-send secret inspection, prompt enhancement |
+| `SessionEnd` | When a session ends | Usage aggregation, metrics submission |
+| `PreToolUse` (matcher: `"Task"`) | Subagent invocation | Capture start events, inject env vars |
+
+> As of 2026-04, `SubagentStop` / `PreCompact` / `PostToolUse (failure handling)` are implemented (see the Hook Inventory above).
+> The official hook events are `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` (9 total). `SubagentStart` / `InstructionsLoaded` / `PermissionRequest` are not part of the official spec.
 
 Add to `settings.json` in this format:
 
 ```json
 {
-  "SubagentStart": [
+  "UserPromptSubmit": [
     {
-      "matcher": "db-agent",
+      "matcher": "",
       "hooks": [
-        { "type": "command", "command": "./scripts/setup-db.sh", "timeout": 10 }
+        { "type": "command", "command": "./scripts/prompt-audit.sh", "timeout": 10 }
       ]
     }
   ]
@@ -117,13 +123,15 @@ Add to `settings.json` in this format:
 ## 3-Layer Defense Model
 
 ```text
-Layer 1: Hooks (PreToolUse / PostToolUse / SessionStart)
+Layer 1: Hooks (PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact)
   ↓  Active even with --dangerously-skip-permissions
 Layer 2: Deny rules (settings.json)
   ↓  Active in normal mode
 Layer 3: Allow rules (settings.local.json)
   ↓  Active only in normal mode
 ```
+
+> Layer 1 includes blocking hooks (`safety-check.sh` / `protect-files.sh`), observation hooks (`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`), and notification hooks (`notify-claude.sh`). The observation and notification hooks don't block operations, but they still function as part of the defense perimeter by persisting audit trails and alerts even under `--dangerously-skip-permissions`.
 
 - Layer 1 is always active. The most reliable defense layer
 - Layer 2 is automatically applied in normal mode

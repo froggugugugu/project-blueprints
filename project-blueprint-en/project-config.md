@@ -375,3 +375,81 @@ output/reports/                <- Human-readable summaries (Git-managed)
 | draw.io | yes | Architecture diagrams and flow charts |
 | pr-review-toolkit | yes | GitHub PR integration |
 | sentry | no | Production error investigation (enable as needed) |
+
+---
+
+## 13. Model Selection Strategy <!-- Recommended -->
+
+> Which Claude model — Opus / Sonnet / Haiku — to use for each skill / team / agent.
+> Makes the cost / quality / speed trade-off explicit. If unspecified, falls back to the session default.
+
+### 13.1 Tier definitions
+
+| Tier | Model (as of 2026-04) | Use | Cost level |
+| ---- | --------------------- | --- | ---------- |
+| **Critical** | `claude-opus-4-7` | Architecture decisions, security audits, complex refactors | High |
+| **Complex** | `claude-sonnet-4-6` | Design, implementation, code review, E2E authoring | Medium (recommended) |
+| **Operational** | `claude-haiku-4-5-20251001` | Exploration, doc sync, lightweight repetitive work | Low |
+
+> **Model ID notes**: Opus 4.7 and Sonnet 4.6 are alias IDs (Anthropic auto-updates them to the latest revision). Haiku uses a date-pinned version ID. Since aliases can be retired, production deployments should consider pinning to a dated ID. Check the exact current IDs on the [Anthropic Console Models page](https://console.anthropic.com/settings/models).
+
+Older models (`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5`, etc.) are discouraged in this template.
+
+### 13.2 Skill × model recommendations
+
+| Skill | Recommended tier | Rationale |
+| ----- | ---------------- | --------- |
+| `/prd` | Complex | Requirements structuring; moderate reasoning |
+| `/architecture` | Critical | Design mistakes ripple downstream |
+| `/plan` | Complex | Task breakdown, dependency mapping |
+| `/implementing-features` | Complex | Main TDD implementation workload |
+| `/ui-ux-design` | Complex | Design-system alignment judgment |
+| `/hig-compliance` | Complex | Cross-screen consistency |
+| `/design-system-audit` | Complex | Ratio / token calculations |
+| `/code-review` | Critical | Finding quality drives downstream quality |
+| `/security-scan` | Critical | Missed vulnerabilities have large impact |
+| `/legal-check` | Complex | License / GDPR text matching |
+| `/e2e-testing` | Complex | Page Object design, stability |
+| `/performance` | Complex | Measurement data interpretation |
+| `/refactoring` | Critical | Structural change risk management |
+| `/adr` | Operational | Templated record keeping |
+| `/review-fix` | Complex | Must correctly understand review intent |
+
+### 13.3 Team × model recommendations
+
+| Team | PJM | Analyst | Planner | Developer | Reviewer | Tester |
+| ---- | --- | ------- | ------- | --------- | -------- | ------ |
+| `TEAM_PJM` | Critical | Complex | Complex | Complex | Critical | Complex |
+| `TEAM_FEATURE` | — | — | Complex | Complex | Complex | Complex |
+| `TEAM_QA` | — | — | — | — | Critical | Complex |
+| `TEAM_PLANNING` | Critical | Complex | Complex | — | — | — |
+| `TEAM_DESIGN` | — | Complex | — | Complex | Complex | — |
+| `TEAM_REFACTOR` | — | — | Complex | Critical | Complex | Complex |
+
+The PJM (lead) role uses Critical because of the judgment precision required.
+Reviewer is Critical since audit misalignment is costly.
+
+### 13.4 Subagent × model recommendations
+
+| Agent | Tier | Rationale |
+| ----- | ---- | --------- |
+| `explorer` | Operational | Lightweight Grep/Read iteration |
+| `planner` | Complex | Impact analysis |
+| `security-reviewer` | Critical | Missed vulnerabilities are critical |
+| `performance-analyst` | Complex | Measurement data interpretation |
+| `doc-synchronizer` | Operational | Deterministic diff updates |
+| `test-writer` | Complex | Edge-case coverage |
+
+### 13.5 Cost optimization principles
+
+1. **Use Operational aggressively**: Exploration / sync / templated generation runs fine on Haiku. No need for Opus
+2. **Mix tiers in parallel runs**: For `TEAM_PJM --parallel`, don't put everyone on Opus; mix tiers by role
+3. **Subagents prefer Haiku**: Single-shot delegation stays lightweight; upgrade to Critical only when needed
+4. **Set cost limits on the API key**: See `@.claude/pitfalls.md` #6
+5. **Monthly usage review**: Check the Anthropic Console; revise tiers if usage drifts from expectations
+
+### 13.6 Behavior when unspecified
+
+- A skill / agent with omitted frontmatter `model:` inherits the session default
+- The tables here are **recommendations** and may be overridden by project needs
+- For a personal "always use Opus" preference, set `model` in `~/.claude/settings.json`
