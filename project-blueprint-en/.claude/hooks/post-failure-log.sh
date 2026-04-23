@@ -57,14 +57,27 @@ esac
 # --- Extract fields ---
 if command -v jq &>/dev/null; then
     TOOL_NAME="$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null)"
-    # jq's .[0:500] is a character-based slice (multibyte-safe), unlike `head -c 500`
-    # which splits on bytes and corrupts UTF-8 (e.g. Japanese error messages).
+    # jq's .[0:500] is a character-based slice (multibyte-safe).
     ERROR_MSG="$(echo "$INPUT" | jq -r '(.tool_result.error // .tool_result.content[0].text // "unknown") | tostring | .[0:500]' 2>/dev/null)"
-    # Emit raw compact JSON (no extra string-quoting) and byte-truncate.
-    # Avoids double-encoding when later passed to `jq -nc --arg input_summary`.
-    TOOL_INPUT_SUMMARY="$(echo "$INPUT" | jq -c '.tool_input' 2>/dev/null | cut -c1-500)"
+    # Redact sensitive keys and truncate by character count (multibyte-safe).
+    # Keys matching token/secret/password/credential/authorization/api[_-]key
+    # are replaced with [REDACTED] to prevent leaking secrets into audit logs.
+    TOOL_INPUT_SUMMARY="$(echo "$INPUT" | jq -r '
+        (.tool_input // {}) | (
+          if type == "object" then
+            with_entries(
+              if (.key | test("(?i)(token|secret|password|credential|authorization|api[_-]?key)"))
+              then .value = "[REDACTED]"
+              else .
+              end
+            ) | tojson
+          else
+            "[non-object tool_input omitted]"
+          end
+        ) | .[0:500]' 2>/dev/null)"
 else
-    TOOL_NAME="$(echo "$INPUT" | sed -n 's/.*"tool_name"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
+    # sed fallback: use POSIX `[[:space:]]` (BSD/macOS sed doesn't understand `\s`).
+    TOOL_NAME="$(echo "$INPUT" | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
     ERROR_MSG="unknown"
     TOOL_INPUT_SUMMARY="unknown"
 fi
@@ -86,9 +99,10 @@ if command -v jq &>/dev/null; then
         '{timestamp: $timestamp, tool: $tool, error: $error, input_summary: $input_summary, session_id: $session}' \
         >> "$LOG_FILE" 2>/dev/null || true
 else
-    # Fallback: manual escaping (best-effort)
+    # Fallback: manual escaping (best-effort). Keep schema consistent with
+    # the jq branch by including input_summary (set to "unknown" when no jq).
     ESCAPED_ERROR="$(echo "$ERROR_MSG" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr -d '\n')"
-    printf '{"timestamp":"%s","tool":"%s","error":"%s","session_id":"%s"}\n' \
+    printf '{"timestamp":"%s","tool":"%s","error":"%s","input_summary":"unknown","session_id":"%s"}\n' \
         "$TIMESTAMP" "$TOOL_NAME" "$ESCAPED_ERROR" "$SESSION_ID" \
         >> "$LOG_FILE" 2>/dev/null || true
 fi
