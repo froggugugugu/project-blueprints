@@ -10,7 +10,7 @@ The blueprint is designed to be copied into target projects via the setup steps 
 
 ## Repository Structure
 
-```
+```text
 project-blueprints/
 ├── README.md                    # Root docs (Japanese)
 ├── README-en.md                 # Root docs (English)

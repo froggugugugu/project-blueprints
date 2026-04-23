@@ -69,7 +69,7 @@ bash project-blueprint/setup.sh /path/to/your-project
 
 ## スキルパイプライン
 
-```
+```text
 /prd → /architecture → /plan → /implementing-features → /code-review
                                                       → /security-scan
                                                       → /legal-check
