@@ -98,7 +98,7 @@ Keep `max_turns` low to prevent infinite loops and excessive API consumption:
 
 - **Review usage monthly**: Anthropic Console → Usage
 - **Alert thresholds**: set an alert at 80% of spend limit
-- **Large PRs**: rather than increasing `max_turns`, split PRs upstream
+- **Large PRs**: rather than increasing `max_turns`, **split the PR upstream** into smaller, topic-scoped PRs (improves review quality and cost efficiency)
 - **Avoid wasted runs**: keep the Draft-PR filter in `if:`
 
 ## Troubleshooting

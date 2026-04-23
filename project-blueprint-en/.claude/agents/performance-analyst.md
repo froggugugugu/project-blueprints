@@ -71,8 +71,11 @@ open testreport/bundle-analyzer.html
 ## Constraints
 
 - **No unmeasured proposals**
-- **No code changes** — proposals only; implementation is `/performance`'s job
-- **Bash granted** — for measurement commands (`npm run build`, `lighthouse`, etc.)
+- **No source-tree mutations** — implementation is `/performance`'s job; this agent only measures
+- **Bash granted** — for measurement commands (`npm run build`, `lighthouse`, etc.), but:
+  - No dependency install / update (measure with existing deps only)
+  - Measurement artifacts go under `testreport/` or a temp directory
+  - Never modify `src/`, config files, or lockfiles
 - **Destructive commands blocked** — by `safety-check.sh`; only what's needed for measurement
 
 ## Related skills / agents

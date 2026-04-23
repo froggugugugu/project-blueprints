@@ -123,13 +123,15 @@ Add to `settings.json` in this format:
 ## 3-Layer Defense Model
 
 ```text
-Layer 1: Hooks (PreToolUse / PostToolUse / SessionStart)
+Layer 1: Hooks (PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact)
   ↓  Active even with --dangerously-skip-permissions
 Layer 2: Deny rules (settings.json)
   ↓  Active in normal mode
 Layer 3: Allow rules (settings.local.json)
   ↓  Active only in normal mode
 ```
+
+> Layer 1 includes blocking hooks (`safety-check.sh` / `protect-files.sh`), observation hooks (`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`), and notification hooks (`notify-claude.sh`). The observation and notification hooks don't block operations, but they still function as part of the defense perimeter by persisting audit trails and alerts even under `--dangerously-skip-permissions`.
 
 - Layer 1 is always active. The most reliable defense layer
 - Layer 2 is automatically applied in normal mode

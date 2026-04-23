@@ -71,8 +71,11 @@ open testreport/bundle-analyzer.html
 ## 制約
 
 - **計測なしの改善案禁止** — 「多分遅い」で提案しない
-- **コード変更禁止** — 提案のみ。実装は `/performance` skill で行う
-- **Bash 権限あり** — 計測コマンド実行のため（`npm run build`, `lighthouse` 等）
+- **ソースツリーの変更禁止** — 実装は `/performance` skill に任せる。本 agent は計測のみ
+- **Bash 権限あり** — 計測コマンド実行のため（`npm run build`, `lighthouse` 等）。ただし:
+  - 依存パッケージの追加・更新は行わない（既存依存のみで計測）
+  - 成果物（プロファイル / バンドル解析等）は `testreport/` または一時ディレクトリに書く
+  - `src/`, 設定ファイル, lockfile の書き換えは禁止
 - **破壊的コマンドは禁止** — `safety-check.sh` フックが発動する。計測に必要なものだけ
 
 ## 関連スキル / agent

@@ -63,7 +63,7 @@ or wait for Claude Code's native path-specific rules feature.
 ## Concept alignment
 
 - `.claude/rules/` is part of the generic template layer (project-specific lives in `project-config.md` or `docs/`)
-- CLAUDE.md is **unchanged** (non-destructive) — rule extensions happen here
+- **By default** CLAUDE.md is not modified (non-destructive). Only if you want a rule loaded in every session do you optionally append an `@.claude/rules/...` reference (see Step 3 above)
 - Aim for 50-100 lines per file (same rationale as CLAUDE.md — avoid bloat)
 - Examples are **inactive by default** (anything with `.example` extension is not loaded)
 

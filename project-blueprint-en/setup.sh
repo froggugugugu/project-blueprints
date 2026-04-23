@@ -86,9 +86,13 @@ cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
 # -- Place .mcp.json.template (rename to .mcp.json to activate) ----
+# Preserve existing .mcp.json.template in the target (protects user customizations).
 if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
-    cp "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template"
-    info "Placed .mcp.json.template (rename to .mcp.json to activate)"
+    if cp -n "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template" 2>/dev/null; then
+        info "Placed .mcp.json.template (rename to .mcp.json to activate)"
+    else
+        info ".mcp.json.template already exists, preserved (not overwritten)"
+    fi
 fi
 
 # -- Place .github/ workflow templates -----------------------------

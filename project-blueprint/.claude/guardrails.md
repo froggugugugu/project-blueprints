@@ -123,13 +123,15 @@
 ## 3層防御モデル
 
 ```text
-Layer 1: フック（PreToolUse / PostToolUse / SessionStart）
+Layer 1: フック（PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact）
   ↓  --dangerously-skip-permissions でも有効
 Layer 2: Deny ルール（settings.json）
   ↓  通常モードで有効
 Layer 3: Allow ルール（settings.local.json）
   ↓  通常モードでのみ有効
 ```
+
+> Layer 1 にはブロック系（`safety-check.sh` / `protect-files.sh`）+ 観測系（`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`）+ 通知系（`notify-claude.sh`）が含まれる。観測系・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で防御機構の一部として機能する。
 
 - Layer 1 は常に有効。最も信頼性の高い防御層
 - Layer 2 は通常モードで自動適用

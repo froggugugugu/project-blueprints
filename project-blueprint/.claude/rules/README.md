@@ -62,7 +62,7 @@ vi .claude/rules/language-typescript.md
 ## コンセプト整合
 
 - `.claude/rules/` は汎用テンプレート層の一部（プロジェクト固有は `project-config.md` や `docs/` に）
-- CLAUDE.md は**変更しない**（非破壊）— ルール拡張は全てここで行う
+- **デフォルトでは** CLAUDE.md を変更しない（非破壊）。ルールを全セッションで読ませたい場合のみ `@.claude/rules/...` 参照を追記する（上記ステップ 3 参照）
 - ルールは 1 ファイル 50〜100 行を目安に（CLAUDE.md と同じ理由で肥大化を避ける）
 - example は初期状態で**無効**（`.example` 拡張子がついている限り読まれない）
 

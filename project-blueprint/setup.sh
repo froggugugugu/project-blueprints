@@ -86,9 +86,13 @@ cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 
 # ── .mcp.json.template の配置（利用者が .mcp.json にリネームして有効化）────
+# 既存の .mcp.json.template がターゲットにある場合は保持する（利用者のカスタマイズ保護）
 if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
-    cp "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template"
-    info ".mcp.json.template を配置（有効化するには .mcp.json にリネーム）"
+    if cp -n "$SCRIPT_DIR/.mcp.json.template" "$TARGET_DIR/.mcp.json.template" 2>/dev/null; then
+        info ".mcp.json.template を配置（有効化するには .mcp.json にリネーム）"
+    else
+        info ".mcp.json.template は既に存在するため保持（上書きしない）"
+    fi
 fi
 
 # ── .github/ ワークフローテンプレートの配置 ──────────────────

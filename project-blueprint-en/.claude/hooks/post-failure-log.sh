@@ -37,6 +37,15 @@ IS_ERROR="unknown"
 if command -v jq &>/dev/null; then
     IS_ERROR="$(echo "$INPUT" | jq -r '.tool_result.is_error // .tool_response.is_error // "unknown"' 2>/dev/null)"
     [[ -z "$IS_ERROR" ]] && IS_ERROR="unknown"
+else
+    # jq-absent fallback: coarse grep-based parse. Without jq we can't be fully
+    # authoritative, so we positively identify true/false and otherwise keep
+    # IS_ERROR="unknown" (which still gets logged, per fail-secure policy).
+    if echo "$INPUT" | grep -qE '"is_error"[[:space:]]*:[[:space:]]*true\b'; then
+        IS_ERROR="true"
+    elif echo "$INPUT" | grep -qE '"is_error"[[:space:]]*:[[:space:]]*false\b'; then
+        IS_ERROR="false"
+    fi
 fi
 
 # Only skip when we are CERTAIN the tool call was NOT an error.

@@ -53,11 +53,26 @@ fi
 # --- Ensure log directory exists ---
 mkdir -p "$LOG_DIR" 2>/dev/null || exit 0
 
-# --- Write JSONL line ---
+# --- Write JSONL line (properly escaped) ---
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-LINE="{\"timestamp\":\"$TIMESTAMP\",\"event\":\"$EVENT\",\"agent_name\":\"$AGENT_NAME\",\"agent_id\":\"$AGENT_ID\",\"session_id\":\"$SESSION_ID\"}"
 
-echo "$LINE" >> "$LOG_FILE" 2>/dev/null || true
+if command -v jq &>/dev/null; then
+    # jq handles escaping for all values (quotes, backslashes, control chars)
+    jq -nc \
+        --arg timestamp "$TIMESTAMP" \
+        --arg event "$EVENT" \
+        --arg agent_name "$AGENT_NAME" \
+        --arg agent_id "$AGENT_ID" \
+        --arg session "$SESSION_ID" \
+        '{timestamp: $timestamp, event: $event, agent_name: $agent_name, agent_id: $agent_id, session_id: $session}' \
+        >> "$LOG_FILE" 2>/dev/null || true
+else
+    # Fallback: best-effort manual escaping (backslashes, double quotes, control chars stripped)
+    esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr -d '\000-\037'; }
+    printf '{"timestamp":"%s","event":"%s","agent_name":"%s","agent_id":"%s","session_id":"%s"}\n' \
+        "$TIMESTAMP" "$(esc "$EVENT")" "$(esc "$AGENT_NAME")" "$(esc "$AGENT_ID")" "$(esc "$SESSION_ID")" \
+        >> "$LOG_FILE" 2>/dev/null || true
+fi
 
 # Always exit 0 — this is observation only, never blocks
 exit 0

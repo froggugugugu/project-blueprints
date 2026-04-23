@@ -6,8 +6,9 @@
 # Useful for recovering accidentally lost context or auditing long sessions.
 #
 # Input:  JSON via stdin (compact event metadata)
-# Output: writes transcript snapshot to .claude/transcripts/<session>-<ts>.md
-#         (gitignored directory)
+# Output: writes transcript snapshot to testreport/transcripts/<session>-<ts>.md
+#         (under testreport/, gitignored by the blueprint's .gitignore and the
+#          .gitignore entry injected by setup.sh into the target project)
 #
 # Policy: fail-open (if backup fails, compact proceeds anyway)
 # ==============================================================================
