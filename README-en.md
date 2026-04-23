@@ -98,7 +98,7 @@ For detailed setup instructions, step-by-step configuration guide, and integrati
 
 ## Skill Pipeline
 
-```
+```text
 /prd -> /architecture -> /plan -> /implementing-features -> /code-review
                                                          -> /security-scan
                                                          -> /legal-check

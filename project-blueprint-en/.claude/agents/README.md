@@ -32,7 +32,7 @@ These three complement rather than compete. For example, a `TEAM_PJM` Reviewer c
 
 Explicit example:
 
-```
+```text
 Task({
   description: "Security review of login flow",
   subagent_type: "security-reviewer",

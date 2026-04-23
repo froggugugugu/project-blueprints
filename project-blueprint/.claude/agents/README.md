@@ -32,7 +32,7 @@ Claude Code は各 agent の `description` フィールドを解析して自動�
 
 明示呼び出しの例:
 
-```
+```text
 Task({
   description: "ログイン処理のセキュリティレビュー",
   subagent_type: "security-reviewer",
