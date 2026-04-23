@@ -92,9 +92,14 @@ if [[ -f "$SCRIPT_DIR/.mcp.json.template" ]]; then
 fi
 
 # -- Place .github/ workflow templates -----------------------------
+# Merge scope (when .github/ already exists):
+#   - workflows/*.template (blueprint-supplied workflow templates)
+#   - top-level *.md (e.g., CLAUDE_REVIEW_SETUP.md)
+# Existing files are preserved via `cp -n`.
+# If the blueprint later adds .github/ISSUE_TEMPLATE/, PULL_REQUEST_TEMPLATE.md,
+# dependabot.yml, etc., this branch must be extended to copy them explicitly.
 if [[ -d "$SCRIPT_DIR/.github" ]]; then
     if [[ -d "$TARGET_DIR/.github" ]]; then
-        # If .github/ already exists, merge only workflows/ and top-level md (don't overwrite)
         mkdir -p "$TARGET_DIR/.github/workflows"
         # shellcheck disable=SC2086
         cp -n "$SCRIPT_DIR"/.github/workflows/*.template \

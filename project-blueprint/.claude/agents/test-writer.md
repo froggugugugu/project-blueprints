@@ -40,7 +40,7 @@ color: magenta
 
 ## 出力フォーマット
 
-```markdown
+````markdown
 ## テスト作成結果
 
 ### 新規作成
@@ -65,7 +65,7 @@ Test Files  1 passed (1)
 ### カバレッジ影響
 
 - `src/features/auth/login.ts`: 78% → 94% (lines)
-```
+````
 
 ## 行動指針
 

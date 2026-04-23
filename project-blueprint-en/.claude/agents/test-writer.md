@@ -40,7 +40,7 @@ Follow existing test patterns (AAA / Arrange-Act-Assert, fixtures, Page Objects)
 
 ## Output format
 
-```markdown
+````markdown
 ## Test authoring
 
 ### New files
@@ -65,7 +65,7 @@ Test Files  1 passed (1)
 ### Coverage impact
 
 - `src/features/auth/login.ts`: 78% → 94% (lines)
-```
+````
 
 ## Guidelines
 

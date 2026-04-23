@@ -32,7 +32,7 @@ Identify bottlenecks from measured data and return improvement proposals.
 
 ## Output format
 
-```markdown
+````markdown
 ## Performance analysis
 
 ### Measurements
@@ -59,7 +59,7 @@ Identify bottlenecks from measured data and return improvement proposals.
 <pm> run build -- --analyze
 open testreport/bundle-analyzer.html
 ```
-```
+````
 
 ## Guidelines
 

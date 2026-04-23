@@ -11,7 +11,7 @@
 
 - Python 3.11+ assumed
 - Actively use `match`, type parameter syntax, and exception groups
-- Don't pre-fetch new features via `from __future__ import annotations` (3.11+ doesn't need it)
+- Use `from __future__ import annotations` when you need deferred evaluation of annotations (e.g. forward references). PEP 563 is being superseded by PEP 649, which changes semantics in Python 3.14+; through Python 3.13 the future-import remains the way to opt into deferred evaluation
 
 ## Type hints
 

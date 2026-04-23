@@ -51,7 +51,9 @@ if command -v jq &>/dev/null; then
     # jq's .[0:500] is a character-based slice (multibyte-safe), unlike `head -c 500`
     # which splits on bytes and corrupts UTF-8 (e.g. Japanese error messages).
     ERROR_MSG="$(echo "$INPUT" | jq -r '(.tool_result.error // .tool_result.content[0].text // "unknown") | tostring | .[0:500]' 2>/dev/null)"
-    TOOL_INPUT_SUMMARY="$(echo "$INPUT" | jq -c '.tool_input | tostring | .[0:500]' 2>/dev/null)"
+    # Emit raw compact JSON (no extra string-quoting) and byte-truncate.
+    # Avoids double-encoding when later passed to `jq -nc --arg input_summary`.
+    TOOL_INPUT_SUMMARY="$(echo "$INPUT" | jq -c '.tool_input' 2>/dev/null | cut -c1-500)"
 else
     TOOL_NAME="$(echo "$INPUT" | sed -n 's/.*"tool_name"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
     ERROR_MSG="unknown"

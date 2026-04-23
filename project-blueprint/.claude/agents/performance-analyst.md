@@ -32,7 +32,7 @@ color: yellow
 
 ## 出力フォーマット
 
-```markdown
+````markdown
 ## パフォーマンス分析結果
 
 ### 計測結果
@@ -59,7 +59,7 @@ color: yellow
 <pm> run build -- --analyze
 open testreport/bundle-analyzer.html
 ```
-```
+````
 
 ## 行動指針
 
