@@ -4,6 +4,7 @@ description: 実装変更に合わせて docs/ 配下（project.md / architectur
 tools: Read, Edit, Write, Grep, Glob
 model: claude-haiku-4-5
 color: cyan
+memory: project
 ---
 
 # Doc Synchronizer Agent — ドキュメント同期専門

@@ -4,6 +4,8 @@ description: テストコードを新規作成・追加するときに使用す�
 tools: Read, Edit, Write, Grep, Glob, Bash
 model: claude-sonnet-4-6
 color: magenta
+skills:
+  - e2e-testing
 ---
 
 # Test Writer Agent — テスト作成専門

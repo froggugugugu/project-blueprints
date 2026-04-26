@@ -4,6 +4,7 @@ description: Use to minimally update `docs/` files (project.md / architecture.md
 tools: Read, Edit, Write, Grep, Glob
 model: claude-haiku-4-5
 color: cyan
+memory: project
 ---
 
 # Doc Synchronizer Agent — Documentation Sync Specialist

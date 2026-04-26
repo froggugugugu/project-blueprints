@@ -4,6 +4,8 @@ description: Use to create new test code. For Vitest / Playwright unit and E2E t
 tools: Read, Edit, Write, Grep, Glob, Bash
 model: claude-sonnet-4-6
 color: magenta
+skills:
+  - e2e-testing
 ---
 
 # Test Writer Agent — Test Authoring Specialist

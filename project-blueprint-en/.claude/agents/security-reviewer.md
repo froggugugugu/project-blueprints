@@ -4,6 +4,9 @@ description: Use for security audits. For "is this code safe?", "vulnerability c
 tools: Read, Grep, Glob
 model: claude-opus-4-7
 color: red
+isolation: worktree
+skills:
+  - security-scan
 ---
 
 # Security Reviewer Agent — Security Audit Specialist

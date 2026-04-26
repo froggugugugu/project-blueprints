@@ -4,6 +4,9 @@ description: セキュリティ観点の監査が必要なときに使用する�
 tools: Read, Grep, Glob
 model: claude-opus-4-7
 color: red
+isolation: worktree
+skills:
+  - security-scan
 ---
 
 # Security Reviewer Agent — セキュリティ監査専門

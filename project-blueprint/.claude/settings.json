@@ -1,6 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "language": "ja",
+  "statusLine": {
+    "type": "command",
+    "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/statusline.sh",
+    "padding": 0
+  },
   "hooks": {
     "Stop": [
       {
@@ -26,6 +31,18 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/user-prompt-submit.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -43,6 +60,16 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scan-harness.sh",
             "timeout": 10
           }
         ]
@@ -92,6 +119,18 @@
         ]
       }
     ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
         "matcher": "",
@@ -127,6 +166,13 @@
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
       "Bash(sudo *)"
+    ],
+    "_comment_future_skill_agent_deny": [
+      "Skill(name) / Agent(type) 構文は公式 permissions 仕様に未収録のため、",
+      "現時点では deny 配列に入れない(silent ignore のリスクあり)。",
+      "代替: 高リスク skill 名(deploy* 等)は scan-harness.sh で tool_input.skill を",
+      "判定して block する設計。Agent(general-purpose) も同様に hook 側で実装する。",
+      "公式仕様で正式採用されたらこの _comment を削除し deny に昇格させる。"
     ]
   },
   "enabledPlugins": {

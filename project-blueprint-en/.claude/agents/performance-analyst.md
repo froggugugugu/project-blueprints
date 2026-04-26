@@ -4,6 +4,8 @@ description: Use for performance measurement and bottleneck analysis. For "why i
 tools: Read, Grep, Glob, Bash
 model: claude-sonnet-4-6
 color: yellow
+skills:
+  - performance
 ---
 
 # Performance Analyst Agent — Performance Analysis Specialist

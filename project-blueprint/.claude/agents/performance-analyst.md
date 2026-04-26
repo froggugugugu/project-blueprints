@@ -4,6 +4,8 @@ description: パフォーマンス計測とボトルネック分析が必要な�
 tools: Read, Grep, Glob, Bash
 model: claude-sonnet-4-6
 color: yellow
+skills:
+  - performance
 ---
 
 # Performance Analyst Agent — パフォーマンス分析専門

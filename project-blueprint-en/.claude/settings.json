@@ -1,6 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "language": "en",
+  "statusLine": {
+    "type": "command",
+    "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/statusline.sh",
+    "padding": 0
+  },
   "hooks": {
     "Stop": [
       {
@@ -26,6 +31,18 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/user-prompt-submit.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -43,6 +60,16 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scan-harness.sh",
             "timeout": 10
           }
         ]
@@ -92,6 +119,18 @@
         ]
       }
     ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
         "matcher": "",
@@ -127,6 +166,13 @@
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
       "Bash(sudo *)"
+    ],
+    "_comment_future_skill_agent_deny": [
+      "Skill(name) / Agent(type) syntax is NOT (yet) documented in the official permissions spec.",
+      "Keep them out of the deny array to avoid silent-ignore risk.",
+      "Workaround: enforce high-risk skill blocking (deploy*, etc.) inside scan-harness.sh",
+      "by inspecting tool_input.skill. Same pattern for Agent(general-purpose).",
+      "When the official spec adopts these, delete this comment and promote to deny."
     ]
   },
   "enabledPlugins": {

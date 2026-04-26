@@ -4,6 +4,8 @@ description: 実装前に設計・計画を立てたいときに使用する。�
 tools: Read, Grep, Glob
 model: claude-sonnet-4-6
 color: green
+skills:
+  - adr
 ---
 
 # Planner Agent — 設計計画専門
