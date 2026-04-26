@@ -19,16 +19,22 @@ Each team is mapped to the 15 skills under `.claude/skills/`.
 .claude/teams/TEAM_FEATURE.md output/tasks/TASK_auth.md
 ```
 
-## Team List
+## Team List (with topology)
 
-| Template | Purpose | Members | Skill Coverage |
-| --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management** | **6** | **All skills covered** |
-| `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
-| `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
-| `TEAM_PLANNING.md` | Design phase | 4 | 3 |
-| `TEAM_DESIGN.md` | Design system integration | 4 | 3 |
-| `TEAM_REFACTOR.md` | Refactoring | 4 | 5 |
+`topology` is a parallelism metadata field inspired by claude-flow's orchestration taxonomy:
+
+- **hierarchical**: PL → member, one-direction (sequential, coordination-heavy)
+- **mesh**: cross-review among members (parallel, consensus-heavy)
+- **star**: one central hub radiating to others (distributed dispatch)
+
+| Template | Purpose | Members | Skill Coverage | topology |
+| --- | --- | --- | --- | -------- |
+| **`TEAM_PJM.md`** | **Full lifecycle management** | **6** | **All skills covered** | hierarchical |
+| `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 | hierarchical |
+| `TEAM_QA.md` | Quality assurance / audit | 5 | 5 | mesh |
+| `TEAM_PLANNING.md` | Design phase | 4 | 3 | mesh |
+| `TEAM_DESIGN.md` | Design system integration | 4 | 3 | star |
+| `TEAM_REFACTOR.md` | Refactoring | 4 | 5 | star |
 
 ### Team Selection Guide
 

@@ -11,13 +11,28 @@
 | ------ | -------- | ---- | ---- | ---- |
 | `safety-check.sh` | PreToolUse | Bash | ブロック | 危険なシェルコマンドを検出・阻止 |
 | `protect-files.sh` | PreToolUse | Edit\|Write | ブロック | 機密ファイル・設定ファイルへの書き込みを阻止 |
+| `scan-harness.sh` | PreToolUse | Skill | 警告/ブロック | ハーネス自身の SAST(secret 混入・constitution 改変・local deny の弱体化検出) |
+| `user-prompt-submit.sh` | UserPromptSubmit | — | 警告/ブロック | ユーザー入力に機密パターン(API key 等)を検出して警告 or 差し戻し |
 | `session-start.sh` | SessionStart | — | 警告 | project-config.md / docs/ / settings.local.json の存在チェック |
+| `session-end.sh` | SessionEnd | — | 観測 | セッション終了サマリを `output/reports/sessions/<date>.md` に追記 |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | 警告 | Conventional Commits 形式チェック・シークレット検出 |
 | `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント（console.log 等）の残存検出 |
 | `post-failure-log.sh` | PostToolUse | 全ツール | 観測 | ツール失敗時の構造化エラーログ（`testreport/failures/`） |
 | `subagent-audit.sh` | SubagentStop | — | 観測 | サブエージェント完了の記録（`testreport/agents/`） |
 | `pre-compact-backup.sh` | PreCompact | — | 観測 | コンパクト直前の会話履歴バックアップ（`testreport/transcripts/`） |
 | `notify-claude.sh` | Stop / Notification | — | 通知 | タスク完了時の外部通知（ntfy） |
+
+### Hook profile 切替(2026 拡張)
+
+`BLUEPRINT_HOOK_PROFILE` 環境変数で挙動を切替可能(`user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh` 対応):
+
+| profile | 用途 | 挙動 |
+| ------- | ---- | ---- |
+| `minimal` | CI / 自動化 | パススルー(検査スキップ)。最小オーバーヘッド |
+| `standard`(既定) | 通常開発 | 検出時は警告のみ(non-blocking) |
+| `strict` | 高リスク作業 | 検出時に skill / プロンプトをブロック |
+
+`.envrc` や `direnv` で切り替えるのが推奨。
 
 ### フックの動作原則
 
@@ -44,12 +59,11 @@
 
 | イベント | タイミング | 用途例 |
 | -------- | ---------- | ------ |
-| `UserPromptSubmit` | ユーザー入力送信時 | 秘密情報の送信前検査、プロンプト強化 |
-| `SessionEnd` | セッション終了時 | 使用量集計、メトリクス送信 |
 | `PreToolUse` (matcher: `"Task"`) | サブエージェント起動時 | 開始イベント捕捉、環境変数注入 |
+| `PreToolUse` (matcher: `"Agent"`) | エージェント spawn 直前 | spawn 前審査 |
 
-> 2026-04 時点で `SubagentStop` / `PreCompact` / `PostToolUse (失敗ハンドリング)` は実装済み（本ファイル冒頭のフック一覧参照）。
-> 公式の hook イベントは `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` の 9 種類。`SubagentStart` / `InstructionsLoaded` / `PermissionRequest` 等は公式仕様には存在しない。
+> 2026-04 時点で `UserPromptSubmit` / `SessionEnd` / `SubagentStop` / `PreCompact` / `PostToolUse (失敗ハンドリング)` / `PreToolUse (Skill)` は実装済み(本ファイル冒頭のフック一覧参照)。
+> 公式の hook イベントは `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` の 9 種類。
 
 `settings.json` に追加する形式:
 

@@ -14,7 +14,11 @@ project-config.md       →  TDD実装・テスト・コードレビュー
 （技術スタック・品質基準）  品質レポート・技術ドキュメント
 ```
 
-**1ファイル設定 + 15スキル + 6チーム + 5品質ゲート + 9フック + サブエージェント層** で、個人開発からチーム開発まで対応。
+**1ファイル設定 + 16スキル + 6チーム + 5品質ゲート + 12フック + 6サブエージェント + 4 出力スタイル + 不変原則(constitution)** で、個人開発からチーム開発まで対応。
+
+> 2026-04 時点で **plugin marketplace 配布対応**(`.claude-plugin/marketplace.json`)、
+> **継続学習層**(`.claude/learnings/`)、**self-SAST**(`scan-harness.sh`)、
+> **hook profile 切替**(`BLUEPRINT_HOOK_PROFILE`)を実装済み。
 
 ## はじめかた（5分）
 

@@ -33,6 +33,22 @@
     "For write-capable servers like postgres, deny by default and enable only read-only access"
   ],
   "_comment_optional_servers": {
+    "_comment_priority": [
+      "Recommendation tiers (high -> low):",
+      "  *** filesystem: Efficient file traversal in large repos (fallback for Read/Glob)",
+      "  *** sentry: Continuous monitoring of production errors and performance",
+      "  **  brave-search: WebSearch alternative (works without API key, rate-limited)",
+      "  **  postgres: Read-only schema introspection (NEVER point to a production DSN)",
+      "  *   slack: Team notification automation (mis-post risk; minimize scopes)"
+    ],
+    "filesystem": {
+      "_warning": "The MCP filesystem server can traverse everything under the given root. Always scope it to the project directory. Add `.env`, `node_modules`, `.git` to exclusion paths to avoid leaking secrets",
+      "_recommended_for": "Repositories with >100k lines where Read/Glob token efficiency matters",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}"]
+      }
+    },
     "postgres": {
       "_warning": "Direct DB access is high risk. Use read-only only; never point to a production DSN",
       "_example": {
@@ -42,14 +58,24 @@
     },
     "sentry": {
       "_warning": "Useful for production error investigation. Export $SENTRY_AUTH_TOKEN first",
+      "_recommended_for": "Production phase. Useful for /security-scan and /code-review to fetch error context",
       "_example": {
         "command": "npx",
         "args": ["-y", "@sentry/mcp-server"],
         "env": { "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}" }
       }
     },
+    "brave-search": {
+      "_warning": "Web search alternative. Export $BRAVE_API_KEY (free tier available). Useful when WebSearch is unavailable",
+      "_recommended_for": "Air-gapped / corporate environments where WebSearch is restricted",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        "env": { "BRAVE_API_KEY": "${BRAVE_API_KEY}" }
+      }
+    },
     "slack": {
-      "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN",
+      "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN. Restrict scope to chat:write only",
       "_example": {
         "command": "npx",
         "args": ["-y", "@modelcontextprotocol/server-slack"],

@@ -5,6 +5,14 @@
 # --- Claude Code local settings (user-specific permissions) ---
 .claude/settings.local.json
 
+# --- Session logs (machine-generated, may contain transcripts) ---
+output/reports/sessions/
+output/brainstorm/
+
+# --- Auto memory (Claude Code Auto Memory, project-scope) ---
+# Auto memory is per-machine; should not be committed.
+.claude/memory/
+
 # --- Tool raw output (machine-generated, not for review) ---
 # Note: observability hooks (post-failure-log.sh, subagent-audit.sh) write
 # .jsonl files under testreport/; pre-compact-backup.sh writes .md transcripts.
