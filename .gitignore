@@ -1,2 +1,10 @@
 # Personal notification topic (contains unique ID)
 .claude/hooks/ntfy-topic.txt
+
+# Generated artifacts from blueprint usage at the meta-repo level
+# (per-PR drafts, session logs, brainstorm outputs)
+output/
+
+# Constitution working hash file used for self-verification (regenerated on demand)
+# Keep blueprint-side copies tracked; only the meta-repo root is ignored.
+/.claude/.constitution.sha256
