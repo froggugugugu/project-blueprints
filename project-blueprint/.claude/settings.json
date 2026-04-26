@@ -167,12 +167,14 @@
       "Bash(git clean -f *)",
       "Bash(sudo *)"
     ],
-    "_comment_future_skill_agent_deny": [
-      "Skill(name) / Agent(type) 構文は公式 permissions 仕様に未収録のため、",
-      "現時点では deny 配列に入れない(silent ignore のリスクあり)。",
-      "代替: 高リスク skill 名(deploy* 等)は scan-harness.sh で tool_input.skill を",
-      "判定して block する設計。Agent(general-purpose) も同様に hook 側で実装する。",
-      "公式仕様で正式採用されたらこの _comment を削除し deny に昇格させる。"
+    "_comment_agent_skill_deny": [
+      "Agent(name) は公式仕様で採用済み(2026-04 確認、code.claude.com/docs/en/permissions)。",
+      "プロジェクトに合わせて Agent(Explore) や Agent(custom-agent) を deny に追加可能。",
+      "本テンプレでは default の 6 agents を保持するため空のまま。",
+      "",
+      "Skill(name) は公式仕様に未収録のため deny 配列に入れない(silent ignore リスク)。",
+      "高リスク skill (deploy* 等) は scan-harness.sh 内で tool_input.skill を判定して block する。",
+      "公式仕様で採用されたら deny に昇格させる。"
     ]
   },
   "enabledPlugins": {

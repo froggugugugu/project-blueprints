@@ -14,7 +14,7 @@
 #   exit 0 + JSON {"decision":"block","reason":"..."} = プロンプトを差し戻し
 #   exit 2 = ブロック(stderr が Claude にフィードバック)
 #
-# Policy: fail-open — パース失敗時は通過させる(壊さない)。
+# Policy: fail-open — jq 未導入環境やパース失敗時は素通り(壊さない)。
 # ==============================================================================
 
 set -uo pipefail
@@ -22,14 +22,12 @@ set -uo pipefail
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
-INPUT="$(cat)"
+# jq が無ければ機密検出を諦めて通過(fail-open)。
+# 脆弱な sed フォールバックは誤検出/見逃しのリスクが高いため使わない。
+command -v jq &>/dev/null || exit 0
 
-if command -v jq &>/dev/null; then
-    PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null)"
-else
-    PROMPT="$(printf '%s' "$INPUT" | sed -n 's/.*"prompt"[[:space:]]*:[[:space:]]*"\(.*\)"[[:space:]]*}.*/\1/p' | head -1)"
-fi
-
+INPUT="$(cat 2>/dev/null || true)"
+PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
 [[ -z "$PROMPT" ]] && exit 0
 
 # 機密パターン(誤投稿リスク高い)
@@ -53,12 +51,10 @@ done
 if [[ -n "$DETECTED" ]]; then
     case "$PROFILE" in
         strict)
-            # JSON で差し戻し(2026 仕様)
             printf '{"decision":"block","reason":"プロンプトに機密値の可能性のあるパターン (%s) が含まれます。値を [REDACTED] に置換して再送してください。"}\n' "$DETECTED"
             exit 0
             ;;
         standard|*)
-            # 警告のみ(コンテキストに注入)
             printf '⚠️  user-prompt-submit hook: 機密パターン (%s) を検出しました。プロンプト内のシークレットを伏字化することを推奨します。\n' "$DETECTED"
             exit 0
             ;;

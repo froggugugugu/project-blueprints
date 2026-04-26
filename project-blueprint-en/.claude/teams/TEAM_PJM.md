@@ -100,6 +100,7 @@ output/
 
 | Skill | Owner |
 | --- | --- |
+| `brainstorm` | Analyst (only when the requirement note is vague) |
 | `prd` | Analyst |
 | `architecture` | Analyst |
 | `plan` | Planner |
@@ -130,11 +131,15 @@ output/
 
 ### Analyst
 
+- **Phase 0 (optional)**: If the requirement note is under half a page or "what we won't do"
+  is unclear, run `/brainstorm <note>` first. Save to `output/brainstorm/` and request
+  PJM approval before proceeding.
 - Generate PRD from requirement notes → output to `output/prd/`
 - After PRD approval, generate architecture design doc → output to `output/design/`
-- Skills used: `/prd <file-path>`, `/architecture <file-path>`
+- Skills used: `/brainstorm <note>` (conditional) → `/prd <file-path>` → `/architecture <file-path>`
 - Report ambiguous requirements as "[Needs Confirmation]" to PJM
 - **Do not modify source code**
+- Reference: `.claude/learnings/L0001-brainstorm-before-prd.md` (applicability and impact)
 
 ### Planner
 

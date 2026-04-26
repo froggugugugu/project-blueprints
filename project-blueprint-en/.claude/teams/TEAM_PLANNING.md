@@ -50,11 +50,15 @@ Arguments are optional. When omitted, the PL checks `input/requirements/` and id
 
 ### Requirements Analyst
 
+- **Phase 0 (optional)**: If the requirement note is under half a page or
+  "what we won't do" is unclear, run `/brainstorm <note>` first; save to
+  `output/brainstorm/` before proceeding to PRD.
 - Generate PRD from requirement notes
-- Skills used: `/prd <file-path>`
+- Skills used: `/brainstorm <note>` (conditional) → `/prd <file-path>`
 - Structure user stories, acceptance criteria, and priorities
 - Report ambiguous requirements as "[Needs Confirmation]" to PL
 - **Do not modify source code**
+- Reference: `.claude/learnings/L0001-brainstorm-before-prd.md`
 
 ### Architect
 

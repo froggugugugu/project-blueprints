@@ -100,6 +100,7 @@ output/
 
 | スキル | 担当 |
 | --- | --- |
+| `brainstorm` | アナリスト(要求メモが曖昧な場合のみ起動) |
 | `prd` | アナリスト |
 | `architecture` | アナリスト |
 | `plan` | プランナー |
@@ -131,11 +132,14 @@ output/
 
 ### アナリスト
 
+- **Phase 0(任意)**: 要求メモが半ページ未満 or やらない事項が不明な場合は
+  `/brainstorm <メモ>` を先に起動。`output/brainstorm/` に保存後、PJM に承認を求める
 - 要求メモからPRDを生成する → `output/prd/`に出力
 - PRD承認後、アーキテクチャ設計書を生成する → `output/design/`に出力
-- 使用スキル: `/prd <ファイルパス>`, `/architecture <ファイルパス>`
+- 使用スキル: `/brainstorm <メモ>`(条件付) → `/prd <ファイルパス>` → `/architecture <ファイルパス>`
 - 曖昧な要件は「【要確認】」としてPJMに報告する
 - **ソースコードは変更しない**
+- 参考: `.claude/learnings/L0001-brainstorm-before-prd.md`(適用条件と効果)
 
 ### プランナー
 
