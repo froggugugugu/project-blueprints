@@ -84,6 +84,12 @@ cp -r "$SCRIPT_DIR/input"            "$TARGET_DIR/input"
 cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
+# constitution.md (immutable principles) — referenced by scan-harness.sh / CLAUDE.md
+if [[ -f "$SCRIPT_DIR/constitution.md" ]]; then
+    cp -n "$SCRIPT_DIR/constitution.md" "$TARGET_DIR/constitution.md" 2>/dev/null \
+        && info "constitution.md (immutable principles) placed" \
+        || info "constitution.md already exists, kept (no overwrite)"
+fi
 
 # -- Place .mcp.json.template (rename to .mcp.json to activate) ----
 # Preserve existing .mcp.json.template in the target (protects user customizations).

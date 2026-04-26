@@ -84,6 +84,12 @@ cp -r "$SCRIPT_DIR/input"            "$TARGET_DIR/input"
 cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
+# constitution.md(不変原則)を配置 — scan-harness.sh / CLAUDE.md が参照する
+if [[ -f "$SCRIPT_DIR/constitution.md" ]]; then
+    cp -n "$SCRIPT_DIR/constitution.md" "$TARGET_DIR/constitution.md" 2>/dev/null \
+        && info "constitution.md(不変原則)を配置" \
+        || info "constitution.md は既に存在するため保持(上書きしない)"
+fi
 
 # ── .mcp.json.template の配置（利用者が .mcp.json にリネームして有効化）────
 # 既存の .mcp.json.template がターゲットにある場合は保持する（利用者のカスタマイズ保護）
