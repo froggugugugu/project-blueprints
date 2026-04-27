@@ -90,13 +90,13 @@ from top OSS harness projects (superpowers, ECC, spec-kit, BMAD, claude-flow).
 
 ## [0.2.0] — 2026-04-23
 
-Initial blueprint self-enhancement series。詳細は git log 参照
-(`17cbf99` Merge PR #10 までの履歴)。
+Initial blueprint self-enhancement series(PR #10 マージ — `17cbf99`)。
+詳細は git log 参照。
 
-## [0.1.0] — 2026-04-01
+## [0.1.0] — 2026-02-22
 
 15 skills + 6 teams + 6 agents + 9 hooks + MCP テンプレート + 13 セクションの
-project-config.md を備えたブループリント初版。
+project-config.md を備えたブループリント初版(PR #2 マージ — `c46966a`)。
 
 [Unreleased]: https://github.com/froggugugugu/project-blueprints/compare/v0.3.0...HEAD
 [0.3.0]: https://github.com/froggugugugu/project-blueprints/compare/v0.2.0...v0.3.0
