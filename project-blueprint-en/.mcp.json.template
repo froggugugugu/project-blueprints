@@ -42,21 +42,22 @@
       "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)"
     ],
     "filesystem": {
-      "_warning": "The MCP filesystem server can traverse everything under the given root. Always scope it to the project directory. The exclusion patterns below MUST be set explicitly — the server does NOT auto-skip `.env`, `node_modules`, `.git` etc.",
+      "_warning": "The MCP filesystem server can traverse everything under the given root. Scoping is done by **listing only the safe subdirectories as positional arguments** — the server has no CLI-level exclude flag (as of 2026-04). Use multiple defense layers for secret protection:",
+      "_protection_layers": [
+        "1) Restrict exposed dirs: pass only secret-free subtrees like `${PROJECT_ROOT}/src` as args",
+        "2) protect-files.sh hook (bundled in this template) blocks Read/Edit on `.env`, private keys, etc. even via MCP",
+        "3) For servers that should respect `.gitignore`, use a wrapper layer separately"
+      ],
       "_recommended_for": "Repositories with >100k lines where Read/Glob token efficiency matters",
-      "_example": {
+      "_example_safe": {
+        "_note": "Recommended: pass only secret-free subdirs as positional args",
         "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-filesystem",
-          "${PROJECT_ROOT}",
-          "--exclude", ".env",
-          "--exclude", ".env.*",
-          "--exclude", "node_modules",
-          "--exclude", ".git",
-          "--exclude", "*.pem",
-          "--exclude", "*.key"
-        ]
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}/src", "${PROJECT_ROOT}/docs", "${PROJECT_ROOT}/tests"]
+      },
+      "_example_full_root_with_hooks": {
+        "_note": "Passing the full root requires the protect-files.sh / safety-check.sh hooks to be active",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}"]
       }
     },
     "postgres": {

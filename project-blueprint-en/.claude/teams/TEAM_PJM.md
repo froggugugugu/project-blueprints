@@ -96,7 +96,7 @@ output/
 | **Reviewer** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check` | plan required (PJM approves), source code read-only |
 | **Tester** | general-purpose | Sonnet | `e2e-testing`, `performance` | test files only |
 
-### Skill Coverage (All 12 Skills)
+### Skill Coverage (All 13 Skills)
 
 | Skill | Owner |
 | --- | --- |
@@ -110,6 +110,7 @@ output/
 | `code-review` | Reviewer |
 | `security-scan` | Reviewer |
 | `legal-check` | Reviewer |
+| `hig-compliance` | Reviewer |
 | `e2e-testing` | Tester |
 | `performance` | Tester |
 

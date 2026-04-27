@@ -29,7 +29,7 @@
 
 | テンプレート | 用途 | メンバー | スキル数 | topology |
 | --- | --- | --- | --- | -------- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理** | **6名** | **全スキル網羅** | hierarchical |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理** | **6名** | **13 (チーム経路の全スキル)** | hierarchical |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 | hierarchical |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 | mesh |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 | mesh |
