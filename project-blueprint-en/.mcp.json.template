@@ -42,11 +42,21 @@
       "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)"
     ],
     "filesystem": {
-      "_warning": "The MCP filesystem server can traverse everything under the given root. Always scope it to the project directory. Add `.env`, `node_modules`, `.git` to exclusion paths to avoid leaking secrets",
+      "_warning": "The MCP filesystem server can traverse everything under the given root. Always scope it to the project directory. The exclusion patterns below MUST be set explicitly — the server does NOT auto-skip `.env`, `node_modules`, `.git` etc.",
       "_recommended_for": "Repositories with >100k lines where Read/Glob token efficiency matters",
       "_example": {
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}"]
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "${PROJECT_ROOT}",
+          "--exclude", ".env",
+          "--exclude", ".env.*",
+          "--exclude", "node_modules",
+          "--exclude", ".git",
+          "--exclude", "*.pem",
+          "--exclude", "*.key"
+        ]
       }
     },
     "postgres": {

@@ -137,15 +137,23 @@
 ## 3層防御モデル
 
 ```text
-Layer 1: フック（PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact）
-  ↓  --dangerously-skip-permissions でも有効
-Layer 2: Deny ルール（settings.json）
-  ↓  通常モードで有効
-Layer 3: Allow ルール（settings.local.json）
-  ↓  通常モードでのみ有効
+Layer 1: フック群(--dangerously-skip-permissions でも有効)
+   ├─ PreToolUse: safety-check / protect-files / scan-harness(Skill)
+   ├─ PostToolUse: commit-quality / console-warn / post-failure-log
+   ├─ UserPromptSubmit: user-prompt-submit
+   ├─ SessionStart / SessionEnd: session-start / session-end
+   ├─ SubagentStop: subagent-audit
+   ├─ PreCompact: pre-compact-backup
+   └─ Stop / Notification: notify-claude
+  ↓
+Layer 2: Deny ルール(settings.json)
+  ↓ 通常モードで有効
+Layer 3: Allow ルール(settings.local.json)
+  ↓ 通常モードでのみ有効
+meta : self-SAST(scan-harness.sh が constitution hash / secret 混入 / deny 弱体化を検出)
 ```
 
-> Layer 1 にはブロック系（`safety-check.sh` / `protect-files.sh`）+ 観測系（`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`）+ 通知系（`notify-claude.sh`）が含まれる。観測系・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で防御機構の一部として機能する。
+> Layer 1 にはブロック系(`safety-check.sh` / `protect-files.sh` / `scan-harness.sh`) + 観測系(`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh` / `session-end.sh`) + 警告系(`commit-quality.sh` / `console-warn.sh` / `user-prompt-submit.sh`) + 通知系(`notify-claude.sh`) が含まれる。観測・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で防御機構の一部として機能する。
 
 - Layer 1 は常に有効。最も信頼性の高い防御層
 - Layer 2 は通常モードで自動適用

@@ -42,11 +42,21 @@
       "  ★☆☆ slack: チーム通知の自動化(誤投稿リスクあり、scope を最小化)"
     ],
     "filesystem": {
-      "_warning": "MCP の filesystem サーバーは指定ルート配下を全走査できる。スコープを必ずプロジェクトディレクトリに限定。シークレット混入を避けるため `.env`, `node_modules`, `.git` を除外パスに含める",
+      "_warning": "MCP の filesystem サーバーは指定ルート配下を全走査できる。スコープを必ずプロジェクトディレクトリに限定。下記の除外パターンを **明示的に渡す必要がある**(サーバーは自動的に `.env`, `node_modules`, `.git` をスキップしない)",
       "_recommended_for": "10万行超の大規模リポで Read/Glob のトークン効率を上げたい場合",
       "_example": {
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}"]
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "${PROJECT_ROOT}",
+          "--exclude", ".env",
+          "--exclude", ".env.*",
+          "--exclude", "node_modules",
+          "--exclude", ".git",
+          "--exclude", "*.pem",
+          "--exclude", "*.key"
+        ]
       }
     },
     "postgres": {

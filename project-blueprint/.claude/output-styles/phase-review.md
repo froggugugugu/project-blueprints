@@ -19,7 +19,7 @@ description: レビュー / QA フェーズ用。重大度分類・根拠提示�
 
 ## 出力形式
 
-```markdown
+````markdown
 ### [CRITICAL] <タイトル>
 
 - **場所**: `src/auth/login.ts:42`
@@ -32,7 +32,7 @@ description: レビュー / QA フェーズ用。重大度分類・根拠提示�
   // after
   db.query('SELECT * FROM users WHERE id = ?', [id])
   ```
-```
+````
 
 ## サマリー要件
 

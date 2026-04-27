@@ -33,7 +33,7 @@
 | 役割 | エージェント種別 | モデル | 使用スキル | 権限 |
 | --- | --- | --- | --- | --- |
 | **PL（リーダー）** | general-purpose | Opus | — | delegate |
-| **要件アナリスト** | general-purpose, mode: plan | Sonnet | `prd` | plan必須（PLが承認）、ソースコード変更不可 |
+| **要件アナリスト** | general-purpose, mode: plan | Sonnet | `brainstorm`(条件付), `prd` | plan必須（PLが承認）、ソースコード変更不可 |
 | **アーキテクト** | general-purpose, mode: plan | Sonnet | `architecture` | plan必須（PLが承認）、ソースコード変更不可 |
 | **プランナー** | general-purpose, mode: plan | Sonnet | `plan` | plan必須（PLが承認）、ソースコード変更不可 |
 
@@ -80,6 +80,10 @@
 
 ```text
 PL: 要求メモの確認 → 設計タスクリスト作成・割り当て
+  |
+  v
+[Phase 0、条件付] メモ半ページ未満 or やらない事項不明の場合:
+  要件アナリスト: /brainstorm <メモ> → output/brainstorm/ に保存 → PL 承認
   |
   v
 要件アナリスト: /prd で要求メモからPRD生成 → PLに提出

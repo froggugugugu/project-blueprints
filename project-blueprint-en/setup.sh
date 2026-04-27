@@ -85,10 +85,15 @@ cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
 # constitution.md (immutable principles) — referenced by scan-harness.sh / CLAUDE.md
+# Note: avoid SC2015 (`&& A || B`) since `cp -n` returns 0 even when it skips —
+#       use an explicit existence check instead.
 if [[ -f "$SCRIPT_DIR/constitution.md" ]]; then
-    cp -n "$SCRIPT_DIR/constitution.md" "$TARGET_DIR/constitution.md" 2>/dev/null \
-        && info "constitution.md (immutable principles) placed" \
-        || info "constitution.md already exists, kept (no overwrite)"
+    if [[ -e "$TARGET_DIR/constitution.md" ]]; then
+        info "constitution.md already exists, kept (no overwrite)"
+    else
+        cp "$SCRIPT_DIR/constitution.md" "$TARGET_DIR/constitution.md"
+        info "constitution.md (immutable principles) placed"
+    fi
 fi
 
 # -- Place .mcp.json.template (rename to .mcp.json to activate) ----

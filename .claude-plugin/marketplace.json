@@ -29,15 +29,15 @@
         "quality-gates"
       ],
       "components": {
-        "skills": "./project-blueprint/.claude/skills",
-        "agents": "./project-blueprint/.claude/agents",
-        "hooks": "./project-blueprint/.claude/hooks",
+        "skills": "./.claude/skills",
+        "agents": "./.claude/agents",
+        "hooks": "./.claude/hooks",
         "commands": null,
-        "mcpServers": "./project-blueprint/.mcp.json.template",
-        "settings": "./project-blueprint/.claude/settings.json"
+        "mcpServers": "./.mcp.json.template",
+        "settings": "./.claude/settings.json"
       },
       "documentation": {
-        "readme": "./project-blueprint/README.md",
+        "readme": "./README.md",
         "constitution": "./constitution.md"
       }
     },
@@ -60,15 +60,15 @@
         "quality-gates"
       ],
       "components": {
-        "skills": "./project-blueprint-en/.claude/skills",
-        "agents": "./project-blueprint-en/.claude/agents",
-        "hooks": "./project-blueprint-en/.claude/hooks",
+        "skills": "./.claude/skills",
+        "agents": "./.claude/agents",
+        "hooks": "./.claude/hooks",
         "commands": null,
-        "mcpServers": "./project-blueprint-en/.mcp.json.template",
-        "settings": "./project-blueprint-en/.claude/settings.json"
+        "mcpServers": "./.mcp.json.template",
+        "settings": "./.claude/settings.json"
       },
       "documentation": {
-        "readme": "./project-blueprint-en/README.md",
+        "readme": "./README.md",
         "constitution": "./constitution.md"
       }
     }

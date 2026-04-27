@@ -33,7 +33,7 @@ Arguments are optional. When omitted, the PL checks `input/requirements/` and id
 | Role | Agent Type | Model | Skills | Permissions |
 | --- | --- | --- | --- | --- |
 | **PL (Leader)** | general-purpose | Opus | — | delegate |
-| **Requirements Analyst** | general-purpose, mode: plan | Sonnet | `prd` | plan required (PL approves), source code read-only |
+| **Requirements Analyst** | general-purpose, mode: plan | Sonnet | `brainstorm` (conditional), `prd` | plan required (PL approves), source code read-only |
 | **Architect** | general-purpose, mode: plan | Sonnet | `architecture` | plan required (PL approves), source code read-only |
 | **Planner** | general-purpose, mode: plan | Sonnet | `plan` | plan required (PL approves), source code read-only |
 
@@ -81,6 +81,10 @@ Arguments are optional. When omitted, the PL checks `input/requirements/` and id
 
 ```text
 PL: Review requirement notes → Create design task list & assign
+  |
+  v
+[Phase 0, conditional] If note < ½ page or "what we won't do" unclear:
+  Requirements Analyst: /brainstorm <note> → save to output/brainstorm/ → PL approves
   |
   v
 Requirements Analyst: Generate PRD from notes with /prd → Submit to PL

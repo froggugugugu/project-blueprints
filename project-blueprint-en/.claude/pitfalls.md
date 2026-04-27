@@ -141,7 +141,7 @@ common in long-running Claude Code sessions.
 | ----- | ------- |
 | **Symptom** | A single conversation flips between requirements, debugging, an unrelated investigation, and back; context bloats and instruction precision drops |
 | **Cause** | History, file reads, and command output from loosely-related tasks all linger in the context window |
-| **Mitigation** | Run `/clear` when the task switches. Habit-forming at phase gates (`@.claude/quality-gates.md`) is the most effective |
+| **Mitigation** | Run `/clear` when the task switches. Habit-forming at phase gates (see `.claude/quality-gates.md`) is the most effective |
 
 ### 17. Over-correction loop (correcting the same issue repeatedly)
 

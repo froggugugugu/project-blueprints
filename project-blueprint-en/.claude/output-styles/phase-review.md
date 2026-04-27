@@ -19,7 +19,7 @@ or for any PR review and QA work in general.
 
 ## Output Format
 
-```markdown
+````markdown
 ### [CRITICAL] <Title>
 
 - **Location**: `src/auth/login.ts:42`
@@ -32,7 +32,7 @@ or for any PR review and QA work in general.
   // after
   db.query('SELECT * FROM users WHERE id = ?', [id])
   ```
-```
+````
 
 ## Required Summary
 

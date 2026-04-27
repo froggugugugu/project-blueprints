@@ -137,15 +137,23 @@ Add to `settings.json` in this format:
 ## 3-Layer Defense Model
 
 ```text
-Layer 1: Hooks (PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact)
-  ↓  Active even with --dangerously-skip-permissions
+Layer 1: Hooks (active even with --dangerously-skip-permissions)
+   ├─ PreToolUse:        safety-check / protect-files / scan-harness(Skill)
+   ├─ PostToolUse:       commit-quality / console-warn / post-failure-log
+   ├─ UserPromptSubmit:  user-prompt-submit
+   ├─ SessionStart/End:  session-start / session-end
+   ├─ SubagentStop:      subagent-audit
+   ├─ PreCompact:        pre-compact-backup
+   └─ Stop / Notification: notify-claude
+  ↓
 Layer 2: Deny rules (settings.json)
-  ↓  Active in normal mode
+  ↓ Active in normal mode
 Layer 3: Allow rules (settings.local.json)
-  ↓  Active only in normal mode
+  ↓ Active only in normal mode
+meta : self-SAST (scan-harness.sh detects constitution-hash drift / secret leaks / weakened denies)
 ```
 
-> Layer 1 includes blocking hooks (`safety-check.sh` / `protect-files.sh`), observation hooks (`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`), and notification hooks (`notify-claude.sh`). The observation and notification hooks don't block operations, but they still function as part of the defense perimeter by persisting audit trails and alerts even under `--dangerously-skip-permissions`.
+> Layer 1 includes blocking hooks (`safety-check.sh` / `protect-files.sh` / `scan-harness.sh`), observation hooks (`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh` / `session-end.sh`), warning hooks (`commit-quality.sh` / `console-warn.sh` / `user-prompt-submit.sh`), and notification hooks (`notify-claude.sh`). The observation and notification hooks don't block operations, but they still function as part of the defense perimeter by persisting audit trails and alerts even under `--dangerously-skip-permissions`.
 
 - Layer 1 is always active. The most reliable defense layer
 - Layer 2 is automatically applied in normal mode

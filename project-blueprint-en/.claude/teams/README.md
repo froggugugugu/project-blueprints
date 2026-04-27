@@ -200,6 +200,7 @@ Mapping of team-routed skills across teams:
 
 | Skill | PJM | Feature | QA | Planning | Design | Refactor |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `brainstorm` | Analyst (cond.) | — | — | Analyst (cond.) | — | — |
 | `plan` | Planner | PL | — | Planner | — | PL |
 | `implementing-features` | Developer | Developer | — | — | — | Refactorer |
 | `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |

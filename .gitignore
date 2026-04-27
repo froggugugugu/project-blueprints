@@ -3,11 +3,13 @@
 
 # Generated artifacts from blueprint usage at the meta-repo level
 # (per-PR drafts, session logs, brainstorm outputs)
-output/
+# Anchored to repo root only — blueprint-side `output/` dirs stay tracked.
+/output/
 
 # Constitution working hash file used for self-verification (regenerated on demand)
 # Keep blueprint-side copies tracked; only the meta-repo root is ignored.
 /.claude/.constitution.sha256
-.claude/scheduled_tasks.lock
 
 # Claude Code internal scheduling lock (per-machine)
+# Anchored to repo root only.
+/.claude/scheduled_tasks.lock

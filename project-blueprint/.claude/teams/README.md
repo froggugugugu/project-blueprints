@@ -200,6 +200,7 @@ project-root/
 
 | スキル | PJM | Feature | QA | Planning | Design | Refactor |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `brainstorm` | Analyst (条件付) | — | — | Analyst (条件付) | — | — |
 | `plan` | Planner | PL | — | Planner | — | PL |
 | `implementing-features` | Developer | Developer | — | — | — | Refactorer |
 | `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |

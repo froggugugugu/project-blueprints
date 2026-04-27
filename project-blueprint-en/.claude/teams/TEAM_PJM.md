@@ -90,13 +90,13 @@ output/
 | Role | Agent Type | Model | Skills | Permissions |
 | --- | --- | --- | --- | --- |
 | **PJM (Leader)** | general-purpose | Opus | — | delegate + plan approval |
-| **Analyst** | general-purpose, mode: plan | Sonnet | `prd`, `architecture` | plan required (PJM approves), source code read-only |
+| **Analyst** | general-purpose, mode: plan | Sonnet | `brainstorm` (conditional), `prd`, `architecture` | plan required (PJM approves), source code read-only |
 | **Planner** | general-purpose, mode: plan | Sonnet | `plan` | plan required (PJM approves), source code read-only |
 | **Developer** | general-purpose | Sonnet | `implementing-features`, `ui-ux-design`, `refactoring` | plan required (PJM approves) |
 | **Reviewer** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check` | plan required (PJM approves), source code read-only |
 | **Tester** | general-purpose | Sonnet | `e2e-testing`, `performance` | test files only |
 
-### Skill Coverage (All 11 Skills)
+### Skill Coverage (All 12 Skills)
 
 | Skill | Owner |
 | --- | --- |
@@ -176,6 +176,8 @@ output/
 ```text
 Phase 1: Requirements Analysis
   PJM: Check requirement notes in input/ → Assign to Analyst
+  [Phase 0, conditional] If note < ½ page or "what we won't do" unclear:
+    Analyst: /brainstorm <note> → save to output/brainstorm/ → PJM approves
   Analyst: Generate PRD with /prd → Output to output/prd/
   🚏 Gate 1: Normal=Present to human→Wait for approval / Autonomous=PJM judges by quality criteria
 

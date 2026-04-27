@@ -90,13 +90,13 @@ output/
 | 役割 | エージェント種別 | モデル | 使用スキル | 権限 |
 | --- | --- | --- | --- | --- |
 | **PJM（リーダー）** | general-purpose | Opus | — | delegate + plan承認 |
-| **アナリスト** | general-purpose, mode: plan | Sonnet | `prd`, `architecture` | plan必須（PJMが承認）、ソースコード変更不可 |
+| **アナリスト** | general-purpose, mode: plan | Sonnet | `brainstorm`(条件付), `prd`, `architecture` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **プランナー** | general-purpose, mode: plan | Sonnet | `plan` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **開発者** | general-purpose | Sonnet | `implementing-features`, `ui-ux-design`, `refactoring` | plan必須（PJMが承認） |
 | **レビュアー** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check`, `hig-compliance` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **テスター** | general-purpose | Sonnet | `e2e-testing`, `performance` | テストファイルのみ変更可 |
 
-### スキルカバレッジ（全12スキル）
+### スキルカバレッジ（全13スキル）
 
 | スキル | 担当 |
 | --- | --- |
@@ -176,6 +176,8 @@ output/
 ```text
 Phase 1: 要件分析
   PJM: input/ の要求メモを確認 → アナリストに割り当て
+  [Phase 0、条件付] メモ半ページ未満 or やらない事項不明の場合:
+    アナリスト: /brainstorm <メモ> → output/brainstorm/ に保存 → PJM 承認
   アナリスト: /prd で PRD 生成 → output/prd/ に出力
   🚏 ゲート1: 通常=人間に提示→承認待ち / 自律=PJMが品質基準で判定
 
