@@ -41,10 +41,14 @@ Layer 1: フック(常時有効) / Layer 2: deny ルール(共有) / Layer 3: al
 `--dangerously-skip-permissions` でも Layer 1 は有効。フック群を停止・無効化する変更は禁止。
 新しい hook を追加する変更は許容。
 
-## 6. CLAUDE.md は 200 行以内に収める
+## 6. CLAUDE.md は 200 行以内を目安、220 行を超えたら切り出し
 
 肥大化するとルールが埋もれて遵守率が落ちる(pitfalls.md #1, #18)。
-細則は `.claude/rules/`、`.claude/skills/<name>/SKILL.md`、`docs/` に分離する。
+
+- **目安**: 200 行以内
+- **ハード上限**: 220 行(超過したら次回の編集で必ず切り出し)
+- **切り出し先**: `.claude/rules/<topic>.md`、`.claude/skills/<name>/SKILL.md`、`docs/<topic>.md`
+- **判定**: 1 つのトピックが 20 行を超えたら切り出し候補。`@import` で参照に置換
 
 ## 7. シークレットは絶対にコミットしない
 

@@ -75,9 +75,13 @@
 - 変更はファイル単位で衝突を回避する。同一ファイルの同時編集は行わない
 - 共有レイヤーの変更は逐次で行う
 - 大きな機能追加は `/plan` スキルで事前にタスク分解し、並行可能な単位を特定する
-- Agent Teams 使用時は `.claude/teams/` 配下のチームテンプレートに従う(全引数省略可)
+- Agent Teams 使用時は `.claude/teams/` 配下のチームテンプレートに従う(全引数省略可):
+  - フルライフサイクル: `TEAM_PJM.md`、機能開発: `TEAM_FEATURE.md`、QA: `TEAM_QA.md`
+  - 設計: `TEAM_PLANNING.md`、デザイン: `TEAM_DESIGN.md`、リファクタ: `TEAM_REFACTOR.md`
 - **teammateMode 選択基準**: 同一ファイルを複数メンバーが触らない場合は `in-process`(高速)、並行ブランチが必要な場合は `worktree`。`settings.local.json` で設定
-- チーム一覧と topology は `.claude/teams/README.md` を参照
+
+@.claude/teams/README.md  <!-- チーム一覧 / topology(hierarchical / mesh / star)/ 選定ガイド -->
+
 - PJM チームは `input/` のメモを読み、`output/` に成果物を生成する
 - PL がタスク分解・依存設定・割り当て、メンバーは割り当てタスクのみ実装する
 

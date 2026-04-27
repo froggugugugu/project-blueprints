@@ -6,13 +6,13 @@
 # Profile 切替: $BLUEPRINT_HOOK_PROFILE で挙動切替
 #   - minimal:  パススルー(検査スキップ)
 #   - standard: 機密パターン検出のみ警告(non-blocking、既定)
-#   - strict:   検出時にブロック(decision=block で差し戻し)
+#   - strict:   stdout に JSON {"decision":"block"} を出して差し戻し(公式仕様、exit 0)
 #
 # Input:  JSON via stdin {"prompt": "...", "session_id": "..."}
 # Output:
 #   exit 0 + plain stdout = additional context を Claude に注入
 #   exit 0 + JSON {"decision":"block","reason":"..."} = プロンプトを差し戻し
-#   exit 2 = ブロック(stderr が Claude にフィードバック)
+#                                                       (2026 仕様は exit 2 ではなく exit 0 + JSON)
 #
 # Policy: fail-open — jq 未導入環境やパース失敗時は素通り(壊さない)。
 # ==============================================================================

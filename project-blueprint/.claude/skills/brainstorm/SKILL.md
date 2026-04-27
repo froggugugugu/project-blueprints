@@ -1,9 +1,10 @@
 ---
 name: brainstorm
-description: 要求メモが曖昧な段階で、Socratic 質問駆動で前提を炙り出すスキル。`/prd` の前段で利用する。「ブレスト」「前提整理」「質問駆動」「曖昧さ」「想定外を洗い出したい」などのトリガーで起動。コードもドキュメントも書かず、対話のみで終了する。Source-code read-only — 変更不可。出力は `output/brainstorm/` にメモ形式で保存(Write 権限が必要)。引数省略可: /brainstorm <要求メモ or 指示>
+description: 曖昧な要求メモから前提を Socratic 質問で炙り出す `/prd` 前段スキル。読取専用、出力は `output/brainstorm/` のみ。
 allowed-tools: Read, Grep, Glob, Write, AskUserQuestion
 argument-hint: <要求メモのファイルパス、または整理したいトピック>
 disable-model-invocation: false
+triggers: ブレスト, 前提整理, 質問駆動, 曖昧さ, 想定外, pre-prd, クリアリフィケーション
 ---
 
 # `/brainstorm` — `/prd` 前段の Socratic ブレスト

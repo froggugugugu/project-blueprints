@@ -75,9 +75,13 @@ Restrict dependency directions between layers. Rule details defined in `project-
 - Avoid conflicts at the file level. Do not simultaneously edit the same file
 - Changes to the shared layer are performed sequentially
 - Pre-decompose large feature additions with `/plan` to identify parallelizable units
-- When using Agent Teams, follow team templates under `.claude/teams/` (all arguments optional)
+- When using Agent Teams, follow team templates under `.claude/teams/` (all arguments optional):
+  - Full lifecycle: `TEAM_PJM.md`, feature dev: `TEAM_FEATURE.md`, QA: `TEAM_QA.md`
+  - Planning: `TEAM_PLANNING.md`, design system: `TEAM_DESIGN.md`, refactor: `TEAM_REFACTOR.md`
 - **teammateMode selection**: Use `in-process` (fast) when members don't touch the same files; use `worktree` (git worktree isolation) when parallel branches are needed
-- Team list with topology metadata: see `.claude/teams/README.md`
+
+@.claude/teams/README.md  <!-- Team list / topology (hierarchical / mesh / star) / selection guide -->
+
 - The PJM team reads notes from `input/` and generates deliverables in `output/`
 - The PL decomposes tasks, sets dependencies, and assigns them; members implement only assigned tasks
 

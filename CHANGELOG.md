@@ -97,3 +97,8 @@ Initial blueprint self-enhancement series。詳細は git log 参照
 
 15 skills + 6 teams + 6 agents + 9 hooks + MCP テンプレート + 13 セクションの
 project-config.md を備えたブループリント初版。
+
+[Unreleased]: https://github.com/froggugugugu/project-blueprints/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/froggugugugu/project-blueprints/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/froggugugugu/project-blueprints/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/froggugugugu/project-blueprints/releases/tag/v0.1.0

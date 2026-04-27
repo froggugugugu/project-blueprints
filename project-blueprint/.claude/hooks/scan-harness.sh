@@ -53,13 +53,24 @@ esac
 PROJECT="${CLAUDE_PROJECT_DIR:-.}"
 ISSUES=()
 
+# クロスプラットフォーム sha256: GNU coreutils → shasum (macOS) の順でフォールバック
+sha256_of() {
+    if command -v sha256sum &>/dev/null; then
+        sha256sum "$1" | cut -d' ' -f1
+    elif command -v shasum &>/dev/null; then
+        shasum -a 256 "$1" | cut -d' ' -f1
+    else
+        echo ""  # どちらも無い → 後段で fail-open
+    fi
+}
+
 # 3a. constitution.md hash 監視(常に実施 — 軽量、決定論的)
 CONST="$PROJECT/constitution.md"
 HASH_FILE="$PROJECT/.claude/.constitution.sha256"
 if [[ -f "$CONST" && -f "$HASH_FILE" ]]; then
-    CURRENT=$(sha256sum "$CONST" | cut -d' ' -f1)
+    CURRENT=$(sha256_of "$CONST")
     EXPECTED=$(cat "$HASH_FILE")
-    if [[ "$CURRENT" != "$EXPECTED" ]]; then
+    if [[ -n "$CURRENT" && "$CURRENT" != "$EXPECTED" ]]; then
         ISSUES+=("constitution.md が変更されています(ハッシュ不一致)。意図的な変更なら .claude/.constitution.sha256 を更新してください")
     fi
 fi
@@ -73,6 +84,7 @@ if [[ -f "$LOCAL" ]] && command -v jq &>/dev/null; then
 fi
 
 # 3c. Secret パターン検出(NEED_FULL_SCAN=1 のときのみ実施 — 重い)
+# 注: \b 単語境界は BSD grep で挙動が異なるため使用しない(GNU/BSD 両対応のため)
 if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
     SCAN_TARGETS=(
         "$PROJECT/.claude"
@@ -87,7 +99,7 @@ if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
         if grep -rEq -- 'ghp_[a-zA-Z0-9]{36}' "$target" 2>/dev/null; then
             ISSUES+=("GitHub PAT パターンが ${target} に含まれます")
         fi
-        if grep -rEq -- '\bsk-[a-zA-Z0-9]{32,}\b' "$target" 2>/dev/null; then
+        if grep -rEq -- 'sk-[a-zA-Z0-9]{32,}' "$target" 2>/dev/null; then
             ISSUES+=("API key パターン (sk-...) が ${target} に含まれます")
         fi
     done

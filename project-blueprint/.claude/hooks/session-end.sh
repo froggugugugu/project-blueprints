@@ -19,7 +19,7 @@ set -uo pipefail
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
-INPUT="$(cat)"
+INPUT="$(cat 2>/dev/null || true)"  # fail-open: stdin 読込失敗でも通過
 REPORT_DIR="${CLAUDE_PROJECT_DIR:-.}/output/reports/sessions"
 mkdir -p "$REPORT_DIR" 2>/dev/null || exit 0
 
@@ -55,6 +55,8 @@ if [[ -d "${CLAUDE_PROJECT_DIR:-.}/.git" ]]; then
     fi
 fi
 
-printf '| %s | `%s` | %s | %s | %s |\n' "$NOW" "${SID:0:8}" "$REASON" "$CHANGED" "$COMMITS" >> "$LOG"
+# REASON サニタイズ: Markdown テーブル区切り '|' と改行を無害化(表崩壊防止)
+REASON_SAFE=$(printf '%s' "$REASON" | tr '\n' ' ' | sed 's/|/\\|/g')
+printf '| %s | `%s` | %s | %s | %s |\n' "$NOW" "${SID:0:8}" "$REASON_SAFE" "$CHANGED" "$COMMITS" >> "$LOG"
 
 exit 0

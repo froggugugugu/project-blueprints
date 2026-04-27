@@ -25,11 +25,18 @@ description: 実装フェーズ用。TDD・最小差分・検証ファースト�
 - カバレッジ・lint・型エラー数の前後比較を出す
 - 未解決の TODO は明示的にコメント or 後続タスクへ
 
+> **N/A の許容**: テスト基盤・カバレッジ計測・型チェック・lint のいずれかが
+> プロジェクトに未導入(or `project-config.md` で未有効化)の場合、
+> その項目は **「未実施(N/A)+ 理由 + 次アクション」** の形で報告してよい。
+> 例: 「カバレッジ: N/A(vitest 未導入、§6 で coverage 目標未設定)。次: §6 設定後に有効化」。
+> 虚偽の数値を報告しないことが最優先。
+
 ## 禁止事項
 
 - `--no-verify` の使用
 - 失敗したテストの skip / 削除による「緑化」
-- console.log 等のデバッグコード残存
+- デバッグコードの残存(言語別: JS の `console.log`、Python の `print` / `logger.debug`、
+  Go の `fmt.Println`、Rust の `dbg!` / `println!`、Ruby の `puts` / `pp`、Swift の `print`)
 - フックを迂回した強行コミット
 - 推測でのフィールド追加・削除
 

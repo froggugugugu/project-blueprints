@@ -35,11 +35,11 @@
   "_comment_optional_servers": {
     "_comment_priority": [
       "Recommendation tiers (high -> low):",
-      "  *** filesystem: Efficient file traversal in large repos (fallback for Read/Glob)",
-      "  *** sentry: Continuous monitoring of production errors and performance",
-      "  **  brave-search: WebSearch alternative (works without API key, rate-limited)",
-      "  **  postgres: Read-only schema introspection (NEVER point to a production DSN)",
-      "  *   slack: Team notification automation (mis-post risk; minimize scopes)"
+      "  ★★★ filesystem: Efficient file traversal in large repos (fallback for Read/Glob)",
+      "  ★★★ sentry: Continuous monitoring of production errors and performance",
+      "  ★★☆ brave-search: WebSearch alternative (works without API key, rate-limited)",
+      "  ★★☆ postgres: Read-only schema introspection (NEVER point to a production DSN)",
+      "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)"
     ],
     "filesystem": {
       "_warning": "The MCP filesystem server can traverse everything under the given root. Always scope it to the project directory. Add `.env`, `node_modules`, `.git` to exclusion paths to avoid leaking secrets",

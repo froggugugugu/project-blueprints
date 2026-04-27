@@ -36,7 +36,9 @@ fi
 
 phase=""
 if [ -n "$project_dir" ] && [ -d "$project_dir/output" ]; then
-  latest=$(ls -t "$project_dir/output" 2>/dev/null | head -1)
+  # ディレクトリのみを対象に最新を取得(ls -t はファイル混在を拾うため避ける)
+  latest=$(find "$project_dir/output" -mindepth 1 -maxdepth 1 -type d \
+             -printf '%T@ %f\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
   case "$latest" in
     brainstorm) phase="🌱 Brainstorm" ;;
     prd)        phase="📝 PRD" ;;

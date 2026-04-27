@@ -25,11 +25,19 @@ Use this style when running `/implementing-features`, `/refactoring`, or any tas
 - Show before/after for coverage, lint warnings, type errors.
 - Mark unresolved TODOs explicitly or move them to follow-up tasks.
 
+> **N/A allowance**: If test infrastructure / coverage / type-checking / lint is not yet
+> set up for the project (or not enabled in `project-config.md`), report the item as
+> **"N/A + reason + next action"** instead. Example: "Coverage: N/A (vitest not installed,
+> no coverage target in §6). Next: enable after §6 configured." Truthful reporting beats
+> fabricated numbers.
+
 ## Forbidden
 
 - Use of `--no-verify`.
 - "Greening" by skipping or deleting failing tests.
-- Leftover debug code (`console.log`, etc.).
+- Leftover debug statements (language-specific: JS `console.log`, Python `print` /
+  `logger.debug`, Go `fmt.Println`, Rust `dbg!` / `println!`, Ruby `puts` / `pp`,
+  Swift `print`).
 - Bypassing hooks to force a commit.
 - Adding/removing fields by guessing.
 

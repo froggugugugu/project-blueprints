@@ -46,10 +46,14 @@ Layer 1: hooks (always-on) / Layer 2: deny rules (shared) / Layer 3: allow rules
 Layer 1 stays active even with `--dangerously-skip-permissions`. Changes that
 disable or stop hooks are prohibited. Adding new hooks is permitted.
 
-## 6. Keep CLAUDE.md within 200 lines (target)
+## 6. Keep CLAUDE.md within 200 lines (target), 220 lines (hard cap)
 
 Bloat reduces compliance because important rules get buried (pitfalls.md #1, #18).
-Detailed rules go to `.claude/rules/`, `.claude/skills/<name>/SKILL.md`, or `docs/`.
+
+- **Target**: under 200 lines
+- **Hard cap**: 220 lines (must extract on the next edit if exceeded)
+- **Extract to**: `.claude/rules/<topic>.md`, `.claude/skills/<name>/SKILL.md`, `docs/<topic>.md`
+- **Heuristic**: a single topic exceeding 20 lines is an extraction candidate. Replace with `@import`
 
 ## 7. Never commit secrets
 

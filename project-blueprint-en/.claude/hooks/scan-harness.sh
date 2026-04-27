@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# scan-harness.sh — PreToolUse hook (Skill matcher) — Self-SAST + 高リスク skill 抑止
+# scan-harness.sh — PreToolUse hook (Skill matcher) — Self-SAST + high-risk skill block
 #
-# 役割:
-#   1. ハーネス自身(.claude/, .mcp.json*, settings.json) の secret/逸脱検出
-#   2. constitution.md の hash 監視(改竄検出)
-#   3. 高リスク skill(deploy 系)を tool_input.skill で実効ブロック
-#      ↑ Skill(name) permission deny が公式未対応のため hook で代替
+# Role:
+#   1. Detect secrets / drift in the harness itself (.claude/, .mcp.json*, settings.json)
+#   2. Hash-monitor constitution.md (tamper detection)
+#   3. Effectively block high-risk skills (deploy*) via tool_input.skill
+#      (Skill(name) permission deny is not in the official spec yet, so we substitute via hook)
 #
-# Profile 切替: $BLUEPRINT_HOOK_PROFILE
-#   - minimal:  通過のみ
-#   - standard: 警告のみ(non-blocking、既定)
-#   - strict:   検出時/高リスク skill 起動時にブロック
+# Profile switching: $BLUEPRINT_HOOK_PROFILE
+#   - minimal:  pass-through only
+#   - standard: warn-only on detection (non-blocking, default)
+#   - strict:   block on detection / on high-risk skill launch
 #
 # Input:  JSON via stdin {"tool_name":"Skill","tool_input":{"skill":"..."}}
-# Output: exit 0 = allow / exit 2 = block (strict or 高リスク skill)
-# Policy: fail-open(パース失敗時は通過)
+# Output: exit 0 = allow / exit 2 = block (strict, or high-risk skill)
+# Policy: fail-open (pass through if parsing fails)
 # ==============================================================================
 
 set -uo pipefail
@@ -25,24 +25,23 @@ PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 
 INPUT="$(cat 2>/dev/null || true)"
 
-# ── 1. tool_input.skill 抽出 ──────────────────────────────────────────
+# ── 1. Extract tool_input.skill ───────────────────────────────────────
 SKILL=""
 if command -v jq &>/dev/null; then
     SKILL=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // .tool_input.name // empty' 2>/dev/null)
 fi
 
-# ── 2. 高リスク skill 判定(常に実施、profile 非依存) ─────────────────
+# ── 2. High-risk skill check (always, profile-independent) ────────────
 case "$SKILL" in
     deploy|deploy-*|*-deploy|prod-*|production-*)
-        echo "🛡️  scan-harness: 高リスク skill '$SKILL' は実効ブロックされます" >&2
-        echo "  理由: 本テンプレートは deploy 系 skill を deny 対象としています(公式 Skill() 未対応のため hook で代替)" >&2
-        echo "  許可するには: settings.local.json で BLUEPRINT_HOOK_PROFILE=minimal を設定" >&2
+        echo "🛡️  scan-harness: high-risk skill '$SKILL' is effectively blocked" >&2
+        echo "  Reason: this template denies deploy-class skills (Skill() permission not yet supported, hook substitute in use)" >&2
+        echo "  To allow: set BLUEPRINT_HOOK_PROFILE=minimal in settings.local.json" >&2
         exit 2
         ;;
 esac
 
-# ── 3. 重い SAST は constitution チェックのみ毎回実施。secret スキャンは
-#     一定の skill のみ(security-scan, legal-check, review-fix の前)に絞る ─
+# ── 3. Heavy SAST: only for select skills. Hash check runs always. ────
 NEED_FULL_SCAN=0
 case "$SKILL" in
     security-scan|legal-check|review-fix|architecture|prd|"")
@@ -53,26 +52,37 @@ esac
 PROJECT="${CLAUDE_PROJECT_DIR:-.}"
 ISSUES=()
 
-# 3a. constitution.md hash 監視(常に実施 — 軽量、決定論的)
+# Cross-platform sha256: prefer sha256sum (GNU), fall back to shasum -a 256 (macOS)
+sha256_of() {
+    if command -v sha256sum &>/dev/null; then
+        sha256sum "$1" | cut -d' ' -f1
+    elif command -v shasum &>/dev/null; then
+        shasum -a 256 "$1" | cut -d' ' -f1
+    else
+        echo ""  # neither available; fail-open below
+    fi
+}
+
+# 3a. Constitution hash monitoring (always, lightweight, deterministic)
 CONST="$PROJECT/constitution.md"
 HASH_FILE="$PROJECT/.claude/.constitution.sha256"
 if [[ -f "$CONST" && -f "$HASH_FILE" ]]; then
-    CURRENT=$(sha256sum "$CONST" | cut -d' ' -f1)
+    CURRENT=$(sha256_of "$CONST")
     EXPECTED=$(cat "$HASH_FILE")
-    if [[ "$CURRENT" != "$EXPECTED" ]]; then
-        ISSUES+=("constitution.md が変更されています(ハッシュ不一致)。意図的な変更なら .claude/.constitution.sha256 を更新してください")
+    if [[ -n "$CURRENT" && "$CURRENT" != "$EXPECTED" ]]; then
+        ISSUES+=("constitution.md has been modified (hash mismatch). If this change is intentional, update .claude/.constitution.sha256")
     fi
 fi
 
-# 3b. settings.local.json が deny を上書きしていないか(常に実施 — 軽量)
+# 3b. Detect deny-rule weakening in settings.local.json (always, lightweight)
 LOCAL="$PROJECT/.claude/settings.local.json"
 if [[ -f "$LOCAL" ]] && command -v jq &>/dev/null; then
     if jq -e '.permissions.deny' "$LOCAL" >/dev/null 2>&1; then
-        ISSUES+=("settings.local.json に permissions.deny が定義されています(共有 settings.json で管理すべき)")
+        ISSUES+=("settings.local.json defines permissions.deny (deny rules should live in shared settings.json)")
     fi
 fi
 
-# 3c. Secret パターン検出(NEED_FULL_SCAN=1 のときのみ実施 — 重い)
+# 3c. Secret pattern scan (only when NEED_FULL_SCAN=1, this is the heavy one)
 if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
     SCAN_TARGETS=(
         "$PROJECT/.claude"
@@ -82,30 +92,30 @@ if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
     for target in "${SCAN_TARGETS[@]}"; do
         [[ -e "$target" ]] || continue
         if grep -rEq -- 'AKIA[0-9A-Z]{16}' "$target" 2>/dev/null; then
-            ISSUES+=("AWS Access Key ID パターンが ${target} に含まれます")
+            ISSUES+=("AWS Access Key ID pattern present in ${target}")
         fi
         if grep -rEq -- 'ghp_[a-zA-Z0-9]{36}' "$target" 2>/dev/null; then
-            ISSUES+=("GitHub PAT パターンが ${target} に含まれます")
+            ISSUES+=("GitHub PAT pattern present in ${target}")
         fi
-        if grep -rEq -- '\bsk-[a-zA-Z0-9]{32,}\b' "$target" 2>/dev/null; then
-            ISSUES+=("API key パターン (sk-...) が ${target} に含まれます")
+        if grep -rEq -- 'sk-[a-zA-Z0-9]{32,}' "$target" 2>/dev/null; then
+            ISSUES+=("API key pattern (sk-...) present in ${target}")
         fi
     done
 fi
 
-# ── 4. 結果出力 ──────────────────────────────────────────────────────
+# ── 4. Result output ──────────────────────────────────────────────────
 if [[ ${#ISSUES[@]} -eq 0 ]]; then
     exit 0
 fi
 
-echo "🛡️  scan-harness: 自己 SAST で ${#ISSUES[@]} 件の問題を検出" >&2
+echo "🛡️  scan-harness: self-SAST detected ${#ISSUES[@]} issue(s)" >&2
 for i in "${ISSUES[@]}"; do
     echo "  - $i" >&2
 done
 
 case "$PROFILE" in
     strict)
-        echo "(BLUEPRINT_HOOK_PROFILE=strict のため skill 起動をブロックします)" >&2
+        echo "(BLUEPRINT_HOOK_PROFILE=strict, blocking skill invocation)" >&2
         exit 2
         ;;
     standard|*)

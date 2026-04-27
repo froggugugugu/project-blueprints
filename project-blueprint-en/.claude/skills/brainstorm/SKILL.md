@@ -1,9 +1,10 @@
 ---
 name: brainstorm
-description: Socratic, question-driven skill for surfacing assumptions before `/prd`. Triggers: brainstorm, surface assumptions, clarify, ambiguity check, pre-PRD, "what am I missing". Writes no code or production docs. Source-code read-only. Outputs notes to `output/brainstorm/` (requires Write permission). Optional argument: /brainstorm <requirement-note or topic>
+description: Socratic clarification skill that surfaces assumptions before `/prd`. Read-only; output to `output/brainstorm/` only.
 allowed-tools: Read, Grep, Glob, Write, AskUserQuestion
 argument-hint: <requirement-note path, or topic to clarify>
 disable-model-invocation: false
+triggers: brainstorm, surface-assumptions, clarify, ambiguity-check, pre-prd, what-am-i-missing
 ---
 
 # `/brainstorm` — Pre-`/prd` Socratic clarification

@@ -2,19 +2,19 @@
 # ==============================================================================
 # user-prompt-submit.sh — UserPromptSubmit hook (2026 spec)
 #
-# 役割: ユーザー入力を Claude が処理する前に検査し、機密語・誤投稿を検出する。
-# Profile 切替: $BLUEPRINT_HOOK_PROFILE で挙動切替
-#   - minimal:  パススルー(検査スキップ)
-#   - standard: 機密パターン検出のみ警告(non-blocking、既定)
-#   - strict:   検出時にブロック(decision=block で差し戻し)
+# Role: Inspect user input before Claude processes it; detect secret patterns / leak risk.
+# Profile switching: $BLUEPRINT_HOOK_PROFILE
+#   - minimal:  pass-through (skip checks)
+#   - standard: warn-only on detection (non-blocking, default)
+#   - strict:   block via stdout JSON {"decision":"block"} (official spec, exit 0)
 #
 # Input:  JSON via stdin {"prompt": "...", "session_id": "..."}
 # Output:
-#   exit 0 + plain stdout = additional context を Claude に注入
-#   exit 0 + JSON {"decision":"block","reason":"..."} = プロンプトを差し戻し
-#   exit 2 = ブロック(stderr が Claude にフィードバック)
+#   exit 0 + plain stdout = inject additional context to Claude
+#   exit 0 + JSON {"decision":"block","reason":"..."} = ask Claude to revise the prompt
+#                                                       (the 2026 spec uses exit 0 + JSON, not exit 2)
 #
-# Policy: fail-open — jq 未導入環境やパース失敗時は素通り(壊さない)。
+# Policy: fail-open — pass through when jq is missing or parsing fails (don't break).
 # ==============================================================================
 
 set -uo pipefail
@@ -22,18 +22,18 @@ set -uo pipefail
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
-# jq が無ければ機密検出を諦めて通過(fail-open)。
-# 脆弱な sed フォールバックは誤検出/見逃しのリスクが高いため使わない。
+# Without jq we drop secret detection and pass through (fail-open).
+# A fragile sed fallback would risk false positives/negatives, so we don't use it.
 command -v jq &>/dev/null || exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
 PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
 [[ -z "$PROMPT" ]] && exit 0
 
-# 機密パターン(誤投稿リスク高い)
+# Secret patterns (high mis-paste risk)
 SECRET_PATTERNS=(
     'AKIA[0-9A-Z]{16}'                    # AWS Access Key ID
-    'sk-[a-zA-Z0-9]{32,}'                  # OpenAI / Anthropic 形式
+    'sk-[a-zA-Z0-9]{32,}'                  # OpenAI / Anthropic style
     'ghp_[a-zA-Z0-9]{36}'                  # GitHub Personal Access Token
     'gho_[a-zA-Z0-9]{36}'                  # GitHub OAuth Token
     'xox[baprs]-[a-zA-Z0-9-]+'             # Slack Token
@@ -51,11 +51,11 @@ done
 if [[ -n "$DETECTED" ]]; then
     case "$PROFILE" in
         strict)
-            printf '{"decision":"block","reason":"プロンプトに機密値の可能性のあるパターン (%s) が含まれます。値を [REDACTED] に置換して再送してください。"}\n' "$DETECTED"
+            printf '{"decision":"block","reason":"The prompt may contain a sensitive value matching pattern (%s). Please redact the value to [REDACTED] and resubmit."}\n' "$DETECTED"
             exit 0
             ;;
         standard|*)
-            printf '⚠️  user-prompt-submit hook: 機密パターン (%s) を検出しました。プロンプト内のシークレットを伏字化することを推奨します。\n' "$DETECTED"
+            printf '⚠️  user-prompt-submit hook: detected secret pattern (%s). Recommend redacting the value before submitting.\n' "$DETECTED"
             exit 0
             ;;
     esac

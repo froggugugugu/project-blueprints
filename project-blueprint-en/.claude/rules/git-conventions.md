@@ -27,6 +27,7 @@ management via Release Please.
 | `ci:` | CI configuration changes | none |
 | `build:` | Build system and dependency changes | none |
 | `revert:` | Revert a previous commit | none |
+| `feat!:` or BREAKING CHANGE | Breaking change (no backward compat) | **major (x.0.0)** |
 
 ### Rules
 

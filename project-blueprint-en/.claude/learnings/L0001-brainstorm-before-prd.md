@@ -4,7 +4,7 @@ topic: Always run /brainstorm before /prd when the requirement note is vague
 confidence: 0.85
 sample_size: 4
 first_seen: 2026-04-15
-last_confirmed: 2026-04-27
+last_confirmed: 2026-04-26
 status: active
 related: [P19]
 ---
@@ -71,4 +71,4 @@ superpowers' brainstorming skill — confirmed across multiple top-OSS projects.
 | ---- | ------ | ---------------- |
 | 2026-04-15 | Initial registration (2 cases observed) | — (0.50) |
 | 2026-04-22 | 3rd case reproduced, PRD-rework reduction confirmed | 0.50 → 0.65 |
-| 2026-04-27 | 4th case; `/brainstorm` skill shipped in this template | 0.65 → 0.85 |
+| 2026-04-26 | 4th case; `/brainstorm` skill shipped in this template | 0.65 → 0.85 |
