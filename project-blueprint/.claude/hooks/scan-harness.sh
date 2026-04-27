@@ -33,9 +33,11 @@ fi
 
 # ── 2. 高リスク skill 判定(常に実施、profile 非依存) ─────────────────
 case "$SKILL" in
-    deploy|deploy-*|*-deploy|prod-*|production-*)
+    # 注: `prod-*` は false-positive(prod-test, prod-validate 等)が多いため除外、
+    #     明示的な deploy / production プレフィックスのみブロック対象とする
+    deploy|deploy-*|*-deploy|production-*|*-production)
         echo "🛡️  scan-harness: 高リスク skill '$SKILL' は実効ブロックされます" >&2
-        echo "  理由: 本テンプレートは deploy 系 skill を deny 対象としています(公式 Skill() 未対応のため hook で代替)" >&2
+        echo "  理由: 本テンプレートは deploy/production 系 skill を deny 対象としています(公式 Skill() 未対応のため hook で代替)" >&2
         echo "  許可するには: settings.local.json で BLUEPRINT_HOOK_PROFILE=minimal を設定" >&2
         exit 2
         ;;
@@ -78,8 +80,9 @@ fi
 # 3b. settings.local.json が deny を上書きしていないか(常に実施 — 軽量)
 LOCAL="$PROJECT/.claude/settings.local.json"
 if [[ -f "$LOCAL" ]] && command -v jq &>/dev/null; then
-    if jq -e '.permissions.deny' "$LOCAL" >/dev/null 2>&1; then
-        ISSUES+=("settings.local.json に permissions.deny が定義されています(共有 settings.json で管理すべき)")
+    # 空配列 [] は truthy になるので、length > 0 を明示的にチェック
+    if jq -e '(.permissions.deny // []) | length > 0' "$LOCAL" >/dev/null 2>&1; then
+        ISSUES+=("settings.local.json に permissions.deny が非空で定義されています(共有 settings.json で管理すべき)")
     fi
 fi
 
@@ -96,8 +99,12 @@ if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
         if grep -rEq -- 'AKIA[0-9A-Z]{16}' "$target" 2>/dev/null; then
             ISSUES+=("AWS Access Key ID パターンが ${target} に含まれます")
         fi
+        # GitHub PAT(legacy ghp_ + fine-grained github_pat_ 両形式)
         if grep -rEq -- 'ghp_[a-zA-Z0-9]{36}' "$target" 2>/dev/null; then
-            ISSUES+=("GitHub PAT パターンが ${target} に含まれます")
+            ISSUES+=("GitHub PAT (legacy ghp_) パターンが ${target} に含まれます")
+        fi
+        if grep -rEq -- 'github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59}' "$target" 2>/dev/null; then
+            ISSUES+=("GitHub PAT (fine-grained github_pat_) パターンが ${target} に含まれます")
         fi
         if grep -rEq -- 'sk-[a-zA-Z0-9]{32,}' "$target" 2>/dev/null; then
             ISSUES+=("API key パターン (sk-...) が ${target} に含まれます")

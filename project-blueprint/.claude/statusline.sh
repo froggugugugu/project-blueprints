@@ -36,9 +36,15 @@ fi
 
 phase=""
 if [ -n "$project_dir" ] && [ -d "$project_dir/output" ]; then
-  # ディレクトリのみを対象に最新を取得(ls -t はファイル混在を拾うため避ける)
-  latest=$(find "$project_dir/output" -mindepth 1 -maxdepth 1 -type d \
-             -printf '%T@ %f\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+  # ディレクトリのみを対象に最新を取得。`find -printf` は GNU 限定で macOS の
+  # BSD find は非対応のため、stat による両環境フォールバックで実装。
+  latest=$(
+    for d in "$project_dir/output"/*/; do
+      [ -d "$d" ] || continue
+      mtime=$(stat -c '%Y' "$d" 2>/dev/null || stat -f '%m' "$d" 2>/dev/null || echo 0)
+      printf '%s %s\n' "$mtime" "$(basename "$d")"
+    done | sort -rn | head -1 | cut -d' ' -f2-
+  )
   case "$latest" in
     brainstorm) phase="🌱 Brainstorm" ;;
     prd)        phase="📝 PRD" ;;

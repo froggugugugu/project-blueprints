@@ -88,12 +88,12 @@ from top OSS harness projects (superpowers, ECC, spec-kit, BMAD, claude-flow).
 
 ---
 
-## [0.2.0] — 2026-04-23(approx)
+## [0.2.0] — 2026-04-23
 
 Initial blueprint self-enhancement series。詳細は git log 参照
 (`17cbf99` Merge PR #10 までの履歴)。
 
-## [0.1.0] — Initial release
+## [0.1.0] — 2026-04-01
 
 15 skills + 6 teams + 6 agents + 9 hooks + MCP テンプレート + 13 セクションの
 project-config.md を備えたブループリント初版。

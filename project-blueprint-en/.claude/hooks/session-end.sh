@@ -6,9 +6,9 @@
 #       output/reports/sessions/. Core observability primitive. Profile-aware.
 #
 # Profile switching: $BLUEPRINT_HOOK_PROFILE
-#   - minimal:  no-op (pass through)
-#   - standard: append a one-line summary (default)
-#   - strict:   append detailed report (changed files, commit count, test results)
+#   - minimal:  no-op (immediate exit 0)
+#   - standard: append a one-line row (time / SID / Reason / Changed files from git status)
+#   - strict:   append a one-line row (same as standard) + COMMITS column for last hour
 #
 # Input:  JSON via stdin {"session_id":"...", "transcript_path":"...", "reason":"..."}
 # Output: exit 0 (always allow)
@@ -30,8 +30,13 @@ if command -v jq &>/dev/null; then
     SID="$(printf '%s' "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null)"
     REASON="$(printf '%s' "$INPUT" | jq -r '.reason // "stop"' 2>/dev/null)"
 else
-    SID="unknown"
-    REASON="stop"
+    # When jq is missing, attempt grep/sed extraction so logs stay useful (POSIX-friendly)
+    SID="$(printf '%s' "$INPUT" | grep -oE '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' \
+            | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    REASON="$(printf '%s' "$INPUT" | grep -oE '"reason"[[:space:]]*:[[:space:]]*"[^"]*"' \
+              | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    [[ -z "$SID" ]] && SID="unknown"
+    [[ -z "$REASON" ]] && REASON="stop"
 fi
 
 NOW=$(date '+%H:%M:%S')

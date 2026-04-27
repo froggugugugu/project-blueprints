@@ -66,14 +66,17 @@ If a leak is detected, immediately purge the history and rotate the key.
 ## Change protocol
 
 1. Create a PR proposing changes to this file
-2. Reach consensus in review
-3. After merge, update the hash:
+2. **Inside the PR** (not after merge), recompute the hash and commit
+   `.claude/.constitution.sha256` in the same PR (no follow-up PR allowed):
 
    ```bash
+   # Linux / GNU coreutils
    sha256sum constitution.md | cut -d' ' -f1 > .claude/.constitution.sha256
+   # macOS / BSD (fallback when sha256sum is not installed)
+   shasum -a 256 constitution.md | cut -d' ' -f1 > .claude/.constitution.sha256
    ```
 
-4. Include `.claude/.constitution.sha256` in the same PR (no follow-up PR)
+3. Reach consensus in review → merge
 
 `scan-harness.sh` blocks skill invocation under the `strict` profile when it
 detects a hash mismatch (warns only under `standard`).

@@ -6,9 +6,9 @@
 # 観測性向上の中核。Profile 切替に対応。
 #
 # Profile 切替: $BLUEPRINT_HOOK_PROFILE
-#   - minimal:  何もしない(通過)
-#   - standard: 1 行サマリのみ追記(既定)
-#   - strict:   詳細レポート(変更ファイル・コミット数・テスト結果)を追記
+#   - minimal:  何もしない(no-op、即 exit 0)
+#   - standard: 1 行追記(時刻 / SID / Reason / Changed files、CHANGED は git status から)
+#   - strict:   1 行追記(standard と同形式)+ COMMITS 列に直近 1 時間のコミット数
 #
 # Input:  JSON via stdin {"session_id":"...", "transcript_path":"...", "reason":"..."}
 # Output: exit 0 (常に通過)
@@ -30,8 +30,13 @@ if command -v jq &>/dev/null; then
     SID="$(printf '%s' "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null)"
     REASON="$(printf '%s' "$INPUT" | jq -r '.reason // "stop"' 2>/dev/null)"
 else
-    SID="unknown"
-    REASON="stop"
+    # jq 不在環境でも grep/sed で抽出を試行(POSIX 互換、ログの有用性を保つ)
+    SID="$(printf '%s' "$INPUT" | grep -oE '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' \
+            | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    REASON="$(printf '%s' "$INPUT" | grep -oE '"reason"[[:space:]]*:[[:space:]]*"[^"]*"' \
+              | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    [[ -z "$SID" ]] && SID="unknown"
+    [[ -z "$REASON" ]] && REASON="stop"
 fi
 
 NOW=$(date '+%H:%M:%S')

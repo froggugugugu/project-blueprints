@@ -34,8 +34,9 @@ PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
 SECRET_PATTERNS=(
     'AKIA[0-9A-Z]{16}'                    # AWS Access Key ID
     'sk-[a-zA-Z0-9]{32,}'                  # OpenAI / Anthropic style
-    'ghp_[a-zA-Z0-9]{36}'                  # GitHub Personal Access Token
-    'gho_[a-zA-Z0-9]{36}'                  # GitHub OAuth Token
+    'ghp_[a-zA-Z0-9]{36}'                                  # GitHub PAT (legacy)
+    'github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59}'           # GitHub PAT (fine-grained)
+    'gho_[a-zA-Z0-9]{36}'                                  # GitHub OAuth Token
     'xox[baprs]-[a-zA-Z0-9-]+'             # Slack Token
     '-----BEGIN [A-Z ]+PRIVATE KEY-----'   # PEM private key
 )
@@ -51,11 +52,14 @@ done
 if [[ -n "$DETECTED" ]]; then
     case "$PROFILE" in
         strict)
+            # Official spec: stdout JSON {decision:block} + exit 0 (sends back the prompt)
             printf '{"decision":"block","reason":"The prompt may contain a sensitive value matching pattern (%s). Please redact the value to [REDACTED] and resubmit."}\n' "$DETECTED"
             exit 0
             ;;
         standard|*)
-            printf '⚠️  user-prompt-submit hook: detected secret pattern (%s). Recommend redacting the value before submitting.\n' "$DETECTED"
+            # standard warnings go to **stderr**. stdout would be injected into Claude's
+            # prompt (2026 spec); stderr is the correct channel for human-facing feedback.
+            printf '⚠️  user-prompt-submit hook: detected secret pattern (%s). Recommend redacting the value before submitting.\n' "$DETECTED" >&2
             exit 0
             ;;
     esac

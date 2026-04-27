@@ -33,9 +33,11 @@ fi
 
 # ── 2. High-risk skill check (always, profile-independent) ────────────
 case "$SKILL" in
-    deploy|deploy-*|*-deploy|prod-*|production-*)
+    # Note: `prod-*` was removed because of false positives (prod-test, prod-validate, etc.).
+    #       Only explicit deploy / production prefixes are blocked.
+    deploy|deploy-*|*-deploy|production-*|*-production)
         echo "🛡️  scan-harness: high-risk skill '$SKILL' is effectively blocked" >&2
-        echo "  Reason: this template denies deploy-class skills (Skill() permission not yet supported, hook substitute in use)" >&2
+        echo "  Reason: this template denies deploy/production-class skills (Skill() permission not yet supported, hook substitute in use)" >&2
         echo "  To allow: set BLUEPRINT_HOOK_PROFILE=minimal in settings.local.json" >&2
         exit 2
         ;;
@@ -77,8 +79,9 @@ fi
 # 3b. Detect deny-rule weakening in settings.local.json (always, lightweight)
 LOCAL="$PROJECT/.claude/settings.local.json"
 if [[ -f "$LOCAL" ]] && command -v jq &>/dev/null; then
-    if jq -e '.permissions.deny' "$LOCAL" >/dev/null 2>&1; then
-        ISSUES+=("settings.local.json defines permissions.deny (deny rules should live in shared settings.json)")
+    # An empty array [] is truthy in jq; explicitly require length > 0
+    if jq -e '(.permissions.deny // []) | length > 0' "$LOCAL" >/dev/null 2>&1; then
+        ISSUES+=("settings.local.json has a non-empty permissions.deny (deny rules should live in shared settings.json)")
     fi
 fi
 
@@ -94,8 +97,12 @@ if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
         if grep -rEq -- 'AKIA[0-9A-Z]{16}' "$target" 2>/dev/null; then
             ISSUES+=("AWS Access Key ID pattern present in ${target}")
         fi
+        # GitHub PAT (legacy ghp_ + fine-grained github_pat_)
         if grep -rEq -- 'ghp_[a-zA-Z0-9]{36}' "$target" 2>/dev/null; then
-            ISSUES+=("GitHub PAT pattern present in ${target}")
+            ISSUES+=("GitHub PAT (legacy ghp_) pattern present in ${target}")
+        fi
+        if grep -rEq -- 'github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59}' "$target" 2>/dev/null; then
+            ISSUES+=("GitHub PAT (fine-grained github_pat_) pattern present in ${target}")
         fi
         if grep -rEq -- 'sk-[a-zA-Z0-9]{32,}' "$target" 2>/dev/null; then
             ISSUES+=("API key pattern (sk-...) present in ${target}")

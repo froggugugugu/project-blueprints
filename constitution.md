@@ -61,14 +61,17 @@ Layer 1: フック(常時有効) / Layer 2: deny ルール(共有) / Layer 3: al
 ## 変更プロトコル
 
 1. 本ファイルの変更を提案する PR を作成
-2. レビューで合意
-3. PR マージ後、以下のコマンドで hash を更新:
+2. **PR 内で**以下のコマンドで hash を再計算し、`.claude/.constitution.sha256` を
+   同 PR にコミットする(別 PR で後追い禁止):
 
    ```bash
+   # Linux / GNU coreutils
    sha256sum constitution.md | cut -d' ' -f1 > .claude/.constitution.sha256
+   # macOS / BSD (sha256sum 不在環境のフォールバック)
+   shasum -a 256 constitution.md | cut -d' ' -f1 > .claude/.constitution.sha256
    ```
 
-4. `.claude/.constitution.sha256` も同 PR に含める(別 PR で後追い禁止)
+3. レビューで合意 → マージ
 
 `scan-harness.sh` は本ファイルの hash 不一致を検出したら strict プロファイルで
 skill 起動をブロックする(standard プロファイルでは警告のみ)。
