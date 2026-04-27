@@ -93,7 +93,7 @@ output/
 | **Analyst** | general-purpose, mode: plan | Sonnet | `brainstorm` (conditional), `prd`, `architecture` | plan required (PJM approves), source code read-only |
 | **Planner** | general-purpose, mode: plan | Sonnet | `plan` | plan required (PJM approves), source code read-only |
 | **Developer** | general-purpose | Sonnet | `implementing-features`, `ui-ux-design`, `refactoring` | plan required (PJM approves) |
-| **Reviewer** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check` | plan required (PJM approves), source code read-only |
+| **Reviewer** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check`, `hig-compliance` | plan required (PJM approves), source code read-only |
 | **Tester** | general-purpose | Sonnet | `e2e-testing`, `performance` | test files only |
 
 ### Skill Coverage (All 13 Skills)

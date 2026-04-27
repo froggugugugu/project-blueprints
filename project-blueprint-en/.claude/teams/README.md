@@ -32,7 +32,7 @@ Each team is mapped to the 15 skills under `.claude/skills/`.
 | **`TEAM_PJM.md`** | **Full lifecycle management** | **6** | **13 (all team-routed skills)** | hierarchical |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 | hierarchical |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 | mesh |
-| `TEAM_PLANNING.md` | Design phase | 4 | 3 | mesh |
+| `TEAM_PLANNING.md` | Design phase | 4 | 4 | mesh |
 | `TEAM_DESIGN.md` | Design system integration | 4 | 3 | star |
 | `TEAM_REFACTOR.md` | Refactoring | 4 | 5 | star |
 
