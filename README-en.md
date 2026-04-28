@@ -94,6 +94,24 @@ For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/R
 - [`project-blueprint-en/.claude/skills/`](project-blueprint-en/.claude/skills/) — All 16 SKILL.md files
 - [`CHANGELOG.md`](CHANGELOG.md) — Release notes (SemVer + Keep a Changelog)
 
+## Acknowledgments
+
+This blueprint borrows **conceptual ideas** from several outstanding Claude Code
+harness projects, independently re-implemented in our own style. We deeply thank
+their authors and communities.
+
+| Project | Concept borrowed | How it lives here |
+|---|---|---|
+| [spec-kit](https://github.com/github/spec-kit) | The `constitution.md` pattern — separating immutable principles from variable parameters | Independently composed (7 principles + sha256 hash monitoring) |
+| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | The "self-SAST" approach (AgentShield) | `scan-harness.sh` is an independent implementation (own checks and thresholds) |
+| [superpowers](https://github.com/obra/superpowers) | A brainstorming phase placed before `/prd` | `/brainstorm` skill independently authored (own Socratic templates) |
+| [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | Scale-adaptive personas / team structure | Listed as future work in `pitfalls.md` (Out of Scope) |
+| [claude-flow](https://github.com/ruvnet/claude-flow) | Topology metadata (hierarchical / mesh / star) | Adopted as classification axis in `teams/README.md` |
+
+All implementations in this repository are independent — no code or text was
+directly copied from these projects. Their licenses (MIT / Apache 2.0) are
+fully compatible with ours (also MIT).
+
 ## License
 
 MIT

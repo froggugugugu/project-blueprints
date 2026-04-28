@@ -94,6 +94,23 @@ cd ./my-app && claude
 - [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 16 skill の SKILL.md
 - [`CHANGELOG.md`](CHANGELOG.md) — リリースノート(SemVer + Keep a Changelog)
 
+## Acknowledgments — インスパイア元への謝辞
+
+本ブループリントは、以下の優れた Claude Code ハーネス OSS から**概念**を学び、
+独立に実装したものです。各プロジェクトの作者と community に深く感謝します。
+
+| プロジェクト | 借りた概念 | 本リポでの実装 |
+|---|---|---|
+| [spec-kit](https://github.com/github/spec-kit) | `constitution.md` による不変原則の分離思想 | 独自に再構成(7 原則 + sha256 hash 監視) |
+| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | 「ハーネス自身を SAST する」発想(AgentShield) | `scan-harness.sh` は独自実装(検査項目・閾値も独自) |
+| [superpowers](https://github.com/obra/superpowers) | `/prd` 前段に brainstorming フェーズを置く設計 | `/brainstorm` skill として独立に実装(Socratic テンプレも独自) |
+| [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | scale-adaptive な persona / チーム構造 | 将来枠として `pitfalls.md` の Out of Scope に記載 |
+| [claude-flow](https://github.com/ruvnet/claude-flow) | topology メタデータ(hierarchical / mesh / star) | `teams/README.md` に分類軸として導入 |
+
+本リポジトリ内のすべての実装は独立に書かれており、各プロジェクトのコードを
+直接流用・複製したものではありません。各プロジェクトのライセンス(MIT / Apache 2.0)
+とも完全互換です(本リポも MIT)。
+
 ## ライセンス
 
 MIT
