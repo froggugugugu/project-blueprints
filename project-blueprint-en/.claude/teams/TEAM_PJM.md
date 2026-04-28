@@ -159,8 +159,8 @@ output/
 
 ### Reviewer
 
-- Conduct code review, security scan, and legal check after implementation
-- Skills used: `/code-review`, `/security-scan`, `/legal-check`
+- Conduct code review, security scan, legal check, and HIG-compliance check after implementation
+- Skills used: `/code-review`, `/security-scan`, `/legal-check`, `/hig-compliance`
 - Output reports to respective subdirectories under `output/reports/`
 - Send specific feedback to the developer
 - **Do not modify source code**
