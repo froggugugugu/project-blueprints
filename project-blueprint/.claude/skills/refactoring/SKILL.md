@@ -249,6 +249,6 @@ argument-hint: "<対象ディレクトリ or 指示>"
 - `docs/development-patterns.md` に記載されたアンチパターンの使用
 - `--no-verify` によるフック迂回
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/pitfalls.md` で詳細を参照
+@.claude/pitfalls.md

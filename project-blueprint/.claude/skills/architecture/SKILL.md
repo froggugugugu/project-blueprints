@@ -314,6 +314,6 @@ context: fork
 - プロジェクト固有のデータ（ID、パスワード等）をドキュメントに含めること
 - 既存の `docs/` 配下ファイルの無断変更
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/quality-gates.md` で詳細を参照
+@.claude/quality-gates.md

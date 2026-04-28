@@ -202,8 +202,8 @@ When a file path is specified, review changes in that file.
 - Findings based on personal preference (without project convention rationale)
 - Vague findings without severity
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/guardrails.md` for details
-- See `@.claude/rules/workflow-advanced.md` for details
-- See `@.claude/pitfalls.md` for details
+@.claude/guardrails.md
+@.claude/rules/workflow-advanced.md
+@.claude/pitfalls.md

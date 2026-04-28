@@ -226,6 +226,6 @@ Please consult legal professionals for critical decisions.
 - Definitively stating "no issues" without basis
 - Underestimating risks (when uncertain, recommend consulting specialists)
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/pitfalls.md` for details
+@.claude/pitfalls.md

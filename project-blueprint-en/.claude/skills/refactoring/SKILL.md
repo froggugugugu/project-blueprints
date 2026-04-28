@@ -246,6 +246,6 @@ After refactoring, always update affected `docs/` files.
 - Using anti-patterns documented in `docs/development-patterns.md`
 - Bypassing hooks with `--no-verify`
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/pitfalls.md` for details
+@.claude/pitfalls.md

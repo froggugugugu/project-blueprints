@@ -229,6 +229,6 @@ npx license-checker --csv --out licenses.csv
 - 根拠なき「問題なし」の断定
 - リスクの過小評価（不明な場合は専門家への相談を推奨する）
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/pitfalls.md` で詳細を参照
+@.claude/pitfalls.md

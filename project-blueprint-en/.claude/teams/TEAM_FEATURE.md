@@ -149,7 +149,7 @@ When launched from TEAM_PJM's parallel mode (`--parallel`), follow these constra
 - Do not coordinate directly with other TEAM_FEATURE instances (PJM manages integration)
 - Report completion to PJM upon finishing (PJM manages progress via TaskUpdate)
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/teams/README.md` for details
-- See `@.claude/agents/README.md` for details
+@.claude/teams/README.md
+@.claude/agents/README.md

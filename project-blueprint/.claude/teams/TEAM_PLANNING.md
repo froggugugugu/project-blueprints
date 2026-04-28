@@ -135,7 +135,7 @@ PL: 成果物の整合性確認 → 実装チームへ引き継ぎ
 
 チーム全員が`.claude/CLAUDE.md`を読み、プロジェクトの技術スタック・規約に従うこと。
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/teams/README.md` で詳細を参照
-- `@.claude/agents/README.md` で詳細を参照
+@.claude/teams/README.md
+@.claude/agents/README.md

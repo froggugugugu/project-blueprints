@@ -231,6 +231,6 @@ Reference the following documents during PRD generation to ensure consistency:
 - Including project-specific data (IDs, passwords, etc.) in documentation
 - Modifying existing documentation (under `docs/`)
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/quality-gates.md` for details
+@.claude/quality-gates.md

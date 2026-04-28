@@ -380,8 +380,8 @@ pip install semgrep
 - 検出された機密情報のレポートへの転記（マスクする）
 - 「問題なし」の断定（「スキャン範囲内で検出なし」と表現する）
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/guardrails.md` で詳細を参照
-- `@.claude/permissions-guide.md` で詳細を参照
-- `@.claude/pitfalls.md` で詳細を参照
+@.claude/guardrails.md
+@.claude/permissions-guide.md
+@.claude/pitfalls.md

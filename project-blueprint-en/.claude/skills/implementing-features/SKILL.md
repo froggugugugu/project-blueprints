@@ -210,10 +210,10 @@ When implementation is complete, run the dependency direction check command
 - Bypassing hooks with `--no-verify`
 - Using anti-patterns documented in `docs/development-patterns.md`
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/quality-gates.md` for details
-- See `@.claude/rules/document-management.md` for details
-- See `@.claude/rules/git-conventions.md` for details
-- See `@.claude/rules/workflow-advanced.md` for details
-- See `@.claude/pitfalls.md` for details
+@.claude/quality-gates.md
+@.claude/rules/document-management.md
+@.claude/rules/git-conventions.md
+@.claude/rules/workflow-advanced.md
+@.claude/pitfalls.md

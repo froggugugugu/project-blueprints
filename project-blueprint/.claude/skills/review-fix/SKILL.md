@@ -248,6 +248,6 @@ Phase 7 で以下の形式で報告する:
 - 指摘されていないファイルへの変更（波及修正は除く）
 - ユーザーデータの暗黙的な削除・上書き
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/rules/git-conventions.md` で詳細を参照
+@.claude/rules/git-conventions.md

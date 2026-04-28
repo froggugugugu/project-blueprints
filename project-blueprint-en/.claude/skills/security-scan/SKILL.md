@@ -377,8 +377,8 @@ pip install semgrep
 - Transcribing detected sensitive information into the report (mask it)
 - Definitively stating "no issues" (use "no detections within scan scope")
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/guardrails.md` for details
-- See `@.claude/permissions-guide.md` for details
-- See `@.claude/pitfalls.md` for details
+@.claude/guardrails.md
+@.claude/permissions-guide.md
+@.claude/pitfalls.md

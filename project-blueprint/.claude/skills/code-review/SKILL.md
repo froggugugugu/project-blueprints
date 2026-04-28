@@ -205,8 +205,8 @@ context: fork
 - 個人の好みに基づく指摘（プロジェクト規約に根拠がないもの）
 - 重要度なしの曖昧な指摘
 
-## 関連参照(skill 起動時に必要なら読み込む)
+## 関連参照(必要に応じて Claude が load)
 
-- `@.claude/guardrails.md` で詳細を参照
-- `@.claude/rules/workflow-advanced.md` で詳細を参照
-- `@.claude/pitfalls.md` で詳細を参照
+@.claude/guardrails.md
+@.claude/rules/workflow-advanced.md
+@.claude/pitfalls.md

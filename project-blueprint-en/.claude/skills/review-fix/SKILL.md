@@ -246,6 +246,6 @@ The following comments are excluded from auto-fix and prompt manual action:
 - Changes to files not flagged in comments (except for ripple-effect fixes)
 - Implicit deletion/overwriting of user data
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/rules/git-conventions.md` for details
+@.claude/rules/git-conventions.md

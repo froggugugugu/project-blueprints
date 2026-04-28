@@ -136,7 +136,7 @@ Raw tool data goes to `testreport/`, human-readable summaries to `output/reports
 
 All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
 
-## Related references (load on demand at skill invocation)
+## Related references (loaded on demand by Claude)
 
-- See `@.claude/teams/README.md` for details
-- See `@.claude/agents/README.md` for details
+@.claude/teams/README.md
+@.claude/agents/README.md
