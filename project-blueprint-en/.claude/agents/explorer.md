@@ -4,6 +4,7 @@ description: Use when broad codebase exploration, structural grasp, or dependenc
 tools: Read, Grep, Glob
 model: claude-haiku-4-5
 color: blue
+memory: project
 ---
 
 # Explorer Agent — Codebase Exploration Specialist

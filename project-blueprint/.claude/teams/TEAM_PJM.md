@@ -90,16 +90,17 @@ output/
 | 役割 | エージェント種別 | モデル | 使用スキル | 権限 |
 | --- | --- | --- | --- | --- |
 | **PJM（リーダー）** | general-purpose | Opus | — | delegate + plan承認 |
-| **アナリスト** | general-purpose, mode: plan | Sonnet | `prd`, `architecture` | plan必須（PJMが承認）、ソースコード変更不可 |
+| **アナリスト** | general-purpose, mode: plan | Sonnet | `brainstorm`(条件付), `prd`, `architecture` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **プランナー** | general-purpose, mode: plan | Sonnet | `plan` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **開発者** | general-purpose | Sonnet | `implementing-features`, `ui-ux-design`, `refactoring` | plan必須（PJMが承認） |
 | **レビュアー** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check`, `hig-compliance` | plan必須（PJMが承認）、ソースコード変更不可 |
 | **テスター** | general-purpose | Sonnet | `e2e-testing`, `performance` | テストファイルのみ変更可 |
 
-### スキルカバレッジ（全12スキル）
+### スキルカバレッジ（全13スキル）
 
 | スキル | 担当 |
 | --- | --- |
+| `brainstorm` | アナリスト(要求メモが曖昧な場合のみ起動) |
 | `prd` | アナリスト |
 | `architecture` | アナリスト |
 | `plan` | プランナー |
@@ -131,11 +132,14 @@ output/
 
 ### アナリスト
 
+- **Phase 0(任意)**: 要求メモが半ページ未満 or やらない事項が不明な場合は
+  `/brainstorm <メモ>` を先に起動。`output/brainstorm/` に保存後、PJM に承認を求める
 - 要求メモからPRDを生成する → `output/prd/`に出力
 - PRD承認後、アーキテクチャ設計書を生成する → `output/design/`に出力
-- 使用スキル: `/prd <ファイルパス>`, `/architecture <ファイルパス>`
+- 使用スキル: `/brainstorm <メモ>`(条件付) → `/prd <ファイルパス>` → `/architecture <ファイルパス>`
 - 曖昧な要件は「【要確認】」としてPJMに報告する
 - **ソースコードは変更しない**
+- 参考: `.claude/learnings/L0001-brainstorm-before-prd.md`(適用条件と効果)
 
 ### プランナー
 
@@ -172,6 +176,8 @@ output/
 ```text
 Phase 1: 要件分析
   PJM: input/ の要求メモを確認 → アナリストに割り当て
+  [Phase 0、条件付] メモ半ページ未満 or やらない事項不明の場合:
+    アナリスト: /brainstorm <メモ> → output/brainstorm/ に保存 → PJM 承認
   アナリスト: /prd で PRD 生成 → output/prd/ に出力
   🚏 ゲート1: 通常=人間に提示→承認待ち / 自律=PJMが品質基準で判定
 

@@ -14,9 +14,12 @@
     "- MCP: Change according to the MCP plugins you use",
     "",
     "Safety mechanism (defense in depth):",
-    "- Layer 1: PreToolUse + PostToolUse + SessionStart hooks (defined in settings.json, active even with --dangerously-skip-permissions)",
+    "- Layer 1: hooks (defined in settings.json, active even with --dangerously-skip-permissions)",
+    "    PreToolUse(Bash/Edit/Write/Skill) + UserPromptSubmit + SessionStart + SessionEnd",
+    "    + PostToolUse + SubagentStop + PreCompact + Stop/Notification",
     "- Layer 2: deny rules (defined in settings.json. Do not override in this file)",
     "- Layer 3: allow rules (this file, active in normal permission mode)",
+    "- meta : scan-harness.sh runs self-SAST (constitution hash / secret leak / deny weakening)",
     "",
     "teammateMode: Controls Agent Teams execution mode",
     "- 'in-process': Run in same process (default, fast)",
@@ -28,8 +31,15 @@
     "- CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: Enable Agent Teams ('1' to enable)"
   ],
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "BLUEPRINT_HOOK_PROFILE": "standard"
   },
+  "_comment_hook_profile": [
+    "BLUEPRINT_HOOK_PROFILE: behavior switch for next-gen hooks (user-prompt-submit / session-end / scan-harness)",
+    "  - 'minimal':  pass-through (skip checks). Use for CI / automation",
+    "  - 'standard': warn-only on detection (non-blocking, default)",
+    "  - 'strict':   block skill / prompt on detection. Use for high-risk work"
+  ],
   "permissions": {
     "allow": [
       "Edit(**/*.{css,js,ts,tsx,json,md})",

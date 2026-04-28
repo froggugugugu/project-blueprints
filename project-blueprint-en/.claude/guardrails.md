@@ -11,13 +11,28 @@ Provides a unified view of rules that are otherwise distributed across various s
 | ---- | ----- | ------ | -------- | ----------- |
 | `safety-check.sh` | PreToolUse | Bash | Block | Detects and prevents dangerous shell commands |
 | `protect-files.sh` | PreToolUse | Edit\|Write | Block | Prevents writes to sensitive and config files |
+| `scan-harness.sh` | PreToolUse | Skill | Warn/Block | Self-SAST: detects secrets, constitution drift, weakened local denies in the harness |
+| `user-prompt-submit.sh` | UserPromptSubmit | — | Warn/Block | Detects secret patterns (API keys, tokens) in user input |
 | `session-start.sh` | SessionStart | — | Warn | Checks existence of project-config.md / docs/ / settings.local.json |
+| `session-end.sh` | SessionEnd | — | Observe | Appends session summary to `output/reports/sessions/<date>.md` |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | Warn | Conventional Commits format check and secret detection |
 | `console-warn.sh` | PostToolUse | Edit\|Write | Warn | Detects leftover debug statements (console.log, etc.) |
 | `post-failure-log.sh` | PostToolUse | All tools | Observe | Structured error logs on tool failure (`testreport/failures/`) |
 | `subagent-audit.sh` | SubagentStop | — | Observe | Subagent completion records (`testreport/agents/`) |
 | `pre-compact-backup.sh` | PreCompact | — | Observe | Transcript backup before compact (`testreport/transcripts/`) |
 | `notify-claude.sh` | Stop / Notification | — | Notify | External notification on task completion (ntfy) |
+
+### Hook profile switching (2026 extension)
+
+The `BLUEPRINT_HOOK_PROFILE` env var controls behavior of `user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh`:
+
+| profile | Use case | Behavior |
+| ------- | -------- | -------- |
+| `minimal` | CI / automation | Pass-through (skip checks). Minimum overhead |
+| `standard` (default) | Normal dev | Warn-only on detection (non-blocking) |
+| `strict` | High-risk work | Block skill / prompt on detection |
+
+Recommended switching mechanism: `.envrc` / `direnv`.
 
 ### Hook Behavior Principles
 
@@ -44,12 +59,11 @@ Hook events **not** implemented in this template but available for project-speci
 
 | Event | Timing | Use Case |
 | ----- | ------ | -------- |
-| `UserPromptSubmit` | When user input is submitted | Pre-send secret inspection, prompt enhancement |
-| `SessionEnd` | When a session ends | Usage aggregation, metrics submission |
 | `PreToolUse` (matcher: `"Task"`) | Subagent invocation | Capture start events, inject env vars |
+| `PreToolUse` (matcher: `"Agent"`) | Just before agent spawn | Pre-spawn screening |
 
-> As of 2026-04, `SubagentStop` / `PreCompact` / `PostToolUse (failure handling)` are implemented (see the Hook Inventory above).
-> The official hook events are `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` (9 total). `SubagentStart` / `InstructionsLoaded` / `PermissionRequest` are not part of the official spec.
+> As of 2026-04, `UserPromptSubmit` / `SessionEnd` / `SubagentStop` / `PreCompact` / `PostToolUse (failure handling)` / `PreToolUse (Skill)` are implemented (see Hook Inventory above).
+> The official hook events are `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` (9 total).
 
 Add to `settings.json` in this format:
 
@@ -123,15 +137,23 @@ Add to `settings.json` in this format:
 ## 3-Layer Defense Model
 
 ```text
-Layer 1: Hooks (PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact)
-  ↓  Active even with --dangerously-skip-permissions
+Layer 1: Hooks (active even with --dangerously-skip-permissions)
+   ├─ PreToolUse:        safety-check / protect-files / scan-harness(Skill)
+   ├─ PostToolUse:       commit-quality / console-warn / post-failure-log
+   ├─ UserPromptSubmit:  user-prompt-submit
+   ├─ SessionStart/End:  session-start / session-end
+   ├─ SubagentStop:      subagent-audit
+   ├─ PreCompact:        pre-compact-backup
+   └─ Stop / Notification: notify-claude
+  ↓
 Layer 2: Deny rules (settings.json)
-  ↓  Active in normal mode
+  ↓ Active in normal mode
 Layer 3: Allow rules (settings.local.json)
-  ↓  Active only in normal mode
+  ↓ Active only in normal mode
+meta : self-SAST (scan-harness.sh detects constitution-hash drift / secret leaks / weakened denies)
 ```
 
-> Layer 1 includes blocking hooks (`safety-check.sh` / `protect-files.sh`), observation hooks (`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh`), and notification hooks (`notify-claude.sh`). The observation and notification hooks don't block operations, but they still function as part of the defense perimeter by persisting audit trails and alerts even under `--dangerously-skip-permissions`.
+> Layer 1 includes blocking hooks (`safety-check.sh` / `protect-files.sh` / `scan-harness.sh`), observation hooks (`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh` / `session-end.sh`), warning hooks (`commit-quality.sh` / `console-warn.sh` / `user-prompt-submit.sh`), and notification hooks (`notify-claude.sh`). The observation and notification hooks don't block operations, but they still function as part of the defense perimeter by persisting audit trails and alerts even under `--dangerously-skip-permissions`.
 
 - Layer 1 is always active. The most reliable defense layer
 - Layer 2 is automatically applied in normal mode

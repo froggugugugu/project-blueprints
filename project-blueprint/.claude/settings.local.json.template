@@ -14,9 +14,12 @@
     "- MCP: 使用するMCPプラグインに合わせて変更",
     "",
     "安全機構（多層防御）:",
-    "- Layer 1: PreToolUse + SessionStart フック（settings.json で定義、--dangerously-skip-permissions でも有効）",
+    "- Layer 1: フック群（settings.json で定義、--dangerously-skip-permissions でも有効）",
+    "    PreToolUse(Bash/Edit/Write/Skill) + UserPromptSubmit + SessionStart + SessionEnd",
+    "    + PostToolUse + SubagentStop + PreCompact + Stop/Notification",
     "- Layer 2: deny ルール（settings.json に定義済み。このファイルでは上書きしないこと）",
     "- Layer 3: allow ルール（このファイル、通常モード時に有効）",
+    "- meta : scan-harness.sh による self-SAST（constitution hash / secret 混入 / deny 弱体化検出）",
     "",
     "teammateMode: エージェントチームの実行方式を制御する",
     "- 'in-process': 同一プロセス内で実行（デフォルト、高速）",
@@ -28,8 +31,15 @@
     "- CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: Agent Teams 機能の有効化（'1' で有効）"
   ],
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "BLUEPRINT_HOOK_PROFILE": "standard"
   },
+  "_comment_hook_profile": [
+    "BLUEPRINT_HOOK_PROFILE: 新世代 hook (user-prompt-submit / session-end / scan-harness) の挙動切替",
+    "  - 'minimal':  パススルー(検査スキップ)。CI / 自動化向け",
+    "  - 'standard': 検出時は警告のみ(non-blocking、既定)",
+    "  - 'strict':   検出時に skill / プロンプトをブロック。高リスク作業向け"
+  ],
   "permissions": {
     "allow": [
       "Edit(**/*.{css,js,ts,tsx,json,md})",

@@ -343,6 +343,15 @@ output/reports/                <- Human-readable summaries (Git-managed)
 - Dependency vulnerabilities should be checked regularly
 - <!-- Add other project-specific policies -->
 
+### Harness-side safety mechanisms (provided by this template)
+
+- **3-layer defense**: hooks (Layer 1) → deny rules (Layer 2) → allow rules (Layer 3). Details in `@.claude/guardrails.md`
+- **Self-SAST**: `scan-harness.sh` (PreToolUse: Skill) detects secret leaks / constitution drift / weakened local denies
+- **Inviolable principles**: 7 principles in `@constitution.md`, hash-monitored via `.claude/.constitution.sha256`
+- **Hook profile**: `BLUEPRINT_HOOK_PROFILE=minimal|standard|strict` toggles inspection strictness
+- **High-risk skill blocking**: `deploy*` skills are blocked at all times by `scan-harness.sh` (only `minimal` profile lets them through)
+- **3-tier permission operation**: allowlist / auto / sandbox usage detailed in `@.claude/permissions-guide.md`
+
 ---
 
 ## 11. Project-Specific Notes <!-- Recommended -->

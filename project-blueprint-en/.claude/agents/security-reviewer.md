@@ -4,6 +4,9 @@ description: Use for security audits. For "is this code safe?", "vulnerability c
 tools: Read, Grep, Glob
 model: claude-opus-4-7
 color: red
+isolation: worktree
+skills:
+  - security-scan
 ---
 
 # Security Reviewer Agent — Security Audit Specialist
@@ -78,6 +81,7 @@ Comprehensively review authentication, authorization, input validation, secret m
 - **Cite basis always** — OWASP / CWE ID required; "vaguely dangerous" is forbidden
 - **Minimize reproduction details** — describe impact instead of a step-by-step PoC
 - **No Bash** — use the Grep / Glob tools for file search (agent frontmatter `tools:` accepts tool names only; subcommand-level restrictions like `Bash(grep *)` are not supported)
+- **Note on `skills: security-scan`**: the skill's `allowed-tools` includes `Bash(git *)`, but that applies to **direct skill invocation**. When invoked through this agent, the agent's `tools: Read, Grep, Glob` take precedence — only the skill's review guidance is consulted (no Bash is granted)
 
 ## Related skills / agents
 

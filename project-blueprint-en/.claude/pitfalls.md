@@ -12,7 +12,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | As CLAUDE.md grows, Claude stops following earlier instructions |
 | **Cause** | Above ~200 lines, important rules get buried in low-priority noise. Token cost also grows per session |
-| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use `@path` imports |
+| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use concrete `@import` paths like `@docs/*.md` / `@.claude/*.md` (root-relative) |
 
 ### 2. Subagents don't inherit parent skills / rules
 
@@ -130,6 +130,61 @@ This file contains **universal, template-wide pitfalls** only.
 | **Cause** | Bypassing feels faster than fixing the hook failure |
 | **Mitigation** | `--no-verify` is blocked by `safety-check.sh`. When tempted, first investigate what the hook is protecting. See also CLAUDE.md §Git Operations Policy |
 
+## Context-management pitfalls
+
+Five high-frequency failure patterns extracted from the official best practices,
+common in long-running Claude Code sessions.
+
+### 16. Kitchen sink session (mixing unrelated tasks)
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | A single conversation flips between requirements, debugging, an unrelated investigation, and back; context bloats and instruction precision drops |
+| **Cause** | History, file reads, and command output from loosely-related tasks all linger in the context window |
+| **Mitigation** | Run `/clear` when the task switches. Habit-forming at the phase gates defined in `.claude/quality-gates.md` is the most effective |
+
+### 17. Over-correction loop (correcting the same issue repeatedly)
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | The same spot is corrected 3+ times and still wrong. Failed approaches stay in context |
+| **Cause** | The model retains every failed attempt, so it cannot decide which to commit to |
+| **Mitigation** | After two consecutive failures, run `/clear` and re-issue the prompt with what you learned baked in. `/rewind` to a pre-failure checkpoint also works |
+
+### 18. Bloated CLAUDE.md (instructions buried)
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Rules in CLAUDE.md stop being followed |
+| **Cause** | Above ~200 lines, low-priority instructions drown the high-priority ones (same root as #1) |
+| **Mitigation** | For each line, ask "would Claude make a mistake without this?". If no, delete. Consider promoting rules into hooks. Move details into `.claude/rules/` or skills |
+
+### 19. Trust-then-verify gap (committing without verification)
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | "Looks-like-it-works" code is approved and merged, then breaks on edge cases |
+| **Cause** | Approval was granted without tests, screenshots, or other evidence |
+| **Mitigation** | The `/implementing-features` skill enforces TDD. Verify UI changes with the Playwright MCP. Make "no change ships without a verification artifact" a phase-gate criterion |
+
+### 20. Infinite exploration (unbounded investigation)
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | A "please investigate" task ends up reading 100+ files, exhausts context, and reaches no conclusion |
+| **Cause** | The exploration runs in the parent session instead of a subagent |
+| **Mitigation** | Delegate investigations to the `explorer` subagent (separate context, summary returned). Always bound the scope: "max 3 files" or "only under X/" |
+
+## Recommended session-management commands
+
+| Scenario | Command | Effect |
+| -------- | ------- | ------ |
+| Switching tasks | `/clear` | Fully reset context. The strongest context-compression lever |
+| Roll back exploration | `/rewind` or `Esc Esc` | Restore conversation/code to a pre-failure checkpoint |
+| Partial compaction | `/compact <focus>` | Summarize while keeping a specific topic |
+| Side question | `/btw <q>` | Asks without entering history (overlay display) |
+| Parallel work | `claude --continue` in another terminal | Writer / Reviewer multi-session pattern |
+
 ## Future expansion candidates (out of scope)
 
 The following are not in the current template but under consideration:
@@ -137,7 +192,10 @@ The following are not in the current template but under consideration:
 - **Dedicated `/bug-fix` skill**: Pimzino-style Report → Analyze → Fix → Verify pipeline
 - **EARS-format requirements**: Introduce gotalab/cc-sdd style Kiro spec-driven approach in `/prd`
 - **`brief.md` artifact**: Add a Phase 0 scope summary for session resumption
-- **Plugin packaging**: Add `.claude-plugin/marketplace.json` for marketplace distribution
-- **English/Japanese sync**: Maintain parity between `project-blueprint/` and `project-blueprint-en/`
+- **Scale-adaptive teams**: BMAD-METHOD-style XS/S/M/L variants of `TEAM_*.md` (currently fixed)
+- **`monitors/` / `bin/`**: Bundle background watchers and PATH-auto-extended scripts in the plugin (2026 spec)
+- **Standardized EnterWorktree**: Auto-worktree on `/security-scan` / `/refactoring` entry
 
-These are tracked as expansion items; currently noted only as "future candidates".
+> Already-ingested features (plugin packaging / learnings / constitution / `/brainstorm` /
+> the 3 new hooks, etc.) are noted at the top of the root `README-en.md`. This file's
+> charter is "failure-pattern catalog", so the implemented-feature list does not live here.

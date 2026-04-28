@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# session-end.sh — SessionEnd hook (2026 spec)
+#
+# Role: Generate aggregated reports on session end and append to
+#       output/reports/sessions/. Core observability primitive. Profile-aware.
+#
+# Profile switching: $BLUEPRINT_HOOK_PROFILE
+#   - minimal:  no-op (immediate exit 0)
+#   - standard: append a one-line row (time / SID / Reason / Changed files from git status)
+#   - strict:   append a one-line row (same as standard) + COMMITS column for last hour
+#
+# Input:  JSON via stdin {"session_id":"...", "transcript_path":"...", "reason":"..."}
+# Output: exit 0 (always allow)
+# ==============================================================================
+
+set -uo pipefail
+
+PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
+[[ "$PROFILE" == "minimal" ]] && exit 0
+
+INPUT="$(cat 2>/dev/null || true)"  # fail-open: pass through even if stdin read fails
+REPORT_DIR="${CLAUDE_PROJECT_DIR:-.}/output/reports/sessions"
+mkdir -p "$REPORT_DIR" 2>/dev/null || exit 0
+
+TODAY=$(date +%Y-%m-%d)
+LOG="$REPORT_DIR/$TODAY.md"
+
+if command -v jq &>/dev/null; then
+    SID="$(printf '%s' "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null)"
+    REASON="$(printf '%s' "$INPUT" | jq -r '.reason // "stop"' 2>/dev/null)"
+else
+    # When jq is missing, attempt grep/sed extraction so logs stay useful (POSIX-friendly)
+    SID="$(printf '%s' "$INPUT" | grep -oE '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' \
+            | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    REASON="$(printf '%s' "$INPUT" | grep -oE '"reason"[[:space:]]*:[[:space:]]*"[^"]*"' \
+              | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+    [[ -z "$SID" ]] && SID="unknown"
+    [[ -z "$REASON" ]] && REASON="stop"
+fi
+
+NOW=$(date '+%H:%M:%S')
+
+if [[ ! -f "$LOG" ]]; then
+    {
+        echo "# Session log — $TODAY"
+        echo ""
+        echo "| End time | session_id | Reason | Changed files | Commits |"
+        echo "| -------- | ---------- | ------ | ------------- | ------- |"
+    } > "$LOG"
+fi
+
+CHANGED=0
+COMMITS=0
+if [[ -d "${CLAUDE_PROJECT_DIR:-.}/.git" ]]; then
+    CHANGED=$(git -C "${CLAUDE_PROJECT_DIR:-.}" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    if [[ "$PROFILE" == "strict" ]]; then
+        COMMITS=$(git -C "${CLAUDE_PROJECT_DIR:-.}" log --since="1 hour ago" --oneline 2>/dev/null | wc -l | tr -d ' ')
+    fi
+fi
+
+# Sanitize REASON: neutralize Markdown table separator '|' and newlines (prevent table corruption)
+REASON_SAFE=$(printf '%s' "$REASON" | tr '\n' ' ' | sed 's/|/\\|/g')
+printf '| %s | `%s` | %s | %s | %s |\n' "$NOW" "${SID:0:8}" "$REASON_SAFE" "$CHANGED" "$COMMITS" >> "$LOG"
+
+exit 0

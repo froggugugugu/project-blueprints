@@ -90,16 +90,17 @@ output/
 | Role | Agent Type | Model | Skills | Permissions |
 | --- | --- | --- | --- | --- |
 | **PJM (Leader)** | general-purpose | Opus | — | delegate + plan approval |
-| **Analyst** | general-purpose, mode: plan | Sonnet | `prd`, `architecture` | plan required (PJM approves), source code read-only |
+| **Analyst** | general-purpose, mode: plan | Sonnet | `brainstorm` (conditional), `prd`, `architecture` | plan required (PJM approves), source code read-only |
 | **Planner** | general-purpose, mode: plan | Sonnet | `plan` | plan required (PJM approves), source code read-only |
 | **Developer** | general-purpose | Sonnet | `implementing-features`, `ui-ux-design`, `refactoring` | plan required (PJM approves) |
-| **Reviewer** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check` | plan required (PJM approves), source code read-only |
+| **Reviewer** | general-purpose, mode: plan | Sonnet | `code-review`, `security-scan`, `legal-check`, `hig-compliance` | plan required (PJM approves), source code read-only |
 | **Tester** | general-purpose | Sonnet | `e2e-testing`, `performance` | test files only |
 
-### Skill Coverage (All 11 Skills)
+### Skill Coverage (All 13 Skills)
 
 | Skill | Owner |
 | --- | --- |
+| `brainstorm` | Analyst (only when the requirement note is vague) |
 | `prd` | Analyst |
 | `architecture` | Analyst |
 | `plan` | Planner |
@@ -109,6 +110,7 @@ output/
 | `code-review` | Reviewer |
 | `security-scan` | Reviewer |
 | `legal-check` | Reviewer |
+| `hig-compliance` | Reviewer |
 | `e2e-testing` | Tester |
 | `performance` | Tester |
 
@@ -130,11 +132,15 @@ output/
 
 ### Analyst
 
+- **Phase 0 (optional)**: If the requirement note is under half a page or "what we won't do"
+  is unclear, run `/brainstorm <note>` first. Save to `output/brainstorm/` and request
+  PJM approval before proceeding.
 - Generate PRD from requirement notes → output to `output/prd/`
 - After PRD approval, generate architecture design doc → output to `output/design/`
-- Skills used: `/prd <file-path>`, `/architecture <file-path>`
+- Skills used: `/brainstorm <note>` (conditional) → `/prd <file-path>` → `/architecture <file-path>`
 - Report ambiguous requirements as "[Needs Confirmation]" to PJM
 - **Do not modify source code**
+- Reference: `.claude/learnings/L0001-brainstorm-before-prd.md` (applicability and impact)
 
 ### Planner
 
@@ -153,8 +159,8 @@ output/
 
 ### Reviewer
 
-- Conduct code review, security scan, and legal check after implementation
-- Skills used: `/code-review`, `/security-scan`, `/legal-check`
+- Conduct code review, security scan, legal check, and HIG-compliance check after implementation
+- Skills used: `/code-review`, `/security-scan`, `/legal-check`, `/hig-compliance`
 - Output reports to respective subdirectories under `output/reports/`
 - Send specific feedback to the developer
 - **Do not modify source code**
@@ -171,6 +177,8 @@ output/
 ```text
 Phase 1: Requirements Analysis
   PJM: Check requirement notes in input/ → Assign to Analyst
+  [Phase 0, conditional] If note < ½ page or "what we won't do" unclear:
+    Analyst: /brainstorm <note> → save to output/brainstorm/ → PJM approves
   Analyst: Generate PRD with /prd → Output to output/prd/
   🚏 Gate 1: Normal=Present to human→Wait for approval / Autonomous=PJM judges by quality criteria
 

@@ -1,6 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "language": "en",
+  "statusLine": {
+    "type": "command",
+    "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/statusline.sh",
+    "padding": 0
+  },
   "hooks": {
     "Stop": [
       {
@@ -26,6 +31,18 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/user-prompt-submit.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -43,6 +60,16 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scan-harness.sh",
             "timeout": 10
           }
         ]
@@ -92,6 +119,18 @@
         ]
       }
     ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
         "matcher": "",
@@ -127,6 +166,15 @@
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
       "Bash(sudo *)"
+    ],
+    "_comment_agent_skill_deny": [
+      "Agent(name) is officially supported as of 2026-04 (code.claude.com/docs/en/permissions).",
+      "Add Agent(Explore) or Agent(custom-agent) to deny per project as needed.",
+      "Empty here to preserve the 6 default agents shipped by this template.",
+      "",
+      "Skill(name) is NOT (yet) in the documented permissions spec.",
+      "Block high-risk skills (deploy*, etc.) inside scan-harness.sh by inspecting tool_input.skill.",
+      "Promote to deny once the official spec adopts it."
     ]
   },
   "enabledPlugins": {

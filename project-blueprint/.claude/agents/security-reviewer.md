@@ -4,6 +4,9 @@ description: セキュリティ観点の監査が必要なときに使用する�
 tools: Read, Grep, Glob
 model: claude-opus-4-7
 color: red
+isolation: worktree
+skills:
+  - security-scan
 ---
 
 # Security Reviewer Agent — セキュリティ監査専門
@@ -78,6 +81,7 @@ color: red
 - **根拠必須** — OWASP / CWE の ID を付ける。「なんとなく危ない」禁止
 - **再現手順は最小限** — 攻撃方法を詳細に書かない（Proof of Concept の代わりに影響を説明）
 - **Bash なし** — ファイル検索は Grep / Glob ツールで実施(agent frontmatter の `tools:` はツール名のみ受付で、`Bash(grep *)` のようなサブコマンド絞り込みはできないため)
+- **`skills: security-scan` 注記**: skill の `allowed-tools` には `Bash(git *)` が含まれるが、これは **skill 直接起動時**の権限。本 agent 経由で実行する場合は agent の `tools: Read, Grep, Glob` が優先され、skill の指示書(レビュー観点)のみ参照される(Bash 不可は維持される)
 
 ## 関連スキル / agent
 

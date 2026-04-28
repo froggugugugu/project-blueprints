@@ -4,6 +4,7 @@ description: コードベースの広範な探索・構造把握・依存関係�
 tools: Read, Grep, Glob
 model: claude-haiku-4-5
 color: blue
+memory: project
 ---
 
 # Explorer Agent — コードベース探索専門

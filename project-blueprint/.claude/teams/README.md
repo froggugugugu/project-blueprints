@@ -19,16 +19,22 @@
 .claude/teams/TEAM_FEATURE.md output/tasks/TASK_auth.md
 ```
 
-## チーム一覧
+## チーム一覧(topology 付き)
 
-| テンプレート | 用途 | メンバー | カバーするスキル数 |
-| --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理** | **6名** | **全スキル網羅** |
-| `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
-| `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
-| `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
-| `TEAM_DESIGN.md` | デザインシステム | 4名 | 3 |
-| `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 |
+`topology` は `claude-flow` のオーケストレーション分類にならった並列性メタデータ:
+
+- **hierarchical**: PL → メンバーの 1 方向(逐次・調整重視)
+- **mesh**: メンバー間が相互レビュー(並列・合議重視)
+- **star**: 中央 1 名がハブで放射状(分散指示)
+
+| テンプレート | 用途 | メンバー | スキル数 | topology |
+| --- | --- | --- | --- | -------- |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理** | **6名** | **13 (チーム経路の全スキル)** | hierarchical |
+| `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 | hierarchical |
+| `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 | mesh |
+| `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 4 | mesh |
+| `TEAM_DESIGN.md` | デザインシステム | 4名 | 3 | star |
+| `TEAM_REFACTOR.md` | リファクタリング | 4名 | 5 | star |
 
 ### チーム選定ガイド
 
@@ -194,6 +200,7 @@ project-root/
 
 | スキル | PJM | Feature | QA | Planning | Design | Refactor |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `brainstorm` | Analyst (条件付) | — | — | Analyst (条件付) | — | — |
 | `plan` | Planner | PL | — | Planner | — | PL |
 | `implementing-features` | Developer | Developer | — | — | — | Refactorer |
 | `ui-ux-design` | Developer | UI/UX | — | — | UI/UX | — |

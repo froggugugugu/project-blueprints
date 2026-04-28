@@ -343,6 +343,15 @@ output/reports/                ← 人間向けサマリー（Git管理）
 - 依存パッケージの脆弱性は定期確認
 - <!-- その他プロジェクト固有のポリシーを追記 -->
 
+### ハーネス側の安全機構(本テンプレート提供)
+
+- **3 層防御**: フック(Layer 1) → deny ルール(Layer 2) → allow ルール(Layer 3)。詳細は `@.claude/guardrails.md`
+- **Self-SAST**: `scan-harness.sh`(PreToolUse: Skill)が secret 混入 / constitution 改竄 / settings.local の deny 弱体化を検出
+- **不変原則**: `@constitution.md` の 7 原則が `.claude/.constitution.sha256` で hash 監視される
+- **Hook profile**: `BLUEPRINT_HOOK_PROFILE=minimal|standard|strict` で検査の厳しさを切替可能
+- **高リスク skill 抑止**: `deploy*` 系 skill は `scan-harness.sh` で常時ブロック(profile=minimal でのみ通過)
+- **3 階層 permission 運用**: allowlist / auto / sandbox の使い分けは `@.claude/permissions-guide.md` 参照
+
 ---
 
 ## 11. プロジェクト固有の注意事項 <!-- 推奨 -->

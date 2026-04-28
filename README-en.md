@@ -16,7 +16,11 @@ project-config.md           ->  TDD Implementation, Tests, Code Review
   standards)
 ```
 
-**1 config file + 15 skills + 6 teams + 5 quality gates + 9 hooks + subagent layer** -- scales from solo to team development.
+**1 config file + 16 skills + 6 teams + 5 quality gates + 12 hooks + 6 subagents + 4 output styles + immutable `constitution.md`** — scales from solo to team development.
+
+> As of 2026-04: **plugin marketplace distribution** (`.claude-plugin/marketplace.json`),
+> **continuous learning layer** (`.claude/learnings/`), **self-SAST** (`scan-harness.sh`),
+> and **hook profile switching** (`BLUEPRINT_HOOK_PROFILE`) are all shipped.
 
 ## Getting Started
 

@@ -4,6 +4,8 @@ description: Use to devise a design or plan before implementation. For "how shou
 tools: Read, Grep, Glob
 model: claude-sonnet-4-6
 color: green
+skills:
+  - adr
 ---
 
 # Planner Agent — Design Planning Specialist

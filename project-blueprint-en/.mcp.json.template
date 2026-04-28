@@ -33,6 +33,33 @@
     "For write-capable servers like postgres, deny by default and enable only read-only access"
   ],
   "_comment_optional_servers": {
+    "_comment_priority": [
+      "Recommendation tiers (high -> low):",
+      "  ★★★ filesystem: Efficient file traversal in large repos (fallback for Read/Glob)",
+      "  ★★★ sentry: Continuous monitoring of production errors and performance",
+      "  ★★☆ brave-search: WebSearch alternative (works without API key, rate-limited)",
+      "  ★★☆ postgres: Read-only schema introspection (NEVER point to a production DSN)",
+      "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)"
+    ],
+    "filesystem": {
+      "_warning": "The MCP filesystem server can traverse everything under the given root. Scoping is done by **listing only the safe subdirectories as positional arguments** — the server has no CLI-level exclude flag (as of 2026-04). Use multiple defense layers for secret protection:",
+      "_protection_layers": [
+        "1) Restrict exposed dirs: pass only secret-free subtrees like `${PROJECT_ROOT}/src` as args",
+        "2) protect-files.sh hook (bundled in this template) blocks Read/Edit on `.env`, private keys, etc. even via MCP",
+        "3) For servers that should respect `.gitignore`, use a wrapper layer separately"
+      ],
+      "_recommended_for": "Repositories with >100k lines where Read/Glob token efficiency matters",
+      "_example_safe": {
+        "_note": "Recommended: pass only secret-free subdirs as positional args",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}/src", "${PROJECT_ROOT}/docs", "${PROJECT_ROOT}/tests"]
+      },
+      "_example_full_root_with_hooks": {
+        "_note": "Passing the full root requires the protect-files.sh / safety-check.sh hooks to be active",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}"]
+      }
+    },
     "postgres": {
       "_warning": "Direct DB access is high risk. Use read-only only; never point to a production DSN",
       "_example": {
@@ -42,14 +69,24 @@
     },
     "sentry": {
       "_warning": "Useful for production error investigation. Export $SENTRY_AUTH_TOKEN first",
+      "_recommended_for": "Production phase. Useful for /security-scan and /code-review to fetch error context",
       "_example": {
         "command": "npx",
         "args": ["-y", "@sentry/mcp-server"],
         "env": { "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}" }
       }
     },
+    "brave-search": {
+      "_warning": "Web search alternative. Export $BRAVE_API_KEY (free tier available). Useful when WebSearch is unavailable",
+      "_recommended_for": "Air-gapped / corporate environments where WebSearch is restricted",
+      "_example": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        "env": { "BRAVE_API_KEY": "${BRAVE_API_KEY}" }
+      }
+    },
     "slack": {
-      "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN",
+      "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN. Restrict scope to chat:write only",
       "_example": {
         "command": "npx",
         "args": ["-y", "@modelcontextprotocol/server-slack"],
