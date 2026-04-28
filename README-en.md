@@ -25,8 +25,11 @@ At this point, the **design phase** runs: `/brainstorm` (when requirements are v
 Implementation-side skills like `/implementing-features` need `§4` (Architecture) filled in first —
 see "[Adopt incrementally](#adopt-incrementally)" below.
 
-> **Demo** (30s): `/prd` → `/architecture` → `/plan` → `/implementing-features`
-> *(GIF coming soon)*
+![5-line quickstart demo](.github/demo/quickstart.gif)
+
+> The 5 lines walk through `git clone` → `setup.sh` (places constitution.md, skills, hooks)
+> → `printf` to add §2 → launching `claude` → `/plan` accepted by Opus 4.7 —
+> all visible in **30 seconds**.
 
 ---
 

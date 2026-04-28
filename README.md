@@ -23,8 +23,11 @@ cd ./my-app && claude
 この時点で `/brainstorm`(要件曖昧時)→ `/prd` → `/plan` までの**設計フェーズ**が動きます。
 `/implementing-features` 等の実装系 skill は §4(アーキテクチャ)を埋めてから — 詳細は下の「[段階的に使う](#段階的に使う)」を参照。
 
-> **デモ**(30 秒): `/prd` → `/architecture` → `/plan` → `/implementing-features`
-> *(GIF 準備中)*
+![5 行 quickstart デモ](.github/demo/quickstart.gif)
+
+> 5 行を実行すると `git clone` → `setup.sh`(constitution.md・skills・hooks 配置)
+> → `printf` で §2 追記 → `claude` 起動 → `/plan ログイン機能の設計` を Opus 4.7
+> が受理 — までを **30 秒で確認**できます。
 
 ---
 
