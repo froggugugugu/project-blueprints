@@ -56,6 +56,14 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - Avoid over-engineering — implement the minimum complexity needed
 - Don't duplicate in docs what can be read from code
 
+## Document management (short)
+
+- **Human-managed**: `project-config.md` (13 sections) / `input/requirements/` / `constitution.md` (repo root)
+- **AI-managed**: `docs/*.md` (project-derived info) / `output/` (deliverables) / `testreport/` (raw tool data)
+- **AI-mutable sections**: `project-config.md` §2 (Tech Stack) / §3 (Commands) / §11 (Known Pitfalls) only. §1 / §4-§10 / §12 / §13 are human-decision areas (immutable to AI)
+- **Primary owner**: `docs/*.md` and `project-config.md` §2/§3 are consolidated by `/implementing-features`. Other skills only report findings
+- **Details** (conflict-prevention tables / docs update rules): `/implementing-features` loads `@.claude/rules/document-management.md` at invocation
+
 ## Architecture governance
 
 - Restrict dependency direction between layers; details in `project-config.md` §4.4

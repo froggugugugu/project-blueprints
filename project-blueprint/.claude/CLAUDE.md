@@ -56,6 +56,14 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - 過剰設計を避ける — 現要件に必要な最小限の複雑さで実装
 - コードから読み取れる情報をドキュメントに重複させない
 
+## ドキュメント管理(短縮版)
+
+- **人間管理**: `project-config.md`(13 セクション) / `input/requirements/` / `constitution.md`(repo ルート)
+- **AI 管理**: `docs/*.md`(プロジェクト派生情報) / `output/`(成果物) / `testreport/`(ツール生データ)
+- **AI が更新可能なセクション**: `project-config.md` §2(技術スタック)/ §3(コマンド)/ §11(既知の落とし穴)のみ。§1 / §4-§10 / §12 / §13 は人間決定領域(改変不可)
+- **一次更新責務**: `docs/*.md` と `project-config.md` §2/§3 は `/implementing-features` skill が集約。他 skill は発見事項を報告
+- **詳細**(競合防止表 / docs 更新の細則):`/implementing-features` が起動時に `@.claude/rules/document-management.md` を load
+
 ## アーキテクチャガバナンス
 
 - レイヤー間の依存方向制限。詳細は `project-config.md` §4.4
