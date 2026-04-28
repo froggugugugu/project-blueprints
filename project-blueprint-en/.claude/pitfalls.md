@@ -12,7 +12,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | As CLAUDE.md grows, Claude stops following earlier instructions |
 | **Cause** | Above ~200 lines, important rules get buried in low-priority noise. Token cost also grows per session |
-| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use `@path` imports |
+| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use concrete `@import` paths like `@docs/*.md` / `@.claude/*.md` (root-relative) |
 
 ### 2. Subagents don't inherit parent skills / rules
 
