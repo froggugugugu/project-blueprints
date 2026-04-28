@@ -20,7 +20,8 @@ cd ./my-app && claude
 # → Claude Code が起動したらプロンプトで:  /plan ログイン機能の設計
 ```
 
-これで `/brainstorm`(要件曖昧時)→ `/prd` → `/plan` → `/implementing-features` → `/code-review` の流れが動きます。
+この時点で `/brainstorm`(要件曖昧時)→ `/prd` → `/plan` までの**設計フェーズ**が動きます。
+`/implementing-features` 等の実装系 skill は §4(アーキテクチャ)を埋めてから — 詳細は下の「[段階的に使う](#段階的に使う)」を参照。
 
 > **デモ**(30 秒): `/prd` → `/architecture` → `/plan` → `/implementing-features`
 > *(GIF 準備中)*
@@ -107,7 +108,7 @@ cd ./my-app && claude
 | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT | 「ハーネス自身を SAST する」発想(AgentShield) | `scan-harness.sh` は独自実装(検査項目・閾値も独自) |
 | [superpowers](https://github.com/obra/superpowers) | MIT | `/prd` 前段に brainstorming フェーズを置く設計 | `/brainstorm` skill として独立に実装(Socratic テンプレも独自) |
 | [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | MIT | scale-adaptive な persona / チーム構造 | 将来枠として `pitfalls.md` の Out of Scope に記載 |
-| [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | topology メタデータ(hierarchical / mesh / star) | `teams/README.md` に分類軸として導入 |
+| [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | topology メタデータ(hierarchical / mesh / star) | [`project-blueprint/.claude/teams/README.md`](project-blueprint/.claude/teams/README.md) に分類軸として導入 |
 
 本リポジトリ内のすべての実装は独立に書かれており、各プロジェクトのコードを
 直接流用・複製したものではありません。各プロジェクトのライセンス(全 MIT)と

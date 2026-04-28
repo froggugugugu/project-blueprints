@@ -21,8 +21,9 @@ cd ./my-app && claude
 # → Once Claude Code launches, type:  /plan login feature design
 ```
 
-This is enough for `/brainstorm` (when requirements are vague) → `/prd` →
-`/plan` → `/implementing-features` → `/code-review` to flow.
+At this point, the **design phase** runs: `/brainstorm` (when requirements are vague) → `/prd` → `/plan`.
+Implementation-side skills like `/implementing-features` need `§4` (Architecture) filled in first —
+see "[Adopt incrementally](#adopt-incrementally)" below.
 
 > **Demo** (30s): `/prd` → `/architecture` → `/plan` → `/implementing-features`
 > *(GIF coming soon)*
@@ -111,7 +112,7 @@ their authors and communities.
 | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT | The "self-SAST" approach (AgentShield) | `scan-harness.sh` is an independent implementation (own checks and thresholds) |
 | [superpowers](https://github.com/obra/superpowers) | MIT | A brainstorming phase placed before `/prd` | `/brainstorm` skill independently authored (own Socratic templates) |
 | [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | MIT | Scale-adaptive personas / team structure | Listed as future work in `pitfalls.md` (Out of Scope) |
-| [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | Topology metadata (hierarchical / mesh / star) | Adopted as classification axis in `teams/README.md` |
+| [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | Topology metadata (hierarchical / mesh / star) | Adopted as classification axis in [`project-blueprint-en/.claude/teams/README.md`](project-blueprint-en/.claude/teams/README.md) |
 
 All implementations in this repository are independent — no code or text was
 directly copied from these projects. Their licenses (all MIT) are fully
