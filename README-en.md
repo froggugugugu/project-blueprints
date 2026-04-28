@@ -1,155 +1,122 @@
 # Project Blueprints
 
-AI-collaborative development environment templates for Claude Code.
+[**日本語**](README.md) · [English] · [CHANGELOG](CHANGELOG.md) · [constitution](constitution.md)
 
-Consolidate all human decisions into a single `project-config.md` file, and let AI handle everything from requirements analysis to PRD generation, design, implementation, testing, and review.
+> An AI-collaborative development harness for Claude Code, characterized by its
+> **JP↔EN structural mirror** and **self-SAST** (the harness inspects itself).
+> Hand a one-line requirement note to AI and get PRD → design → TDD → QA reports.
+> Just **one line in `project-config.md` §2** to start.
 
-## Project Blueprints in 30 Seconds
+**Prerequisite**: [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and on `PATH`.
 
-```
-What You Write              ->  What AI Generates
----------------------         ---------------------
-Requirement notes (a few    ->  PRD, Architecture Docs, Task Breakdown
-  lines of notes)
-project-config.md           ->  TDD Implementation, Tests, Code Review
-(Tech stack, Quality        ->  Quality Reports, Technical Documentation
-  standards)
-```
+---
 
-**1 config file + 16 skills + 6 teams + 5 quality gates + 12 hooks + 6 subagents + 4 output styles + immutable `constitution.md`** — scales from solo to team development.
-
-> As of 2026-04: **plugin marketplace distribution** (`.claude-plugin/marketplace.json`),
-> **continuous learning layer** (`.claude/learnings/`), **self-SAST** (`scan-harness.sh`),
-> and **hook profile switching** (`BLUEPRINT_HOOK_PROFILE`) are all shipped.
-
-## Getting Started
-
-```
-New project? --- Yes --> One-command setup with setup.sh
-       |
-       No (existing project)
-       |
-       v
-  Run setup.sh (existing .claude/ auto-backed up)
-       |
-       v
-  Fill in project-config.md (S1-S3, S6 -- 4 sections minimum)
-       |
-       v
-  Run /plan in Claude Code to verify setup
-       |
-       v
-  Start developing! (/prd -> /architecture -> /implementing-features)
-```
-
-### One-Command Setup
+## Run it in 5 lines
 
 ```bash
-git clone https://github.com/your-org/project-blueprints.git
-cd project-blueprints
-bash project-blueprint-en/setup.sh /path/to/your-project
+git clone https://github.com/froggugugugu/project-blueprints.git
+bash project-blueprints/project-blueprint-en/setup.sh ./my-app
+printf '\n## §2 Tech Stack\n- TypeScript / Vite / Vitest\n' >> ./my-app/project-config.md
+cd ./my-app && claude
+# → Once Claude Code launches, type:  /plan login feature design
 ```
 
-### Manual Setup
+At this point, the **design phase** runs: `/brainstorm` (when requirements are vague) → `/prd` → `/plan`.
+Implementation-side skills like `/implementing-features` need `§4` (Architecture) filled in first —
+see "[Adopt incrementally](#adopt-incrementally)" below.
 
-```bash
-cp -r project-blueprint-en/.claude /path/to/new-project/.claude
-cp -r project-blueprint-en/docs /path/to/new-project/docs
-cp -r project-blueprint-en/input /path/to/new-project/input
-cp -r project-blueprint-en/output /path/to/new-project/output
-cp -r project-blueprint-en/testreport /path/to/new-project/testreport
-cp project-blueprint-en/project-config.md /path/to/new-project/project-config.md
+> **Demo** (30s): `/prd` → `/architecture` → `/plan` → `/implementing-features`
+> *(GIF coming soon)*
 
-# Move CLAUDE.md to the project root
-mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
-```
+---
 
-### Fill in project-config.md (Minimum 4 Sections)
+## Why this — 5 differentiators
 
-| Section | Content |
-| --- | --- |
-| S1 Project Basics | Name, description, language |
-| S2 Tech Stack | Frameworks, libraries |
-| S3 Commands | dev / build / test / lint |
-| S6 Quality Standards | Coverage target, TDD on/off |
+| | Strength | Summary |
+|---|---|---|
+| 🌏 | **JP↔EN structural mirror** | `project-blueprint/` (Japanese) and `project-blueprint-en/` (English) are kept in lockstep. Multilingual Claude Code harnesses are rare in the ecosystem |
+| 🛡️ | **Self-SAST** (`scan-harness.sh`) | The harness inspects itself for secret leaks, constitution drift, and weakened denies |
+| 📜 | **Constitution-driven** | 7 immutable principles in `constitution.md`, sha256-monitored. Hooks block AI attempts to alter them |
+| 🚦 | **5 quality gates** | Optional human intervention points at PRD / design / task / implementation / verification |
+| 🧩 | **Three-layer separation** | skill (work) / team (orchestration) / agent (specialist) — never blurred. No cyclic references between layers |
 
-> Example: [project-config.sample.md](project-blueprint-en/project-config.sample.md) (fully filled sample using a task management app)
+---
 
-### Start Development
+## What's inside
 
 ```text
-# Full lifecycle with PJM team (recommended)
+16 skills    /brainstorm, /prd, /architecture, /plan, /implementing-features,
+             /code-review, /security-scan, /legal-check, /performance,
+             /refactoring, /e2e-testing, /ui-ux-design, /hig-compliance,
+             /design-system-audit, /adr, /review-fix
+ 6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
+ 6 agents    explorer, planner, security-reviewer, performance-analyst,
+             doc-synchronizer, test-writer
+12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
+             SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
+ 4 styles    phase-prd, phase-design, phase-implementation, phase-review
+ 4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 1 plugin    .claude-plugin/marketplace.json (Anthropic plugin spec compliant, not yet submitted)
+```
+
+For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/README.md) and [`CHANGELOG.md`](CHANGELOG.md).
+
+---
+
+## Adopt incrementally
+
+| Stage | Sections to fill | Unlocks |
+| --- | --- | --- |
+| **Minimal** | §1 + §2 + §3 | `/brainstorm`, `/prd`, `/plan` for requirements & design |
+| **Recommended** | + §4 (Architecture) | `/implementing-features` (TDD), all teams |
+| **Full** | All 13 sections | `/security-scan`, `/legal-check`, model-tier strategy (§13) |
+
+> The "Run in 5 lines" example only fills `§2` as a smoke test. For real projects,
+> filling `§1` (project name) and `§3` (build/test/lint commands) unlocks more skills.
+
+---
+
+## Common usage
+
+```bash
+# Full lifecycle (recommended)
 .claude/teams/TEAM_PJM.md input/requirements/REQ_001.md
 
-# Individual skills
-/prd input/requirements/REQ_001.md
-/plan Design user authentication feature
+# Single skill
+/brainstorm input/requirements/REQ_001.md   # When the requirement is vague
+/prd        input/requirements/REQ_001.md   # Generate PRD
+/plan       Login feature design            # Task breakdown
 /implementing-features output/tasks/TASK_auth.md
 ```
 
-For detailed setup instructions, step-by-step configuration guide, and integration into existing projects, see [project-blueprint-en/README.md](project-blueprint-en/README.md).
+---
 
-## Features
+## 📚 Learn more
 
-- **Single config file**: Consolidate tech stack, quality standards, and policies in `project-config.md`. Fill in incrementally
-- **15 skills**: PRD / architecture / task breakdown / TDD implementation / UI/UX / HIG compliance / design-token audit / code review / E2E / performance / refactoring / security scan / legal check / ADR / review-fix
-- **6 team templates**: Full lifecycle (PJM) / feature / QA / planning / design / refactoring
-- **6 subagents**: explorer / planner / security-reviewer / performance-analyst / doc-synchronizer / test-writer (`.claude/agents/`)
-- **5 quality gates**: Checkpoints where humans can review and approve at each phase
-- **9 hooks**: Defense in depth (5 block + 3 observe + 1 notify). Active even with `--dangerously-skip-permissions`
-- **Input/Output separation**: Clear separation between human requirements (`input/`) and AI deliverables (`output/`)
-- **MCP / GitHub Actions templates**: Project-shared MCP (`.mcp.json.template`) and `@claude` PR review (`.github/workflows/`)
+- [`project-blueprint-en/README.md`](project-blueprint-en/README.md) — Detailed setup
+- [`constitution.md`](constitution.md) — 7 inviolable principles (with change protocol)
+- [`project-blueprint-en/.claude/CLAUDE.md`](project-blueprint-en/.claude/CLAUDE.md) — Development guide (cross-cutting rules, ≤200 lines)
+- [`project-blueprint-en/.claude/pitfalls.md`](project-blueprint-en/.claude/pitfalls.md) — 20 common AI-collaboration pitfalls
+- [`project-blueprint-en/.claude/skills/`](project-blueprint-en/.claude/skills/) — All 16 SKILL.md files
+- [`CHANGELOG.md`](CHANGELOG.md) — Release notes (SemVer + Keep a Changelog)
 
-## Skill Pipeline
+## Acknowledgments
 
-```text
-/prd -> /architecture -> /plan -> /implementing-features -> /code-review
-                                                         -> /security-scan
-                                                         -> /legal-check
-                                                         -> /e2e-testing
-                                                         -> /performance
-                                                         -> /refactoring
+This blueprint borrows **conceptual ideas** from several outstanding Claude Code
+harness projects, independently re-implemented in our own style. We deeply thank
+their authors and communities.
 
-Auxiliary: /ui-ux-design, /hig-compliance, /design-system-audit, /adr, /review-fix
-```
+| Project | License | Concept borrowed | How it lives here |
+|---|---|---|---|
+| [spec-kit](https://github.com/github/spec-kit) | MIT | The `constitution.md` pattern — separating immutable principles from variable parameters | Independently composed (7 principles + sha256 hash monitoring) |
+| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT | The "self-SAST" approach (AgentShield) | `scan-harness.sh` is an independent implementation (own checks and thresholds) |
+| [superpowers](https://github.com/obra/superpowers) | MIT | A brainstorming phase placed before `/prd` | `/brainstorm` skill independently authored (own Socratic templates) |
+| [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | MIT | Scale-adaptive personas / team structure | Listed as future work in `pitfalls.md` (Out of Scope) |
+| [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | Topology metadata (hierarchical / mesh / star) | Adopted as classification axis in [`project-blueprint-en/.claude/teams/README.md`](project-blueprint-en/.claude/teams/README.md) |
 
-Each skill can be used standalone, as part of a team (multi-agent), or delegated to a one-off subagent (`.claude/agents/`).
-
-## Teams
-
-| Template | Purpose | Members | Skills |
-| --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **All skills covered** |
-| `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
-| `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
-| `TEAM_PLANNING.md` | Design phase | 4 | 3 |
-| `TEAM_DESIGN.md` | Design system integration | 5 | 4 |
-| `TEAM_REFACTOR.md` | Refactoring | 4 | 5 |
-
-## File Structure
-
-```
-project-blueprint-en/
-+-- README.md                      Setup instructions & detailed guide
-+-- setup.sh                       One-command setup script
-+-- project-config.md              [Human+AI] Config file (13 sections)
-+-- project-config.sample.md       Filled sample (task management app)
-+-- input/requirements/            [Human] Requirement notes
-+-- output/                        [AI-generated] PRD, design, tasks, quality reports
-+-- docs/                          [AI-generated] Technical docs (auto-maintained)
-+-- testreport/                    [AI-generated] Raw tool output (.gitignore target)
-+-- .mcp.json.template             Shared MCP server configuration template
-+-- .github/workflows/             Claude Code PR review workflow template
-+-- .claude/
-    +-- CLAUDE.md                  Development guide (moved to root during setup)
-    +-- skills/                    15 skill definitions
-    +-- teams/                     6 team definitions
-    +-- agents/                    6 subagent definitions
-    +-- rules/                     Language/path-specific rule extensions
-    +-- hooks/                     9 hook scripts
-    +-- pitfalls.md                Common pitfalls in AI-collaborative dev
-    +-- tasks/                     Task instruction templates
-```
+All implementations in this repository are independent — no code or text was
+directly copied from these projects. Their licenses (all MIT) are fully
+compatible with ours (also MIT).
 
 ## License
 
