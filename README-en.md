@@ -2,9 +2,12 @@
 
 [**日本語**](README.md) · [English] · [CHANGELOG](CHANGELOG.md) · [constitution](constitution.md)
 
-> **The only JP↔EN bilingual development harness for Claude Code.**
-> Hand a one-line requirement note to AI and get PRD → design → TDD implementation → QA reports.
-> Just **3 lines** in `project-config.md` to start.
+> An AI-collaborative development harness for Claude Code, characterized by its
+> **JP↔EN structural mirror** and **self-SAST** (the harness inspects itself).
+> Hand a one-line requirement note to AI and get PRD → design → TDD → QA reports.
+> Just **one line in `project-config.md` §2** to start.
+
+**Prerequisite**: [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and on `PATH`.
 
 ---
 
@@ -13,29 +16,28 @@
 ```bash
 git clone https://github.com/froggugugugu/project-blueprints.git
 bash project-blueprints/project-blueprint-en/setup.sh ./my-app
-echo -e "\n## §2 Tech Stack\n- TypeScript / Vite / Vitest" >> ./my-app/project-config.md
+printf '\n## §2 Tech Stack\n- TypeScript / Vite / Vitest\n' >> ./my-app/project-config.md
 cd ./my-app && claude
-# → Inside Claude Code:  /plan login feature design
+# → Once Claude Code launches, type:  /plan login feature design
 ```
 
-After line 5, you can already run `/prd`, `/plan`, `/implementing-features`, code review, and more.
+This is enough for `/brainstorm` (when requirements are vague) → `/prd` →
+`/plan` → `/implementing-features` → `/code-review` to flow.
 
-> **Demo** (30s): `/prd` → `/architecture` → `/plan` → `/implementing-features` flow
+> **Demo** (30s): `/prd` → `/architecture` → `/plan` → `/implementing-features`
 > *(GIF coming soon)*
 
 ---
 
 ## Why this — 5 differentiators
 
-| | Strength | What others lack |
+| | Strength | Summary |
 |---|---|---|
-| 🌏 | **JP↔EN structural mirror** | All competitors (superpowers, ECC, spec-kit, BMAD, claude-flow) are English-only |
+| 🌏 | **JP↔EN structural mirror** | `project-blueprint/` (Japanese) and `project-blueprint-en/` (English) are kept in lockstep. Multilingual Claude Code harnesses are rare in the ecosystem |
 | 🛡️ | **Self-SAST** (`scan-harness.sh`) | The harness inspects itself for secret leaks, constitution drift, and weakened denies |
-| 📜 | **Constitution-driven** | 7 inviolable principles in `constitution.md`, sha256 hash-monitored |
-| 🚦 | **5 quality gates** | Optional human intervention at PRD / design / task / implementation / verification |
-| 🧩 | **Three-layer separation** | skill (work) / team (orchestration) / agent (specialist) — never blurred |
-
-The 7 inviolable principles are codified in [`constitution.md`](constitution.md) (changes require a hash-bumping PR).
+| 📜 | **Constitution-driven** | 7 immutable principles in `constitution.md`, sha256-monitored. Hooks block AI attempts to alter them |
+| 🚦 | **5 quality gates** | Optional human intervention points at PRD / design / task / implementation / verification |
+| 🧩 | **Three-layer separation** | skill (work) / team (orchestration) / agent (specialist) — never blurred. No cyclic references between layers |
 
 ---
 
@@ -53,7 +55,7 @@ The 7 inviolable principles are codified in [`constitution.md`](constitution.md)
              SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
- 1 plugin    .claude-plugin/marketplace.json (Anthropic marketplace ready)
+ 1 plugin    .claude-plugin/marketplace.json (Anthropic plugin spec compliant, not yet submitted)
 ```
 
 For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/README.md) and [`CHANGELOG.md`](CHANGELOG.md).
@@ -67,6 +69,9 @@ For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/R
 | **Minimal** | §1 + §2 + §3 | `/brainstorm`, `/prd`, `/plan` for requirements & design |
 | **Recommended** | + §4 (Architecture) | `/implementing-features` (TDD), all teams |
 | **Full** | All 13 sections | `/security-scan`, `/legal-check`, model-tier strategy (§13) |
+
+> The "Run in 5 lines" example only fills `§2` as a smoke test. For real projects,
+> filling `§1` (project name) and `§3` (build/test/lint commands) unlocks more skills.
 
 ---
 
@@ -100,17 +105,17 @@ This blueprint borrows **conceptual ideas** from several outstanding Claude Code
 harness projects, independently re-implemented in our own style. We deeply thank
 their authors and communities.
 
-| Project | Concept borrowed | How it lives here |
-|---|---|---|
-| [spec-kit](https://github.com/github/spec-kit) | The `constitution.md` pattern — separating immutable principles from variable parameters | Independently composed (7 principles + sha256 hash monitoring) |
-| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | The "self-SAST" approach (AgentShield) | `scan-harness.sh` is an independent implementation (own checks and thresholds) |
-| [superpowers](https://github.com/obra/superpowers) | A brainstorming phase placed before `/prd` | `/brainstorm` skill independently authored (own Socratic templates) |
-| [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | Scale-adaptive personas / team structure | Listed as future work in `pitfalls.md` (Out of Scope) |
-| [claude-flow](https://github.com/ruvnet/claude-flow) | Topology metadata (hierarchical / mesh / star) | Adopted as classification axis in `teams/README.md` |
+| Project | License | Concept borrowed | How it lives here |
+|---|---|---|---|
+| [spec-kit](https://github.com/github/spec-kit) | MIT | The `constitution.md` pattern — separating immutable principles from variable parameters | Independently composed (7 principles + sha256 hash monitoring) |
+| [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT | The "self-SAST" approach (AgentShield) | `scan-harness.sh` is an independent implementation (own checks and thresholds) |
+| [superpowers](https://github.com/obra/superpowers) | MIT | A brainstorming phase placed before `/prd` | `/brainstorm` skill independently authored (own Socratic templates) |
+| [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) | MIT | Scale-adaptive personas / team structure | Listed as future work in `pitfalls.md` (Out of Scope) |
+| [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | Topology metadata (hierarchical / mesh / star) | Adopted as classification axis in `teams/README.md` |
 
 All implementations in this repository are independent — no code or text was
-directly copied from these projects. Their licenses (MIT / Apache 2.0) are
-fully compatible with ours (also MIT).
+directly copied from these projects. Their licenses (all MIT) are fully
+compatible with ours (also MIT).
 
 ## License
 
