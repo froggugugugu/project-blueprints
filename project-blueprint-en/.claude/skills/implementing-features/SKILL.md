@@ -209,3 +209,11 @@ When implementation is complete, run the dependency direction check command
 - Implicitly deleting or overwriting user data
 - Bypassing hooks with `--no-verify`
 - Using anti-patterns documented in `docs/development-patterns.md`
+
+## Related references (load on demand at skill invocation)
+
+- See `@.claude/quality-gates.md` for details
+- See `@.claude/rules/document-management.md` for details
+- See `@.claude/rules/git-conventions.md` for details
+- See `@.claude/rules/workflow-advanced.md` for details
+- See `@.claude/pitfalls.md` for details

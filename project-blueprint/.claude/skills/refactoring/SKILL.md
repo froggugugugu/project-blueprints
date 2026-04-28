@@ -248,3 +248,7 @@ argument-hint: "<対象ディレクトリ or 指示>"
 - 後方互換を壊す変更（リエクスポートなしでの移動）
 - `docs/development-patterns.md` に記載されたアンチパターンの使用
 - `--no-verify` によるフック迂回
+
+## 関連参照(skill 起動時に必要なら読み込む)
+
+- `@.claude/pitfalls.md` で詳細を参照

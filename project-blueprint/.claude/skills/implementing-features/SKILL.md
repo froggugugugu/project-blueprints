@@ -211,3 +211,11 @@ argument-hint: "<タスクファイル or 指示>"
 - ユーザーデータの暗黙的な削除・上書き
 - `--no-verify` によるフック迂回
 - `docs/development-patterns.md` に記載されたアンチパターンの使用
+
+## 関連参照(skill 起動時に必要なら読み込む)
+
+- `@.claude/quality-gates.md` で詳細を参照
+- `@.claude/rules/document-management.md` で詳細を参照
+- `@.claude/rules/git-conventions.md` で詳細を参照
+- `@.claude/rules/workflow-advanced.md` で詳細を参照
+- `@.claude/pitfalls.md` で詳細を参照

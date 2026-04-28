@@ -135,3 +135,8 @@ PL: 品質ゲート判定 → 完了 or 差し戻し
 ## 技術スタック参照
 
 チーム全員が`.claude/CLAUDE.md`を読み、プロジェクトの技術スタック・規約に従うこと。
+
+## 関連参照(skill 起動時に必要なら読み込む)
+
+- `@.claude/teams/README.md` で詳細を参照
+- `@.claude/agents/README.md` で詳細を参照

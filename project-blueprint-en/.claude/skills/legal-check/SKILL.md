@@ -225,3 +225,7 @@ Please consult legal professionals for critical decisions.
 - Providing legal advice (limit to reference-level findings)
 - Definitively stating "no issues" without basis
 - Underestimating risks (when uncertain, recommend consulting specialists)
+
+## Related references (load on demand at skill invocation)
+
+- See `@.claude/pitfalls.md` for details

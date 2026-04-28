@@ -148,3 +148,8 @@ When launched from TEAM_PJM's parallel mode (`--parallel`), follow these constra
 - Only modify files listed in the target files/directories section (changes to out-of-scope files are prohibited)
 - Do not coordinate directly with other TEAM_FEATURE instances (PJM manages integration)
 - Report completion to PJM upon finishing (PJM manages progress via TaskUpdate)
+
+## Related references (load on demand at skill invocation)
+
+- See `@.claude/teams/README.md` for details
+- See `@.claude/agents/README.md` for details

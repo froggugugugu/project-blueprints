@@ -42,6 +42,7 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
 | 📜 | **Constitution-driven** | 7 immutable principles in `constitution.md`, sha256-monitored. Hooks block AI attempts to alter them |
 | 🚦 | **5 quality gates** | Optional human intervention points at PRD / design / task / implementation / verification |
 | 🧩 | **Three-layer separation** | skill (work) / team (orchestration) / agent (specialist) — never blurred. No cyclic references between layers |
+| 🪶 | **Pro-plan friendly** | Session-start load compressed to **~7K tokens** (70% reduction). Details are lazy-loaded by each skill at invocation |
 
 ---
 

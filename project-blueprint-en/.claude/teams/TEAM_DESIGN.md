@@ -143,3 +143,8 @@ After design system work is complete, coordinate with the following teams:
 ## Tech Stack Reference
 
 All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
+
+## Related references (load on demand at skill invocation)
+
+- See `@.claude/teams/README.md` for details
+- See `@.claude/agents/README.md` for details
