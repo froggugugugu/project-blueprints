@@ -245,3 +245,7 @@ The following comments are excluded from auto-fix and prompt manual action:
 - `--force` push
 - Changes to files not flagged in comments (except for ripple-effect fixes)
 - Implicit deletion/overwriting of user data
+
+## Related references (loaded on demand by Claude)
+
+@.claude/rules/git-conventions.md

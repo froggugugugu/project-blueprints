@@ -201,3 +201,9 @@ When a file path is specified, review changes in that file.
 - Requesting additions not in the specification
 - Findings based on personal preference (without project convention rationale)
 - Vague findings without severity
+
+## Related references (loaded on demand by Claude)
+
+@.claude/guardrails.md
+@.claude/rules/workflow-advanced.md
+@.claude/pitfalls.md

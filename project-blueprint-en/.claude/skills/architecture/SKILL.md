@@ -310,3 +310,7 @@ Specify multiple files separated by spaces.
 - Making final technology decisions (limit to presenting options and rationale)
 - Including project-specific data (IDs, passwords, etc.) in documentation
 - Unauthorized modification of existing `docs/` files
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md

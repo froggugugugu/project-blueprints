@@ -119,3 +119,8 @@ PL: Step completion decision → Next step or done
 ## Tech Stack Reference
 
 All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
+
+## Related references (loaded on demand by Claude)
+
+@.claude/teams/README.md
+@.claude/agents/README.md

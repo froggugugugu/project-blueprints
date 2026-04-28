@@ -148,3 +148,8 @@ TEAM_PJM の並行モード（`--parallel`）から起動された場合、以�
 - 対象ファイル・ディレクトリに記載されたファイルのみ変更する（スコープ外のファイル変更は禁止）
 - 他の TEAM_FEATURE インスタンスとは直接連携しない（PJM が統合管理を担当する）
 - 完了時に PJM に完了を報告する（PJM が TaskUpdate で進捗を管理する）
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/teams/README.md
+@.claude/agents/README.md

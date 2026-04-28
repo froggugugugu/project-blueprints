@@ -247,3 +247,7 @@ Phase 7 で以下の形式で報告する:
 - `--force` プッシュ
 - 指摘されていないファイルへの変更（波及修正は除く）
 - ユーザーデータの暗黙的な削除・上書き
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/rules/git-conventions.md

@@ -230,3 +230,7 @@ Reference the following documents during PRD generation to ensure consistency:
 - Making final technology decisions (limit to presenting options and rationale)
 - Including project-specific data (IDs, passwords, etc.) in documentation
 - Modifying existing documentation (under `docs/`)
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md

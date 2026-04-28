@@ -209,3 +209,11 @@ When implementation is complete, run the dependency direction check command
 - Implicitly deleting or overwriting user data
 - Bypassing hooks with `--no-verify`
 - Using anti-patterns documented in `docs/development-patterns.md`
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md
+@.claude/rules/document-management.md
+@.claude/rules/git-conventions.md
+@.claude/rules/workflow-advanced.md
+@.claude/pitfalls.md

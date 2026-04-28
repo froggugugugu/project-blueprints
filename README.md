@@ -40,6 +40,7 @@ cd ./my-app && claude
 | 📜 | **Constitution-driven** | `constitution.md` の不変原則 7 つを sha256 hash で監視。AI が改竄しようとしたらフックがブロック |
 | 🚦 | **5 品質ゲート** | PRD / 設計 / タスク / 実装 / 検証 の各段階で人間介入ポイント(任意) |
 | 🧩 | **三層分離** | skill(作業)/ team(編成)/ agent(専門家)を混ぜない設計。layer 間の循環参照を禁止 |
+| 🪶 | **Pro 契約フレンドリー** | **セッション開始時**のロードを ~7K tokens に圧縮(従来比 70% 減)。詳細(`pitfalls.md` / `guardrails.md` 等)は各 skill が起動時に必要なものを `@import` で取得する遅延読込設計。skill を使わないセッションでは context window を 17K 以上節約 |
 
 ---
 

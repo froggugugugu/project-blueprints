@@ -189,3 +189,7 @@ When the following are discovered during design investigation, update `project-c
 - Modifying source code (including test files)
 - Starting implementation tasks without design approval
 - Including project-specific data (IDs, passwords, etc.) in documentation
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md

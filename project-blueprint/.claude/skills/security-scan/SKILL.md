@@ -379,3 +379,9 @@ pip install semgrep
 - 脆弱性情報の過小評価（不明な場合は高めに評価する）
 - 検出された機密情報のレポートへの転記（マスクする）
 - 「問題なし」の断定（「スキャン範囲内で検出なし」と表現する）
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/guardrails.md
+@.claude/permissions-guide.md
+@.claude/pitfalls.md

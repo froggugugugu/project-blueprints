@@ -376,3 +376,9 @@ pip install semgrep
 - Underestimating vulnerability information (when uncertain, rate higher)
 - Transcribing detected sensitive information into the report (mask it)
 - Definitively stating "no issues" (use "no detections within scan scope")
+
+## Related references (loaded on demand by Claude)
+
+@.claude/guardrails.md
+@.claude/permissions-guide.md
+@.claude/pitfalls.md

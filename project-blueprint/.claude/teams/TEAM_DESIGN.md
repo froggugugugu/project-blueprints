@@ -174,3 +174,8 @@ PL: 最終確認 → 完了判定
 ## 技術スタック参照
 
 チーム全員が`.claude/CLAUDE.md`を読み、プロジェクトの技術スタック・規約に従うこと。
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/teams/README.md
+@.claude/agents/README.md

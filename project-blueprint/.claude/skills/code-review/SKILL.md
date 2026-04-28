@@ -204,3 +204,9 @@ context: fork
 - 仕様書にない要件の追加要求
 - 個人の好みに基づく指摘（プロジェクト規約に根拠がないもの）
 - 重要度なしの曖昧な指摘
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/guardrails.md
+@.claude/rules/workflow-advanced.md
+@.claude/pitfalls.md

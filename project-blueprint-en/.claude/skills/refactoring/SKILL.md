@@ -245,3 +245,7 @@ After refactoring, always update affected `docs/` files.
 - Changes that break backward compatibility (moves without re-exports)
 - Using anti-patterns documented in `docs/development-patterns.md`
 - Bypassing hooks with `--no-verify`
+
+## Related references (loaded on demand by Claude)
+
+@.claude/pitfalls.md
