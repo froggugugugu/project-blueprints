@@ -53,10 +53,10 @@ fi
 
 TARGET_DIR="$1"
 
-# Verify that the target directory exists
+# Verify that the target directory exists (create it if missing — new-project case)
 if [[ ! -d "$TARGET_DIR" ]]; then
-    error "Target directory does not exist: $TARGET_DIR"
-    exit 1
+    info "Creating new target directory: $TARGET_DIR"
+    mkdir -p "$TARGET_DIR" || { error "Failed to create directory: $TARGET_DIR"; exit 1; }
 fi
 
 # Convert to absolute path

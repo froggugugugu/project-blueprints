@@ -53,10 +53,10 @@ fi
 
 TARGET_DIR="$1"
 
-# ターゲットディレクトリの存在確認
+# ターゲットディレクトリの存在確認(なければ作成。新規プロジェクト想定)
 if [[ ! -d "$TARGET_DIR" ]]; then
-    error "ターゲットディレクトリが存在しません: $TARGET_DIR"
-    exit 1
+    info "ターゲットディレクトリを新規作成: $TARGET_DIR"
+    mkdir -p "$TARGET_DIR" || { error "ディレクトリ作成に失敗: $TARGET_DIR"; exit 1; }
 fi
 
 # 絶対パスに変換
