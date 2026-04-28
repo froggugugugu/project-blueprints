@@ -33,7 +33,7 @@
 | `/legal-check <対象>` | OSS ライセンス・プライバシー・知財チェック(読取専用) |
 | `/performance <対象>` | 計測ファーストのパフォーマンス最適化 |
 | `/refactoring <対象>` | 大規模コード再構成・責務移動 |
-| `/review-fix <PR番号>` | CodeRabbit/Copilot 指摘の一括修正・push |
+| `/review-fix <PR番号>` | CodeRabbit/Copilot レビュー指摘の自動修正 |
 
 各 skill は起動時に必要な詳細(`pitfalls.md`、`guardrails.md` 等)を個別に `@import` する。
 
@@ -86,8 +86,8 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 ## 実装ワークフロー
 
-1. 要件確認 → 2. 影響調査 → 3. テスト設計 → **🚏 設計ゲート**
-4. 実装 → 5. リファクター → **🚏 実装ゲート** → 6. セルフレビュー → **🚏 最終ゲート**
+要件確認 → 影響調査 → テスト設計 → **🚏 設計ゲート**
+→ 実装 → リファクター → **🚏 実装ゲート** → セルフレビュー → **🚏 最終ゲート**
 
 ## 実装チェックリスト(提出前)
 

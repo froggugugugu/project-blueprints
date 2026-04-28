@@ -86,8 +86,8 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 
 ## Implementation workflow
 
-1. Requirements → 2. Impact analysis → 3. Test design → **🚏 Design Gate**
-4. Implementation → 5. Refactor → **🚏 Implementation Gate** → 6. Self-review → **🚏 Final Gate**
+Requirements → Impact analysis → Test design → **🚏 Design Gate**
+→ Implementation → Refactor → **🚏 Implementation Gate** → Self-review → **🚏 Final Gate**
 
 ## Implementation checklist (before submission)
 
