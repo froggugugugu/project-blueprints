@@ -17,6 +17,15 @@ context: fork
 日本語の要求メモ・要件メモファイルを入力として、Claude Codeが理解しやすい構造化された
 PRD（Product Requirements Document）を生成するスキル。**ソースコードは一切変更しない。**
 
+## Spec-Driven 哲学
+
+GitHub Spec-Kit / BMAD-METHOD 等で確立された **"specification first, technology later"** パターンに沿う。
+
+- 本スキルの PRD は **「何を、なぜ」を tech-agnostic に固定する**ための成果物（= spec）
+- 技術選定(`/architecture`)・実装計画(`/plan`)はこの spec を根拠とする**後段**で決定する
+- spec が曖昧なら無理に進めず、`/brainstorm` で前提を炙り出してから戻る
+- 仕様駆動チェーン: `/brainstorm` → **`/prd`** → `/architecture` → `/plan` → `/implementing-features`
+
 ## 前提条件
 
 | 参照ファイル | 用途 | スタブ時のフォールバック |

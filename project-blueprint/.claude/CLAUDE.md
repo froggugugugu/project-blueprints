@@ -117,7 +117,9 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - 詳細(deny ルール一覧、保護ファイル、permissions ガイド)は `/security-scan` 等のセキュリティ系 skill 起動時に load
 - `project-config.md` §10 にプロジェクト固有ポリシーを定義
 
-> **不変原則**: `constitution.md`(repo ルート)に 7 原則を分離。AI が破ろうとしたら `scan-harness.sh` フックがブロック。
+> **不変原則** (`constitution.md` で全文管理 / `scan-harness.sh` が改変を検知):
+> ①人間↔AI 責務分離 / ②日英 2 言語ミラー / ③5 品質ゲート維持 / ④三層分離(skill/team/agent) /
+> ⑤3 層防御維持 / ⑥CLAUDE.md ≤200 行 / ⑦シークレット禁止
 
 ## Git 操作
 

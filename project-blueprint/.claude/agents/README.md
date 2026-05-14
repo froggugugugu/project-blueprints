@@ -8,11 +8,13 @@ Claude Code は各 agent の `description` フィールドを解析して自動�
 
 | agent | 用途 | モデル | tools | 書き込み権限 |
 | ----- | ---- | ------ | ----- | ------------ |
-| `explorer` | コードベースの広範な探索 | Haiku 4.5 | Read / Grep / Glob | なし |
+| `explorer` | コードベース内の広範な探索 | Haiku 4.5 | Read / Grep / Glob | なし |
+| `researcher` | 外部技術情報・公式 docs の調査 | Sonnet 4.6 | Read / Grep / Glob / WebSearch / WebFetch / Context7 | なし |
 | `planner` | 実装前の設計計画立案 | Sonnet 4.6 | Read / Grep / Glob | なし |
 | `security-reviewer` | OWASP 準拠のセキュリティ監査 | Opus 4.7 | Read / Grep / Glob | なし |
 | `performance-analyst` | 計測ファーストのボトルネック分析 | Sonnet 4.6 | Read / Grep / Glob / Bash | なし |
-| `doc-synchronizer` | `docs/` 配下の自動同期更新 | Haiku 4.5 | Read / Edit / Write / Grep / Glob | `docs/` のみ |
+| `doc-synchronizer` | `docs/` 配下の**既存**ファイル同期 | Haiku 4.5 | Read / Edit / Write / Grep / Glob | `docs/` のみ |
+| `doc-writer` | `output/` 配下に**新規**ドキュメント執筆 | Sonnet 4.6 | Read / Edit / Write / Grep / Glob | `output/` のみ |
 | `test-writer` | ユニット・E2E テスト作成 | Sonnet 4.6 | Read / Edit / Write / Grep / Glob / Bash | テストファイルのみ |
 
 ## agent vs team vs skill の使い分け
@@ -55,7 +57,7 @@ Task({
 | Tier | モデル | 用途 | 例 |
 | ---- | ------ | ---- | -- |
 | Critical | Opus 4.7 | セキュリティ・アーキ判断 | `security-reviewer` |
-| Complex | Sonnet 4.6 | 設計・実装・テスト | `planner`, `performance-analyst`, `test-writer` |
+| Complex | Sonnet 4.6 | 設計・実装・テスト・調査・執筆 | `planner`, `performance-analyst`, `test-writer`, `researcher`, `doc-writer` |
 | Operational | Haiku 4.5 | 探索・同期・繰り返し作業 | `explorer`, `doc-synchronizer` |
 
 モデルは frontmatter の `model:` キーで指定する。未指定時はセッションの既定モデルを継承する。

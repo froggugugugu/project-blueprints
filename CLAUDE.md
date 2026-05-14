@@ -28,11 +28,11 @@ project-blueprints/
 │   │   ├── guardrails.md        # Safety mechanism overview
 │   │   ├── quality-gates.md     # Quality gate definitions
 │   │   ├── pitfalls.md          # Common failure patterns (anti-patterns)
-│   │   ├── skills/              # 15 skill definitions (SKILL.md files)
+│   │   ├── skills/              # 16 skill definitions (SKILL.md files)
 │   │   ├── teams/               # 6 team templates (TEAM_*.md files)
-│   │   ├── agents/              # 6 subagent definitions (.claude/agents/*.md)
+│   │   ├── agents/              # 8 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
-│   │   ├── hooks/               # 9 hook scripts (safety + observability)
+│   │   ├── hooks/               # 12 hook scripts (safety + observability; .sh count)
 │   │   └── tasks/               # Task instruction templates
 │   ├── docs/                    # AI-managed technical docs (stubs)
 │   ├── input/                   # Human requirements input
@@ -54,13 +54,13 @@ project-blueprints/
 
 **Generic vs project-specific**: Everything under `.claude/` is reusable across projects. `docs/`, `input/`, `output/` are project-specific and generated per-use.
 
-**Skill system** (15 skills in `.claude/skills/*/SKILL.md`): Each skill is a standalone prompt with a defined pipeline order: `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`. Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`.
+**Skill system** (16 skills in `.claude/skills/*/SKILL.md`): Each skill is a standalone prompt with a defined pipeline order: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`. Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`. The `/prd` skill follows the spec-driven framing (specification first, technology later) aligned with GitHub Spec-Kit / BMAD-METHOD.
 
-**Team system** (6 teams in `.claude/teams/TEAM_*.md`): Multi-agent orchestration templates. `TEAM_PJM.md` is the recommended full-lifecycle team (6 members, covers all 15 skills, 5 quality gates).
+**Team system** (6 teams in `.claude/teams/TEAM_*.md`): Multi-agent orchestration templates. `TEAM_PJM.md` is the recommended full-lifecycle team (6 members, covers all 16 skills, 5 quality gates).
 
-**Subagent layer** (6 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `test-writer`). Complements teams and skills with isolated-context execution.
+**Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
-**Hook system** (9 hooks in `.claude/hooks/*.sh`): Defense in depth across `PreToolUse` / `PostToolUse` / `SessionStart` / `SubagentStop` / `PreCompact`. 5 block + 3 observe + 1 notify. See `.claude/guardrails.md`.
+**Hook system** (12 hook scripts in `.claude/hooks/*.sh`, 13 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `SessionStart` / `SessionEnd` / `SubagentStop` / `PreCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup roles. See `.claude/guardrails.md`.
 
 **MCP + GitHub Actions**: `.mcp.json.template` for project-shared MCP servers; `.github/workflows/claude-review.yml.template` for `@claude` PR review automation.
 

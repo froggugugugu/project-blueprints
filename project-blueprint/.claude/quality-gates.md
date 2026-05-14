@@ -53,3 +53,23 @@ PJMチームのフェーズ間承認ポイント。詳細は `.claude/teams/TEAM
 - カバレッジが目標値を下回っていないこと
 - 静的解析のエラーが0件であること
 - 上記を満たせば自動通過。満たさない場合は人間の判断を仰ぐ
+
+## ゲート 5 検証基準(定量計測表)
+
+`/code-review` skill のレビュー観点 #10(定量計測)と整合する gate 5 通過の根拠データ。
+すべて未提示の場合、gate 5 は **自動通過しない**(`/code-review` が CONSIDER 指摘として記録する)。
+
+| 指標 | 取得元 | 通過閾値(既定) | NG 時の対応 |
+| ---- | ------ | -------------- | ----------- |
+| カバレッジ delta | `testreport/coverage/` | `project-config.md` §6 目標以上 | 不足箇所のテスト追加 |
+| 静的解析エラー | lint / 型チェック | 新規 0 件 | 修正してから再 review |
+| バンドルサイズ delta | build 出力 | §6 で閾値未定義なら情報提示のみ | 閾値設定 or 例外承認 |
+| テスト失敗数 | CI / `testreport/` | 0 件 | 修正してから再実行 |
+| 性能メトリクス delta | `/performance` 出力 | ベースライン未悪化 | チューニング or 例外承認 |
+
+### 計測データの収集責務
+
+| Phase | 収集担当 | 出力先 |
+| ----- | -------- | ------ |
+| 実装中(Phase 4) | `/implementing-features`(カバレッジ・lint)、`/e2e-testing`(E2E 失敗数) | `testreport/` |
+| 検証(Phase 5) | `/performance`(perf delta)、`/code-review`(集約) | `output/reports/review/` |

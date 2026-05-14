@@ -53,3 +53,23 @@ Inter-phase approval points for the PJM team. Refer to `.claude/teams/TEAM_PJM.m
 - Coverage does not fall below the target
 - Zero static analysis errors
 - Auto-pass if the above are met. Seek human judgment if not met
+
+## Gate 5 Verification Criteria (Quantitative Measurement Table)
+
+Evidence data for gate 5 passage, aligned with `/code-review` review aspect #10 (Quantitative Measurement).
+If all are missing, gate 5 **does not auto-pass** (`/code-review` records a CONSIDER finding).
+
+| Metric | Source | Default Threshold | Action When NG |
+| ------ | ------ | ----------------- | -------------- |
+| Coverage delta | `testreport/coverage/` | At or above `project-config.md` §6 target | Add tests for uncovered areas |
+| Static analysis errors | Lint / type check | 0 new errors | Fix then re-review |
+| Bundle size delta | Build output | Informational only if §6 has no threshold | Set threshold or grant exception |
+| Test failure count | CI / `testreport/` | 0 | Fix then re-run |
+| Performance metrics delta | `/performance` output | No regression vs baseline | Tune or grant exception |
+
+### Measurement Data Collection Responsibility
+
+| Phase | Collector | Output Destination |
+| ----- | --------- | ------------------ |
+| Implementation (Phase 4) | `/implementing-features` (coverage, lint); `/e2e-testing` (E2E failure count) | `testreport/` |
+| Verification (Phase 5) | `/performance` (perf delta); `/code-review` (aggregation) | `output/reports/review/` |

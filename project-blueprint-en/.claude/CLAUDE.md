@@ -117,7 +117,9 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate**
 - Detailed deny lists, protected files, and permissions guide are loaded by security-related skills (`/security-scan`, etc.)
 - Project-specific policy in `project-config.md` §10
 
-> **Inviolable principles**: `constitution.md` (repo root) holds 7 principles. The `scan-harness.sh` hook blocks AI attempts to violate them.
+> **Inviolable principles** (full text in `constitution.md` / `scan-harness.sh` blocks violations):
+> ①Human↔AI separation / ②JP/EN mirror parity / ③5 quality gates preserved / ④3-layer separation (skill/team/agent) /
+> ⑤3-layer defense preserved / ⑥CLAUDE.md ≤200 lines / ⑦No secrets committed
 
 ## Git operations
 

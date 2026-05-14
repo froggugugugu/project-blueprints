@@ -15,6 +15,15 @@ A skill that takes requirement notes/memos as input and generates a structured
 PRD (Product Requirements Document) optimized for Claude Code comprehension.
 **Never modifies source code.**
 
+## Spec-Driven Philosophy
+
+Follows the **"specification first, technology later"** pattern established by GitHub Spec-Kit / BMAD-METHOD.
+
+- The PRD here is the artifact that **pins down "what & why" in a tech-agnostic form** (= spec)
+- Technology selection (`/architecture`) and implementation planning (`/plan`) are decided **downstream** based on this spec
+- If the spec is ambiguous, do not force progress — fall back to `/brainstorm` to surface premises first
+- Spec-driven chain: `/brainstorm` → **`/prd`** → `/architecture` → `/plan` → `/implementing-features`
+
 ## Prerequisites
 
 | Reference File | Purpose | Fallback When Stub |

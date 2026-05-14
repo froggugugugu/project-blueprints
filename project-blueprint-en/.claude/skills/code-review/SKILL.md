@@ -121,6 +121,22 @@ When a file path is specified, review changes in that file.
 - Has `docs/` been updated to reflect implementation changes?
 - If documentation is not updated, report as a MUST finding
 
+### 10. Quantitative Measurement (Eval / Metrics)
+
+**Objectifies gate 5 (verification complete) with quantitative data**. This skill is read-only, so it does not execute measurement commands — instead it aggregates existing measurement artifacts, CI logs, or data presented by the parent session.
+
+| Metric | Source | NG Threshold |
+| ------ | ------ | ------------ |
+| Coverage delta | `testreport/coverage/` or CI output | Below target in `project-config.md` §6 |
+| Static analysis error delta | Lint output / CI logs | 1+ new error introduced |
+| Bundle size delta | Build output / CI logs | Exceeds threshold (when defined in `project-config.md` §6) |
+| Performance metrics delta | `/performance` output / `testreport/` | Regression vs baseline |
+| Test failure count | CI logs | 1+ |
+
+- If measurement data is **not provided** and `project-config.md` §6 defines criteria → emit a **CONSIDER finding** ("Please attach gate 5 verification data")
+- **Improvements** in measurement data (coverage uplift, etc.) should be called out in "Good Points"
+- See `@.claude/quality-gates.md` for details
+
 ## Output Contract
 
 ### Section Definitions
@@ -176,6 +192,16 @@ When a file path is specified, review changes in that file.
 - Impact Scope: [Feature name]
 - Spec Compliance: OK / NG
 - Documentation Sync: OK / NG
+
+## Quantitative Measurement (optional / gate 5 evidence)
+
+| Metric | Before | After | delta | Source |
+| ------ | ------ | ----- | ----- | ------ |
+| Coverage | XX.X% | YY.Y% | +ΔΔ% | testreport/coverage |
+| Static analysis errors | N | M | -K | npm run lint |
+| Bundle size | XX KB | YY KB | +ΔΔ% | npm run build |
+
+> When no data is provided, write `_no measurement data provided_` for this section
 
 ## Findings
 
