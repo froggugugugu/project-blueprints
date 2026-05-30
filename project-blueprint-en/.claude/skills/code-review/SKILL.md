@@ -1,11 +1,14 @@
 ---
 name: code-review
+version: 1.0.0
 description: >
   Reviews code changes for quality, conventions compliance, performance, and security.
   Triggers: review, check, validate, inspect, audit code quality.
   Source-code read-only — never modifies source code or test files.
   Outputs review report to output/reports/review/ (requires Write permission to output/reports/review/).
   Takes optional argument: /code-review <target-file or instruction>
+argument-hint: "<target-file or instruction>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 

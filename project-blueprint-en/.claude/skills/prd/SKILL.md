@@ -1,11 +1,14 @@
 ---
 name: prd
+version: 1.0.0
 description: >
   Generates a PRD (Product Requirements Document) from requirement notes or memos.
   Triggers: prd, requirements, PRD generation, requirement specification.
   Source-code read-only — never modifies source code or test files.
   Outputs structured PRD to output/prd/ (requires Write permission to output/prd/).
   Takes a file path as argument: /prd <file-path>
+argument-hint: "<file-path>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 

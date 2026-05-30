@@ -251,3 +251,5 @@ Phase 7 で以下の形式で報告する:
 ## 関連参照(必要に応じて Claude が load)
 
 @.claude/rules/git-conventions.md
+@.claude/quality-gates.md
+@.claude/pitfalls.md

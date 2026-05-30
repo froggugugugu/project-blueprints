@@ -191,3 +191,8 @@ argument-hint: "<対象コンポーネント or 指示>"
 - 可読性を著しく損なうマイクロ最適化
 - 既存テストを壊す変更
 - `--no-verify` によるフック迂回
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

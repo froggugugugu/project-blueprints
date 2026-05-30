@@ -384,4 +384,5 @@ pip install semgrep
 
 @.claude/guardrails.md
 @.claude/permissions-guide.md
+@.claude/quality-gates.md
 @.claude/pitfalls.md

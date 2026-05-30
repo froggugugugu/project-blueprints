@@ -251,4 +251,5 @@ argument-hint: "<対象ディレクトリ or 指示>"
 
 ## 関連参照(必要に応じて Claude が load)
 
+@.claude/quality-gates.md
 @.claude/pitfalls.md

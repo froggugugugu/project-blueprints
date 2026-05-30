@@ -1,11 +1,14 @@
 ---
 name: security-scan
+version: 1.0.0
 description: >
   Runs security scanning tools and generates structured vulnerability reports.
   Triggers: security scan, vulnerability, OWASP, ZAP, npm audit, DAST, SAST, secret detection, dependency check, CVE.
   Source-code read-only — never modifies source code or test files.
   Outputs scan report to output/reports/security/ and raw data to testreport/security/ (requires Write permission to both).
   Takes optional argument: /security-scan <target-scope or instruction>
+argument-hint: "<target-scope or instruction>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), Write(testreport/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 
@@ -381,4 +384,5 @@ pip install semgrep
 
 @.claude/guardrails.md
 @.claude/permissions-guide.md
+@.claude/quality-gates.md
 @.claude/pitfalls.md

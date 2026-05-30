@@ -1,10 +1,12 @@
 ---
 name: performance
+version: 1.0.0
 description: >
   Measures and optimizes application performance using a measurement-first approach.
   Triggers: performance, optimize, slow, bundle size, re-render, memory, profiler, lazy load, memoize.
   Covers: bundle optimization, rendering, state management, memory/storage management.
   Takes optional argument: /performance <target-component or instruction>
+argument-hint: "<target-component or instruction>"
 ---
 
 # Performance Optimization
@@ -189,3 +191,8 @@ After optimization changes, always update affected `docs/` files.
 - Micro-optimizations that significantly degrade readability
 - Changes that break existing tests
 - Bypassing hooks with `--no-verify`
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

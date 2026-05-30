@@ -190,3 +190,8 @@ test.describe('[機能名]', () => {
 - [ ] データ永続化（リロード後）のテストがある
 - [ ] 機能横断シナリオがある
 - [ ] E2Eテストが安定してパスする
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md
