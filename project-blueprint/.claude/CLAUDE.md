@@ -34,6 +34,7 @@
 | `/performance <対象>` | 計測ファーストのパフォーマンス最適化 |
 | `/refactoring <対象>` | 大規模コード再構成・責務移動 |
 | `/review-fix <PR番号>` | CodeRabbit/Copilot レビュー指摘の自動修正 |
+| `/harness-refine <対象 or 指示>` | ハーネス骨格の自己採点 → 強化 → セルフレビュー(2 ラウンド固定 / 日英ミラー同期必須) |
 
 各 skill は起動時に必要な詳細(`pitfalls.md`、`guardrails.md` 等)を個別に `@import` する。
 

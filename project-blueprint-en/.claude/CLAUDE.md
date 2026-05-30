@@ -34,6 +34,7 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
 | `/performance <target>` | Measurement-first performance optimization |
 | `/refactoring <target>` | Large-scale restructuring / responsibility migration |
 | `/review-fix <PR#>` | Auto-fix CodeRabbit/Copilot review comments |
+| `/harness-refine <target or instruction>` | Self-score → improve → review the harness scaffolding (2 fixed rounds / JP-EN mirror parity required) |
 
 Each skill loads its own details (`pitfalls.md`, `guardrails.md`, etc.) at invocation time.
 
