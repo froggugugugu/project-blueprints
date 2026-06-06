@@ -7,6 +7,8 @@ description: >
   Apple Human Interface Guidelines (HIG) based system-wide UI consistency check and correction.
   Takes optional argument: /hig-compliance <target-directory or instruction>
 argument-hint: "<対象ディレクトリ or 指示>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
+context: main
 ---
 
 # HIG Compliance — Apple Human Interface Guidelines 準拠チェック・補正

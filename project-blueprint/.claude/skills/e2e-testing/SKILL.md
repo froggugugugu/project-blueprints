@@ -7,6 +7,8 @@ description: >
   Creates and maintains Playwright E2E tests. Covers Page Object design, test data management, stability patterns, and reporting.
   Takes optional argument: /e2e-testing <target-feature or instruction>
 argument-hint: "<対象機能 or 指示>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_take_screenshot
+context: main
 ---
 
 # E2E Testing
@@ -190,3 +192,8 @@ test.describe('[機能名]', () => {
 - [ ] データ永続化（リロード後）のテストがある
 - [ ] 機能横断シナリオがある
 - [ ] E2Eテストが安定してパスする
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

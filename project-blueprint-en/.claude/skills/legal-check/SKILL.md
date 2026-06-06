@@ -1,11 +1,14 @@
 ---
 name: legal-check
+version: 1.0.0
 description: >
   Reviews code, documents, and configurations for IT legal compliance.
   Triggers: legal, license, compliance, privacy, GDPR, copyright, terms, contract, OSS license, intellectual property, data protection.
   Source-code read-only — never modifies source code or test files.
   Outputs legal check report to output/reports/legal/ (requires Write permission to output/reports/legal/).
   Takes optional argument: /legal-check <target-scope or instruction>
+argument-hint: "<target-scope or instruction>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 
@@ -228,4 +231,5 @@ Please consult legal professionals for critical decisions.
 
 ## Related references (loaded on demand by Claude)
 
+@.claude/quality-gates.md
 @.claude/pitfalls.md

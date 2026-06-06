@@ -53,6 +53,7 @@ That's it. AI reads `project-config.md` and generates a structured design docume
 | Get help with implementation only | `/implementing-features Add a login feature` |
 | Get a code review | `/code-review src/features/auth/` |
 | Run team-based quality assurance | `.claude/teams/TEAM_QA.md src/` |
+| Extend AI tools by adding MCP servers | `cp .mcp.json.template .mcp.json` → fill in required MCP servers and commit (project-shared) |
 
 > For detailed setup instructions and the full feature set, see the sections below.
 

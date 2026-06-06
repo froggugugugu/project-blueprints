@@ -7,6 +7,8 @@ description: >
   Auto-fetches CodeRabbit/Copilot review comments from GitHub PRs, analyzes, and executes fix, test, commit, and push.
   Takes optional argument: /review-fix <PR-number>
 argument-hint: "<PR番号>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Bash(gh *), Agent, WebSearch, WebFetch
+context: main
 ---
 
 # Review Fix
@@ -251,3 +253,5 @@ Phase 7 で以下の形式で報告する:
 ## 関連参照(必要に応じて Claude が load)
 
 @.claude/rules/git-conventions.md
+@.claude/quality-gates.md
+@.claude/pitfalls.md

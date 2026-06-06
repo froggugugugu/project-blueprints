@@ -1,10 +1,14 @@
 ---
 name: ui-ux-design
+version: 1.0.0
 description: >
   Reviews and implements UI/UX following project design systems.
   Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design, design consistency audit, system-wide consistency.
   Covers: visual consistency, design system compliance, accessibility, responsive design, dark mode, and system-wide design consistency audit.
   Takes optional argument: /ui-ux-design <target-file or instruction>
+argument-hint: "<target-file or instruction>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs
+context: main
 ---
 
 # UI/UX Design

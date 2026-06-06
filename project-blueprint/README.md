@@ -53,6 +53,7 @@ bash setup.sh /path/to/your-project
 | 実装だけ手伝ってほしい | `/implementing-features ログイン機能を追加` |
 | コードレビューしてほしい | `/code-review src/features/auth/` |
 | チームで品質保証したい | `.claude/teams/TEAM_QA.md src/` |
+| MCP サーバーを追加して AI のツールを拡張したい | `cp .mcp.json.template .mcp.json` → 必要な MCP サーバーを記入してコミット(プロジェクト共有) |
 
 > 詳細なセットアップ手順・全機能については以降のセクションを参照。
 

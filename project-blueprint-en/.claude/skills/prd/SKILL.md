@@ -1,11 +1,14 @@
 ---
 name: prd
+version: 1.0.0
 description: >
   Generates a PRD (Product Requirements Document) from requirement notes or memos.
   Triggers: prd, requirements, PRD generation, requirement specification.
   Source-code read-only — never modifies source code or test files.
   Outputs structured PRD to output/prd/ (requires Write permission to output/prd/).
   Takes a file path as argument: /prd <file-path>
+argument-hint: "<file-path>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 
@@ -14,6 +17,15 @@ context: fork
 A skill that takes requirement notes/memos as input and generates a structured
 PRD (Product Requirements Document) optimized for Claude Code comprehension.
 **Never modifies source code.**
+
+## Spec-Driven Philosophy
+
+Follows the **"specification first, technology later"** pattern established by GitHub Spec-Kit / BMAD-METHOD.
+
+- The PRD here is the artifact that **pins down "what & why" in a tech-agnostic form** (= spec)
+- Technology selection (`/architecture`) and implementation planning (`/plan`) are decided **downstream** based on this spec
+- If the spec is ambiguous, do not force progress — fall back to `/brainstorm` to surface premises first
+- Spec-driven chain: `/brainstorm` → **`/prd`** → `/architecture` → `/plan` → `/implementing-features`
 
 ## Prerequisites
 

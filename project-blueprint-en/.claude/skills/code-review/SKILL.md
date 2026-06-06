@@ -1,11 +1,14 @@
 ---
 name: code-review
+version: 1.0.0
 description: >
   Reviews code changes for quality, conventions compliance, performance, and security.
   Triggers: review, check, validate, inspect, audit code quality.
   Source-code read-only — never modifies source code or test files.
   Outputs review report to output/reports/review/ (requires Write permission to output/reports/review/).
   Takes optional argument: /code-review <target-file or instruction>
+argument-hint: "<target-file or instruction>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 
@@ -121,6 +124,22 @@ When a file path is specified, review changes in that file.
 - Has `docs/` been updated to reflect implementation changes?
 - If documentation is not updated, report as a MUST finding
 
+### 10. Quantitative Measurement (Eval / Metrics)
+
+**Objectifies gate 5 (verification complete) with quantitative data**. This skill is read-only, so it does not execute measurement commands — instead it aggregates existing measurement artifacts, CI logs, or data presented by the parent session.
+
+| Metric | Source | NG Threshold |
+| ------ | ------ | ------------ |
+| Coverage delta | `testreport/coverage/` or CI output | Below target in `project-config.md` §6 |
+| Static analysis error delta | Lint output / CI logs | 1+ new error introduced |
+| Bundle size delta | Build output / CI logs | Exceeds threshold (when defined in `project-config.md` §6) |
+| Performance metrics delta | `/performance` output / `testreport/` | Regression vs baseline |
+| Test failure count | CI logs | 1+ |
+
+- If measurement data is **not provided** and `project-config.md` §6 defines criteria → emit a **CONSIDER finding** ("Please attach gate 5 verification data")
+- **Improvements** in measurement data (coverage uplift, etc.) should be called out in "Good Points"
+- See `@.claude/quality-gates.md` for details
+
 ## Output Contract
 
 ### Section Definitions
@@ -176,6 +195,18 @@ When a file path is specified, review changes in that file.
 - Impact Scope: [Feature name]
 - Spec Compliance: OK / NG
 - Documentation Sync: OK / NG
+
+## Quantitative Measurement (optional / gate 5 evidence)
+
+| Metric | Before | After | delta | Source |
+| ------ | ------ | ----- | ----- | ------ |
+| Coverage | XX.X% | YY.Y% | +ΔΔ% | testreport/coverage |
+| Static analysis errors | N | M | -K | npm run lint |
+| Bundle size | XX KB | YY KB | +ΔΔ% | npm run build |
+| Performance metrics | XX ms | YY ms | +ΔΔ% | output/reports/performance / testreport |
+| Test failures | N | M | -K | CI logs / testreport |
+
+> When no data is provided, write `_no measurement data provided_` for this section
 
 ## Findings
 

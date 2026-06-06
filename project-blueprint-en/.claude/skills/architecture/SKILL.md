@@ -1,11 +1,14 @@
 ---
 name: architecture
+version: 1.0.0
 description: >
   Designs system architecture from requirement notes and generates architecture.md.
   Triggers: architecture, system design, structure design, layer design.
   Source-code read-only — never modifies source code or test files.
   Outputs structured architecture document to output/design/ (requires Write permission to output/design/).
   Takes a file path as argument: /architecture <file-path>
+argument-hint: "<file-path>"
+allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 context: fork
 ---
 

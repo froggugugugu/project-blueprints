@@ -1,10 +1,14 @@
 ---
 name: review-fix
+version: 1.0.0
 description: >
   Automatically retrieves and analyzes CodeRabbit/Copilot review comments on GitHub PRs, then executes fix → test → commit & push in one go.
   Triggers: review-fix, fix review, fix review comments, CodeRabbit review fix, Copilot review fix, PR review fix, review comments fix.
   Use this skill whenever asked to "fix the review comments," "address the review," or "review-fix" after reviews have been posted on a PR.
   Takes optional argument: /review-fix <PR number>
+argument-hint: "<PR number>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Bash(gh *), Agent, WebSearch, WebFetch
+context: main
 ---
 
 # Review Fix
@@ -249,3 +253,5 @@ The following comments are excluded from auto-fix and prompt manual action:
 ## Related references (loaded on demand by Claude)
 
 @.claude/rules/git-conventions.md
+@.claude/quality-gates.md
+@.claude/pitfalls.md

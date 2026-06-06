@@ -8,11 +8,13 @@ To invoke explicitly, use the `Task` tool with `subagent_type: <name>`.
 
 | Agent | Purpose | Model | Tools | Write access |
 | ----- | ------- | ----- | ----- | ------------ |
-| `explorer` | Broad codebase exploration | Haiku 4.5 | Read / Grep / Glob | None |
+| `explorer` | Broad in-repo codebase exploration | Haiku 4.5 | Read / Grep / Glob | None |
+| `researcher` | External technical investigation (official docs, standards) | Sonnet 4.6 | Read / Grep / Glob / WebSearch / WebFetch / Context7 | None |
 | `planner` | Pre-implementation design planning | Sonnet 4.6 | Read / Grep / Glob | None |
 | `security-reviewer` | OWASP-aligned security audit | Opus 4.7 | Read / Grep / Glob | None |
 | `performance-analyst` | Measurement-first bottleneck analysis | Sonnet 4.6 | Read / Grep / Glob / Bash | None |
-| `doc-synchronizer` | Auto-sync updates to `docs/` | Haiku 4.5 | Read / Edit / Write / Grep / Glob | `docs/` only |
+| `doc-synchronizer` | Sync updates to **existing** files under `docs/` | Haiku 4.5 | Read / Edit / Write / Grep / Glob | `docs/` only |
+| `doc-writer` | Author **new** documents under `output/` | Sonnet 4.6 | Read / Edit / Write / Grep / Glob | `output/` only |
 | `test-writer` | Unit and E2E test creation | Sonnet 4.6 | Read / Edit / Write / Grep / Glob / Bash | Test files only |
 
 ## agent vs team vs skill — when to use which
@@ -55,7 +57,7 @@ Even if the parent session has broad permissions, agents won't cause unintended 
 | Tier | Model | Usage | Example |
 | ---- | ----- | ----- | ------- |
 | Critical | Opus 4.7 | Security and architectural judgment | `security-reviewer` |
-| Complex | Sonnet 4.6 | Design, implementation, testing | `planner`, `performance-analyst`, `test-writer` |
+| Complex | Sonnet 4.6 | Design, implementation, testing, research, authoring | `planner`, `performance-analyst`, `test-writer`, `researcher`, `doc-writer` |
 | Operational | Haiku 4.5 | Exploration, synchronization, repetitive work | `explorer`, `doc-synchronizer` |
 
 Specify via the frontmatter `model:` key. If unspecified, the session default is inherited.

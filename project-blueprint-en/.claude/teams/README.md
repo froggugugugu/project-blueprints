@@ -222,6 +222,31 @@ These skills are designed to be called standalone, outside team contexts:
 - **`/adr`**: Records architecture decisions. Called on-demand when a judgment call is made
 - **`/review-fix`**: Auto-fixes CodeRabbit / Copilot review comments on a given PR number
 
+## Subagent Dispatch Guide
+
+Team members can delegate to the following subagents on demand (see `@.claude/agents/README.md`).
+
+| Agent | PJM | Feature | QA | Planning | Design | Refactor |
+| ----- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `explorer` | Analyst/Planner | PL | Reviewer | Planner | UI/UX | Refactorer |
+| `researcher` | Analyst | Developer (new dependency) | Security | Architect | DS Eng | — |
+| `planner` | Planner | — | — | Planner | — | — |
+| `security-reviewer` | Reviewer | — | Security | — | — | — |
+| `performance-analyst` | Tester | — | Perf Eng | — | — | — |
+| `doc-synchronizer` | Developer | Developer | — | — | — | Refactorer |
+| `doc-writer` | Analyst/Reviewer | — | Reviewer | Analyst | — | — |
+| `test-writer` | Developer/Tester | Developer | Tester | — | — | Tester |
+
+### Typical dispatch examples
+
+- **PJM Phase 2 (Architecture design)**: Analyst calls `researcher` to confirm the latest spec of the target library → runs `/architecture`
+- **PJM Phase 5 (Verification)**: Reviewer calls `doc-writer` to author a consolidated summary report under `output/reports/` (aggregating multiple skill outputs)
+- **TEAM_FEATURE during implementation**: Developer calls `researcher` to confirm the official spec of an unfamiliar dependency before touching it (avoid wheel reinvention)
+- **TEAM_QA**: Security role combines `security-reviewer` agent + `researcher` (latest CVE intelligence) for audits
+- **TEAM_PLANNING**: Architect uses `researcher` to gather comparison data on candidate frameworks → grounding for design decisions
+
+Agents and teams live on different layers (the three-layer separation principle). Team members dispatch agents on demand for single-shot work; agents must not launch teams (no circular invocation).
+
 ## Invocation Patterns
 
 All teams: Arguments (file path or instruction) are optional. When omitted, the PL interactively identifies the target.

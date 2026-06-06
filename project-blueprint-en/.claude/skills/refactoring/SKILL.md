@@ -1,10 +1,14 @@
 ---
 name: refactoring
+version: 1.0.0
 description: >
   Executes safe, incremental refactoring with rollback capability.
   Triggers: refactor, restructure, extract, consolidate, decompose, move, rename, split, merge, reorganize.
   Covers: feature responsibility migration, store split/merge, component decomposition, utility extraction, type consolidation, dependency rule fixes.
   Takes optional argument: /refactoring <target-directory or instruction>
+argument-hint: "<target-directory or instruction>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs
+context: main
 ---
 
 # Safe Refactoring
@@ -248,4 +252,5 @@ After refactoring, always update affected `docs/` files.
 
 ## Related references (loaded on demand by Claude)
 
+@.claude/quality-gates.md
 @.claude/pitfalls.md

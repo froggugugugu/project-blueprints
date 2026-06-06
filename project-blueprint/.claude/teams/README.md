@@ -222,6 +222,31 @@ project-root/
 - **`/adr`**: 設計判断の記録。判断タイミングでオンデマンド呼び出し
 - **`/review-fix`**: 指定 PR の CodeRabbit / Copilot レビュー指摘を自動修正
 
+## サブエージェント dispatch ガイド
+
+チーム内のメンバーは、必要に応じて以下の subagent に単発委譲できる(`@.claude/agents/README.md` 参照)。
+
+| Agent | PJM | Feature | QA | Planning | Design | Refactor |
+| ----- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `explorer` | Analyst/Planner | PL | Reviewer | Planner | UI/UX | Refactorer |
+| `researcher` | Analyst | Developer (新規依存時) | Security | Architect | DS Eng | — |
+| `planner` | Planner | — | — | Planner | — | — |
+| `security-reviewer` | Reviewer | — | Security | — | — | — |
+| `performance-analyst` | Tester | — | Perf Eng | — | — | — |
+| `doc-synchronizer` | Developer | Developer | — | — | — | Refactorer |
+| `doc-writer` | Analyst/Reviewer | — | Reviewer | Analyst | — | — |
+| `test-writer` | Developer/Tester | Developer | Tester | — | — | Tester |
+
+### 典型 dispatch 例
+
+- **PJM Phase 2(アーキテクチャ設計)**: Analyst が `researcher` を呼んで対象ライブラリの最新仕様を確認 → `/architecture` 実行
+- **PJM Phase 5(検証)**: Reviewer が `doc-writer` を呼んで `output/reports/` の集約サマリーレポート(複数 skill 結果の集約)を起こす
+- **TEAM_FEATURE 実装中**: Developer が未知の依存を触る前に `researcher` で公式仕様を確認(車輪の再発明防止)
+- **TEAM_QA**: Security 役が `security-reviewer` agent + `researcher`(CVE 最新情報)を組み合わせて監査
+- **TEAM_PLANNING**: Architect が `researcher` で複数候補フレームワークの比較情報を収集 → 設計判断の根拠に
+
+agent と team は層が異なる(三層分離原則)。team 内のメンバーが必要時に単発で呼び出す形を取り、agent から team を起動するような循環は禁止。
+
 ## 起動パターン
 
 全チーム共通: 引数（ファイルパス or 指示）は省略可能。省略時はPLが対話的に対象を特定する。

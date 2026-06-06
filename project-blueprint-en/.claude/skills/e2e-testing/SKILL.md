@@ -1,10 +1,14 @@
 ---
 name: e2e-testing
+version: 1.0.0
 description: >
   Creates and maintains Playwright E2E tests for SPAs.
   Triggers: E2E test, scenario test, user flow, cross-feature, Playwright.
   Covers: Page Object design, test data management, stability patterns, and reporting.
   Takes optional argument: /e2e-testing <target-feature or instruction>
+argument-hint: "<target-feature or instruction>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_take_screenshot
+context: main
 ---
 
 # E2E Testing
@@ -188,3 +192,8 @@ test.describe('[Feature Name]', () => {
 - [ ] Data persistence test (after reload) exists
 - [ ] Cross-feature scenarios exist
 - [ ] E2E tests pass stably
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md
