@@ -29,13 +29,7 @@ context: main
 
 実装コード、`docs/` 内容、`output/` 成果物、`testreport/` 生データは対象外。**テンプレート骨格のみ**を扱う。
 
-## 起動条件(代表例)
-
-- 「ハーネスを補正して」「ベストプラクティス準拠で再構築して」「セルフリファインして」
-- 「.claude/ の構造を見直したい」「skill / agent / team の配置を点検したい」
-- 「project-blueprint と project-blueprint-en の整合性を整えて」
-
-## 前提と参照ファイル
+## 前提条件
 
 | 参照 | 用途 | 改変 |
 | ---- | ---- | ---- |
@@ -50,7 +44,7 @@ context: main
 | `.claude/rules/*.md` | パス / 言語別ルール拡張 | ✅(`.example` 規約を維持) |
 | 公式ドキュメント | 最新 best practice | WebFetch / Context7 MCP |
 
-## 改変境界(MUST 守れ)
+## 基本姿勢(改変境界 — MUST 守れ)
 
 | 領域 | 可否 | 補足 |
 | ---- | ---- | ---- |
@@ -64,6 +58,18 @@ context: main
 | `input/requirements/` | ❌ | 人間入力 |
 
 破ろうとした場合は **即停止して人間に確認**。`scan-harness.sh` フックが検知する場合もある。
+
+## 使い方
+
+```text
+/harness-refine <対象ディレクトリ or 補正指示(省略可)>
+```
+
+引数を省略した場合は `project-blueprint/` と `project-blueprint-en/` 全体を対象とする。代表的な起動例:
+
+- 「ハーネスを補正して」「ベストプラクティス準拠で再構築して」「セルフリファインして」
+- 「.claude/ の構造を見直したい」「skill / agent / team の配置を点検したい」
+- 「project-blueprint と project-blueprint-en の整合性を整えて」
 
 ## 全体ワークフロー(2 ラウンド固定 — 3 ラウンド目は禁止)
 

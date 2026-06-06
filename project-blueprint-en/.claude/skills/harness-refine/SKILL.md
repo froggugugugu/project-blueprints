@@ -31,16 +31,7 @@ A meta-skill that refines the harness scaffolding under `project-blueprint/` and
 Source code, `docs/` content, `output/` deliverables, and `testreport/` raw data are
 out of scope. **Only template scaffolding** is touched.
 
-## Trigger examples
-
-- "Refine the harness"
-- "Restructure to follow best practices"
-- "Run a self-refine pass"
-- "Audit the .claude/ layout"
-- "Re-align skill / agent / team placement"
-- "Bring `project-blueprint/` and `project-blueprint-en/` back in sync"
-
-## Inputs and reference files
+## Prerequisites
 
 | Reference | Purpose | Editable? |
 | --------- | ------- | --------- |
@@ -55,7 +46,7 @@ out of scope. **Only template scaffolding** is touched.
 | `.claude/rules/*.md` | Path / language rule extensions | ✅ (preserve `.example` convention) |
 | Official docs | Latest best practice | WebFetch / Context7 MCP |
 
-## Edit boundary (MUST hold)
+## Principles (edit boundary — MUST hold)
 
 | Area | Editable? | Notes |
 | ---- | --------- | ----- |
@@ -70,6 +61,21 @@ out of scope. **Only template scaffolding** is touched.
 
 If any of the immutable boundaries would be crossed, **halt immediately and ask the human**.
 `scan-harness.sh` may also block via hooks.
+
+## Usage
+
+```text
+/harness-refine <target-dir or instruction>
+```
+
+When the argument is omitted, the entire `project-blueprint/` and `project-blueprint-en/` tree is targeted. Representative triggers:
+
+- "Refine the harness"
+- "Restructure to follow best practices"
+- "Run a self-refine pass"
+- "Audit the .claude/ layout"
+- "Re-align skill / agent / team placement"
+- "Bring `project-blueprint/` and `project-blueprint-en/` back in sync"
 
 ## Overall workflow (2 fixed rounds — no auto round 3)
 
