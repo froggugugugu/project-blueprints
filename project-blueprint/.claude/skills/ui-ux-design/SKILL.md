@@ -451,3 +451,8 @@ style={{ padding: '13px', gap: '7px' }}
 - ダークモード未対応のUI変更
 - 仕様書にないUI要素の追加
 - `--no-verify` によるフック迂回
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

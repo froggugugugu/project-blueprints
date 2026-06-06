@@ -26,6 +26,12 @@ UIシステム全体のデザイン整合性を定義・検証・保管するた
 | **既存画面の整合性監査** | 観点別チェックリストで不整合を検出・記録 |
 | **Claude Code指示テンプレート** | 実装時に渡す標準化プロンプトの生成 |
 
+### 他スキルとの連携
+
+| 前工程 | 本スキル | 後工程 |
+| ------ | -------- | ------ |
+| `/ui-ux-design`（デザインレビュー） | `/design-system-audit` | `/implementing-features`（トークン適用） `/hig-compliance`（UI 一貫性） |
+
 ---
 
 ## STEP 1: デザイントークンの定義
@@ -257,3 +263,8 @@ border-radius-full= 9999px
 
 詳細な監査チェックリストは → `references/audit-checklist.md`  
 比率の数値計算参考は → `references/ratio-reference.md`
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

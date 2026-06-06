@@ -451,3 +451,8 @@ The following information is documented per project:
 - UI changes that don't support dark mode
 - Adding UI elements not in the specification
 - Bypassing hooks with `--no-verify`
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

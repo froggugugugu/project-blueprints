@@ -60,6 +60,12 @@ context: fork
 - ADR ファイル: `output/design/ADR_NNN_<title>.md`
 - ADR インデックス: `output/design/ADR_INDEX.md`
 
+### 他スキルとの連携
+
+| 前工程 | 本スキル | 後工程 |
+| ------ | -------- | ------ |
+| `/architecture` `/plan`（大きな設計判断が発生した時） | `/adr` | （記録が成果物 — 後工程なし） |
+
 ---
 
 ## ワークフロー
