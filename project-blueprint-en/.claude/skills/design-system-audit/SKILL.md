@@ -3,6 +3,8 @@ name: design-system-audit
 version: 1.0.0
 description: A skill for verifying and standardizing design consistency across the entire UI system. Use it for referencing design guidelines for new screens, auditing consistency of existing screens, and generating Claude Code instruction templates. It defines and verifies numerical systems (design tokens) for buttons, spacing, typography, colors, etc. based on ratio principles such as the golden ratio and silver ratio. Use this skill whenever you feel "the design is inconsistent," "we need to unify spacing standards," "title positions are misaligned across screens," or "we want to apply ratios to clean up the UI." Technology-stack agnostic (applicable to Web/Qt/QML/mobile).
 argument-hint: "<target-directory or instruction>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
+context: main
 ---
 
 # Design System Audit Skill

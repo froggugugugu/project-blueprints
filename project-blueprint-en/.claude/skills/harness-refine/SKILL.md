@@ -73,7 +73,7 @@ If any of the immutable boundaries would be crossed, **halt immediately and ask 
 
 ## Overall workflow (2 fixed rounds — no auto round 3)
 
-```
+```text
 Round 1                                 Round 2
   ┌─────────────┐                         ┌─────────────┐
   │ 1-A Score    │                         │ 2-A Score   │

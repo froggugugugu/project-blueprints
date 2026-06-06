@@ -7,6 +7,8 @@ description: >
   Measurement-first approach. Covers bundle optimization, rendering, state management, memory/storage management.
   Takes optional argument: /performance <target-component or instruction>
 argument-hint: "<対象コンポーネント or 指示>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs
+context: main
 ---
 
 # Performance Optimization

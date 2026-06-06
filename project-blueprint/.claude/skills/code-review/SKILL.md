@@ -203,6 +203,8 @@ context: fork
 | カバレッジ | XX.X% | YY.Y% | +ΔΔ% | testreport/coverage |
 | 静的解析エラー | N | M | -K | npm run lint |
 | バンドルサイズ | XX KB | YY KB | +ΔΔ% | npm run build |
+| 性能メトリクス | XX ms | YY ms | +ΔΔ% | output/reports/performance / testreport |
+| テスト失敗数 | N | M | -K | CI ログ / testreport |
 
 > データ未提示時はこのセクションを `_計測データ未提示_` と記載
 

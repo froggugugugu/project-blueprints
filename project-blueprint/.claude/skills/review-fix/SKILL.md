@@ -7,6 +7,8 @@ description: >
   Auto-fetches CodeRabbit/Copilot review comments from GitHub PRs, analyzes, and executes fix, test, commit, and push.
   Takes optional argument: /review-fix <PR-number>
 argument-hint: "<PR番号>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Bash(gh *), Agent, WebSearch, WebFetch
+context: main
 ---
 
 # Review Fix

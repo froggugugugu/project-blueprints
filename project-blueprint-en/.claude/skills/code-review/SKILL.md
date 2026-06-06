@@ -203,6 +203,8 @@ When a file path is specified, review changes in that file.
 | Coverage | XX.X% | YY.Y% | +ΔΔ% | testreport/coverage |
 | Static analysis errors | N | M | -K | npm run lint |
 | Bundle size | XX KB | YY KB | +ΔΔ% | npm run build |
+| Performance metrics | XX ms | YY ms | +ΔΔ% | output/reports/performance / testreport |
+| Test failures | N | M | -K | CI logs / testreport |
 
 > When no data is provided, write `_no measurement data provided_` for this section
 
