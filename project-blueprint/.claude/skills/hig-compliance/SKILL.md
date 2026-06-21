@@ -480,3 +480,8 @@ Phase 2 の収集データを基に、**画面間の差異をマトリクスで�
 - アイコンの恣意的な変更（用語集の標準に従う）
 - `--no-verify` によるフック迂回
 - `--force` によるプッシュ
+
+## 関連参照(必要に応じて Claude が load)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

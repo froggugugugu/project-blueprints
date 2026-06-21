@@ -59,6 +59,12 @@ in a form that future developers (human or AI) can understand.
 - ADR files: `output/design/ADR_NNN_<title>.md`
 - ADR index: `output/design/ADR_INDEX.md`
 
+### Integration with Other Skills
+
+| Previous Step | This Skill | Next Step |
+| ------------- | ---------- | --------- |
+| `/architecture` `/plan` (when a major design decision arises) | `/adr` | (the record is the deliverable — no next step) |
+
 ---
 
 ## Workflow

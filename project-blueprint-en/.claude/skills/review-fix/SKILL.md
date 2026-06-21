@@ -34,6 +34,12 @@ It accurately understands the reviewer's intent and applies fixes following the 
 /review-fix 37       # Specify PR #37
 ```
 
+### Integration with Other Skills
+
+| Previous Step | This Skill | Next Step |
+| ------------- | ---------- | --------- |
+| `/code-review` `/security-scan` (after review findings are posted on the PR) | `/review-fix` | `/code-review` (re-review to confirm findings are resolved) |
+
 ## Prerequisites
 
 | Requirement | Details |

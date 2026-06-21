@@ -1,6 +1,6 @@
 ---
 name: harness-refine
-version: 1.0.0
+version: 2.0.0
 description: >
   This skill should be used when the user asks to "refine the harness", "self-improve the blueprint",
   "restructure .claude/ to match best practices", "audit harness configuration",
@@ -12,22 +12,37 @@ description: >
   `output/` deliverables, and `testreport/` raw data are out of scope.
   `constitution.md` and `project-config.md` §1 / §4-§10 / §12 / §13 are immutable.
   Both JP and EN mirrors MUST be kept in lockstep — completion requires structural parity.
-  Runs self-score → self-improve → self-review for **2 fixed rounds**; escalates to a human
+  Starts with a non-mutating Round 0 that refreshes the rubric from the latest official
+  best-practice sources and prior refinement reports (self-strengthening preflight), then runs
+  self-score → self-improve → self-review for **2 fixed rounds**; escalates to a human
   if the round-2 reviewer does not approve.
   Outputs a refinement report to `output/reports/harness-refine/` (requires Write permission to that path).
   Takes optional argument: /harness-refine <target-dir or instruction>
 argument-hint: "<対象ディレクトリ or 補正指示(省略可)>"
-allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 context: main
 ---
 
-# Harness Refine — ベストプラクティス準拠の自己採点・強化・レビュー(2 ラウンド固定)
+# Harness Refine — 自己強化型ベストプラクティス補正(Round 0 リフレッシュ + 2 ラウンド固定)
 
 ハーネス構成(`project-blueprint/` および `project-blueprint-en/`)を、
-**Claude Code 公式ベストプラクティス** と **`constitution.md` 7 原則** の両方を rubric として
+**Claude Code 公式ベストプラクティス**(毎回 Round 0 で再取得)と
+**`constitution.md` 7 原則** の両方を rubric として
 **自己採点 → 自己強化 → セルフレビュー** を **2 ラウンド** 回して構造補正するメタスキル。
 
 実装コード、`docs/` 内容、`output/` 成果物、`testreport/` 生データは対象外。**テンプレート骨格のみ**を扱う。
+
+## 自己強化メカニズム(本スキルの核)
+
+本スキルは rubric を凍結せず、走るたびに自律的に強くなる。3 つの機構で実現する:
+
+1. **Round 0 リフレッシュ**(非破壊): 公式一次ソース(下記「ベストプラクティス基準ソース」)を
+   WebFetch / Context7 で再取得し、最新ガイダンスとの差分を **今回ラウンドの暫定採点基準**に反映する。
+   訓練データだけで判断しない。
+2. **adaptive ループ**: 過去レポート(`output/reports/harness-refine/`)を読み、
+   **未解決課題**と **2 回以上再発した指摘**を抽出して優先補正対象へ昇格する(失敗をループでなく学習に変える)。
+3. **rubric 自己進化**: Round 0 で新しい公式ベストプラクティスを発見したら **新規採点項目を提案**する。
+   ただし `constitution.md` に触れる変更は自動採用せず、必ず人間承認を得る。
 
 ## 前提条件
 
@@ -36,12 +51,14 @@ context: main
 | `constitution.md`(repo ルート) | 7 不変原則(rubric の上位条件) | ❌ 改変禁止 |
 | `project-config.md` §1 / §4-§10 / §12 / §13 | 人間決定領域 | ❌ 改変禁止 |
 | `project-config.md` §2 / §3 / §11 | AI 可変領域 | ⚠️ 構造のみ可(値は触らない) |
+| `project-config.md` §13 | Opus/Sonnet/Haiku tier 戦略(採点 11 で参照) | ❌ 改変禁止(参照のみ) |
 | `.claude/CLAUDE.md` | 横断ルール(原則 ⑥: ≤200 行目安) | ✅ |
-| `.claude/skills/*/SKILL.md` | スキル骨格(frontmatter / pipeline) | ✅ |
-| `.claude/agents/*.md` | 単発専門家定義 | ✅ |
+| `.claude/skills/*/SKILL.md` | スキル骨格(frontmatter / pipeline / description) | ✅ |
+| `.claude/agents/*.md` | 単発専門家定義(最小権限 / 単一責務) | ✅ |
 | `.claude/teams/TEAM_*.md` | オーケストレーション | ✅ |
 | `.claude/hooks/*.sh` | 3 層防御 Layer 1 | ❌ 本スキルでは触らない(別 PR で議論) |
 | `.claude/rules/*.md` | パス / 言語別ルール拡張 | ✅(`.example` 規約を維持) |
+| 過去レポート(`output/reports/harness-refine/`) | adaptive ループの学習入力 | 読取のみ |
 | 公式ドキュメント | 最新 best practice | WebFetch / Context7 MCP |
 
 ## 基本姿勢(改変境界 — MUST 守れ)
@@ -71,61 +88,94 @@ context: main
 - 「.claude/ の構造を見直したい」「skill / agent / team の配置を点検したい」
 - 「project-blueprint と project-blueprint-en の整合性を整えて」
 
-## 全体ワークフロー(2 ラウンド固定 — 3 ラウンド目は禁止)
+## 全体ワークフロー(Round 0 + 2 ラウンド固定 — 3 ラウンド目は禁止)
 
 ```text
-ラウンド 1                              ラウンド 2
-  ┌─────────────┐                        ┌─────────────┐
-  │ 1-A 自己採点 │                        │ 2-A 自己採点 │
-  │   (rubric)   │                        │  (差分中心)  │
-  └─────┬────────┘                        └─────┬────────┘
-        ▼                                       ▼
-  ┌─────────────┐                        ┌─────────────┐
-  │ 1-B 自己強化 │ ── 日英ミラー適用 ──→  │ 2-B 自己強化 │ ── 日英ミラー適用 ──→
-  └─────┬────────┘                        └─────┬────────┘
-        ▼                                       ▼
-  ┌─────────────┐                        ┌─────────────┐
-  │ 1-C レビュー │ (code-reviewer agent)  │ 2-C レビュー │ (code-reviewer agent)
-  └─────┬────────┘                        └─────┬────────┘
-        └────────► R2 入力 ───────────────────┘
-                                                ▼
-                                         最終レポート出力
+Round 0(非破壊・自己強化)        ラウンド 1                          ラウンド 2
+  ┌─────────────────┐              ┌─────────────┐                    ┌─────────────┐
+  │ 公式 BP 再取得   │              │ 1-A 自己採点 │                    │ 2-A 自己採点 │
+  │ 過去レポート学習 │ ── rubric ─→ │   (rubric)   │                    │  (差分中心)  │
+  │ ルーブリック差分 │   差分注入    └─────┬────────┘                    └─────┬────────┘
+  └─────────────────┘                      ▼                                  ▼
+                                     ┌─────────────┐                    ┌─────────────┐
+                                     │ 1-B 自己強化 │ ─ 日英ミラー適用 → │ 2-B 自己強化 │ ─ 日英ミラー →
+                                     └─────┬────────┘                    └─────┬────────┘
+                                           ▼                                  ▼
+                                     ┌─────────────┐                    ┌─────────────┐
+                                     │ 1-C レビュー │ (code-reviewer)    │ 2-C レビュー │ (code-reviewer)
+                                     └─────┬────────┘                    └─────┬────────┘
+                                           └──────► R2 入力 ───────────────┘
+                                                                              ▼
+                                                                       最終レポート出力
 ```
 
+- **Round 0** で **最新ベストプラクティス取得 + 過去レポート学習**(ファイルは一切編集しない)
 - ラウンド 1 で **大枠補正**(命名揺れ、配置ミス、frontmatter 欠落、ミラー乖離など)
 - ラウンド 2 で **R1 残課題 + 二次効果**(`@import` 切れ、CLAUDE.md スキル一覧との不整合、リンク 404)
 - 各ラウンドのレビューは `pr-review-toolkit:code-reviewer` agent に委任して **独立判定**を取る
 - ラウンド 2 で承認に届かなければ **人間にエスカレーション**(自動 3 ラウンド禁止)
 
+## Round 0 — ベストプラクティス・リフレッシュ(自己強化プリフライト / 非破壊)
+
+ファイルを **一切編集しない**。調査と差分生成のみ。手順:
+
+1. **最新公式ガイダンスの取得**: 末尾「ベストプラクティス基準ソース」の URL を WebFetch、
+   ライブラリ系は Context7 で取得する。取得失敗時は **degraded モード**として訓練データ + 過去レポートで継続し、
+   その旨を会話とレポートに明示する(無言で訓練データに退行しない)。
+2. **過去レポート学習**: `output/reports/harness-refine/REFINE_*.md`(あれば最新 2〜3 件)を読み、
+   (a) **未解決課題** (b) **2 回以上再発した指摘** を抽出する。
+3. **ライブ・ルーブリック差分の生成**: 取得した最新ガイダンスを下記 15 項目 rubric と突き合わせ、
+   - 既存項目の判定基準が古ければ **今回ラウンドの暫定基準**として更新する
+   - 公式に新しい強い推奨があれば **新規採点項目候補**として記録する
+   - 再発課題は **優先補正対象**へ昇格する
+4. **人間承認ゲート**: 新規採点項目の追加提案、または `constitution.md` に波及する変更は、
+   **採用前に人間へ提示して承認を得る**(自動編集禁止)。
+
+Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取得可否」「再発課題リスト」「今回適用する rubric 差分」。
+
 ## ラウンド 1 — 大枠補正
 
-### 1-A. 自己採点(10 項目 × 0/1/2 点 = 20 点満点)
+### 1-A. 自己採点(15 項目 × 0/1/2 点 = 30 点満点)
+
+採点は **acceptance checklist 方式**(spec-kit 流): 各項目の 2 点条件を満たすかを YES/NO で判定し、根拠を添える。
+
+**A 群 — constitution / 構造の不変条件**
 
 | # | 項目 | 0 点 | 1 点 | 2 点 |
 | - | ---- | ---- | ---- | ---- |
 | 1 | constitution 7 原則の遵守 | 違反あり | 形式上遵守 | + `scan-harness.sh` でテスト化 |
-| 2 | CLAUDE.md ≤200 行(原則 ⑥) | 220 行超 | 200-220 行 | 200 行以下 + `@import` 整理済 |
-| 3 | skill frontmatter 規約 | name / description 欠落あり | 全項目あり | + allowed-tools / context / argument-hint 整備 |
+| 2 | CLAUDE.md ≤200 行(原則 ⑥) | 220 行超 | 200-220 行 | 200 行以下 + 真の削減は path-scoped `rules/` で実現(`@import` は context を減らさない点を理解) |
+| 3 | skill frontmatter 規約 | name / description 欠落 | 全項目あり | + allowed-tools(最小権限)/ context / argument-hint 整備 |
 | 4 | 三層分離(skill ⇄ agent ⇄ team, 原則 ④) | 循環 / 混在あり | 直線的 | + `agents/README.md` に選定ガイド |
 | 5 | 3 層防御維持(原則 ⑤) | hook 削除あり | 同数維持 | + 各 hook の責務 header コメントあり |
-| 6 | 日英ミラー同期(原則 ②) | ファイル数 / 構造に差 | ファイル数一致 | + 章立てまで一致 |
+| 6 | 日英ミラー同期(原則 ②) | ファイル数 / 構造に差 | ファイル数一致 | + 章立て・行数まで一致(機械 diff で乖離 0) |
 | 7 | rules オプトイン方式 | `.example` なし or 直読み込み | `.example` あり | + 命名規約(`language-*`, `path-*`, `rule-*`)厳守 |
 | 8 | 5 品質ゲート(原則 ③) | 削減あり | 5 ゲート存在 | + 各 skill から `@.claude/quality-gates.md` 参照 |
-| 9 | pipeline 連携明示 | 前後工程記載なし | 一部記載 | 全 skill に「前工程 → 本スキル → 後工程」表 |
-| 10 | 公式 best practice 準拠(SKILL.md / settings 配置) | 古い形式 | 一部準拠 | 最新形式準拠 |
 
-**目標**: ラウンド 1 で **16/20 以上**、ラウンド 2 で **19/20 以上**。
+**B 群 — Anthropic 公式ベストプラクティス + GitHub TOP5 エッセンス**
+
+| # | 項目 | 0 点 | 1 点 | 2 点 |
+| - | ---- | ---- | ---- | ---- |
+| 9 | pipeline 連携・発見可能性(superpowers 流) | 前後工程記載なし / dead-skill あり | 一部記載 | 全 skill に「前 → 本 → 後」表 + どの導線からも孤立した skill なし |
+| 10 | 公式 best-practice 準拠 | 古い形式 | 一部準拠 | Round 0 取得の最新形式に準拠 |
+| 11 | skill description 品質(三人称 / トリガー明示) | 一人称・二人称 or 曖昧 | 三人称 | + ≤1024 字 / トリガー具体的 / 重複トリガーなし |
+| 12 | progressive disclosure | SKILL.md 肥大(>500 行)/ 冗長な背景説明 | ≤500 行 | + 相互排他な詳細を第 3 階層(参照ファイル)へ分割 |
+| 13 | agent 最小権限・単一責務 | 読取専門 agent に Write/Edit / 多責務 | tools allowlist あり | + read-only 系は Write 無し / 1 agent=1 task / 要約のみ返す契約を明記 |
+| 14 | モデル tier 配置(§13 / BMAD 流) | tier 記載なし | tier 記載あり | + 計画系=高 tier / 機械的作業=低 tier の妥当配置 |
+| 15 | eval-first / 受け入れチェックリスト(spec-kit 流) | 検証観点なし | 出力契約あり | + 代表シナリオ + PASS 条件が SKILL.md に明示 |
+
+**目標**(将来の項目追加でも壊れない %): ラウンド 1 で **≥80%(≥24/30)**、ラウンド 2 で **≥95%(≥28/30)**。
 
 採点根拠は会話内に **必ずファイルパス + 行番号**で提示する(「なんとなく低い」は禁止)。
-公式ベストプラクティスの判断は WebFetch(anthropic.com)/ Context7 MCP で最新版を参照する(訓練データのみで判断しない)。
+項目 10 / 11 / 12 の判断は Round 0 で取得した最新公式ガイダンスを基準にする。
 
 ### 1-B. 自己強化(補正)
 
-スコア 0 / 1 点の項目を補正する。優先順:
+スコア 0 / 1 点の項目を補正する。優先順(Round 0 で昇格した再発課題を最優先):
 
 1. **constitution 違反**: 即停止 → 人間確認(自動修正禁止。違反内容を箇条書きで提示)
-2. **CLAUDE.md 行数超過**: `@.claude/rules/<topic>.md` に切り出し → `@import` 参照に置換
-3. **frontmatter 欠落 / 命名揺れ**: skill / agent ファイルに追加・統一
+2. **CLAUDE.md 行数超過**: トピックを `@.claude/rules/<topic>.md` に切り出し → 真に context を削るなら path-scoped 化
+3. **frontmatter 欠落 / 命名揺れ / description 品質**: 三人称・トリガー明示・最小権限 allowlist に統一
 4. **三層分離違反**: 該当呼び出しを単方向に矯正(skill → agent は可、agent → team は禁止)
 5. **ミラー乖離**: 不足側にコピーし、文言は既存 `README-en.md` のトーンで翻訳
 6. **`.example` 規約違反**: 実体ファイルを `.example` に戻すか、命名規約に揃える
@@ -138,8 +188,7 @@ context: main
 
 ### 1-C. セルフレビュー(独立判定)
 
-`Agent` 経由で `pr-review-toolkit:code-reviewer` を **1 回呼ぶ**。
-渡すコンテキスト:
+`Agent` 経由で `pr-review-toolkit:code-reviewer` を **1 回呼ぶ**。渡すコンテキスト:
 
 - ラウンド 1 で行った全 Edit / Write の `git diff`
 - `constitution.md` 7 原則の遵守チェックを明示依頼
@@ -147,15 +196,16 @@ context: main
 
 レビュー結果(MUST / SHOULD / CONSIDER)はラウンド 2 入力に集約。
 
-## ラウンド 2 — 残課題と二次効果
+## ラウンド 2 — 残課題と二次効果(adaptive)
 
-### 2-A. 自己採点(差分中心)
+### 2-A. 自己採点(差分中心 + 解消率)
 
 ラウンド 1 で **1 点以下** だった項目を再採点。加えて以下を新規スコア対象に追加:
 
 - ラウンド 1 Edit の副作用(`@import` 切れ、参照リンク 404、CLAUDE.md スキル一覧との不整合)
 - ミラー側に取りこぼした変更
 - code-reviewer の指摘(MUST は必ず採点へ反映)
+- **解消率トラッキング**: Round 0 で抽出した再発課題が今回解消されたか(再発 3 回目以上は人間エスカレーション候補)
 
 ### 2-B. 自己強化(クロージング)
 
@@ -199,13 +249,18 @@ context: main
 # ハーネス補正レポート — <日付>
 
 ## サマリ
-- ラウンド 1 スコア: NN/20 → ラウンド 2 スコア: MM/20(目標 ≥19)
+- ラウンド 1 スコア: NN/30(N%) → ラウンド 2 スコア: MM/30(M%)(目標 ≥95%)
 - 補正ファイル数: 日本語側 X / 英語側 Y(差分 0 が MUST)
 - constitution 違反: 検出 N 件 / 修正 N 件(自動修正は 0、すべて人間確認経由)
 - code-reviewer 判定: 承認 / 条件付き / 要修正
 
+## Round 0 — ベストプラクティス・リフレッシュ
+- 取得ソース: [URL ごとに 取得成功 / degraded]
+- 再発課題(過去レポート由来): [箇条書き / 解消率]
+- 今回適用した rubric 差分: [更新した判定基準 / 新規項目提案(人間承認待ち)]
+
 ## ラウンド 1
-### 採点(10 項目)
+### 採点(15 項目)
 [各項目: 点数 + 根拠ファイル:行]
 ### 補正
 [ファイルパスごとの変更要約 + WHY]
@@ -213,7 +268,7 @@ context: main
 [code-reviewer agent 出力サマリ]
 
 ## ラウンド 2
-[同上]
+[同上 + 解消率]
 
 ## 残課題
 - (あれば箇条書き。人間判断が必要なもののみ)
@@ -226,6 +281,7 @@ context: main
 
 ### 会話への提示
 
+- Round 0 開始時に「取得する公式ソースと過去レポート学習結果」を明示
 - 各ラウンド開始時に「これからラウンド N の採点を行います」と明示
 - 採点結果は **1 行 1 項目** で表示(箇条書き)
 - 補正は **何を / なぜ / どこを** を都度報告(silent edit 禁止)
@@ -247,8 +303,24 @@ context: main
 - 日英ミラーの **片側だけ**更新して完了とすること(原則 ②)
 - `--no-verify` / `--force` を使った git 操作
 - **3 ラウンド以上の自動ループ**(ラウンド 2 で承認得られなければ人間判断)
+- Round 0 でのファイル編集(Round 0 は非破壊・調査専用)
+- 新規採点項目や constitution 波及変更を **人間承認なしで自動採用**すること
 - ソースコード / `docs/` 内容 / `output/`(本スキル成果以外) / `testreport/` への変更
-- 採点根拠を伴わないスコア提示
+- 採点根拠を伴わないスコア提示 / Round 0 取得失敗を無言で訓練データに退行させること
+
+## ベストプラクティス基準ソース(Round 0 で再取得 — 公式一次ソース優先)
+
+| ソース | 用途 | rubric 対応 |
+| ------ | ---- | ----------- |
+| platform.claude.com/docs `agent-skills/best-practices` | SKILL.md / frontmatter / progressive disclosure / eval-first | 3, 11, 12, 15 |
+| docs.claude.com `claude-code/sub-agents` | subagent 最小権限・単一責務・要約返却 | 13 |
+| docs.claude.com `claude-code/memory` | CLAUDE.md 行数 / `@import` は context 削減せず / path-scoped rules | 2 |
+| anthropic.com/engineering `writing-tools-for-agents` | ツール定義の明確さ・トークン効率 | 10, 11 |
+| anthropic.com/engineering `effective-context-engineering-for-ai-agents` | コンテキスト curation / sub-agent 隔離 | 12, 13 |
+| anthropic.com/engineering `effective-harnesses-for-long-running-agents` | 起動オリエンテーション / 検証ループ | 9, 15 |
+| GitHub: spec-kit / BMAD-METHOD / SuperClaude / agent-os / superpowers | acceptance checklist / モデル tier / standards 集約 / discoverability | 9, 14, 15 |
+
+> 取得に失敗したソースは degraded として明示し、当該 rubric 項目は前回基準で暫定採点する。
 
 ## 関連参照(必要に応じて Claude が load)
 

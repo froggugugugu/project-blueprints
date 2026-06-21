@@ -481,3 +481,8 @@ When `docs/ui-glossary.md` exists, the following skills automatically reference 
 - Arbitrary icon changes (follow glossary standards)
 - Bypassing hooks with `--no-verify`
 - Force pushing with `--force`
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md

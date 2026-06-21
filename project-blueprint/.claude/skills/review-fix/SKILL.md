@@ -34,6 +34,12 @@ GitHub PR に付いた CodeRabbit / GitHub Copilot のレビューコメント�
 /review-fix 37       # PR #37 を指定
 ```
 
+### 他スキルとの連携
+
+| 前工程 | 本スキル | 後工程 |
+| ------ | -------- | ------ |
+| `/code-review` `/security-scan`（レビュー指摘が PR に投稿された後） | `/review-fix` | `/code-review`（再レビューで指摘解消を確認） |
+
 ## 前提条件
 
 | 要件 | 詳細 |

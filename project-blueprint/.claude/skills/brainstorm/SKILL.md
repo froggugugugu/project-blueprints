@@ -1,5 +1,6 @@
 ---
 name: brainstorm
+version: 1.0.0
 description: 曖昧な要求メモから前提を Socratic 質問で炙り出す `/prd` 前段スキル。ブレスト・前提整理・質問駆動・曖昧さ・想定外・pre-prd で起動。読取専用、出力は `output/brainstorm/` のみ。
 allowed-tools: Read, Grep, Glob, Write, AskUserQuestion
 argument-hint: <要求メモのファイルパス、または整理したいトピック>

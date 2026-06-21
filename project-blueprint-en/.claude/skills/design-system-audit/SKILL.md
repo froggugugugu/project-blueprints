@@ -22,6 +22,12 @@ Provides numerically-based design principles from the perspective of a **design 
 | **Existing Screen Consistency Audit** | Detect and record inconsistencies using a categorized checklist |
 | **Claude Code Instruction Templates** | Generate standardized prompts to pass during implementation |
 
+### Integration with Other Skills
+
+| Previous Step | This Skill | Next Step |
+| ------------- | ---------- | --------- |
+| `/ui-ux-design` (design review) | `/design-system-audit` | `/implementing-features` (token application) `/hig-compliance` (UI consistency) |
+
 ---
 
 ## STEP 1: Design Token Definition
@@ -253,3 +259,8 @@ Store in the project's `design-system.md` or `DESIGN_TOKENS.md` with the followi
 
 Detailed audit checklist → `references/audit-checklist.md`
 Ratio calculation reference → `references/ratio-reference.md`
+
+## Related references (loaded on demand by Claude)
+
+@.claude/quality-gates.md
+@.claude/pitfalls.md
