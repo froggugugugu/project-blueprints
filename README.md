@@ -47,18 +47,17 @@ cd ./my-app && claude
 ## いま入っているもの
 
 ```text
-16 skills    /brainstorm, /prd, /architecture, /plan, /implementing-features,
+17 skills    /brainstorm, /prd, /architecture, /plan, /implementing-features,
              /code-review, /security-scan, /legal-check, /performance,
              /refactoring, /e2e-testing, /ui-ux-design, /hig-compliance,
-             /design-system-audit, /adr, /review-fix
+             /design-system-audit, /adr, /review-fix, /harness-refine
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
- 6 agents    explorer, planner, security-reviewer, performance-analyst,
-             doc-synchronizer, test-writer
+ 8 agents    explorer, planner, researcher, security-reviewer,
+             performance-analyst, doc-synchronizer, doc-writer, test-writer
 12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
              SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
- 1 plugin    .claude-plugin/marketplace.json (Anthropic plugin spec 準拠、未提出)
 ```
 
 詳細仕様は [`project-blueprint/README.md`](project-blueprint/README.md) と [`CHANGELOG.md`](CHANGELOG.md) を参照。
@@ -98,7 +97,7 @@ cd ./my-app && claude
 - [`constitution.md`](constitution.md) — 7 不変原則(変更プロトコル付き)
 - [`project-blueprint/.claude/CLAUDE.md`](project-blueprint/.claude/CLAUDE.md) — 開発ガイド(横断ルール、200 行以内)
 - [`project-blueprint/.claude/pitfalls.md`](project-blueprint/.claude/pitfalls.md) — AI 協調開発の落とし穴 20 件
-- [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 16 skill の SKILL.md
+- [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 17 skill の SKILL.md
 - [`CHANGELOG.md`](CHANGELOG.md) — リリースノート(SemVer + Keep a Changelog)
 
 ## Acknowledgments — インスパイア元への謝辞

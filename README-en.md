@@ -49,18 +49,17 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
 ## What's inside
 
 ```text
-16 skills    /brainstorm, /prd, /architecture, /plan, /implementing-features,
+17 skills    /brainstorm, /prd, /architecture, /plan, /implementing-features,
              /code-review, /security-scan, /legal-check, /performance,
              /refactoring, /e2e-testing, /ui-ux-design, /hig-compliance,
-             /design-system-audit, /adr, /review-fix
+             /design-system-audit, /adr, /review-fix, /harness-refine
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
- 6 agents    explorer, planner, security-reviewer, performance-analyst,
-             doc-synchronizer, test-writer
+ 8 agents    explorer, planner, researcher, security-reviewer,
+             performance-analyst, doc-synchronizer, doc-writer, test-writer
 12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
              SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
- 1 plugin    .claude-plugin/marketplace.json (Anthropic plugin spec compliant, not yet submitted)
 ```
 
 For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/README.md) and [`CHANGELOG.md`](CHANGELOG.md).

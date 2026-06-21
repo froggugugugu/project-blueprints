@@ -8,6 +8,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Removed
+
+- **`.claude-plugin/marketplace.json`**: プラグインマーケットプレイス配布を見送り削除。
+  本リポジトリは clone-and-use ハーネス(`setup.sh` でターゲットへ配置)を主経路とする。
+  理由: skill が namespace 化(`/project-blueprint-ja:prd`)されると skill/team 内部の
+  bare スラッシュ相互参照が崩れ、プラグイン単体では `project-config.md` /
+  `input` / `output` / `docs` が scaffold されないため(0.3.0 の plugin 対応化を撤回)。
+
+### Changed
+
+- **README / README-en「いま入っているもの」**: 実数に合わせ skills 16→17
+  (`/harness-refine` 追加)、agents 6→8(`researcher` / `doc-writer` 追加)に修正。
+  非準拠で誤解を招く `1 plugin` 行を削除。
+- **`CLAUDE.md`**: skill 数記述を 17 skills に統一(`/harness-refine` を補助 skill に追記)。
+
 ## [0.3.0] — 2026-04-27
 
 Major self-enhancement release adopting Claude Code 2026 specs and elements
