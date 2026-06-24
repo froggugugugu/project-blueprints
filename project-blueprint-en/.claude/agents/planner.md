@@ -59,7 +59,7 @@ Before implementation, investigate existing code, tests, and documentation and r
 
 ### Risks and assumptions
 
-- <assumption 1>
+- [Assumption] <assumption 1>: the premise this design rests on
 - <risk 1> — mitigation: ...
 
 ### Open questions (if any)

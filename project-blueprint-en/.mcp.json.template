@@ -12,13 +12,9 @@
       "command": "npx",
       "args": ["-y", "@playwright/mcp"]
     },
-    "fetch": {
-      "_comment": "Unauthenticated HTTP GET. Used for fetching external docs",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"]
-    },
     "github": {
       "_comment": "GitHub API (Issues / PR / Actions). Export $GITHUB_TOKEN first. Keep scopes minimal (repo:status, public_repo)",
+      "_verify": "Run 'npm show @modelcontextprotocol/server-github version' to confirm the package is current",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
@@ -39,9 +35,20 @@
       "  ★★★ sentry: Continuous monitoring of production errors and performance",
       "  ★★☆ brave-search: WebSearch alternative (works without API key, rate-limited)",
       "  ★★☆ postgres: Read-only schema introspection (NEVER point to a production DSN)",
-      "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)"
+      "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)",
+      "  ⚠️  Always run 'npm show <package> version' to verify a package exists before use"
     ],
+    "fetch": {
+      "_warning": "@modelcontextprotocol/server-fetch is deprecated. Use Claude Code's built-in WebFetch tool instead",
+      "_deprecated": true,
+      "_alternative": "Use the Claude Code built-in WebFetch tool",
+      "_example_if_needed": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-fetch"]
+      }
+    },
     "filesystem": {
+      "_verify": "Run 'npm show @modelcontextprotocol/server-filesystem version' to confirm the package is current",
       "_warning": "The MCP filesystem server can traverse everything under the given root. Scoping is done by **listing only the safe subdirectories as positional arguments** — the server has no CLI-level exclude flag (as of 2026-04). Use multiple defense layers for secret protection:",
       "_protection_layers": [
         "1) Restrict exposed dirs: pass only secret-free subtrees like `${PROJECT_ROOT}/src` as args",

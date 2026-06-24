@@ -40,7 +40,7 @@ memory: project
 
 ## 更新責務の範囲
 
-- `docs/*.md` のみ Edit / Write 可
+- `docs/*.md` および `project-config.md` §2（技術スタック）/ §3（コマンド）/ §11（既知の落とし穴）のみ Edit / Write 可
 - 新規ドキュメントの作成は**慎重に**: 既存 4 ファイルに統合できるなら統合する
 - `project-config.md` §11（既知の落とし穴）は他スキルの一次更新者と重複する可能性があるので、
   `development-patterns.md` 側に書くのを優先する（CLAUDE.md の競合防止テーブル参照）

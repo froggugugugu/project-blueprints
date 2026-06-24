@@ -51,7 +51,7 @@ When a file path is specified, analyze performance around that file.
 ### Output Destination
 
 - Optimized code: Under `src/` (following the project's directory structure)
-- Report: Presented in conversation
+- Report: Presented in conversation (raw profiler data saved to `testreport/perf/`)
 
 ### Integration with Other Skills
 

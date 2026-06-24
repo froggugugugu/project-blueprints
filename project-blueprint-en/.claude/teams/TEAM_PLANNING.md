@@ -74,7 +74,7 @@ Arguments are optional. When omitted, the PL checks `input/requirements/` and id
 - Skills used: `/plan`
 - Analyze inter-task dependencies and parallelization potential
 - Define test strategy
-- Output task breakdown document to `output/tasks/PLAN_<feature-name>.md`
+- Output task breakdown document to `output/tasks/TASK_<feature-name>.md`
 - **Do not modify source code**
 
 ## Workflow
@@ -114,7 +114,7 @@ PL: Verify deliverable consistency → Hand off to implementation team
 | --- | --- | --- |
 | PRD | Requirements Analyst | `output/prd/PRD_<feature-name>.md` |
 | Architecture Design Doc | Architect | `output/design/ARCH_<feature-name>.md` |
-| Task Breakdown & Test Strategy | Planner | `output/tasks/PLAN_<feature-name>.md` |
+| Task Breakdown & Test Strategy | Planner | `output/tasks/TASK_<feature-name>.md` |
 
 ## Completion Criteria
 

@@ -37,6 +37,7 @@ Recommended switching mechanism: `.envrc` / `direnv`.
 ### Hook Behavior Principles
 
 - **Block hooks**: exit 2 to abort the operation. Reason communicated via stderr
+  - Exception: `UserPromptSubmit` hooks use `exit 0 + stdout JSON {"decision":"block","reason":"..."}` to reject a prompt (per the official 2026 spec — not exit 2)
 - **Warn hooks**: exit 0 to allow the operation. Feedback provided via stderr
 - **Notify hooks**: exit 0. Sends notifications to external services
 - **Fail-open policy**: If JSON parsing fails, the operation is allowed (don't block work)

@@ -29,6 +29,10 @@ INPUT="$(cat 2>/dev/null || true)"
 SKILL=""
 if command -v jq &>/dev/null; then
     SKILL=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // .tool_input.name // empty' 2>/dev/null)
+else
+    # sed fallback when jq is absent: prevents deploy-block bypass
+    SKILL=$(printf '%s' "$INPUT" | sed -n 's/.*"skill"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)
+    [[ -z "$SKILL" ]] && SKILL=$(printf '%s' "$INPUT" | sed -n 's/.*"name"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)
 fi
 
 # ── 2. High-risk skill check (always, profile-independent) ────────────
@@ -79,9 +83,9 @@ fi
 # 3b. Detect deny-rule weakening in settings.local.json (always, lightweight)
 LOCAL="$PROJECT/.claude/settings.local.json"
 if [[ -f "$LOCAL" ]] && command -v jq &>/dev/null; then
-    # An empty array [] is truthy in jq; explicitly require length > 0
-    if jq -e '(.permissions.deny // []) | length > 0' "$LOCAL" >/dev/null 2>&1; then
-        ISSUES+=("settings.local.json has a non-empty permissions.deny (deny rules should live in shared settings.json)")
+    # Warn when the deny key exists at all (empty [] also overrides shared deny rules)
+    if jq -e 'getpath(["permissions","deny"]) != null' "$LOCAL" >/dev/null 2>&1; then
+        ISSUES+=("settings.local.json defines permissions.deny (an empty [] clears all deny rules — manage deny rules in shared settings.json instead)")
     fi
 fi
 

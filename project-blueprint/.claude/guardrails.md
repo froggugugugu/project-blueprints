@@ -37,6 +37,7 @@
 ### フックの動作原則
 
 - **ブロック系**: exit 2 で操作を中止。理由を stderr で通知
+  - 例外: `UserPromptSubmit` フックは公式仕様により `exit 0 + stdout JSON {"decision":"block","reason":"..."}` でプロンプトを差し戻す（exit 2 ではない）
 - **警告系**: exit 0 で操作は許可。フィードバックを stderr で通知
 - **通知系**: exit 0。外部サービスに通知を送信
 - **fail-open ポリシー**: JSON パース失敗時は操作を許可（安全側に倒さず、作業を止めない）

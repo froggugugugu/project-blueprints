@@ -72,7 +72,7 @@ TOOLCHAIN_CONFIGS=(
 # Regex patterns on full path
 PROTECTED_PATH_PATTERNS=(
     '\.env\.'
-    '/\.git/'
+    '(^|/)\.git(/|$)'
     '(^|/)\.claude/settings\.json$'
     '(^|/)\.claude/settings\.local\.json$'
     '\.pem$'
