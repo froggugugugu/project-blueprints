@@ -53,6 +53,13 @@ fi
 
 TARGET_DIR="$1"
 
+# -- Dependency check -----------------------------------------------
+# jq is required for safety-check.sh to function fully. Warn if absent (setup continues).
+if ! command -v jq &>/dev/null; then
+    warn "jq is not installed. safety-check.sh will skip most checks when jq is absent (only the most critical patterns will be caught)."
+    warn "Install: macOS → brew install jq  /  Ubuntu → sudo apt-get install jq  /  Alpine → apk add jq"
+fi
+
 # Verify that the target directory exists (create it if missing — new-project case)
 if [[ ! -d "$TARGET_DIR" ]]; then
     info "Creating new target directory: $TARGET_DIR"

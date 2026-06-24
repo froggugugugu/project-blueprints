@@ -19,7 +19,16 @@ INPUT="$(cat)"
 if command -v jq &>/dev/null; then
     CMD="$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 else
-    # fail-open: jq が無ければ検査スキップ（sed フォールバックは精度不足で誤検知リスクが高い）
+    # jq 不在時: rm -rf / 等の最重要パターンのみ raw JSON で直接検査し、残りはスキップ(fail-open)
+    # Note: jq は safety-check.sh の完全動作に必要。setup.sh で警告済み。
+    echo "safety-check: jq が未インストールです。最重要パターンのみ検査します(完全保護には jq が必要)" >&2
+    for _p in "rm -rf /" "rm -fr /" "rm -rf --no-preserve-root" "rm -fr --no-preserve-root"; do
+        if echo "$INPUT" | grep -qF "$_p"; then
+            echo "BLOCKED: Dangerous pattern detected in command: '$_p'" >&2
+            echo "If you believe this is safe, ask the user for explicit approval." >&2
+            exit 2
+        fi
+    done
     exit 0
 fi
 

@@ -19,7 +19,16 @@ INPUT="$(cat)"
 if command -v jq &>/dev/null; then
     CMD="$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 else
-    # fail-open: skip check when jq is absent (sed fallback has high false-positive risk)
+    # jq absent: check only the most critical patterns in raw JSON; skip the rest (fail-open)
+    # Note: jq is required for full protection. setup.sh warns when jq is missing.
+    echo "safety-check: jq is not installed. Checking critical patterns only (install jq for full protection)" >&2
+    for _p in "rm -rf /" "rm -fr /" "rm -rf --no-preserve-root" "rm -fr --no-preserve-root"; do
+        if echo "$INPUT" | grep -qF "$_p"; then
+            echo "BLOCKED: Dangerous pattern detected in command: '$_p'" >&2
+            echo "If you believe this is safe, ask the user for explicit approval." >&2
+            exit 2
+        fi
+    done
     exit 0
 fi
 

@@ -53,6 +53,13 @@ fi
 
 TARGET_DIR="$1"
 
+# ── 依存ツールの確認 ─────────────────────────────────────────
+# jq は safety-check.sh フックの完全動作に必要。不在時は警告のみ(setup は続行)。
+if ! command -v jq &>/dev/null; then
+    warn "jq が未インストールです。safety-check.sh フックが jq 不在時に rm -rf / 等の最重要パターン以外をスキップします。"
+    warn "インストール: macOS → brew install jq  /  Ubuntu → sudo apt-get install jq  /  Alpine → apk add jq"
+fi
+
 # ターゲットディレクトリの存在確認(なければ作成。新規プロジェクト想定)
 if [[ ! -d "$TARGET_DIR" ]]; then
     info "ターゲットディレクトリを新規作成: $TARGET_DIR"
