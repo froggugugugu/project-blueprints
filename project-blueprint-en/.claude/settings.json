@@ -166,15 +166,6 @@
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
       "Bash(sudo *)"
-    ],
-    "_comment_agent_skill_deny": [
-      "Agent(name) is officially supported as of 2026-04 (code.claude.com/docs/en/permissions).",
-      "Add Agent(Explore) or Agent(custom-agent) to deny per project as needed.",
-      "Empty here to preserve the 6 default agents shipped by this template.",
-      "",
-      "Skill(name) is NOT (yet) in the documented permissions spec.",
-      "Block high-risk skills (deploy*, etc.) inside scan-harness.sh by inspecting tool_input.skill.",
-      "Promote to deny once the official spec adopts it."
     ]
   },
   "enabledPlugins": {
