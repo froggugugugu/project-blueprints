@@ -107,150 +107,17 @@ Standardize terminology based on HIG principles:
 
 **1.3 Output `docs/ui-glossary.md`**
 
-```markdown
-# UI Glossary
-
-## Button Label Standards
-
-| Action | Standard Label | Incorrect Examples | HIG Basis |
-| ------ | -------------- | ------------------ | --------- |
-| Create | Create | New, Add, Make new | Buttons: concise verbs indicating the action |
-| Save | Save | Store, Keep, OK | Buttons: use specific verbs |
-| Delete | Delete | Remove, Erase, Discard | Buttons: clearly indicate destructive actions |
-| Cancel | Cancel | Dismiss, Never mind, Go back | Buttons: "Cancel" as the standard |
-| Confirm | [specific verb] | OK, Yes, Confirm | Buttons: prefer specific verbs over "OK" |
-
-## Page Title Standards
-
-| Pattern | Format | Example |
-| ------- | ------ | ------- |
-| List screen | [Noun] List or [Noun]s | Users |
-| Detail screen | [Noun] Details or [Noun Name] | User Details |
-| Create screen | Create [Noun] | Create User |
-| Edit screen | Edit [Noun] | Edit User |
-| Settings screen | Settings or [Category] Settings | Notification Settings |
-
-## Icon Usage Standards
-
-| Action | Standard Icon | Required/Recommended |
-| ------ | ------------- | -------------------- |
-| Add | Plus / PlusCircle | Recommended |
-| Delete | Trash2 | Required |
-| Edit | Pencil / Edit | Recommended |
-| Search | Search | Required |
-| Settings | Settings / Gear | Required |
-| Back | ArrowLeft / ChevronLeft | Required |
-| Close | X | Required |
-| Menu | Menu / MoreHorizontal / MoreVertical | Required |
-| Filter | Filter / SlidersHorizontal | Recommended |
-| Sort | ArrowUpDown | Recommended |
-
-## Notification Message Standards
-
-| Type | Format | Example |
-| ---- | ------ | ------- |
-| Success | "[Noun] [past tense verb] successfully" | User created successfully |
-| Error | "Failed to [verb] [noun]" | Failed to create user |
-| Confirmation | "[Verb] this [noun]?" | Delete this user? |
-| Warning | "[Impact description]. [Verb]?" | This action cannot be undone. Delete? |
-```
+The template (4 standard tables: button labels, page titles, icons, notification messages) is in
+`references/ui-glossary-template.md`.
 
 ---
 
 ### Phase 2: HIG Compliance Check (8 Categories)
 
-Scan the following categories **in parallel using subagents**.
-
-#### Category A: Button & Action Consistency
-
-Based on HIG "Buttons", "Menus", "Toggles" sections.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Same action has different captions across screens | Compare against glossary | "Use consistent terminology" |
-| Destructive button lacks warning style | Check for `variant="destructive"` `color="error"` etc. | "Visually distinguish destructive actions" |
-| Confirmation dialog uses "OK" | Grep for `>OK<` `"OK"` | "Use specific verbs" |
-| Button placement order differs across screens | Primary/secondary action left/right position | "Place primary action in consistent position" |
-| Icon-only button lacks label | Check for `aria-label` `title` presence | "Accessibility" |
-
-#### Category B: Icon Completeness & Consistency
-
-Based on HIG "Icons", "SF Symbols" sections.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Same action uses different icons | Analyze icon import list vs action mapping | "Use the same icon for the same concept" |
-| Icon missing where one should be set | Compare against glossary icon standards | "Consistency" |
-| Icon sizes differ across screens | Compare `size=` `width=` `height=` `className` values | "Visual consistency" |
-| Text+icon combinations are inconsistent | Compare `<Icon>` + text patterns in buttons | "Text and icon relationship" |
-
-#### Category C: Navigation & Screen Transition Consistency
-
-Based on HIG "Navigation bars", "Tab bars", "Sidebars" sections.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Back button style/position differs across screens | Compare navigation component implementations | "Predictable navigation" |
-| Breadcrumb presence inconsistent across screens | Check Breadcrumb component usage | "Show user's current location" |
-| Page transition animations inconsistent | Check transition/animation usage patterns | "Consistent transitions" |
-| Modal vs page navigation usage inconsistent | Check Dialog/Sheet usage criteria | "Appropriate use of modals" |
-
-#### Category D: Form & Input Consistency
-
-Based on HIG "Text fields", "Labels", "Entering data" sections.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Same input field type has different styles | Compare Input/Select/Textarea variant/size | "Consistent input experience" |
-| Placeholder text style inconsistent | Compare placeholder text expression patterns | "Keep hint text concise" |
-| Validation error display method differs | Compare error message display patterns | "Inline feedback" |
-| Required/optional display method inconsistent | Check required mark/label format | "Clear labeling" |
-| Form layout (vertical/horizontal) inconsistent | Compare form structures | "Predictable layout" |
-
-#### Category E: Feedback & State Display Consistency
-
-Based on HIG "Alerts", "Progress indicators", "Status" sections.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Loading display method differs across screens | Compare Spinner/Skeleton/Progress usage | "Consistent feedback" |
-| Success/error notification display method differs | Compare toast/alert/banner usage | "Feedback consistency" |
-| Empty state design differs or is missing across screens | Compare EmptyState component usage | "Provide guidance when no content" |
-| Confirmation dialog structure differs across screens | Compare Dialog internal structure (title/description/buttons) | "Alert structure" |
-| Error screen design inconsistent | Compare ErrorBoundary/error page | "Error guidance" |
-
-#### Category F: Typography & Text Consistency
-
-Based on HIG "Typography" section.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Heading hierarchy differs across screens | Compare h1-h6/text-xl etc. usage patterns | "Clear information hierarchy" |
-| Date/time format inconsistent | Collect and compare date display patterns | "Consistent formatting" |
-| Number format inconsistent | Compare number display (comma separation, units) | "Consistent formatting" |
-| Writing style inconsistent | Compare tone and voice patterns | "Consistent tone" |
-
-#### Category G: Layout & Structure Consistency
-
-Based on HIG "Layout", "Lists and tables" sections.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| List screen layout (table/card/list) inconsistent | Compare list display components | "Consistent content display" |
-| Detail screen section structure inconsistent | Compare section division patterns | "Predictable structure" |
-| Page header structure inconsistent | Compare title+action button placement | "Consistent header structure" |
-| List item structure inconsistent | Compare list item internal structure | "Consistent list display" |
-
-#### Category H: Accessibility Consistency
-
-Based on HIG "Accessibility" section.
-
-| Check Item | Detection Method | HIG Basis |
-| ---------- | ---------------- | --------- |
-| Focus order is not logical | Check tabIndex usage patterns | "Logical focus order" |
-| Image alt text missing | Check `<img` `<Image` alt attribute | "Alternative text" |
-| Information conveyed by color alone | Check color+icon/text co-usage | "Don't rely on color alone" |
-| Touch targets too small | Check button/link sizes (44x44pt minimum) | "Minimum touch target" |
+Scan the 8 categories defined in `references/hig-check-categories.md`
+(A: Button & Action / B: Icons / C: Navigation / D: Form & Input / E: Feedback & State / F: Typography /
+G: Layout & Structure / H: Accessibility) **in parallel using subagents**. See the reference file for
+each category's check items, detection methods, and HIG basis.
 
 ---
 
