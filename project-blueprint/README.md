@@ -17,6 +17,9 @@ Claude Codeプロジェクトの AI協調開発環境テンプレート。
 bash setup.sh /path/to/your-project
 ```
 
+> さらに軽くしたい場合は `bash setup.sh /path/to/your-project --profile minimal` で
+> skills 5 / agents 2 / hooks 2 だけを導入できる(詳細は下記「プロファイル」参照)。
+
 ### Step 2: project-config.md に3セクションだけ記入
 
 ```markdown
@@ -73,7 +76,32 @@ bash setup.sh /path/to/your-project
 - `.gitignore` への `testreport/` 追記
 - 既存 `.claude/` がある場合は `.claude.bak/` に自動バックアップ
 
+#### プロファイル（段階的インストール）
+
+`--profile` オプションで導入する `.claude/` の範囲を選べる（省略時は `full`）:
+
+| プロファイル | skills | agents | hooks | teams | 用途 |
+| --- | --- | --- | --- | --- | --- |
+| `minimal` | 5 | 2 | 2 | なし | まず最速で試す軽量構成 |
+| `standard` | 17 | 8 | 12 | なし | チーム機能以外フル |
+| `full`（デフォルト） | 17 | 8 | 12 | 6 | 現行と同じフル構成 |
+
+```bash
+bash setup.sh /path/to/your-project --profile minimal
+bash setup.sh /path/to/your-project --profile standard
+```
+
+`minimal` は `brainstorm` / `prd` / `plan` / `implementing-features` / `code-review` の中核5 skillと、
+`safety-check.sh` / `protect-files.sh` の最低限のガードレールのみを導入する軽量構成。
+セーフガード系フック（`session-start.sh` 等）も間引かれる点に注意。
+
+> project-config.md の「ミニマル/推奨/フル」（§記入量の目安）とは**別の独立した軸**。
+> 例えば `--profile minimal` で導入しても project-config.md はフルまで記入して構わない。
+
 ### 方法B: 手動コピー
+
+> この手動コピーは常に `full` 相当になる。段階的な導入（プロファイル）が必要な場合は
+> 上記「方法A」（`setup.sh --profile`）を使用すること。
 
 ```bash
 cp -r project-blueprint/.claude /path/to/new-project/.claude
@@ -466,9 +494,10 @@ project-blueprint/
 
 ```bash
 bash setup.sh /path/to/existing-project
+bash setup.sh /path/to/existing-project --profile minimal   # 軽量構成にしたい場合
 ```
 
-手動の場合は以下（既存の `.claude/` があれば事前にバックアップ）:
+手動の場合は以下（既存の `.claude/` があれば事前にバックアップ。手動コピーは常に `full` 相当）:
 
 ```bash
 # 既存の .claude/ があればバックアップ

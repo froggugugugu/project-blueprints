@@ -48,6 +48,8 @@ Run a `TEAM_*.md` from `.claude/teams/` to launch a multi-agent team:
 
 Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 
+> **Profile note**: `.claude/teams/` is only bundled with the `full` profile (`bash setup.sh <dir> --profile full`, the default). Under `minimal` / `standard` profiles this directory does not exist and team templates (`TEAM_*.md`) are unavailable. Individual `/skill` commands remain usable within whatever that profile bundles.
+
 ## Development principles
 
 - For ambiguous specs, never proceed by guessing — present 1-2 options and confirm

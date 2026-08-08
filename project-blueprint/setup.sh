@@ -22,7 +22,7 @@ error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 usage() {
     cat <<'EOF'
 使い方:
-  bash setup.sh <ターゲットディレクトリ>
+  bash setup.sh <ターゲットディレクトリ> [--profile minimal|standard|full]
 
 説明:
   Project Blueprint のファイルをターゲットプロジェクトにコピーします。
@@ -35,9 +35,18 @@ usage() {
   - project-config.md (設定ファイル)
   - CLAUDE.md → プロジェクトルートに配置
 
+プロファイル(--profile、省略時は full):
+  minimal   skills 5 / agents 2 / hooks 2 / teams なし — 最速で試す軽量構成
+  standard  skills 17 / agents 8 / hooks 12 / teams なし — チーム機能以外フル
+  full      skills 17 / agents 8 / hooks 12 / teams 6 — デフォルト・現行互換
+
+  ※ minimal はセーフガード系フック(session-start等)も間引く軽量構成です。
+     project-config.md の「ミニマル/推奨/フル」(§記入量の目安)とは別の軸です。
+
 例:
   bash setup.sh /path/to/my-project
-  bash setup.sh .                      # カレントディレクトリに導入
+  bash setup.sh /path/to/my-project --profile minimal
+  bash setup.sh . --profile standard   # カレントディレクトリに導入
 
 セットアップ後の手順:
   1. project-config.md の §1〜§3, §6 を記入
@@ -46,12 +55,49 @@ EOF
     exit 1
 }
 
-# ── 引数チェック ────────────────────────────────────────────
-if [[ $# -lt 1 ]]; then
+# ── 引数解析 ────────────────────────────────────────────────
+PROFILE="full"   # デフォルトは後方互換のため full(剪定なし)
+TARGET_DIR=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --profile)
+            PROFILE="${2:-}"
+            shift 2
+            ;;
+        --profile=*)
+            PROFILE="${1#*=}"
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        -*)
+            error "不明なオプション: $1"
+            usage
+            ;;
+        *)
+            if [[ -n "$TARGET_DIR" ]]; then
+                error "ターゲットディレクトリは1つだけ指定してください: $1"
+                usage
+            fi
+            TARGET_DIR="$1"
+            shift
+            ;;
+    esac
+done
+
+if [[ -z "$TARGET_DIR" ]]; then
     usage
 fi
 
-TARGET_DIR="$1"
+case "$PROFILE" in
+    minimal|standard|full) ;;
+    *)
+        error "不正なプロファイル: $PROFILE (minimal / standard / full のいずれか)"
+        usage
+        ;;
+esac
 
 # ── 依存ツールの確認 ─────────────────────────────────────────
 # jq は safety-check.sh フックの完全動作に必要。不在時は警告のみ(setup は続行)。
@@ -82,8 +128,51 @@ if [[ -d "$TARGET_DIR/.claude" ]]; then
     mv "$TARGET_DIR/.claude" "$BACKUP_DIR"
 fi
 
+# ── プロファイル別 keep リスト ──────────────────────────────
+# "*" は「剪定しない(全部残す)」を意味するセンチネル。
+# standard/full は skills/agents/hooks を一切削らないため、
+# 将来ファイルが増減しても保守対象は minimal のリストだけで済む。
+case "$PROFILE" in
+    minimal)
+        KEEP_SKILLS=(brainstorm prd plan implementing-features code-review)
+        KEEP_AGENTS=(explorer.md researcher.md)
+        KEEP_HOOKS=(safety-check.sh protect-files.sh)
+        KEEP_TEAMS=()          # 空 = teams/ を丸ごと除外
+        ;;
+    standard)
+        KEEP_SKILLS=("*")
+        KEEP_AGENTS=("*")
+        KEEP_HOOKS=("*")
+        KEEP_TEAMS=()          # 空 = teams/ を丸ごと除外
+        ;;
+    full)
+        KEEP_SKILLS=("*")
+        KEEP_AGENTS=("*")
+        KEEP_HOOKS=("*")
+        KEEP_TEAMS=("*")
+        ;;
+esac
+
+# 与えられたディレクトリ直下を keep リストに基づいて剪定する。
+# bash 3.2(macOS標準)互換のため連想配列は使わない。
+prune_dir() {
+    local dir="$1"; shift
+    local -a keep=("$@")
+    [[ "${keep[0]:-}" == "*" ]] && return 0   # センチネル: 何もしない
+    local entry base found k
+    for entry in "$dir"/*; do
+        [[ -e "$entry" ]] || continue
+        base="$(basename "$entry")"
+        found=0
+        for k in "${keep[@]}"; do
+            [[ "$base" == "$k" ]] && { found=1; break; }
+        done
+        [[ "$found" -eq 0 ]] && rm -rf "$entry"
+    done
+}
+
 # ── ファイルコピー ──────────────────────────────────────────
-info "ブループリントをコピー中..."
+info "ブループリントをコピー中... (プロファイル: $PROFILE)"
 
 cp -r "$SCRIPT_DIR/.claude"          "$TARGET_DIR/.claude"
 cp -r "$SCRIPT_DIR/docs"             "$TARGET_DIR/docs"
@@ -91,6 +180,22 @@ cp -r "$SCRIPT_DIR/input"            "$TARGET_DIR/input"
 cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
+
+# ── プロファイルに応じた .claude/ の剪定 ─────────────────────
+prune_dir "$TARGET_DIR/.claude/skills" "${KEEP_SKILLS[@]}"
+prune_dir "$TARGET_DIR/.claude/agents" "${KEEP_AGENTS[@]}" "README.md"
+prune_dir "$TARGET_DIR/.claude/hooks"  "${KEEP_HOOKS[@]}"
+
+if [[ "${#KEEP_TEAMS[@]}" -eq 0 ]]; then
+    rm -rf "$TARGET_DIR/.claude/teams"
+fi
+
+# ── settings.json の profile 差し替え ────────────────────────
+if [[ "$PROFILE" == "minimal" ]]; then
+    mv "$TARGET_DIR/.claude/settings.minimal.json" "$TARGET_DIR/.claude/settings.json"
+else
+    rm -f "$TARGET_DIR/.claude/settings.minimal.json"
+fi
 # constitution.md(不変原則)を配置 — scan-harness.sh / CLAUDE.md が参照する
 # 注: SC2015 回避のため `&& A || B` ではなく明示的な if 分岐を使用する
 #     (cp -n は上書きしないが exit 0 を返すので、存在チェックで判定する)
@@ -169,7 +274,7 @@ fi
 
 # ── 完了メッセージ ──────────────────────────────────────────
 echo ""
-info "セットアップ完了!"
+info "セットアップ完了! (プロファイル: $PROFILE)"
 echo ""
 echo "次のステップ:"
 echo "  1. project-config.md を記入（最低 §1〜§3, §6）"

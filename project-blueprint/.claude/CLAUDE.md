@@ -48,6 +48,8 @@
 
 team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が自動 load される。
 
+> **プロファイル別の同梱について**: `.claude/teams/` は `full` プロファイル(`bash setup.sh <dir> --profile full`、デフォルト)でのみ同梱される。`minimal` / `standard` プロファイルではこのディレクトリ自体が存在せず、チーム機能(`TEAM_*.md`)は利用できない。個別の `/skill` コマンドは各プロファイルの同梱範囲内で通常通り利用できる。
+
 ## 開発原則
 
 - 仕様が曖昧な場合は推測で進めず、選択肢を 1〜2 つ提示して確認する

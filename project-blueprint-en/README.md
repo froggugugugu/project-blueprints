@@ -17,6 +17,9 @@ You don't need to use every section, team, or skill. **Get started in 3 steps.**
 bash setup.sh /path/to/your-project
 ```
 
+> Want it even lighter? `bash setup.sh /path/to/your-project --profile minimal`
+> installs just 5 skills / 2 agents / 2 hooks (see "Profiles" below for details).
+
 ### Step 2: Fill in just 3 sections of project-config.md
 
 ```markdown
@@ -73,7 +76,33 @@ This single command handles everything:
 - Adds `testreport/` to `.gitignore`
 - Automatically backs up any existing `.claude/` to `.claude.bak/`
 
+#### Profiles (staged installation)
+
+The `--profile` option controls how much of `.claude/` gets installed (defaults to `full`):
+
+| Profile | skills | agents | hooks | teams | Use case |
+| --- | --- | --- | --- | --- | --- |
+| `minimal` | 5 | 2 | 2 | none | Fastest way to try it out, lightweight |
+| `standard` | 17 | 8 | 12 | none | Everything but team mode |
+| `full` (default) | 17 | 8 | 12 | 6 | Same as the current full setup |
+
+```bash
+bash setup.sh /path/to/your-project --profile minimal
+bash setup.sh /path/to/your-project --profile standard
+```
+
+`minimal` installs only the 5 core skills (`brainstorm` / `prd` / `plan` / `implementing-features` /
+`code-review`) and the minimum guardrails (`safety-check.sh` / `protect-files.sh`). Note that it also
+trims safeguard hooks such as `session-start.sh`.
+
+> This is a **separate, independent axis** from project-config.md's "minimal/recommended/full"
+> guidance (which is about how much of project-config.md to fill in). For example, you can install
+> with `--profile minimal` and still fill in project-config.md all the way to full.
+
 ### Method B: Manual copy
+
+> This manual copy is always equivalent to `full`. If you need a staged install (profile),
+> use Method A (`setup.sh --profile`) above instead.
 
 ```bash
 cp -r project-blueprint-en/.claude /path/to/new-project/.claude
@@ -467,9 +496,10 @@ Using `setup.sh` completes everything in one command, including automatic backup
 
 ```bash
 bash setup.sh /path/to/existing-project
+bash setup.sh /path/to/existing-project --profile minimal   # for a lightweight install
 ```
 
-For manual setup (back up any existing `.claude/` first):
+For manual setup (back up any existing `.claude/` first; manual copy is always equivalent to `full`):
 
 ```bash
 # Back up existing .claude/ if present

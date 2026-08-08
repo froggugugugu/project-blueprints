@@ -55,6 +55,12 @@ flowchart LR
 > **S6 (Quality Standards)** controls TDD, coverage targets, and quality gate activation. It's not a prerequisite for any skill — everything works with it blank — but filling it in enables automated quality management.
 >
 > **Blank sections** are simply skipped during skill execution. They do not cause errors.
+>
+> **Note**: the "minimal/recommended/full" guidance above is about *which project-config.md sections to fill in*.
+> Which skills/agents/hooks/teams get physically bundled under `.claude/` is controlled by a
+> **separate, independent axis**: `setup.sh --profile minimal|standard|full`. The names are similar but
+> the two axes are unrelated (e.g. you can install with `setup.sh --profile minimal` and still fill in
+> project-config.md all the way to full).
 
 ---
 
