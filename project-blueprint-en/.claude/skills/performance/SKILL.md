@@ -1,6 +1,5 @@
 ---
 name: performance
-version: 1.0.0
 description: >
   Measures and optimizes application performance using a measurement-first approach.
   Triggers: performance, optimize, slow, bundle size, re-render, memory, profiler, lazy load, memoize.
@@ -51,7 +50,7 @@ When a file path is specified, analyze performance around that file.
 ### Output Destination
 
 - Optimized code: Under `src/` (following the project's directory structure)
-- Report: Presented in conversation
+- Report: Presented in conversation (raw profiler data saved to `testreport/perf/`)
 
 ### Integration with Other Skills
 
@@ -135,6 +134,8 @@ When a file path is specified, analyze performance around that file.
 - Before/After table metrics must be measured under identical conditions
 - Measurement values must always include units (KB, ms, count, items)
 - Optimization decisions based on "guessing" or "probably" are prohibited
+
+**PASS criteria**: every Before/After metric improved (state a reason for any that regressed) / tests and static analysis pass at least as many checks as the baseline / zero optimization proposals lack a measured value.
 
 ## Report Format
 

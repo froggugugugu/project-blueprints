@@ -1,6 +1,5 @@
 ---
 name: ui-ux-design
-version: 1.0.0
 description: >
   Reviews and implements UI/UX following project design systems.
   Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design, design consistency audit, system-wide consistency.
@@ -105,58 +104,8 @@ Used when implementing or modifying UI.
 Scans across the entire system to detect and correct design inconsistencies between features and components.
 When the `--fix` flag is provided, auto-fixes are also applied (`--fix` omitted = report only).
 
-#### Audit Execution Steps
-
-**Phase 1: Information Gathering** (executed in parallel via subagents)
-
-Execute the following scans in parallel:
-
-| Scan Target | Method | Detected Issues |
-| ----------- | ------ | --------------- |
-| Hardcoded color values | Grep `.tsx` `.ts` `.css` files under `src/` for `#[0-9a-fA-F]{3,8}` `rgb\(` `rgba\(` `hsl\(` patterns | DS token non-usage |
-| Inline styles | Grep for `style={{` `style=\{` patterns | Magic numbers outside tokens |
-| Tailwind arbitrary values | Grep for `\-\[.*\]` patterns (`text-[#...]` `p-[13px]`, etc.) | Values outside DS scale |
-| Component usage patterns | Tally common components (Button, Card, Dialog, Sheet, Input, etc.) used in each feature's Page/Container | Implementation variance of same UI types |
-| Responsive patterns | Grep to tally `useMediaQuery` `md:` `lg:` `sm:` breakpoint usage | Breakpoint inconsistency |
-| a11y patterns | Grep to tally `role=` `aria-` `tabIndex`, detect `<div onClick` as button substitutes | a11y deficiencies |
-| Icon usage | Grep to tally imports from `lucide-react` | Icon usage consistency |
-| Empty/loading states | Check for `isLoading` `isEmpty` `empty` patterns in each page | Missing UX states |
-
-**Phase 2: Pattern Analysis**
-
-Analyze the collected data as follows:
-
-1. **Color token usage rate**: Token usage rate defined in `src/index.css` vs remaining hardcoded values
-2. **Component consistency matrix**: Comparison table of how each feature uses common UI components
-   - e.g., Whether Button variant/size usage is unified across features
-   - e.g., Whether Dialog/Sheet usage criteria are consistent
-3. **Spacing statistics**: Distribution of spacing values used (within Tailwind scale vs arbitrary values)
-4. **Responsive strategy consistency**: Whether mobile/PC switching approaches are consistent across features
-5. **Interaction pattern consistency**: Whether loading, error, and empty state representations are unified
-
-**Phase 3: Inconsistency Classification & Prioritization**
-
-Classify detected inconsistencies by the following criteria:
-
-| Classification | Criteria | Priority |
-| -------------- | -------- | -------- |
-| **Token violation** | Not using tokens defined in the DS | HIGH |
-| **Pattern mismatch** | Same type of UI element implemented differently across features | MEDIUM |
-| **Gap** | UX states (empty states, etc.) present in other features but missing | MEDIUM |
-| **a11y deficiency** | Non-semantic HTML, missing ARIA | HIGH |
-| **Minor difference** | Trivial differences that don't affect behavior but should be unified | LOW |
-
-**Phase 4: Report Output or Auto-Fix**
-
-- Without `--fix`: Output audit report to `output/reports/review/DESIGN_AUDIT_{YYYYMMDD}.md`
-- With `--fix`: Auto-fix in HIGH → MEDIUM order, then output fix summary
-  - Auto-fix targets: Token violations (hardcoded color values → semantic colors), Tailwind arbitrary values → scale values
-  - Auto-fix exclusions: Pattern mismatches (require design decisions), gaps (require new implementation)
-  - After fixes, run build/lint/tests to confirm no breaking changes
-
-#### Audit Scope Control
-
-By default, the entire `src/` directory is scanned, but scope can be narrowed:
+Detailed execution steps (Phase 1-4 scan targets, analysis criteria, classification, auto-fix rules)
+are in `references/system-audit-workflow.md`.
 
 ```text
 /ui-ux-design --audit                          # Entire src/
@@ -164,62 +113,11 @@ By default, the entire `src/` directory is scanned, but scope can be narrowed:
 /ui-ux-design --audit --fix                    # Entire + auto-fix
 ```
 
-#### Auto-Fix Rules
-
-Auto-fix only applies changes that meet the following safety criteria:
-
-1. **Mechanically unambiguous conversion**: 1:1 mapping such as `#ffffff` → `bg-background`
-2. **Visually equivalent**: No visual difference before and after the fix
-3. **Tests pass**: All tests pass after the fix
-4. **Skip when judgment needed**: When multiple candidates exist or the context is dependent, document in the report and leave to humans
-
 ## Review Perspectives
 
-### 1. Design System Compliance
-
-- Does it follow the guidelines of the project's specified design system?
-- Are color palette, typography, and spacing consistent?
-- Is component usage aligned with design system recommended patterns?
-
-### 2. Color & Theme
-
-- Are semantic colors (CSS variables/design tokens) used?
-- Are there any hardcoded color values?
-- Is sufficient contrast ratio maintained in dark mode (WCAG AA: 4.5:1 or higher)?
-- Are focus and hover state styles defined?
-
-### 3. Typography
-
-- Do font sizes and weights follow the design system scale?
-- Is the heading hierarchy (h1–h6) logical?
-- Are line height and letter spacing readable?
-
-### 4. Layout & Spacing
-
-- Is the design system's spacing scale used?
-- Are grid/flex usages appropriate?
-- Does whitespace appropriately express visual hierarchy?
-
-### 5. Accessibility (a11y)
-
-- Is semantic HTML used (`button`, `nav`, `main`, etc.)?
-- Are ARIA attributes appropriate (neither excessive nor insufficient)?
-- Is keyboard navigation possible?
-- Is the content understandable by screen readers?
-- Are focus indicators visible?
-
-### 6. Responsive Design
-
-- Are breakpoints appropriately set?
-- Does nothing break from mobile to desktop?
-- Are touch targets an appropriate size (44x44px or larger recommended)?
-
-### 7. Interaction
-
-- Is loading state appropriately communicated?
-- Are error states visually clear?
-- Are transitions/animations natural (not excessive)?
-- Is there an empty state design?
+The 7 categories checked in design review mode (design system compliance / color & theme / typography /
+layout & spacing / accessibility / responsive design / interaction) are detailed in
+`references/review-criteria.md`.
 
 ## Output Contract
 
@@ -258,6 +156,8 @@ Auto-fix only applies changes that meet the following safety criteria:
 | **MUST** | DS violation, a11y WCAG AA non-compliance, dark mode unsupported | Hardcoded color values, not focusable, insufficient contrast ratio |
 | **SHOULD** | Deviation from DS recommended patterns, responsive improvements | Inconsistent spacing, insufficient touch targets |
 | **CONSIDER** | UX improvement proposals, interaction enhancements | Empty state design, loading indicators |
+
+**PASS criteria**: every MUST finding is either "addressed" or "documented as not addressable" / Implementation mode: dark-mode check result is OK and the build passes / Audit mode: token usage rate has not regressed from the previous audit.
 
 ### Overall Verdict Enumeration
 

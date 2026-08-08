@@ -1,6 +1,5 @@
 ---
 name: legal-check
-version: 1.0.0
 description: >
   Reviews code, documents, and configurations for IT legal compliance.
   Triggers: legal, license, compliance, privacy, GDPR, copyright, terms, contract, OSS license, intellectual property, data protection.

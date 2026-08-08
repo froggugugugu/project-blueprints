@@ -1,6 +1,5 @@
 ---
 name: e2e-testing
-version: 1.0.0
 description: >
   Creates and maintains Playwright E2E tests for SPAs.
   Triggers: E2E test, scenario test, user flow, cross-feature, Playwright.

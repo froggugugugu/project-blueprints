@@ -1,6 +1,5 @@
 ---
 name: brainstorm
-version: 1.0.0
 description: Socratic clarification skill that surfaces assumptions before `/prd`. Triggers: brainstorm, surface-assumptions, clarify, ambiguity-check, pre-prd, what-am-i-missing. Read-only; output to `output/brainstorm/` only.
 allowed-tools: Read, Grep, Glob, Write, AskUserQuestion
 argument-hint: <requirement-note path, or topic to clarify>

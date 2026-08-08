@@ -1,6 +1,5 @@
 ---
 name: e2e-testing
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "create E2E tests", "write scenario tests", "test user flow",
   or mentions "E2Eテスト", "シナリオテスト", "Playwright".

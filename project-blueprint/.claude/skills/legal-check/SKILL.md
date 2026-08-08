@@ -1,6 +1,5 @@
 ---
 name: legal-check
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "check licenses", "audit compliance", "review privacy policy",
   or mentions "ライセンス", "法務チェック", "GDPR", "OSSライセンス", "知的財産", "コンプライアンス".

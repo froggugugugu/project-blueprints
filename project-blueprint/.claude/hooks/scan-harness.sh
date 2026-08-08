@@ -29,6 +29,10 @@ INPUT="$(cat 2>/dev/null || true)"
 SKILL=""
 if command -v jq &>/dev/null; then
     SKILL=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // .tool_input.name // empty' 2>/dev/null)
+else
+    # jq 未導入時: deploy ブロックが無効化されないよう sed でフォールバック抽出
+    SKILL=$(printf '%s' "$INPUT" | sed -n 's/.*"skill"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)
+    [[ -z "$SKILL" ]] && SKILL=$(printf '%s' "$INPUT" | sed -n 's/.*"name"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)
 fi
 
 # ── 2. 高リスク skill 判定(常に実施、profile 非依存) ─────────────────
@@ -80,9 +84,9 @@ fi
 # 3b. settings.local.json が deny を上書きしていないか(常に実施 — 軽量)
 LOCAL="$PROJECT/.claude/settings.local.json"
 if [[ -f "$LOCAL" ]] && command -v jq &>/dev/null; then
-    # 空配列 [] は truthy になるので、length > 0 を明示的にチェック
-    if jq -e '(.permissions.deny // []) | length > 0' "$LOCAL" >/dev/null 2>&1; then
-        ISSUES+=("settings.local.json に permissions.deny が非空で定義されています(共有 settings.json で管理すべき)")
+    # deny キーが存在する場合は警告(空配列 [] も deny ルールを上書きするため危険)
+    if jq -e 'getpath(["permissions","deny"]) != null' "$LOCAL" >/dev/null 2>&1; then
+        ISSUES+=("settings.local.json に permissions.deny が定義されています(空配列 [] は deny ルールを無効化します。共有 settings.json で管理すべき)")
     fi
 fi
 

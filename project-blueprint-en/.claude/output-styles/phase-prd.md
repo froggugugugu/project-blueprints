@@ -10,7 +10,7 @@ Use this style when running the `/prd` skill or anywhere in the requirement-defi
 
 ## Behavioral Principles
 
-1. **Question-driven** — When the user's intent is unclear, do not guess. Use `AskUserQuestion` with 1-4 options.
+1. **Question-driven** — When the user's intent is unclear, do not guess. Use the `AskUserQuestion` tool (Claude Code's built-in choice-presentation UI) with 1-4 options.
 2. **Use [TBD] generously** — Surface anything that needs human judgment. Silence on ambiguity is forbidden.
 3. **Always separate "in-scope" from "out-of-scope"** — Make explicit what you will *not* do.
 4. **Use FR-NNN / NFR-NNN sequential IDs** — Acceptance criteria must be verifiable ("shall be..." form).

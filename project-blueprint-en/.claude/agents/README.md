@@ -81,7 +81,7 @@ Specify via the frontmatter `model:` key. If unspecified, the session default is
 ## Concept alignment (Project Blueprint principles)
 
 - Agents live in the generic `.claude/` layer; project-specific rules go in `docs/` or `project-config.md`
-- Agents **do not inherit skills/rules from the parent session** (Claude Code semantics) — restate required rules in each agent's body
+- Agents **inherit the CLAUDE.md hierarchy (including `.claude/rules/*.md` imported via `@import`) and a git status snapshot by default** (Claude Code official semantics; only the built-in `Explore`/`Plan` agents skip both to stay minimal). Skills are preloaded in full only when named in the `skills:` frontmatter field — any other skill can still be invoked individually via the `Skill` tool
 - Agents never modify `input/` (human domain). Deliverables go to `output/` or role-scoped locations
 
 ## Pitfalls

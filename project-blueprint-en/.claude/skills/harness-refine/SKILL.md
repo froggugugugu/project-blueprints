@@ -1,22 +1,15 @@
 ---
 name: harness-refine
-version: 2.0.0
 description: >
   This skill should be used when the user asks to "refine the harness", "self-improve the blueprint",
   "restructure .claude/ to match best practices", "audit harness configuration",
   or mentions "harness refine", "best-practice alignment", "self-refine",
   "harness self-audit", "rework skill/agent/team layout".
-  Scope is limited to harness scaffolding — `.claude/` (skills / agents / teams / rules / output-styles),
-  CLAUDE.md, README.md and the input/output/docs/testreport directory skeleton — under
-  `project-blueprint/` and `project-blueprint-en/`. Source code, `docs/` content,
-  `output/` deliverables, and `testreport/` raw data are out of scope.
-  `constitution.md` and `project-config.md` §1 / §4-§10 / §12 / §13 are immutable.
-  Both JP and EN mirrors MUST stay in lockstep — completion requires structural parity.
-  Starts with a non-mutating Round 0 that refreshes the rubric from the latest official
-  best-practice sources and prior refinement reports (self-strengthening preflight), then runs
-  self-score → self-improve → self-review for **2 fixed rounds**; escalates to a human
-  if the round-2 reviewer does not approve.
-  Outputs a refinement report to `output/reports/harness-refine/` (requires Write permission to that path).
+  Self-scores and refines the `.claude/` harness scaffolding (skills / agents / teams / rules)
+  under `project-blueprint/` and `project-blueprint-en/` against refreshed official best practices,
+  in lockstep across both language mirrors. Source code and `docs/`/`output/` content are out of scope.
+  Runs a non-mutating Round 0 best-practice refresh, then self-score → self-improve → self-review
+  for 2 fixed rounds, escalating to a human if not approved.
   Takes optional argument: /harness-refine <target-dir or instruction>
 argument-hint: "<target-directory or refinement instruction (optional)>"
 allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
@@ -249,7 +242,7 @@ Invoke `pr-review-toolkit:code-reviewer` again. Decision matrix:
 | **Conditional approval** | Check if remaining MUSTs are fixable; if yes, fix; otherwise escalate |
 | **Requires rework** | **Halt and escalate to human** — auto round 3 is forbidden |
 
-## Output contract
+## Output Contract
 
 ### Final report (required)
 

@@ -19,8 +19,17 @@ INPUT="$(cat)"
 if command -v jq &>/dev/null; then
     CMD="$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 else
-    # Fallback: rough extraction without jq
-    CMD="$(echo "$INPUT" | sed -n 's/.*"command"\s*:\s*"\(.*\)"/\1/p' | head -1)"
+    # jq absent: check only the most critical patterns in raw JSON; skip the rest (fail-open)
+    # Note: jq is required for full protection. setup.sh warns when jq is missing.
+    echo "safety-check: jq is not installed. Checking critical patterns only (install jq for full protection)" >&2
+    for _p in "rm -rf /" "rm -fr /" "rm -rf --no-preserve-root" "rm -fr --no-preserve-root"; do
+        if echo "$INPUT" | grep -qF "$_p"; then
+            echo "BLOCKED: Dangerous pattern detected in command: '$_p'" >&2
+            echo "If you believe this is safe, ask the user for explicit approval." >&2
+            exit 2
+        fi
+    done
+    exit 0
 fi
 
 # Fail-open: if we couldn't extract a command, allow it
@@ -36,14 +45,7 @@ FIXED_PATTERNS=(
     "rm -fr /"
     "rm -rf --no-preserve-root"
     "rm -fr --no-preserve-root"
-    "git push --force"
-    "git push -f "
-    "git push -f	"
     "git reset --hard"
-    "git clean -fd"
-    "git clean -fx"
-    "git clean -f "
-    "git clean -f	"
     "git checkout -- ."
     "git checkout ."
     "git restore ."
@@ -51,12 +53,16 @@ FIXED_PATTERNS=(
 )
 
 # Regex patterns (matched with grep -E)
+# Note: git push --force and git clean -f use regex to catch flag reordering
+# (e.g. "git push origin main --force" or "git clean -x -f")
 REGEX_PATTERNS=(
     '(curl|wget)\s+.*\|\s*(bash|sh|zsh)'
     '\bsudo\b'
     '\bmkfs\b'
     '\bdd\s+if='
     '--no-verify'
+    'git\s+push\b[^|&;]*(--force|-f\b)'
+    'git\s+clean\b[^|&;]*-[a-zA-Z]*f'
 )
 
 # --- Check fixed-string patterns ---

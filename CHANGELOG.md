@@ -16,6 +16,36 @@ All notable changes to this project will be documented in this file.
   bare スラッシュ相互参照が崩れ、プラグイン単体では `project-config.md` /
   `input` / `output` / `docs` が scaffold されないため(0.3.0 の plugin 対応化を撤回)。
 
+### Fixed (hook robustness + doc consistency)
+
+- **`commit-quality.sh`**: `git diff HEAD~1..HEAD` は初回コミットで失敗する。
+  `git show HEAD` に変更（全コミットで動作）。
+- **`notify-claude.sh`**: `--wait` 引数末尾で `$2` が `set -u` 下で未定義エラー。
+  `${2:-}` に変更。
+- **`protect-files.sh`**: `/\.git/` パターンは `.git/` 直下ファイルを保護できない
+  (`path = ".git/config"` 形式で不一致)。`(^|/)\.git(/|$)` に修正。
+- **`safety-check.sh`**: jq 不在時の sed フォールバックを削除（誤検知リスク大）。
+  fail-open に変更。`git push --force` / `git clean -f` の固定文字列マッチを
+  正規表現に移行（フラグ順バイパスを防止）。
+- **`scan-harness.sh`**: jq 不在時 SKILL 名が空になり deploy ブロックが無効化。
+  sed フォールバックを追加。`permissions.deny: []`（空配列）が `length > 0` を
+  通過してしまう問題を `getpath != null` チェックに変更。
+- **`guardrails.md`**: `UserPromptSubmit` フックは `exit 0 + stdout JSON` で
+  差し戻す（`exit 2` ではない）仕様を明記。
+- **`doc-synchronizer.md`**: "docs/*.md のみ書込可" とありながら下方では
+  `project-config.md` §2/§3/§11 も更新可と矛盾。行 43 を整合させた。
+- **`performance/SKILL.md`**: レポート出力先が `testreport/` 契約と矛盾。
+  計測ツール生データを `testreport/perf/` に保存する旨を明記。
+- **`TEAM_PLANNING.md`**: プランナーの出力が `PLAN_<名>.md` だが
+  `TEAM_FEATURE.md` は `TASK_<名>.md` を参照。`TASK_<名>.md` に統一。
+- **`planner.md`**: リスク・前提セクションに `【仮定】` ラベルを追加
+  (`CLAUDE.md` の `【仮定】` 明示規約と整合)。
+- **`phase-prd.md`**: `AskUserQuestion` に "Claude Code 組み込みツール" の
+  説明を追記（cross-reference 欠落）。
+- **`.mcp.json.template`**: `@modelcontextprotocol/server-fetch` が廃止予定。
+  active セクションから除去し optional に移動して廃止警告を追加。
+  `filesystem` / `github` に `npm show` 確認コマンドの注記を追加。
+
 ### Changed
 
 - **README / README-en「いま入っているもの」**: 実数に合わせ skills 16→17

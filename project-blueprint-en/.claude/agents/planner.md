@@ -59,7 +59,7 @@ Before implementation, investigate existing code, tests, and documentation and r
 
 ### Risks and assumptions
 
-- <assumption 1>
+- [Assumption] <assumption 1>: the premise this design rests on
 - <risk 1> — mitigation: ...
 
 ### Open questions (if any)
@@ -78,4 +78,4 @@ Before implementation, investigate existing code, tests, and documentation and r
 
 - Refer to `project-config.md` §1–§4 to align with the architecture pattern
 - If `docs/` is stubbed, fall back to `project-config.md` directly (same as SKILL.md conventions)
-- Does not inherit parent skills/rules — required rules must be passed via parent `prompt`
+- Inherits the CLAUDE.md hierarchy and git status by default (official semantics). Skills are not auto-inherited unless explicitly named — pass any additional rules via the parent `prompt`

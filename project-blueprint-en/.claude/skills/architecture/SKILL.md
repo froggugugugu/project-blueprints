@@ -1,6 +1,5 @@
 ---
 name: architecture
-version: 1.0.0
 description: >
   Designs system architecture from requirement notes and generates architecture.md.
   Triggers: architecture, system design, structure design, layer design.

@@ -57,4 +57,4 @@ Efficiently grasp the project's file structure, functions, and dependencies, the
 
 - Follows the "least privilege" principle from `.claude/agents/README.md`
 - Does not read or write `input/` (human domain)
-- Does not inherit parent skills/rules — required rules must be passed via parent `prompt`
+- Inherits the CLAUDE.md hierarchy and git status by default (official semantics). Skills are not auto-inherited unless explicitly named — pass any additional rules via the parent `prompt`

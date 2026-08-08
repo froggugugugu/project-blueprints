@@ -1,6 +1,5 @@
 ---
 name: adr
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "record a design decision", "create an ADR", "document architecture decisions",
   or mentions "ADR", "architecture decision record", "design rationale", "why this design", "decision log".
@@ -193,6 +192,8 @@ When changing status, append the reason and date to the ADR body.
 | Alternatives | Yes | Minimum 2 options. Each with pros/cons |
 | Consequences | Yes | Both positive and negative aspects |
 | Index update | Yes | Add to ADR_INDEX.md |
+
+**PASS criteria**: every required column above is filled in / at least 2 alternatives, each with pros and cons / the decision is stated unambiguously in one sentence. Self-correct before submitting if any is missing.
 
 ---
 

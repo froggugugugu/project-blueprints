@@ -93,4 +93,4 @@ Test Files  1 passed (1)
 
 - `TEAM_PJM` の「テスター」ロールが本 agent を呼ぶ運用パターン
 - `testreport/coverage/` （.gitignore 対象）にはツール生データ、`output/reports/test/` には人間向けサマリー
-- 親の skill / rules は継承しない — 必要な規則は親の prompt で渡す
+- CLAUDE.md 階層と git status は既定で継承する(公式仕様)。skill は明示指定しない限り自動継承されないので、追加の規則は親の prompt で渡す

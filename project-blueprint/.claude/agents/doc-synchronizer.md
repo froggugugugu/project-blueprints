@@ -40,7 +40,7 @@ memory: project
 
 ## 更新責務の範囲
 
-- `docs/*.md` のみ Edit / Write 可
+- `docs/*.md` および `project-config.md` §2（技術スタック）/ §3（コマンド）/ §11（既知の落とし穴）のみ Edit / Write 可
 - 新規ドキュメントの作成は**慎重に**: 既存 4 ファイルに統合できるなら統合する
 - `project-config.md` §11（既知の落とし穴）は他スキルの一次更新者と重複する可能性があるので、
   `development-patterns.md` 側に書くのを優先する（CLAUDE.md の競合防止テーブル参照）
@@ -77,4 +77,4 @@ memory: project
 
 - `docs/` は **AI 管理領域**（人間管理の `project-config.md` と分離）
 - `project-config.md` §11 は AI も追記可能だが、`development-patterns.md` との重複を避ける
-- 親の skill は継承しないので、必要な更新指針は親の `prompt` で渡す
+- CLAUDE.md 階層と git status は既定で継承する(公式仕様)。skill は明示指定しない限り自動継承されないので、追加の更新指針は親の `prompt` で渡す

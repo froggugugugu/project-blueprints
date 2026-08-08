@@ -71,7 +71,8 @@ if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null
         'password\s*=\s*["\x27][^"\x27]{8,}'
     )
 
-    COMMIT_DIFF="$(git diff HEAD~1..HEAD -U0 2>/dev/null || true)"
+    # git show works for all commits including the initial one (HEAD~1 doesn't exist on first commit)
+    COMMIT_DIFF="$(git show --no-color --format="" HEAD -U0 2>/dev/null || true)"
     if [[ -n "$COMMIT_DIFF" ]]; then
         for pattern in "${SECRET_PATTERNS[@]}"; do
             MATCHES="$(echo "$COMMIT_DIFF" | grep -E "^\+" | grep -iE "$pattern" | head -3 || true)"

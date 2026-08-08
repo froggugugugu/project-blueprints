@@ -1,6 +1,5 @@
 ---
 name: review-fix
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "fix review comments", "address PR feedback", "fix CodeRabbit issues",
   or mentions "レビュー修正", "レビュー指摘修正", "PRレビュー対応", "review-fix".
@@ -238,6 +237,8 @@ Phase 7 で以下の形式で報告する:
 | 修正サマリー | ✅ | カテゴリ別の件数・対応状況。0件でも行は残す |
 | テスト結果 | ✅ | テスト・lint・コミットハッシュ |
 | 手動対応が必要な項目 | 条件付き | 自動修正対象外の指摘がある場合のみ |
+
+**PASS条件**: Major/Minor指摘が全て「修正」または「確認済み(却下理由あり)」のいずれか / テスト全パス・lintエラー0件 / コミットハッシュが結果報告に記載されている。
 
 ## 対象外（自動修正しないもの）
 

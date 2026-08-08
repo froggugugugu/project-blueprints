@@ -73,8 +73,8 @@ case "$event_type" in
       case "$1" in
         --wait)
           wait_mode=true
-          if [ -n "$2" ] && [[ "$2" =~ ^[0-9]+$ ]]; then
-            wait_timeout="$2"
+          if [ -n "${2:-}" ] && [[ "${2:-}" =~ ^[0-9]+$ ]]; then
+            wait_timeout="${2:-}"
             shift
           fi
           ;;

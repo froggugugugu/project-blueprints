@@ -17,6 +17,9 @@ You don't need to use every section, team, or skill. **Get started in 3 steps.**
 bash setup.sh /path/to/your-project
 ```
 
+> Want it even lighter? `bash setup.sh /path/to/your-project --profile minimal`
+> installs just 5 skills / 2 agents / 2 hooks (see "Profiles" below for details).
+
 ### Step 2: Fill in just 3 sections of project-config.md
 
 ```markdown
@@ -73,7 +76,33 @@ This single command handles everything:
 - Adds `testreport/` to `.gitignore`
 - Automatically backs up any existing `.claude/` to `.claude.bak/`
 
+#### Profiles (staged installation)
+
+The `--profile` option controls how much of `.claude/` gets installed (defaults to `full`):
+
+| Profile | skills | agents | hooks | teams | Use case |
+| --- | --- | --- | --- | --- | --- |
+| `minimal` | 5 | 2 | 2 | none | Fastest way to try it out, lightweight |
+| `standard` | 17 | 8 | 12 | none | Everything but team mode |
+| `full` (default) | 17 | 8 | 12 | 6 | Same as the current full setup |
+
+```bash
+bash setup.sh /path/to/your-project --profile minimal
+bash setup.sh /path/to/your-project --profile standard
+```
+
+`minimal` installs only the 5 core skills (`brainstorm` / `prd` / `plan` / `implementing-features` /
+`code-review`) and the minimum guardrails (`safety-check.sh` / `protect-files.sh`). Note that it also
+trims safeguard hooks such as `session-start.sh`.
+
+> This is a **separate, independent axis** from project-config.md's "minimal/recommended/full"
+> guidance (which is about how much of project-config.md to fill in). For example, you can install
+> with `--profile minimal` and still fill in project-config.md all the way to full.
+
 ### Method B: Manual copy
+
+> This manual copy is always equivalent to `full`. If you need a staged install (profile),
+> use Method A (`setup.sh --profile`) above instead.
 
 ```bash
 cp -r project-blueprint-en/.claude /path/to/new-project/.claude
@@ -254,7 +283,7 @@ Teams focused on specific phases are also available. All arguments are optional:
 |                                                           |
 |  .claude/CLAUDE.md ............ Development guide         |
 |  .claude/hooks/ ............... Safety hooks (defense)    |
-|  .claude/skills/ .............. 15 skill definitions      |
+|  .claude/skills/ .............. 17 skill definitions      |
 |  .claude/teams/ ............... 6 team definitions        |
 |  .claude/tasks/ ............... Task instruction templates |
 |  .claude/settings.json ........ Plugin & hook config      |
@@ -303,30 +332,39 @@ project-blueprint-en/
 |   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth)
 |   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
 |   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
+|   |   +-- scan-harness.sh                  Harness self-SAST & risky-skill blocking (PreToolUse)
+|   |   +-- user-prompt-submit.sh            Secret pattern detection (UserPromptSubmit)
 |   |   +-- session-start.sh                 Session readiness check (SessionStart)
+|   |   +-- session-end.sh                   Session-end logging (SessionEnd)
 |   |   +-- commit-quality.sh                Commit quality check (PostToolUse)
 |   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
+|   |   +-- post-failure-log.sh              Tool failure logging (PostToolUse)
+|   |   +-- subagent-audit.sh                Subagent run auditing (SubagentStop)
+|   |   +-- pre-compact-backup.sh            Transcript backup before compaction (PreCompact)
+|   |   +-- notify-claude.sh                 Completion/confirmation push notifications (Stop/Notification)
 |   |
-|   +-- skills/                            <-- [Generic] 15 skill definitions
-|   |   +-- plan/SKILL.md                    Planning & design
-|   |   +-- implementing-features/SKILL.md   TDD implementation
-|   |   +-- ui-ux-design/SKILL.md            UI/UX design
-|   |   +-- e2e-testing/SKILL.md             E2E testing
-|   |   +-- code-review/SKILL.md             Code review
-|   |   +-- performance/SKILL.md             Performance optimization
-|   |   +-- refactoring/SKILL.md             Refactoring
-|   |   +-- legal-check/SKILL.md             IT legal compliance check
-|   |   +-- security-scan/                   Security scan
-|   |   |   +-- SKILL.md
-|   |   |   +-- SETUP_GUIDE.md                 Tool setup guide
+|   +-- skills/                            <-- [Generic] 17 skill definitions
+|   |   +-- brainstorm/SKILL.md              Premise elicitation (pre-/prd)
 |   |   +-- prd/SKILL.md                     PRD generation
 |   |   +-- architecture/SKILL.md            Architecture design
+|   |   +-- plan/SKILL.md                    Planning & design
+|   |   +-- adr/SKILL.md                     Architecture Decision Records
+|   |   +-- implementing-features/SKILL.md   TDD implementation
+|   |   +-- ui-ux-design/SKILL.md            UI/UX design
 |   |   +-- hig-compliance/SKILL.md          HIG compliance check
 |   |   +-- design-system-audit/             Design token audit
 |   |   |   +-- SKILL.md
 |   |   |   +-- references/                    Audit checklist & ratio reference
+|   |   +-- e2e-testing/SKILL.md             E2E testing
+|   |   +-- code-review/SKILL.md             Code review
+|   |   +-- security-scan/                   Security scan
+|   |   |   +-- SKILL.md
+|   |   |   +-- SETUP_GUIDE.md                 Tool setup guide
+|   |   +-- legal-check/SKILL.md             IT legal compliance check
+|   |   +-- performance/SKILL.md             Performance optimization
+|   |   +-- refactoring/SKILL.md             Refactoring
 |   |   +-- review-fix/SKILL.md              PR review auto-fix
-|   |   +-- adr/SKILL.md                     Architecture Decision Records
+|   |   +-- harness-refine/SKILL.md          Harness self-audit & refinement
 |   |
 |   +-- teams/                             <-- [Generic] 6 team definitions
 |   |   +-- README.md                        Team usage guide
@@ -370,7 +408,7 @@ project-blueprint-en/
 
 | Template | Purpose | Members | Skills |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **14/15** |
+| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **13/17** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
@@ -379,30 +417,34 @@ project-blueprint-en/
 
 For team selection guidance, workflow details, launch patterns, and skill coverage, see `.claude/teams/README.md`.
 
-### Skills (all 15)
+### Skills (all 17)
 
 All skills accept optional arguments. When omitted, the user is prompted interactively.
 Read-only skills use `context: fork` (executed on a copy of the conversation context).
 
 | Skill | Command | Mode | project-config.md Updates |
 | ------ | -------- | ------ | ---------------------- |
+| Brainstorm | `/brainstorm <requirements memo>` | Read-only | -- |
 | PRD | `/prd <file-path>` | Read-only | -- |
 | Architecture | `/architecture <file-path>` | Read-only | -- |
 | Plan | `/plan <description or file-path>` | Read-only | May update S11 |
+| ADR | `/adr <decision-title or instruction>` | Read/Write | -- |
 | Implementing Features | `/implementing-features <task-file or instructions>` | Read/Write | Updates S2, S3, S11 |
 | UI/UX Design | `/ui-ux-design <target-file or instructions>` | Review/Implement | -- |
 | HIG Compliance | `/hig-compliance <target-directory or instructions>` | Review/Implement | -- |
 | Design System Audit | `/design-system-audit <target-directory or instructions>` | Read-only | -- |
-| Code Review | `/code-review <target-file or instructions>` | Read-only | -- |
 | E2E Testing | `/e2e-testing <target-feature or instructions>` | Read/Write | -- |
-| Performance | `/performance <target or instructions>` | Read/Write | Updates S11 |
-| Refactoring | `/refactoring <target-directory or instructions>` | Read/Write | -- |
+| Code Review | `/code-review <target-file or instructions>` | Read-only | -- |
 | Security Scan | `/security-scan <scope or instructions>` | Read-only | -- |
 | Legal Check | `/legal-check <scope or instructions>` | Read-only | -- |
+| Performance | `/performance <target or instructions>` | Read/Write | Updates S11 |
+| Refactoring | `/refactoring <target-directory or instructions>` | Read/Write | -- |
 | Review Fix | `/review-fix <PR-number>` | Read/Write | -- |
-| ADR | `/adr <decision-title or instruction>` | Read/Write | -- |
+| Harness Refine | `/harness-refine <target-dir or instruction>` | Read/Write (`.claude/` scaffolding only) | -- |
 
-Skill pipeline: `/prd` -> `/architecture` -> `/plan` -> `/implementing-features` -> `/code-review` + `/security-scan` + `/e2e-testing` + `/performance`
+Skill pipeline: `/brainstorm` -> `/prd` -> `/architecture` -> `/plan` -> `/implementing-features` -> `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
+
+Auxiliary skills (outside the pipeline, invoked on demand): `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`
 
 ---
 
@@ -417,6 +459,8 @@ Skill pipeline: `/prd` -> `/architecture` -> `/plan` -> `/implementing-features`
 | Gate 5 | After verification | Consolidated quality report across all checks |
 
 Pass criteria: All tests pass + Coverage meets target + Zero static analysis errors
+
+Human review at each gate is an optional intervention point, not a mandatory approval step (`constitution.md` principle #3). The gates themselves may not be skipped or reduced in number.
 
 ---
 
@@ -452,9 +496,10 @@ Using `setup.sh` completes everything in one command, including automatic backup
 
 ```bash
 bash setup.sh /path/to/existing-project
+bash setup.sh /path/to/existing-project --profile minimal   # for a lightweight install
 ```
 
-For manual setup (back up any existing `.claude/` first):
+For manual setup (back up any existing `.claude/` first; manual copy is always equivalent to `full`):
 
 ```bash
 # Back up existing .claude/ if present

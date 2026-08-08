@@ -40,7 +40,7 @@ Lightweight, fast, deterministic. Runs on Haiku.
 
 ## Scope of update responsibility
 
-- `docs/*.md` only — Edit / Write permitted
+- `docs/*.md` and `project-config.md` §2 (tech stack) / §3 (commands) / §11 (known pitfalls) — Edit / Write permitted
 - New doc creation should be rare; prefer integrating into existing 4 files
 - `project-config.md` §11 (known pitfalls) may overlap with other skills;
   prefer writing to `development-patterns.md` (see CLAUDE.md conflict-prevention table)
@@ -77,4 +77,4 @@ Lightweight, fast, deterministic. Runs on Haiku.
 
 - `docs/` is the **AI-managed domain** (separate from human-managed `project-config.md`)
 - `project-config.md` §11 can be appended by AI, but avoid duplication with `development-patterns.md`
-- Does not inherit parent skills — pass required guidelines via parent `prompt`
+- Inherits the CLAUDE.md hierarchy and git status by default (official semantics). Skills are not auto-inherited unless explicitly named — pass any additional guidelines via the parent `prompt`

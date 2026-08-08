@@ -1,6 +1,5 @@
 ---
 name: implementing-features
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "implement a feature", "fix a bug", "create a component",
   or mentions "実装", "機能追加", "バグ修正", "コンポーネント作成".

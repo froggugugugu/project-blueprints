@@ -1,6 +1,5 @@
 ---
 name: code-review
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "review code", "check code quality", "validate changes",
   or mentions "コードレビュー", "品質チェック", "レビュー".

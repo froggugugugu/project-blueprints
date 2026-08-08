@@ -22,7 +22,7 @@ error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 usage() {
     cat <<'EOF'
 Usage:
-  bash setup.sh <target-directory>
+  bash setup.sh <target-directory> [--profile minimal|standard|full]
 
 Description:
   Copies the Project Blueprint files to the target project.
@@ -35,9 +35,19 @@ Description:
   - project-config.md (configuration file)
   - CLAUDE.md -> placed at the project root
 
+Profiles (--profile, defaults to full):
+  minimal   5 skills / 2 agents / 2 hooks / no teams — fastest way to try it out
+  standard  17 skills / 8 agents / 12 hooks / no teams — everything but team mode
+  full      17 skills / 8 agents / 12 hooks / 6 teams — default, matches current behavior
+
+  Note: minimal also trims safeguard hooks (e.g. session-start) for a lighter footprint.
+  This is a separate axis from the "minimal/recommended/full" guidance in project-config.md
+  (which is about how much of project-config.md to fill in).
+
 Examples:
   bash setup.sh /path/to/my-project
-  bash setup.sh .                      # Install into the current directory
+  bash setup.sh /path/to/my-project --profile minimal
+  bash setup.sh . --profile standard   # Install into the current directory
 
 After setup:
   1. Fill in project-config.md sections S1-S3 and S6
@@ -46,12 +56,56 @@ EOF
     exit 1
 }
 
-# -- Argument check ------------------------------------------------
-if [[ $# -lt 1 ]]; then
+# -- Argument parsing ------------------------------------------------
+PROFILE="full"   # Defaults to full (no pruning) for backward compatibility
+TARGET_DIR=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --profile)
+            PROFILE="${2:-}"
+            shift 2
+            ;;
+        --profile=*)
+            PROFILE="${1#*=}"
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        -*)
+            error "Unknown option: $1"
+            usage
+            ;;
+        *)
+            if [[ -n "$TARGET_DIR" ]]; then
+                error "Specify only one target directory: $1"
+                usage
+            fi
+            TARGET_DIR="$1"
+            shift
+            ;;
+    esac
+done
+
+if [[ -z "$TARGET_DIR" ]]; then
     usage
 fi
 
-TARGET_DIR="$1"
+case "$PROFILE" in
+    minimal|standard|full) ;;
+    *)
+        error "Invalid profile: $PROFILE (must be minimal, standard, or full)"
+        usage
+        ;;
+esac
+
+# -- Dependency check -----------------------------------------------
+# jq is required for safety-check.sh to function fully. Warn if absent (setup continues).
+if ! command -v jq &>/dev/null; then
+    warn "jq is not installed. safety-check.sh will skip most checks when jq is absent (only the most critical patterns will be caught)."
+    warn "Install: macOS → brew install jq  /  Ubuntu → sudo apt-get install jq  /  Alpine → apk add jq"
+fi
 
 # Verify that the target directory exists (create it if missing — new-project case)
 if [[ ! -d "$TARGET_DIR" ]]; then
@@ -75,8 +129,51 @@ if [[ -d "$TARGET_DIR/.claude" ]]; then
     mv "$TARGET_DIR/.claude" "$BACKUP_DIR"
 fi
 
+# -- Profile keep lists ----------------------------------------------
+# "*" is a sentinel meaning "keep everything, prune nothing".
+# standard/full never trim skills/agents/hooks, so the only list that
+# needs maintenance as files are added/removed is minimal's.
+case "$PROFILE" in
+    minimal)
+        KEEP_SKILLS=(brainstorm prd plan implementing-features code-review)
+        KEEP_AGENTS=(explorer.md researcher.md)
+        KEEP_HOOKS=(safety-check.sh protect-files.sh)
+        KEEP_TEAMS=()          # empty = exclude teams/ entirely
+        ;;
+    standard)
+        KEEP_SKILLS=("*")
+        KEEP_AGENTS=("*")
+        KEEP_HOOKS=("*")
+        KEEP_TEAMS=()          # empty = exclude teams/ entirely
+        ;;
+    full)
+        KEEP_SKILLS=("*")
+        KEEP_AGENTS=("*")
+        KEEP_HOOKS=("*")
+        KEEP_TEAMS=("*")
+        ;;
+esac
+
+# Prune a directory's immediate children based on a keep list.
+# Uses plain indexed arrays (no associative arrays) for bash 3.2 (macOS default) compatibility.
+prune_dir() {
+    local dir="$1"; shift
+    local -a keep=("$@")
+    [[ "${keep[0]:-}" == "*" ]] && return 0   # sentinel: no-op
+    local entry base found k
+    for entry in "$dir"/*; do
+        [[ -e "$entry" ]] || continue
+        base="$(basename "$entry")"
+        found=0
+        for k in "${keep[@]}"; do
+            [[ "$base" == "$k" ]] && { found=1; break; }
+        done
+        [[ "$found" -eq 0 ]] && rm -rf "$entry"
+    done
+}
+
 # -- Copy files ----------------------------------------------------
-info "Copying blueprint files..."
+info "Copying blueprint files... (profile: $PROFILE)"
 
 cp -r "$SCRIPT_DIR/.claude"          "$TARGET_DIR/.claude"
 cp -r "$SCRIPT_DIR/docs"             "$TARGET_DIR/docs"
@@ -84,6 +181,22 @@ cp -r "$SCRIPT_DIR/input"            "$TARGET_DIR/input"
 cp -r "$SCRIPT_DIR/output"           "$TARGET_DIR/output"
 cp -r "$SCRIPT_DIR/testreport"       "$TARGET_DIR/testreport"
 cp    "$SCRIPT_DIR/project-config.md" "$TARGET_DIR/project-config.md"
+
+# -- Prune .claude/ according to the selected profile -----------------
+prune_dir "$TARGET_DIR/.claude/skills" "${KEEP_SKILLS[@]}"
+prune_dir "$TARGET_DIR/.claude/agents" "${KEEP_AGENTS[@]}" "README.md"
+prune_dir "$TARGET_DIR/.claude/hooks"  "${KEEP_HOOKS[@]}"
+
+if [[ "${#KEEP_TEAMS[@]}" -eq 0 ]]; then
+    rm -rf "$TARGET_DIR/.claude/teams"
+fi
+
+# -- Swap in the profile-specific settings.json ------------------------
+if [[ "$PROFILE" == "minimal" ]]; then
+    mv "$TARGET_DIR/.claude/settings.minimal.json" "$TARGET_DIR/.claude/settings.json"
+else
+    rm -f "$TARGET_DIR/.claude/settings.minimal.json"
+fi
 # constitution.md (immutable principles) — referenced by scan-harness.sh / CLAUDE.md
 # Note: avoid SC2015 (`&& A || B`) since `cp -n` returns 0 even when it skips —
 #       use an explicit existence check instead.
@@ -162,7 +275,7 @@ fi
 
 # -- Done ----------------------------------------------------------
 echo ""
-info "Setup complete!"
+info "Setup complete! (profile: $PROFILE)"
 echo ""
 echo "Next steps:"
 echo "  1. Fill in project-config.md (at minimum S1-S3 and S6)"

@@ -1,6 +1,5 @@
 ---
 name: architecture
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "design architecture", "create system design",
   or mentions "アーキテクチャ", "システム設計", "構成設計", "レイヤー設計".

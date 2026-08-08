@@ -1,7 +1,10 @@
 ---
 name: design-system-audit
-version: 1.0.0
-description: A skill for verifying and standardizing design consistency across the entire UI system. Use it for referencing design guidelines for new screens, auditing consistency of existing screens, and generating Claude Code instruction templates. It defines and verifies numerical systems (design tokens) for buttons, spacing, typography, colors, etc. based on ratio principles such as the golden ratio and silver ratio. Use this skill whenever you feel "the design is inconsistent," "we need to unify spacing standards," "title positions are misaligned across screens," or "we want to apply ratios to clean up the UI." Technology-stack agnostic (applicable to Web/Qt/QML/mobile).
+description: >
+  This skill should be used when the user asks to "audit design tokens", "unify spacing", "standardize typography",
+  or mentions "design tokens", "spacing inconsistency", "design is inconsistent", "ratio", "design consistency audit".
+  Validates design tokens (spacing, typography, color) against ratio principles (golden/silver ratio).
+  Tech-stack agnostic (Web/Qt/QML/mobile). Takes optional argument: /design-system-audit <target-directory or instruction>
 argument-hint: "<target-directory or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
 context: main
@@ -252,6 +255,17 @@ Store in the project's `design-system.md` or `DESIGN_TOKENS.md` with the followi
 |------|---------|---------------|-------------|--------|
 | yyyy-mm-dd | ___ | ___ | N | Resolved/Unresolved |
 ```
+
+---
+
+## Output Contract
+
+| Deliverable | Required | Constraints |
+| ----------- | -------- | ----------- |
+| Design system storage document | Yes | Must satisfy the STEP 4 structure (core principles/design tokens/per-screen rules/audit log) |
+| Inconsistency record (during audit) | Conditional | Only when STEP 2 detects issues, output in the category-based record format |
+
+**PASS criteria**: all categories A–H have been checked in STEP 2 / every detected inconsistency has current value, correct value, and priority filled in the record format / any deviation from the scale ratio has a stated reason.
 
 ---
 

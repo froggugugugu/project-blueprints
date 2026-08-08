@@ -1,6 +1,5 @@
 ---
 name: review-fix
-version: 1.0.0
 description: >
   Automatically retrieves and analyzes CodeRabbit/Copilot review comments on GitHub PRs, then executes fix → test → commit & push in one go.
   Triggers: review-fix, fix review, fix review comments, CodeRabbit review fix, Copilot review fix, PR review fix, review comments fix.
@@ -238,6 +237,8 @@ Report in the following format at Phase 7:
 | Fix Summary | ✅ | Category-level counts and actions. Keep rows even if 0 |
 | Test Results | ✅ | Tests, lint, commit hash |
 | Items Requiring Manual Action | Conditional | Only when there are comments excluded from auto-fix |
+
+**PASS criteria**: every Major/Minor comment is either "fixed" or "confirmed (with a stated reason for rejection)" / tests fully pass and lint reports 0 errors / the commit hash is recorded in the result report.
 
 ## Out of Scope (Not Auto-Fixed)
 

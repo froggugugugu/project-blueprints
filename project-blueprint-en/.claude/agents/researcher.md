@@ -76,4 +76,4 @@ Use `explorer` for in-repo investigation; use this agent for external technical 
 
 - Follows `.claude/agents/README.md` "principle of least privilege" (Web tools are granted; Edit/Write are not)
 - Saving external research into `docs/` is the parent session's or `doc-synchronizer`'s responsibility
-- Does not inherit skills/rules from the parent — required rules must be passed in the `prompt`
+- Inherits the CLAUDE.md hierarchy and git status by default (official semantics). Skills are not auto-inherited unless explicitly named — pass any additional rules via the parent `prompt`
