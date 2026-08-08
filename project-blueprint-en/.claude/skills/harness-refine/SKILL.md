@@ -1,6 +1,5 @@
 ---
 name: harness-refine
-version: 2.0.0
 description: >
   This skill should be used when the user asks to "refine the harness", "self-improve the blueprint",
   "restructure .claude/ to match best practices", "audit harness configuration",
@@ -249,7 +248,7 @@ Invoke `pr-review-toolkit:code-reviewer` again. Decision matrix:
 | **Conditional approval** | Check if remaining MUSTs are fixable; if yes, fix; otherwise escalate |
 | **Requires rework** | **Halt and escalate to human** — auto round 3 is forbidden |
 
-## Output contract
+## Output Contract
 
 ### Final report (required)
 

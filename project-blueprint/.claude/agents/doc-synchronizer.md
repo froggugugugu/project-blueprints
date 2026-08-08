@@ -77,4 +77,4 @@ memory: project
 
 - `docs/` は **AI 管理領域**（人間管理の `project-config.md` と分離）
 - `project-config.md` §11 は AI も追記可能だが、`development-patterns.md` との重複を避ける
-- 親の skill は継承しないので、必要な更新指針は親の `prompt` で渡す
+- CLAUDE.md 階層と git status は既定で継承する(公式仕様)。skill は明示指定しない限り自動継承されないので、追加の更新指針は親の `prompt` で渡す

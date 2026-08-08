@@ -1,6 +1,5 @@
 ---
 name: plan
-version: 1.0.0
 description: >
   Generates design documents and task breakdowns for feature implementation.
   Triggers: plan, design, decompose, analyze impact, task breakdown.

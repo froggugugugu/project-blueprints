@@ -1,6 +1,5 @@
 ---
 name: hig-compliance
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "check HIG compliance", "unify button labels", "fix icon consistency",
   or mentions "HIG compliance", "UI consistency", "button unification", "icon unification", "terminology unification",
@@ -359,6 +358,8 @@ Apply corrections in the following order:
 ```text
 - [ ] `file-path:line-number` Finding description. **HIG basis**: Applicable guideline. **Unified to**: Specific correction. **Affected screens**: List of impacted screens.
 ```
+
+**PASS criteria**: every MUST finding has a unified-to correction / when run with `--fix`, tests pass after the fix / the HIG compliance score has not dropped versus the previous scan (if any).
 
 ---
 

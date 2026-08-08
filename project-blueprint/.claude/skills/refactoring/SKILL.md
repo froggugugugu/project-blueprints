@@ -1,6 +1,5 @@
 ---
 name: refactoring
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "refactor code", "restructure", "extract component", "split store",
   or mentions "リファクタリング", "再構成", "責務分離", "コンポーネント分割".
@@ -185,6 +184,8 @@ context: main
 - Before/Afterの変動列は符号付き（`+3`, `-2`, `±0`）
 - 変更サマリーのファイルパスは `src/` からの相対パス
 - カバレッジが低下した場合はその理由を付記する
+
+**PASS条件**: 全ステップ完了後にテスト件数が減っていない(減った場合は理由を明記)/ 依存方向違反・循環依存が新たに0件以上増えていない / カバレッジが低下していない(低下時は理由を付記)。
 
 ## レポートフォーマット
 

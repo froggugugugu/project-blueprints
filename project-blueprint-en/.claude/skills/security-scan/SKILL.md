@@ -1,6 +1,5 @@
 ---
 name: security-scan
-version: 1.0.0
 description: >
   Runs security scanning tools and generates structured vulnerability reports.
   Triggers: security scan, vulnerability, OWASP, ZAP, npm audit, DAST, SAST, secret detection, dependency check, CVE.
@@ -286,6 +285,8 @@ When scan tools are not installed:
 - Fix suggestions must be specific code changes or commands
 - State rationale for false positive determinations
 - Always record the version of tools used for scanning
+
+**PASS criteria**: every finding includes CVE/CWE (when applicable), impact, fix suggestion, fix difficulty, and false-positive determination / every CRITICAL/HIGH finding has a numbered recommended action / the scanning tool version is recorded.
 
 ## Report Format
 

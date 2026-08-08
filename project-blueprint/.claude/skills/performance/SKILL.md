@@ -1,6 +1,5 @@
 ---
 name: performance
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "optimize performance", "reduce bundle size", "fix slow rendering",
   or mentions "パフォーマンス", "最適化", "バンドルサイズ", "メモリリーク", "再レンダリング".
@@ -135,6 +134,8 @@ context: main
 - Before/Afterテーブルの指標は同一条件で計測すること
 - 計測値には必ず単位を付記する（KB, ms, 回, 件）
 - 「推測」「おそらく」による最適化判断は記載禁止
+
+**PASS条件**: Before/After 全指標が改善(悪化した指標がある場合は理由を明記)/ テスト・静的解析がベースラインと同数以上パス / 計測値なしの最適化提案が0件。
 
 ## レポートフォーマット
 

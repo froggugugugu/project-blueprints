@@ -1,6 +1,5 @@
 ---
 name: ui-ux-design
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "review UI design", "improve styling", "add dark mode",
   "fix accessibility", "make responsive", or mentions "デザインレビュー", "UI改善", "デザイン整合性".
@@ -258,6 +257,8 @@ UIの実装・修正を行う場合。
 | **MUST** | DS違反、a11y WCAG AA不適合、ダークモード非対応 | ハードコード色値、フォーカス不可、コントラスト比不足 |
 | **SHOULD** | DS推奨パターンとの乖離、レスポンシブ改善 | スペーシング不統一、タッチターゲット不足 |
 | **CONSIDER** | UX改善提案、インタラクション強化 | 空状態デザイン、ローディング表示 |
+
+**PASS条件**: 全 MUST 指摘が「対応済み」または「対応不可の理由明記」/ 実装モードはダークモード確認結果が OK かつビルド pass / 監査モードはトークン使用率が前回から悪化していない。
 
 ### 総合判定の列挙値
 

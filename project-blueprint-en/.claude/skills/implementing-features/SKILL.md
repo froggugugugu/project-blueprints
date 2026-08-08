@@ -1,6 +1,5 @@
 ---
 name: implementing-features
-version: 1.0.0
 description: >
   Implements features, fixes bugs, and refactors code following TDD workflow.
   Triggers: implement, create, fix, modify, add, refactor, build, develop, change functionality.

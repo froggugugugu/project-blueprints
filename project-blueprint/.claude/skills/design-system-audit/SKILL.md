@@ -1,6 +1,5 @@
 ---
 name: design-system-audit
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "audit design tokens", "unify spacing", "standardize typography",
   or mentions "デザイントークン", "余白統一", "デザインがバラバラ", "比率", "デザイン整合性監査".

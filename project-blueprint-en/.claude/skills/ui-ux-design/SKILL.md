@@ -1,6 +1,5 @@
 ---
 name: ui-ux-design
-version: 1.0.0
 description: >
   Reviews and implements UI/UX following project design systems.
   Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design, design consistency audit, system-wide consistency.
@@ -258,6 +257,8 @@ Auto-fix only applies changes that meet the following safety criteria:
 | **MUST** | DS violation, a11y WCAG AA non-compliance, dark mode unsupported | Hardcoded color values, not focusable, insufficient contrast ratio |
 | **SHOULD** | Deviation from DS recommended patterns, responsive improvements | Inconsistent spacing, insufficient touch targets |
 | **CONSIDER** | UX improvement proposals, interaction enhancements | Empty state design, loading indicators |
+
+**PASS criteria**: every MUST finding is either "addressed" or "documented as not addressable" / Implementation mode: dark-mode check result is OK and the build passes / Audit mode: token usage rate has not regressed from the previous audit.
 
 ### Overall Verdict Enumeration
 

@@ -1,6 +1,5 @@
 ---
 name: plan
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "plan implementation", "decompose tasks", "analyze impact",
   or mentions "設計", "タスク分解", "影響分析".

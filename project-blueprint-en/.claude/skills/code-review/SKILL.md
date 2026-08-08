@@ -1,6 +1,5 @@
 ---
 name: code-review
-version: 1.0.0
 description: >
   Reviews code changes for quality, conventions compliance, performance, and security.
   Triggers: review, check, validate, inspect, audit code quality.

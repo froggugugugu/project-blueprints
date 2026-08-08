@@ -1,6 +1,5 @@
 ---
 name: hig-compliance
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "check HIG compliance", "unify button labels", "fix icon consistency",
   or mentions "HIG準拠", "UI一貫性", "ボタン統一", "アイコン統一", "用語統一", "画面間の整合性", "横断UIチェック".
@@ -358,6 +357,8 @@ Phase 2 の収集データを基に、**画面間の差異をマトリクスで�
 ```text
 - [ ] `ファイルパス:行番号` 指摘内容。**HIG根拠**: 該当ガイドライン。**統一案**: 具体的な修正。**対象画面**: 影響する画面一覧。
 ```
+
+**PASS条件**: 全 MUST 指摘に統一案が付いている / `--fix` 実行時は修正後にテストが通っている / HIG準拠スコアが前回スキャン(あれば)から低下していない。
 
 ---
 

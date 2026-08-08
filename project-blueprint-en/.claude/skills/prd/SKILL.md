@@ -1,6 +1,5 @@
 ---
 name: prd
-version: 1.0.0
 description: >
   Generates a PRD (Product Requirements Document) from requirement notes or memos.
   Triggers: prd, requirements, PRD generation, requirement specification.

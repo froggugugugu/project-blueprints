@@ -93,4 +93,4 @@ Test Files  1 passed (1)
 
 - A typical caller is the "Tester" role in `TEAM_PJM`
 - `testreport/coverage/` (gitignored) holds raw tool output; `output/reports/test/` holds human-oriented summaries
-- Does not inherit parent skills/rules — required rules must be passed via parent `prompt`
+- Inherits the CLAUDE.md hierarchy and git status by default (official semantics). Skills are not auto-inherited unless explicitly named — pass any additional rules via the parent `prompt`

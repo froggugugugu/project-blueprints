@@ -253,7 +253,7 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 │                                                         │
 │  .claude/CLAUDE.md ............ 開発ガイド（横断）       │
 │  .claude/hooks/ ............... 安全フック（多層防御）    │
-│  .claude/skills/ .............. 15個のスキル定義         │
+│  .claude/skills/ .............. 17個のスキル定義         │
 │  .claude/teams/ ............... 6チーム定義              │
 │  .claude/tasks/ ............... タスク指示書テンプレート  │
 │  .claude/settings.json ........ プラグイン・フック設定   │
@@ -299,33 +299,42 @@ project-blueprint/
 │   ├── settings.json                      ← [汎用] プラグイン・フック設定
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
 │   │
-│   ├── hooks/                             ← [汎用] 安全フック（多層防御）
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御・12本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
+│   │   ├── scan-harness.sh                  ハーネス自己SAST・危険skillブロック（PreToolUse）
+│   │   ├── user-prompt-submit.sh            機密パターン検出（UserPromptSubmit）
 │   │   ├── session-start.sh                 セッション開始チェック（SessionStart）
+│   │   ├── session-end.sh                   セッション終了記録（SessionEnd）
 │   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
-│   │   └── console-warn.sh                  デバッグコード検出（PostToolUse）
+│   │   ├── console-warn.sh                  デバッグコード検出（PostToolUse）
+│   │   ├── post-failure-log.sh              ツール失敗ログ記録（PostToolUse）
+│   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStop）
+│   │   ├── pre-compact-backup.sh            コンパクト前トランスクリプト退避（PreCompact）
+│   │   └── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
 │   │
-│   ├── skills/                            ← [汎用] 15スキル定義
-│   │   ├── plan/SKILL.md                    設計・計画
-│   │   ├── implementing-features/SKILL.md   TDD実装
-│   │   ├── ui-ux-design/SKILL.md            UI/UX設計
-│   │   ├── e2e-testing/SKILL.md             E2Eテスト
-│   │   ├── code-review/SKILL.md             コードレビュー
-│   │   ├── performance/SKILL.md             パフォーマンス最適化
-│   │   ├── refactoring/SKILL.md             リファクタリング
-│   │   ├── legal-check/SKILL.md             IT法務チェック
-│   │   ├── security-scan/                   セキュリティスキャン
-│   │   │   ├── SKILL.md
-│   │   │   └── SETUP_GUIDE.md                 ツール導入ガイド
+│   ├── skills/                            ← [汎用] 17スキル定義
+│   │   ├── brainstorm/SKILL.md              前提整理（/prd前段）
 │   │   ├── prd/SKILL.md                     PRD生成
 │   │   ├── architecture/SKILL.md            アーキテクチャ設計
+│   │   ├── plan/SKILL.md                    設計・計画
+│   │   ├── adr/SKILL.md                     設計判断記録（ADR）
+│   │   ├── implementing-features/SKILL.md   TDD実装
+│   │   ├── ui-ux-design/SKILL.md            UI/UX設計
 │   │   ├── hig-compliance/SKILL.md          HIG準拠チェック
 │   │   ├── design-system-audit/             デザイントークン監査
 │   │   │   ├── SKILL.md
 │   │   │   └── references/                    監査チェックリスト・比率参照
+│   │   ├── e2e-testing/SKILL.md             E2Eテスト
+│   │   ├── code-review/SKILL.md             コードレビュー
+│   │   ├── security-scan/                   セキュリティスキャン
+│   │   │   ├── SKILL.md
+│   │   │   └── SETUP_GUIDE.md                 ツール導入ガイド
+│   │   ├── legal-check/SKILL.md             IT法務チェック
+│   │   ├── performance/SKILL.md             パフォーマンス最適化
+│   │   ├── refactoring/SKILL.md             リファクタリング
 │   │   ├── review-fix/SKILL.md              PRレビュー指摘自動修正
-│   │   └── adr/SKILL.md                    設計判断記録（ADR）
+│   │   └── harness-refine/SKILL.md          ハーネス自己点検・補正
 │   │
 │   ├── teams/                             ← [汎用] 6チーム定義
 │   │   ├── README.md                        チーム利用ガイド
@@ -369,7 +378,7 @@ project-blueprint/
 
 | テンプレート | 用途 | メンバー | スキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **14/15** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **13/17** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
@@ -378,30 +387,34 @@ project-blueprint/
 
 チーム選定ガイド・ワークフロー詳細・起動パターン・スキルカバレッジは `.claude/teams/README.md` を参照。
 
-### スキル一覧（全15スキル）
+### スキル一覧（全17スキル）
 
 全スキルは引数を省略可能。省略時はユーザーに対話的に確認する。
 読み取り専用スキルは`context: fork`（会話コンテキストのコピーで実行）かつ`allowed-tools`でツール制限済み。
 
 | スキル | コマンド | モード | project-config.md更新 |
 | ------ | -------- | ------ | ---------------------- |
+| Brainstorm | `/brainstorm <要求メモ>` | 読み取り専用 | — |
 | PRD | `/prd <ファイルパス>` | 読み取り専用 | — |
 | Architecture | `/architecture <ファイルパス>` | 読み取り専用 | — |
 | Plan | `/plan <説明 or ファイルパス>` | 読み取り専用 | §11を更新可 |
+| ADR | `/adr <判断タイトル or 指示>` | 読み書き | — |
 | Implementing Features | `/implementing-features <タスクファイル or 指示>` | 読み書き | §2, §3, §11を更新 |
 | UI/UX Design | `/ui-ux-design <対象ファイル or 指示>` | レビュー/実装 | — |
 | HIG Compliance | `/hig-compliance <対象ディレクトリ or 指示>` | 読み書き | — |
 | Design System Audit | `/design-system-audit <対象ディレクトリ or 指示>` | 読み書き | — |
-| Code Review | `/code-review <対象ファイル or 指示>` | 読み取り専用 | — |
 | E2E Testing | `/e2e-testing <対象機能 or 指示>` | 読み書き | — |
-| Performance | `/performance <対象コンポーネント or 指示>` | 読み書き | §11を更新 |
-| Refactoring | `/refactoring <対象ディレクトリ or 指示>` | 読み書き | — |
+| Code Review | `/code-review <対象ファイル or 指示>` | 読み取り専用 | — |
 | Security Scan | `/security-scan <対象範囲 or 指示>` | 読み取り専用 | — |
 | Legal Check | `/legal-check <対象範囲 or 指示>` | 読み取り専用 | — |
+| Performance | `/performance <対象コンポーネント or 指示>` | 読み書き | §11を更新 |
+| Refactoring | `/refactoring <対象ディレクトリ or 指示>` | 読み書き | — |
 | Review Fix | `/review-fix <PR番号>` | 読み書き | — |
-| ADR | `/adr <判断タイトル or 指示>` | 読み書き | — |
+| Harness Refine | `/harness-refine <対象ディレクトリ or 指示>` | 読み書き（`.claude/`骨格のみ） | — |
 
-スキルパイプライン: `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/e2e-testing` + `/performance`
+スキルパイプライン: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
+
+補助スキル（パイプライン外・オンデマンド起動）: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`
 
 ---
 
@@ -416,6 +429,8 @@ project-blueprint/
 | ゲート5 | 検証完了後 | 全品質レポートの集約 |
 
 通過基準: テスト全パス + カバレッジ目標以上 + 静的解析エラー0件
+
+各ゲートでの人間レビューは任意の介入ポイントであり、必須の承認手続きではない(`constitution.md` 原則③)。ゲート自体を省略・削減することは不可。
 
 ---
 

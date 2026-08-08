@@ -1,6 +1,5 @@
 ---
 name: security-scan
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "run security scan", "check vulnerabilities", "audit dependencies",
   or mentions "セキュリティスキャン", "脆弱性", "OWASP", "npm audit", "シークレット検出", "CVE".
@@ -286,6 +285,8 @@ HTTP応答ヘッダーとアプリケーション設定のセキュリティを�
 - 修正案は具体的なコード変更またはコマンドで記述する
 - 偽陽性の判定根拠を明記する
 - スキャンに使用したツールのバージョンを必ず記録する
+
+**PASS条件**: 全検出事項に CVE/CWE(該当時)・影響・修正案・修正難易度・偽陽性判定が揃っている / CRITICAL/HIGH に推奨アクションが番号付きで対応している / スキャンツールのバージョンが記録されている。
 
 ## レポートフォーマット
 

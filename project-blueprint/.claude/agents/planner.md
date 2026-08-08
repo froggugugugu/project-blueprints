@@ -78,4 +78,4 @@ skills:
 
 - `project-config.md` §1〜§4 を参照してアーキテクチャパターンに整合する計画を立てる
 - `docs/` がスタブ状態の場合は `project-config.md` を直接参照（`SKILL.md` のフォールバック規約と同じ）
-- 親の skill/rules は継承しない — 必要なルールは親の `prompt` で渡す
+- CLAUDE.md 階層と git status は既定で継承する(公式仕様)。skill は明示指定しない限り自動継承されないので、追加のルールは親の `prompt` で渡す

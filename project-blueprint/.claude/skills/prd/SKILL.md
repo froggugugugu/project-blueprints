@@ -1,6 +1,5 @@
 ---
 name: prd
-version: 1.0.0
 description: >
   This skill should be used when the user asks to "generate a PRD", "create requirements", "write a product requirements document",
   or mentions "要件定義", "PRD作成", "要求仕様".

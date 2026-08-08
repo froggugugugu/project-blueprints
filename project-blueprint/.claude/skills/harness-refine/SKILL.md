@@ -1,6 +1,5 @@
 ---
 name: harness-refine
-version: 2.0.0
 description: >
   This skill should be used when the user asks to "refine the harness", "self-improve the blueprint",
   "restructure .claude/ to match best practices", "audit harness configuration",

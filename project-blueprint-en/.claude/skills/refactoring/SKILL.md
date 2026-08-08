@@ -1,6 +1,5 @@
 ---
 name: refactoring
-version: 1.0.0
 description: >
   Executes safe, incremental refactoring with rollback capability.
   Triggers: refactor, restructure, extract, consolidate, decompose, move, rename, split, merge, reorganize.
@@ -184,6 +183,8 @@ Repeat the following for each step:
 - Before/After delta column uses signed notation (`+3`, `-2`, `±0`)
 - Change summary file paths are relative from `src/`
 - When coverage decreases, state the reason
+
+**PASS criteria**: test count has not dropped after all steps complete (state a reason if it did) / dependency-direction violations and circular dependencies have not increased / coverage has not dropped (state a reason if it did).
 
 ## Report Format
 

@@ -83,7 +83,7 @@ Task({
 ## コンセプト整合（プロジェクトブループリント原則）
 
 - agent は `.claude/` 配下の**汎用テンプレート層**。プロジェクト固有のルールは `docs/` や `project-config.md` に
-- agent は **親セッションの skill/rules を継承しない**（Claude Code 仕様）— 必要な規則は各 agent の本文に再記載
+- agent は **CLAUDE.md 階層(`@import` される `.claude/rules/*.md` を含む)と git status のスナップショットを既定で継承する**(Claude Code公式仕様。ビルトインの`Explore`/`Plan`のみ両方をスキップして最小コンテキストで動く)。skill は `skills:` frontmatter で明示指定したもののみ全文プリロードされる — それ以外は `Skill` ツール経由で個別に呼び出せる
 - agent は `input/`（人間入力）を書き換えない。成果物は `output/` か、agent ごとに定義されたスコープ内に
 
 ## 落とし穴
