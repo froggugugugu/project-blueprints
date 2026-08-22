@@ -8,7 +8,7 @@ description: >
   Updates project-config.md §11 when new patterns or pitfalls are identified.
   Takes optional argument: /plan <description or file-path>
 argument-hint: "<description or file-path>"
-allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
+allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(project-config.md), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 context: fork
 ---
 

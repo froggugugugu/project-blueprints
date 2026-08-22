@@ -2,56 +2,56 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "_comment": [
     "This file is a template for .claude/settings.local.json.",
-    "Customize it according to your project-config.md contents",
-    "and place it as .claude/settings.local.json.",
+    "Customize it to match project-config.md and place it as",
+    ".claude/settings.local.json.",
     "",
-    "Customization points:",
-    "- Build tool: Change npm (default) to yarn / pnpm / bun as needed",
-    "  → Refer to _comment_pkg_manager and swap the corresponding lines in allow",
-    "- Quality tool: Change biome (default) to eslint + prettier as needed",
-    "  → Refer to _comment_quality_tools and swap the corresponding lines in allow",
-    "- Test tool: Change vitest (default) to jest as needed",
-    "- MCP: Change according to the MCP plugins you use",
+    "What to customize:",
+    "- Build tool: npm (default) / yarn / pnpm / bun",
+    "  → see _comment_pkg_manager and swap the matching lines in allow",
+    "- Quality tools: biome (default) / eslint + prettier",
+    "  → see _comment_quality_tools and swap the matching lines in allow",
+    "- Test runner: vitest (default) / jest",
+    "- MCP: adjust to the MCP plugins you actually use",
     "",
-    "Safety mechanism (defense in depth):",
-    "- Layer 1: hooks (defined in settings.json, active even with --dangerously-skip-permissions)",
-    "    PreToolUse(Bash/Edit/Write/Skill) + UserPromptSubmit + SessionStart + SessionEnd",
-    "    + PostToolUse + SubagentStop + PreCompact + Stop/Notification",
-    "- Layer 2: deny rules (defined in settings.json. Do not override in this file)",
-    "- Layer 3: allow rules (this file, active in normal permission mode)",
-    "- meta : scan-harness.sh runs self-SAST (constitution hash / secret leak / deny weakening)",
+    "Safety mechanisms (defense in depth):",
+    "- Layer 0: sandbox (off by default; see _comment_sandbox to opt in)",
+    "- Layer 1: hooks (defined in settings.json; active even with --dangerously-skip-permissions)",
+    "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
+    "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
+    "    + PreCompact/PostCompact + Stop/Notification",
+    "- Layer 2: deny / ask rules (already in settings.json; do not override them here)",
+    "- Layer 3: allow rules (this file, active in normal mode)",
+    "- meta : self-SAST via scan-harness.sh (constitution hash / secret leakage / deny weakening)",
     "",
-    "teammateMode: Controls Agent Teams execution mode",
-    "- 'in-process': Run in same process (default, fast)",
-    "- 'worktree': Run in git worktree isolation (recommended for parallel development)",
-    "",
-    "enableAllProjectMcpServers: Auto-enable MCP servers defined in project .mcp.json",
-    "",
-    "env: Environment variable settings",
-    "- CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: Enable Agent Teams ('1' to enable)"
+    "Evaluation order is deny > ask > allow. An operation listed under ask in",
+    "settings.json still prompts even if you allow it here (that is intentional)."
+  ],
+  "_comment_file_rules": [
+    "Important: only Edit(path) and Read(path) are consulted for file permissions.",
+    "Write(path) / NotebookEdit(path) / Glob(path) / MultiEdit(path) are accepted but",
+    "never consulted, and produce a startup warning. Use Edit(path) even when what",
+    "you want to permit is a Write."
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "BLUEPRINT_HOOK_PROFILE": "standard"
   },
   "_comment_hook_profile": [
-    "BLUEPRINT_HOOK_PROFILE: behavior switch for next-gen hooks (user-prompt-submit / session-end / scan-harness)",
-    "  - 'minimal':  pass-through (skip checks). Use for CI / automation",
-    "  - 'standard': warn-only on detection (non-blocking, default)",
-    "  - 'strict':   block skill / prompt on detection. Use for high-risk work"
+    "BLUEPRINT_HOOK_PROFILE: behavior switch for the extended hooks",
+    "  Honored by: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit",
+    "  - 'minimal':  pass-through (skip inspection). For CI / automation",
+    "  - 'standard': warn only on detection (non-blocking, default)",
+    "  - 'strict':   block the skill / prompt on detection. For high-risk work"
   ],
   "permissions": {
     "allow": [
-      "Edit(**/*.{css,js,ts,tsx,json,md})",
-      "Write(**/*.{css,js,ts,tsx,json,md})",
       "Read(**/*)",
-
+      "Edit(**/*.{css,js,jsx,ts,tsx,json,md,yml,yaml})",
       "Bash(npm run *)",
       "Bash(npm install *)",
       "Bash(npm uninstall *)",
       "Bash(npm view *)",
       "Bash(npm ls *)",
-
       "Bash(npx vitest *)",
       "Bash(npx tsc *)",
       "Bash(npx biome *)",
@@ -59,13 +59,11 @@
       "Bash(npx depcruise *)",
       "Bash(npx lint-staged *)",
       "Bash(npx husky *)",
-
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)",
       "Bash(git pull *)",
       "Bash(git fetch *)",
       "Bash(git branch *)",
@@ -76,32 +74,74 @@
       "Bash(git reset *)",
       "Bash(git restore *)",
       "Bash(git remote *)",
-      "Bash(gh pr *)",
-      "Bash(gh repo *)",
-
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr create *)",
+      "Bash(gh repo view *)",
       "Bash(node *)",
       "Bash(ls *)",
       "WebSearch",
-
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:github.com)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "mcp__plugin_playwright_playwright__*",
-      "WebFetch(domain:*)"
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "mcp__playwright__*",
+      "mcp__plugin_playwright_playwright__*"
     ]
   },
+  "_comment_allow_notes": [
+    "git push / gh pr merge / gh release are listed under ask in settings.json, so",
+    "they still prompt even if allowed here. Outbound operations confirm every time.",
+    "",
+    "WebFetch is allowed per domain. To allow everything, replace those entries with",
+    "'WebFetch(domain:*)' — but note that this permits reaching any URL."
+  ],
   "_comment_pkg_manager": [
-    "Switching package managers — swap the npm/npx block in allow",
+    "Switching package manager — swap the npm/npx block inside allow",
     "",
     "yarn: Bash(yarn *), Bash(yarn run *), Bash(yarn add *), Bash(yarn remove *)",
     "pnpm: Bash(pnpm run *), Bash(pnpm add *), Bash(pnpm remove *), Bash(pnpm dlx *)",
     "bun:  Bash(bun run *), Bash(bun add *), Bash(bun remove *), Bash(bunx *)"
   ],
   "_comment_quality_tools": [
-    "Switching quality tools — swap the npx biome line in allow",
+    "Switching quality tools — swap the npx biome line inside allow",
     "",
     "eslint + prettier: Bash(npx eslint *), Bash(npx prettier *)",
-    "jest (alternative to vitest): Bash(npx jest *)"
+    "jest (instead of vitest): Bash(npx jest *)"
+  ],
+  "_comment_sandbox": [
+    "Layer 0: OS sandbox. Runs Bash in isolation and restricts file and network",
+    "access at the OS level, even for arbitrary subprocesses.",
+    "It closes the gap that Read/Edit deny rules cannot cover — reads and writes",
+    "performed by a Python or Node script.",
+    "",
+    "To enable, paste this block at the top level:",
+    "  \"sandbox\": {",
+    "    \"enabled\": true,",
+    "    \"network\": { \"allowedDomains\": [\"registry.npmjs.org\", \"github.com\"] }",
+    "  }",
+    "",
+    "Exempt individual commands that fail inside the sandbox with sandbox.excludedCommands."
+  ],
+  "_comment_teammate": [
+    "teammateMode controls WHERE agent-team teammates are displayed.",
+    "  - 'in-process': inside your main terminal pane (default)",
+    "  - 'auto'      : split panes when tmux / iTerm2 are available, otherwise in-process",
+    "  - 'tmux'      : split panes via tmux / iTerm2",
+    "  - 'iterm2'    : native iTerm2 split panes",
+    "Note: 'worktree' is NOT a teammateMode value. To isolate the repository, set",
+    "      isolation: worktree in a subagent's frontmatter, or configure worktree.*.",
+    "",
+    "worktree.baseRef: which ref new worktrees branch from",
+    "  - 'fresh' (default): branch from origin/<default-branch> (clean, matches the remote)",
+    "  - 'head'           : branch from the current local HEAD (includes unpushed commits)"
   ],
   "enableAllProjectMcpServers": true,
-  "teammateMode": "in-process"
+  "teammateMode": "in-process",
+  "worktree": {
+    "baseRef": "head"
+  }
 }

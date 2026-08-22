@@ -2,9 +2,12 @@
 name: doc-writer
 description: output/ 配下にレポート・ブリーフ・サマリーなど新規 markdown を起こす必要があるときに使用する。「調査結果を report にまとめて」「PR の説明文を書いて」「概要書を作成して」など、構造化データから読みやすい文章を生成する作業を引き受ける。既存ファイルの更新は doc-synchronizer の責務。
 tools: Read, Edit, Write, Grep, Glob
-model: claude-sonnet-4-6
-color: yellow
+model: sonnet
+effort: medium
+permissionMode: acceptEdits
+maxTurns: 30
 memory: project
+color: yellow
 ---
 
 # Doc Writer Agent — 新規ドキュメント執筆専門
@@ -20,7 +23,7 @@ memory: project
 | -- | ------------------- | ------------- |
 | 対象 | `docs/` 配下の**既存**ファイル | `output/` 配下の**新規**ファイル(reports / brief / summary) |
 | 操作 | Edit 中心(最小差分) | Write 中心(新規起こし) |
-| モデル | Haiku 4.5(機械的同期) | Sonnet 4.6(構成判断が必要) |
+| モデル | `haiku`(機械的同期) | `sonnet`(構成判断が必要) |
 | 出力例 | `docs/project.md` のルーティング表を 1 行追加 | `output/reports/review/REVIEW_auth.md` を新規生成 |
 
 既存 docs の小差分更新は `doc-synchronizer`、新規ドキュメント執筆は本 agent。

@@ -12,7 +12,8 @@ description: >
   for 2 fixed rounds, escalating to a human if not approved.
   Takes optional argument: /harness-refine <target-dir or instruction>
 argument-hint: "<対象ディレクトリ or 補正指示(省略可)>"
-allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+effort: high
 context: main
 ---
 

@@ -5,6 +5,29 @@
 プロジェクトの活動フェーズに応じた6つの専門チームテンプレートを提供する。
 各チームは`.claude/skills/`配下のスキルにマッピングされている。
 
+### 公式 Agent Teams 機能との関係
+
+`TEAM_*.md` は**プロンプトレベルのオーケストレーション定義**であり、
+Claude Code 公式の Agent Teams 機能とは別レイヤーにある。両者は組み合わせて使う。
+
+| | `TEAM_*.md`（本テンプレート） | 公式 Agent Teams |
+| --- | --- | --- |
+| 実体 | Markdown のロール定義・フェーズ手順 | 複数の Claude Code インスタンス |
+| 起動 | ファイルパスを渡して読ませる | 自然言語で teammate を依頼する |
+| コンテキスト | メインセッション + subagent | teammate ごとに独立 |
+| 有効化 | 不要（常に使える） | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` が必要 |
+| コスト | 低〜中 | 高（teammate ごとに別インスタンス） |
+
+- **既定は `TEAM_*.md` 単独**で足りる。逐次フェーズや同一ファイルの編集が多い作業では
+  むしろ公式 Agent Teams より効率が良い
+- **並行探索の価値が高い作業**（競合仮説のデバッグ、レイヤー横断の同時実装、
+  複数観点の同時レビュー）でのみ公式 Agent Teams を併用する
+- 併用時は `settings.local.json` の `teammateMode` で teammate の**表示先**を選ぶ
+  （`in-process` / `auto` / `tmux` / `iterm2`）。`worktree` は teammateMode の値ではない
+- 公式 Agent Teams 有効時は、Claude が名前を付けた subagent が teammate として起動する。
+  意図せずチームが形成されることがある点に注意
+- 品質ゲートを teammate にも効かせたい場合は `TeammateIdle` / `TaskCompleted` フックを使う
+
 ## クイックスタート
 
 **全部おまかせ（推奨）:**

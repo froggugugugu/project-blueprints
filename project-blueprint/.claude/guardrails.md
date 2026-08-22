@@ -5,26 +5,45 @@
 
 ---
 
-## フック一覧
+## フック一覧(13 スクリプト / 15 登録)
 
 | フック | イベント | 対象 | 動作 | 説明 |
 | ------ | -------- | ---- | ---- | ---- |
 | `safety-check.sh` | PreToolUse | Bash | ブロック | 危険なシェルコマンドを検出・阻止 |
-| `protect-files.sh` | PreToolUse | Edit\|Write | ブロック | 機密ファイル・設定ファイルへの書き込みを阻止 |
+| `protect-files.sh` | PreToolUse | Edit\|Write\|NotebookEdit | ブロック | 機密ファイル・設定ファイルへの書き込みを阻止 |
 | `scan-harness.sh` | PreToolUse | Skill | 警告/ブロック | ハーネス自身の SAST(secret 混入・constitution 改変・local deny の弱体化検出) |
-| `user-prompt-submit.sh` | UserPromptSubmit | — | 警告/ブロック | ユーザー入力に機密パターン(API key 等)を検出して警告 or 差し戻し |
+| `user-prompt-submit.sh` | UserPromptSubmit | — | 警告/ブロック + 文脈注入 | 機密パターン検出。コンパクト直後は中核ルールを再注入 |
 | `session-start.sh` | SessionStart | — | 警告 | project-config.md / docs/ / settings.local.json の存在チェック |
 | `session-end.sh` | SessionEnd | — | 観測 | セッション終了サマリを `output/reports/sessions/<date>.md` に追記 |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | 警告 | Conventional Commits 形式チェック・シークレット検出 |
-| `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント（console.log 等）の残存検出 |
-| `post-failure-log.sh` | PostToolUse | 全ツール | 観測 | ツール失敗時の構造化エラーログ（`testreport/failures/`） |
-| `subagent-audit.sh` | SubagentStop | — | 観測 | サブエージェント完了の記録（`testreport/agents/`） |
-| `pre-compact-backup.sh` | PreCompact | — | 観測 | コンパクト直前の会話履歴バックアップ（`testreport/transcripts/`） |
-| `notify-claude.sh` | Stop / Notification | — | 通知 | タスク完了時の外部通知（ntfy） |
+| `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント(console.log 等)の残存検出 |
+| `post-failure-log.sh` | **PostToolUseFailure** | `*` | 観測 | ツール失敗時の構造化エラーログ(`testreport/failures/`) |
+| `subagent-audit.sh` | **SubagentStart** | — | 観測 + 文脈注入 | 起動記録 + サブエージェントへガードレールを注入 |
+| `subagent-audit.sh` | SubagentStop | — | 観測 | 完了記録(`testreport/agents/`) |
+| `pre-compact-backup.sh` | PreCompact | — | 観測 | コンパクト直前の会話履歴バックアップ(`testreport/transcripts/`) |
+| `post-compact-restore.sh` | **PostCompact** | — | 観測 + マーカー | 要約を保全し、再注入マーカーを設置 |
+| `notify-claude.sh` | Stop / Notification | — | 通知(async) | タスク完了時の外部通知(ntfy) |
 
-### Hook profile 切替(2026 拡張)
+### コンパクト対策の 2 段構え
 
-`BLUEPRINT_HOOK_PROFILE` 環境変数で挙動を切替可能(`user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh` 対応):
+コンテキストのコンパクト後に指示が薄れる問題(pitfalls #21)への対策:
+
+```text
+PreCompact  → pre-compact-backup.sh   会話履歴を testreport/transcripts/ に退避
+PostCompact → post-compact-restore.sh 要約を保全し .post-compact-pending を設置
+                    ↓ (次の 1 プロンプトだけ)
+UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
+                    additionalContext で中核ルールを再注入
+```
+
+> **なぜ 2 段か**: `PostCompact` は公式仕様上 **decision control を一切持たない**
+> (`additionalContext` も返せない)side-effect 専用イベントである。
+> 文脈を注入できるのは `UserPromptSubmit` 側なので、マーカーで橋渡しする。
+
+### Hook profile 切替
+
+`BLUEPRINT_HOOK_PROFILE` 環境変数で挙動を切替可能
+(`user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh` / `post-compact-restore.sh` / `subagent-audit.sh` 対応):
 
 | profile | 用途 | 挙動 |
 | ------- | ---- | ---- |
@@ -34,83 +53,155 @@
 
 `.envrc` や `direnv` で切り替えるのが推奨。
 
-### フックの動作原則
+### フックの動作原則(公式仕様)
 
-- **ブロック系**: exit 2 で操作を中止。理由を stderr で通知
-  - 例外: `UserPromptSubmit` フックは公式仕様により `exit 0 + stdout JSON {"decision":"block","reason":"..."}` でプロンプトを差し戻す（exit 2 ではない）
-- **警告系**: exit 0 で操作は許可。フィードバックを stderr で通知
-- **通知系**: exit 0。外部サービスに通知を送信
-- **fail-open ポリシー**: JSON パース失敗時は操作を許可（安全側に倒さず、作業を止めない）
-- フックは `--dangerously-skip-permissions` モードでも有効（多層防御）
+- **exit 2 = ブロック**。stderr がブロック理由として Claude に返る
+  - 例外: `UserPromptSubmit` は `exit 0 + stdout JSON {"decision":"block","reason":"..."}` で差し戻す
+- **exit 0 の stderr は debug log 止まり** — Claude にもユーザーにも届かない
+  - 警告を Claude に伝えるには **stdout に `hookSpecificOutput.additionalContext` を出す**
+  - 本テンプレートの警告系フックは共通の `emit_context()` でこれを実装している
+- **stdout の解釈は先頭 1 文字で決まる**: `{` なら JSON、それ以外はプレーンテキスト
+  - プレーンテキストが文脈として渡るのは `UserPromptSubmit` / `UserPromptExpansion` / `SessionStart` のみ
+- **fail-open ポリシー**: JSON パース失敗・jq 不在時は操作を許可(作業を止めない)
+- **`async: true`**: 外部通信など遅いフックはバックグラウンド実行にできる
+  - ただし async フックは `decision` / `permissionDecision` / `continue` を返せない
+  - 本テンプレートでは `notify-claude.sh`(ntfy 送信)のみ async
+- フックは `--dangerously-skip-permissions` モードでも有効(多層防御)
+
+### イベント別の decision 可否(抜粋)
+
+| イベント | 制御 |
+| -------- | ---- |
+| `PreToolUse` | `hookSpecificOutput.permissionDecision`(allow / deny / ask / defer) |
+| `UserPromptSubmit` / `PostToolUse` / `PostToolUseFailure` / `Stop` / `SubagentStop` / `PreCompact` | トップレベル `decision: "block"` + `reason` |
+| `SessionStart` / `Setup` / `SubagentStart` | **文脈注入のみ**(`additionalContext`)。ブロック不可 |
+| `PostCompact` / `SessionEnd` / `Notification` / `FileChanged` 等 | **制御なし**。ログ・クリーンアップ等の副作用専用 |
 
 ### フックタイプの使い分け
 
 | タイプ | 用途 | 例 |
 | ------ | ---- | -- |
 | `command` | シェルスクリプトを実行。パターンマッチ・ファイル検査等の決定論的チェック | safety-check.sh, protect-files.sh |
-| `prompt` | AIに判断を委ねるプロンプトを実行。文脈依存の柔軟な判定が必要な場合 | 「このBashコマンドは本番環境で安全か評価せよ」 |
+| `prompt` | AI に判断を委ねる。文脈依存の柔軟な判定が必要な場合 | 「この Bash コマンドは本番環境で安全か評価せよ」 |
+| `http` | 外部エンドポイントに POST。集中管理・監査基盤との連携 | 組織共通の監査サーバー |
+| `mcp_tool` | MCP ツールを直接呼ぶ | — |
 
-- デフォルトは `command` タイプを推奨（決定論的で高速）
-- `prompt` タイプはコンテキスト依存の判断が必要な場合のみ使用（トークンを消費する）
-- 両タイプを同一イベントに併用可能（command → prompt の順で評価）
+- デフォルトは `command` を推奨(決定論的で高速)
+- `prompt` はコンテキスト依存の判断が必要な場合のみ(トークンを消費する)
+- 同一イベントに複数タイプを併用可能
 
-### 拡張可能なフックイベント
+### 未使用の公式フックイベント(拡張の余地)
 
-本テンプレートで実装済み以外の、プロジェクト固有に追加可能なフックイベント:
+本テンプレートで未使用だが、プロジェクト固有に追加できるイベント:
 
 | イベント | タイミング | 用途例 |
 | -------- | ---------- | ------ |
-| `PreToolUse` (matcher: `"Task"`) | サブエージェント起動時 | 開始イベント捕捉、環境変数注入 |
-| `PreToolUse` (matcher: `"Agent"`) | エージェント spawn 直前 | spawn 前審査 |
-
-> 2026-04 時点で `UserPromptSubmit` / `SessionEnd` / `SubagentStop` / `PreCompact` / `PostToolUse (失敗ハンドリング)` / `PreToolUse (Skill)` は実装済み(本ファイル冒頭のフック一覧参照)。
-> 公式の hook イベントは `PreToolUse` / `PostToolUse` / `UserPromptSubmit` / `Notification` / `Stop` / `SubagentStop` / `PreCompact` / `SessionStart` / `SessionEnd` の 9 種類。
+| `Setup` | `--init-only` / `-p --init` 実行時 | CI での依存インストール・定期クリーンアップ |
+| `InstructionsLoaded` | CLAUDE.md / rules 読込時 | ルール適用の可観測性 |
+| `PermissionRequest` | 権限ダイアログ発生時 | 組織ポリシーによる自動 allow/deny |
+| `PermissionDenied` | auto モードで自動拒否されたとき | 拒否イベントの集計 |
+| `PostToolBatch` | 並列ツール実行の一括完了時 | バッチ単位の検証 |
+| `TaskCreated` / `TaskCompleted` | タスク作成・完了時 | タスク命名規約の強制・品質ゲート |
+| `TeammateIdle` | チームメイトが手待ちになったとき | エージェントチームの品質ゲート |
+| `StopFailure` | ターンがエラー終了したとき | 失敗率の計測 |
+| `FileChanged` | ファイル変更検知時 | 外部ツールとの同期 |
+| `WorktreeCreate` / `WorktreeRemove` | worktree 作成・削除時 | 分離環境のセットアップ |
+| `CwdChanged` / `DirectoryAdded` / `ConfigChange` | 作業ディレクトリ・設定変更時 | 環境変化の監査 |
+| `MessageDisplay` | アシスタント出力の表示時 | 表示内容のマスキング |
+| `Elicitation` / `ElicitationResult` | MCP のフォーム入力時 | 自動応答 |
 
 `settings.json` に追加する形式:
 
 ```json
 {
-  "UserPromptSubmit": [
-    {
-      "matcher": "",
-      "hooks": [
-        { "type": "command", "command": "./scripts/prompt-audit.sh", "timeout": 10 }
-      ]
-    }
-  ]
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "./scripts/gate-check.sh", "timeout": 30 }
+        ]
+      }
+    ]
+  }
 }
 ```
 
 ---
 
-## Deny ルール（settings.json）
+## Deny ルール(settings.json)
+
+### 破壊的シェル操作
 
 | パターン | 目的 |
 | -------- | ---- |
-| `Bash(rm -rf *)` | 再帰削除の防止 |
-| `Bash(rm -rf /*)` | ルートディレクトリ削除の防止 |
-| `Bash(rm -fr *)` | 再帰削除（フラグ順違い）の防止 |
-| `Bash(git push --force *)` | 強制プッシュの防止 |
-| `Bash(git push -f *)` | 強制プッシュ（短縮形）の防止 |
+| `Bash(rm -rf *)` / `Bash(rm -rf /*)` / `Bash(rm -fr *)` | 再帰削除の防止 |
+| `Bash(git push --force *)` / `Bash(git push -f *)` | 強制プッシュの防止 |
 | `Bash(git reset --hard *)` | ハードリセットの防止 |
 | `Bash(git clean -f *)` | 追跡外ファイル一括削除の防止 |
 | `Bash(sudo *)` | 特権昇格の防止 |
+| `Bash(chmod 777 *)` | 過剰な権限付与の防止 |
+| `Bash(dd if=*)` / `Bash(mkfs*)` | ディスク破壊操作の防止 |
+| `Bash(* --no-verify)` / `Bash(* --no-verify *)` | Git フック迂回の防止 |
+| `Skill(skill:deploy)` / `Skill(skill:deploy-*)` / `Skill(skill:*-deploy)` | deploy 系 skill の起動禁止 |
+| `Skill(skill:production-*)` / `Skill(skill:*-production)` | production 系 skill の起動禁止 |
+
+> `Tool(param:value)` 形式で任意ツールのトップレベル入力パラメータを deny/ask できる。
+> `Skill` の `skill` パラメータもその対象なので、高リスク skill を permission 層で止められる。
+> `scan-harness.sh` は同じ判定を profile で緩められる運用層として二重化している。
+
+### シークレットの読み取り禁止(新規)
+
+`protect-files.sh` は `Edit`/`Write` 系しか見ないため、**読み取り**は permissions で塞ぐ。
+`Read(...)` の deny は Edit/Write もあわせてブロックし、`cat` / `head` / `sed` 等
+Claude Code が認識する Bash のファイルコマンドにも適用される。
+
+| パターン | 目的 |
+| -------- | ---- |
+| `Read(./.env)` / `Read(./.env.*)` | 環境変数ファイル |
+| `Read(./secrets/**)` | シークレット置き場 |
+| `Read(.npmrc)` | レジストリトークン |
+| `Read(credentials.json)` / `Read(service-account.json)` | クラウド認証情報 |
+| `Read(id_rsa)` / `Read(id_ed25519)` / `Read(id_ecdsa)` / `Read(id_dsa)` | SSH 秘密鍵 |
+| `Read(*.pem)` / `Read(*.key)` / `Read(*.p12)` / `Read(*.pfx)` / `Read(*.jks)` / `Read(*.keystore)` | 証明書・キーストア |
+| `Edit(./.env)` / `Edit(./.env.*)` / `Edit(*.pem)` / `Edit(*.key)` | NotebookEdit も含めて改変を禁止 |
+
+> **注意**: Read/Edit の deny は Claude の組み込みファイルツールと認識可能な Bash コマンドにしか効かない。
+> Python / Node スクリプトが間接的に開くファイルまでは止まらない。
+> OS レベルで完全に塞ぐには `sandbox` を有効化する(後述)。
+
+### Ask ルール(確認を挟む操作)
+
+`acceptEdits` / `bypassPermissions` でも**必ず確認を挟む**外向き・不可逆操作:
+
+| パターン | 目的 |
+| -------- | ---- |
+| `Bash(git push *)` | リモートへの反映は毎回確認 |
+| `Bash(gh pr merge *)` / `Bash(gh release *)` / `Bash(gh repo delete *)` | マージ・リリース・削除 |
+| `Bash(npm publish *)` / `Bash(yarn publish *)` / `Bash(pnpm publish *)` | パッケージ公開 |
+| `Bash(docker push *)` | イメージ公開 |
+| `Bash(kubectl apply *)` / `Bash(kubectl delete *)` | クラスタ変更 |
+| `Bash(terraform apply *)` / `Bash(terraform destroy *)` | インフラ変更 |
+| `Bash(curl *)` / `Bash(wget *)` | 任意 URL への通信(URL 制限は WebFetch(domain:...) 側で行う) |
+
+> `deny` > `ask` > `allow` の順で評価される。`settings.local.json` の allow に
+> `Bash(git push *)` を書いても ask が優先される(意図的な設計)。
 
 ---
 
 ## 保護ファイル一覧
 
-### シークレット・認証情報（protect-files.sh）
+### シークレット・認証情報(protect-files.sh + deny ルール)
 
 | ファイル / パターン | 理由 |
 | -------------------- | ---- |
-| `.env`, `.env.local`, `.env.production` 等 | 環境変数（シークレット含有の可能性） |
-| `id_rsa`, `id_ed25519`, `id_ecdsa`, `id_dsa` | SSH秘密鍵 |
+| `.env`, `.env.local`, `.env.production` 等 | 環境変数(シークレット含有の可能性) |
+| `id_rsa`, `id_ed25519`, `id_ecdsa`, `id_dsa` | SSH 秘密鍵 |
 | `credentials.json`, `service-account.json` | クラウド認証情報 |
 | `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.keystore` | 証明書・キーストア |
 | `.claude/settings.json`, `.claude/settings.local.json` | Claude Code 設定 |
 
-### ツールチェーン設定（protect-files.sh）
+### ツールチェーン設定(protect-files.sh)
 
 | ファイル / パターン | 理由 |
 | -------------------- | ---- |
@@ -122,7 +213,7 @@
 
 ---
 
-## 禁止操作（CLAUDE.md + safety-check.sh）
+## 禁止操作(CLAUDE.md + safety-check.sh)
 
 | 操作 | 理由 |
 | ---- | ---- |
@@ -135,27 +226,56 @@
 
 ---
 
-## 3層防御モデル
+## 3 層防御モデル
 
 ```text
+Layer 0: OS サンドボックス(任意 / settings.local.json で opt-in)
+   └─ sandbox.enabled = true で Bash をサンドボックス実行。
+      任意のサブプロセスによるファイル・ネットワークアクセスまで OS レベルで制限
+  ↓
 Layer 1: フック群(--dangerously-skip-permissions でも有効)
    ├─ PreToolUse: safety-check / protect-files / scan-harness(Skill)
-   ├─ PostToolUse: commit-quality / console-warn / post-failure-log
+   ├─ PostToolUse: commit-quality / console-warn
+   ├─ PostToolUseFailure: post-failure-log
    ├─ UserPromptSubmit: user-prompt-submit
    ├─ SessionStart / SessionEnd: session-start / session-end
-   ├─ SubagentStop: subagent-audit
-   ├─ PreCompact: pre-compact-backup
-   └─ Stop / Notification: notify-claude
+   ├─ SubagentStart / SubagentStop: subagent-audit
+   ├─ PreCompact / PostCompact: pre-compact-backup / post-compact-restore
+   └─ Stop / Notification: notify-claude(async)
   ↓
-Layer 2: Deny ルール(settings.json)
+Layer 2: Deny / Ask ルール(settings.json — チーム共有)
+   ├─ deny: 破壊的操作・シークレット読取を無条件で遮断
+   └─ ask : 外向き・不可逆操作は権限モードに関わらず確認を挟む
   ↓ 通常モードで有効
-Layer 3: Allow ルール(settings.local.json)
+Layer 3: Allow ルール(settings.local.json — 個人)
   ↓ 通常モードでのみ有効
 meta : self-SAST(scan-harness.sh が constitution hash / secret 混入 / deny 弱体化を検出)
 ```
 
-> Layer 1 にはブロック系(`safety-check.sh` / `protect-files.sh` / `scan-harness.sh`) + 観測系(`subagent-audit.sh` / `pre-compact-backup.sh` / `post-failure-log.sh` / `session-end.sh`) + 警告系(`commit-quality.sh` / `console-warn.sh` / `user-prompt-submit.sh`) + 通知系(`notify-claude.sh`) が含まれる。観測・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で防御機構の一部として機能する。
+> Layer 1 にはブロック系(`safety-check.sh` / `protect-files.sh` / `scan-harness.sh`)
+> + 観測系(`subagent-audit.sh` / `pre-compact-backup.sh` / `post-compact-restore.sh` /
+> `post-failure-log.sh` / `session-end.sh`) + 警告系(`commit-quality.sh` /
+> `console-warn.sh` / `user-prompt-submit.sh`) + 通知系(`notify-claude.sh`)が含まれる。
+> 観測・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で
+> 防御機構の一部として機能する。
 
+- Layer 0 は既定で無効。閉域運用や外部コード実行を伴うプロジェクトで有効化する
 - Layer 1 は常に有効。最も信頼性の高い防御層
-- Layer 2 は通常モードで自動適用
-- Layer 3 はプロジェクト固有の許可ルール（テンプレートから設定）
+- Layer 2 は通常モードで自動適用。`ask` は `acceptEdits` / `bypassPermissions` でも効く
+- Layer 3 はプロジェクト固有の許可ルール(テンプレートから設定)
+
+### Layer 0 の有効化(任意)
+
+```json
+// .claude/settings.local.json
+{
+  "sandbox": {
+    "enabled": true,
+    "network": {
+      "allowedDomains": ["registry.npmjs.org", "github.com", "api.github.com"]
+    }
+  }
+}
+```
+
+サンドボックス内で失敗するコマンドがある場合は `sandbox.excludedCommands` で個別に外す。

@@ -6,7 +6,7 @@ description: >
   Covers: bundle optimization, rendering, state management, memory/storage management.
   Takes optional argument: /performance <target-component or instruction>
 argument-hint: "<target-component or instruction>"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 context: main
 ---
 

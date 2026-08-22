@@ -51,7 +51,7 @@ jobs:
           # - Opus 4.7: high-quality review, high cost
           # - Sonnet 4.6: standard review (recommended)
           # - Haiku 4.5: lightweight review, quick checks
-          model: claude-sonnet-4-6
+          model: claude-sonnet-5
           # Cost guardrail: max turns
           max_turns: 10
           # Additional prompt (project-specific review perspectives)

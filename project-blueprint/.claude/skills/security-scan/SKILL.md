@@ -7,7 +7,9 @@ description: >
   Outputs scan report to output/reports/security/ and raw data to testreport/security/ (requires Write permission to both).
   Takes optional argument: /security-scan <target-scope or instruction>
 argument-hint: "<対象範囲 or 指示>"
-allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), Write(testreport/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
+allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(testreport/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+disallowed-tools: Edit, NotebookEdit
+effort: high
 context: fork
 ---
 

@@ -6,12 +6,30 @@
 #   console.log, console.debug, debugger, print() (Python), dd() (PHP/Laravel)
 #
 # Input:  JSON via stdin  {"tool_name":"Edit","tool_input":{"file_path":"..."}}
-# Output: exit 0 = allow (warnings via stderr)
+# Output: exit 0 + stdout JSON hookSpecificOutput.additionalContext
+#         (stderr on exit 0 is invisible to Claude — official spec)
 #
 # Policy: warn-only (never blocks, provides feedback)
 # ==============================================================================
 
 set -uo pipefail
+
+# ── Shared emitter that actually reaches Claude ───────────────────────
+# Official spec: on exit 0, stderr only reaches the debug log — neither Claude nor
+# the user sees it. To tell Claude, print hookSpecificOutput.additionalContext on stdout.
+emit_context() {
+    local event="$1"; shift
+    local text="$*"
+    [[ -z "$text" ]] && return 0
+    if command -v jq &>/dev/null; then
+        jq -nc --arg e "$event" --arg t "$text" \
+            '{hookSpecificOutput:{hookEventName:$e, additionalContext:$t}}'
+    else
+        local esc
+        esc="$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$esc"
+    fi
+}
 
 # --- Extract the file path from stdin JSON ---
 INPUT="$(cat)"
@@ -70,12 +88,13 @@ for entry in "${DEBUG_PATTERNS[@]}"; do
     fi
 done
 
-# --- Output warnings ---
+# --- Report warnings to Claude ---
 if [[ ${#WARNINGS[@]} -gt 0 ]]; then
-    echo "⚠ Debug statements detected (consider removing before commit):" >&2
+    MSG="Debug statements detected (consider removing before commit):"
     for w in "${WARNINGS[@]}"; do
-        echo "  $w" >&2
+        MSG="$MSG"$'\n'"  $w"
     done
+    emit_context PostToolUse "$MSG"
 fi
 
 exit 0

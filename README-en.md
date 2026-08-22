@@ -28,7 +28,7 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
 ![5-line quickstart demo](.github/demo/quickstart.gif)
 
 > The 5 lines walk through `git clone` → `setup.sh` (places constitution.md, skills, hooks)
-> → `printf` to add §2 → launching `claude` → `/plan` accepted by Opus 4.7 —
+> → `printf` to add §2 → launching `claude` → `/plan` accepted by Opus 5 —
 > all visible in **30 seconds**.
 
 ---
@@ -56,7 +56,7 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
+13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure / UserPromptSubmit /
              SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)

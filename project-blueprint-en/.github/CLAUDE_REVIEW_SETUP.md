@@ -62,9 +62,9 @@ Cost vs quality trade-off:
 
 | Model | Use | Cost estimate |
 | ----- | --- | ------------- |
-| `claude-opus-4-7` | High-quality review, architecture audits | High ($0.30+/PR) |
-| `claude-sonnet-4-6` | Standard review (recommended) | Medium ($0.10/PR) |
-| `claude-haiku-4-5` | Lightweight review, quick checks | Low ($0.02/PR) |
+| `claude-opus-5` | High-quality review, architecture audits | High ($0.30+/PR) |
+| `claude-sonnet-5` | Standard review (recommended) | Medium ($0.10/PR) |
+| `claude-haiku-4-5-20251001` | Lightweight review, quick checks | Low ($0.02/PR) |
 
 ### Customize review axes
 

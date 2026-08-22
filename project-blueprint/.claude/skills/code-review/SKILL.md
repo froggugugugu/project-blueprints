@@ -7,7 +7,9 @@ description: >
   Outputs review report to output/reports/review/ (requires Write permission to output/reports/review/).
   Takes optional argument: /code-review <target-file or instruction>
 argument-hint: "<対象ファイル or 指示>"
-allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
+allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+disallowed-tools: Edit, NotebookEdit
+effort: high
 context: fork
 ---
 

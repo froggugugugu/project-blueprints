@@ -6,7 +6,8 @@
 #   1. Detect secrets / drift in the harness itself (.claude/, .mcp.json*, settings.json)
 #   2. Hash-monitor constitution.md (tamper detection)
 #   3. Effectively block high-risk skills (deploy*) via tool_input.skill
-#      (Skill(name) permission deny is not in the official spec yet, so we substitute via hook)
+#      Doubles up with the Skill(skill:deploy*) deny rules in settings.json.
+#      The deny rules are absolute; this hook is the operational layer a profile can relax.
 #
 # Profile switching: $BLUEPRINT_HOOK_PROFILE
 #   - minimal:  pass-through only
@@ -19,6 +20,23 @@
 # ==============================================================================
 
 set -uo pipefail
+
+# ── Shared emitter that actually reaches Claude ───────────────────────
+# Official spec: on exit 0, stderr only reaches the debug log — neither Claude nor
+# the user sees it. To tell Claude, print hookSpecificOutput.additionalContext on stdout.
+emit_context() {
+    local event="$1"; shift
+    local text="$*"
+    [[ -z "$text" ]] && return 0
+    if command -v jq &>/dev/null; then
+        jq -nc --arg e "$event" --arg t "$text" \
+            '{hookSpecificOutput:{hookEventName:$e, additionalContext:$t}}'
+    else
+        local esc
+        esc="$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$esc"
+    fi
+}
 
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
@@ -41,7 +59,7 @@ case "$SKILL" in
     #       Only explicit deploy / production prefixes are blocked.
     deploy|deploy-*|*-deploy|production-*|*-production)
         echo "🛡️  scan-harness: high-risk skill '$SKILL' is effectively blocked" >&2
-        echo "  Reason: this template denies deploy/production-class skills (Skill() permission not yet supported, hook substitute in use)" >&2
+        echo "  Reason: this template denies deploy/production-class skills (doubled up with the Skill(skill:...) deny rules in settings.json)" >&2
         echo "  To allow: set BLUEPRINT_HOOK_PROFILE=minimal in settings.local.json" >&2
         exit 2
         ;;
@@ -119,17 +137,21 @@ if [[ ${#ISSUES[@]} -eq 0 ]]; then
     exit 0
 fi
 
-echo "🛡️  scan-harness: self-SAST detected ${#ISSUES[@]} issue(s)" >&2
+SUMMARY="scan-harness: self-SAST detected ${#ISSUES[@]} issue(s)"
 for i in "${ISSUES[@]}"; do
-    echo "  - $i" >&2
+    SUMMARY="$SUMMARY"$'\n'"  - $i"
 done
 
 case "$PROFILE" in
     strict)
+        # exit 2 is the only path where stderr reaches Claude (official spec)
+        printf '%s\n' "$SUMMARY" >&2
         echo "(BLUEPRINT_HOOK_PROFILE=strict, blocking skill invocation)" >&2
         exit 2
         ;;
     standard|*)
+        # non-blocking: tell Claude via stdout additionalContext
+        emit_context PreToolUse "$SUMMARY"
         exit 0
         ;;
 esac

@@ -1,6 +1,15 @@
+---
+paths:
+  - "docs/**/*.md"
+  - "output/**/*.md"
+  - "input/**/*.md"
+  - "project-config.md"
+---
 # Document Management Policy
 
-> Imported by `CLAUDE.md` to prevent CLAUDE.md bloat. Cross-cutting rule reference.
+> **path-specific rule**: auto-loads only when Claude touches docs/ · output/ · input/ · project-config.md
+
+> Split out of CLAUDE.md to keep it small. It loads automatically per the frontmatter above, and skills can still reference it explicitly with `@import`.
 
 ## Human-managed files
 

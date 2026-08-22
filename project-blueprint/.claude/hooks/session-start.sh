@@ -3,14 +3,31 @@
 # session-start.sh — SessionStart hook
 #
 # Runs at the beginning of each Claude Code session.
-# Checks project readiness and outputs warnings to stderr
-# so Claude can inform the user of any setup issues.
+# Checks project readiness and reports findings to Claude.
 #
-# Output: stderr warnings are fed back to Claude as context
+# Output: stdout JSON hookSpecificOutput.additionalContext (SessionStart)
+#         NOTE: stderr on exit 0 never reaches Claude (official spec)
 # Exit:   always 0 (informational only, never blocks)
 # ==============================================================================
 
 set -uo pipefail
+
+# ── Claude へ所見を届けるための共通エミッタ ────────────────────────────
+# 公式仕様: exit 0 時の stderr は debug log にしか残らず、Claude にもユーザーにも
+# 届かない。Claude に伝えるには stdout に hookSpecificOutput.additionalContext を出す。
+emit_context() {
+    local event="$1"; shift
+    local text="$*"
+    [[ -z "$text" ]] && return 0
+    if command -v jq &>/dev/null; then
+        jq -nc --arg e "$event" --arg t "$text" \
+            '{hookSpecificOutput:{hookEventName:$e, additionalContext:$t}}'
+    else
+        local esc
+        esc="$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$esc"
+    fi
+}
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 warnings=()
@@ -43,13 +60,13 @@ if [[ ! -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
     warnings+=("settings.local.json が未作成です。settings.local.json.template を参考に作成してください。")
 fi
 
-# --- Output warnings ---
+# --- Claude に状態を通知 ---
 if [[ ${#warnings[@]} -gt 0 ]]; then
-    echo "=== Session Start: プロジェクト状態チェック ===" >&2
+    MSG="プロジェクト状態チェック(project-blueprint SessionStart):"
     for w in "${warnings[@]}"; do
-        echo "  - $w" >&2
+        MSG="$MSG"$'\n'"  - $w"
     done
-    echo "================================================" >&2
+    emit_context SessionStart "$MSG"
 fi
 
 exit 0

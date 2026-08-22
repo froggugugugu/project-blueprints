@@ -2,10 +2,13 @@
 name: performance-analyst
 description: Use for performance measurement and bottleneck analysis. For "why is it slow?", "bundle bloat cause", "memory leak", "over-rendering", etc. Measurement-first — never propose without measuring.
 tools: Read, Grep, Glob, Bash
-model: claude-sonnet-4-6
-color: yellow
+model: sonnet
+effort: high
+maxTurns: 40
+memory: project
 skills:
   - performance
+color: orange
 ---
 
 # Performance Analyst Agent — Performance Analysis Specialist

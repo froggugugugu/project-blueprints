@@ -26,7 +26,7 @@ cd ./my-app && claude
 ![5 行 quickstart デモ](.github/demo/quickstart.gif)
 
 > 5 行を実行すると `git clone` → `setup.sh`(constitution.md・skills・hooks 配置)
-> → `printf` で §2 追記 → `claude` 起動 → `/plan ログイン機能の設計` を Opus 4.7
+> → `printf` で §2 追記 → `claude` 起動 → `/plan ログイン機能の設計` を Opus 5
 > が受理 — までを **30 秒で確認**できます。
 
 ---
@@ -54,7 +54,7 @@ cd ./my-app && claude
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
+13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure / UserPromptSubmit /
              SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)

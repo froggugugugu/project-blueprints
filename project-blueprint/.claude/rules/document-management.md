@@ -1,6 +1,15 @@
+---
+paths:
+  - "docs/**/*.md"
+  - "output/**/*.md"
+  - "input/**/*.md"
+  - "project-config.md"
+---
 # ドキュメント管理方針
 
-> 本ファイルは `CLAUDE.md` から `@import` される。CLAUDE.md 肥大化防止のため切り出し。
+> **path-specific rule**: docs/ · output/ · input/ · project-config.md に触れたときだけ自動 load される
+
+> CLAUDE.md 肥大化防止のため切り出したルール。上の frontmatter に従って自動 load され、必要な skill からは `@import` でも明示参照できる。
 
 ## 人間が管理するファイル
 

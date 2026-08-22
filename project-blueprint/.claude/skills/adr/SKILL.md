@@ -7,7 +7,8 @@ description: >
   Architecture Decision Records (ADR) を作成・管理し、設計判断のコンテキスト・根拠・影響を記録する。
   引数は省略可能: /adr <判断タイトル or 指示>
 argument-hint: "<判断タイトル or 指示>"
-allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), Agent, WebSearch, WebFetch
+allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Agent, WebSearch, WebFetch
+effort: low
 context: fork
 ---
 

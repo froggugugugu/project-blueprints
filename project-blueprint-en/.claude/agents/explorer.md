@@ -2,9 +2,11 @@
 name: explorer
 description: Use when broad codebase exploration, structural grasp, or dependency investigation is needed. For "where is X?", "how is Y implemented?" type queries. Read-only.
 tools: Read, Grep, Glob
-model: claude-haiku-4-5
-color: blue
+model: haiku
+effort: low
+maxTurns: 30
 memory: project
+color: blue
 ---
 
 # Explorer Agent — Codebase Exploration Specialist

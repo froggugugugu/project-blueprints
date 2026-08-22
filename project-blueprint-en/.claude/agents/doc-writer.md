@@ -2,9 +2,12 @@
 name: doc-writer
 description: Use when a new markdown document must be authored under `output/` — reports, briefs, summaries. Handles tasks like "write up the investigation as a report", "draft a PR description", "produce a one-page brief". Updates to existing documents are `doc-synchronizer`'s responsibility.
 tools: Read, Edit, Write, Grep, Glob
-model: claude-sonnet-4-6
-color: yellow
+model: sonnet
+effort: medium
+permissionMode: acceptEdits
+maxTurns: 30
 memory: project
+color: yellow
 ---
 
 # Doc Writer Agent — New Document Authoring
@@ -20,7 +23,7 @@ Chooses structure, granularity, and vocabulary so that the reader (typically a h
 | ---- | ------------------- | ------------- |
 | Target | **Existing** files under `docs/` | **New** files under `output/` (reports / briefs / summaries) |
 | Operation | Edit-centric (minimal diff) | Write-centric (greenfield) |
-| Model | Haiku 4.5 (mechanical sync) | Sonnet 4.6 (needs structural judgment) |
+| Model | `haiku` (mechanical sync) | `sonnet` (needs structural judgment) |
 | Example | Adds one row to the routing table in `docs/project.md` | Generates `output/reports/review/REVIEW_auth.md` from scratch |
 
 Use `doc-synchronizer` for small diffs to existing docs; use this agent to author new documents.

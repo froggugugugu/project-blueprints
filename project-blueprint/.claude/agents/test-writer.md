@@ -2,10 +2,13 @@
 name: test-writer
 description: テストコードを新規作成・追加するときに使用する。Vitest / Playwright ユニット・E2E テストの作成、境界値・エッジケース網羅、既存テストパターンの踏襲が必要なタスク。テストファイルのみ変更する。
 tools: Read, Edit, Write, Grep, Glob, Bash
-model: claude-sonnet-4-6
-color: magenta
+model: sonnet
+effort: medium
+maxTurns: 40
+memory: project
 skills:
   - e2e-testing
+color: pink
 ---
 
 # Test Writer Agent — テスト作成専門

@@ -67,6 +67,13 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - **Primary owner**: `docs/*.md` and `project-config.md` §2/§3 are consolidated by `/implementing-features`. Other skills only report findings
 - **Details** (conflict-prevention tables / docs update rules): `/implementing-features` loads `@.claude/rules/document-management.md` at invocation
 
+## Rule hierarchy (`.claude/rules/`)
+
+- No `paths:` = loaded in every session (only `git-conventions.md`)
+- With `paths:` = loaded only when Claude touches a matching file (`document-management.md` / `workflow-advanced.md`)
+- Enable language- or layer-specific rules by copying a `.example` and editing its `paths:`
+- Task-specific procedures belong in a skill, not in a rule
+
 ## Architecture governance
 
 - Restrict dependency direction between layers; details in `project-config.md` §4.4
@@ -84,7 +91,9 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 
 - Same-file simultaneous edits prohibited
 - Shared-layer changes done sequentially
-- `teammateMode`: `in-process` (fast) / `worktree` (isolated) in `settings.local.json`
+- Enable Agent Teams with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` (off by default)
+- `teammateMode` selects where teammates are **displayed** (`in-process` / `auto` / `tmux` / `iterm2`).
+  To isolate the repository, use a subagent's `isolation: worktree`
 - PJM team reads `input/`, generates deliverables in `output/`; PL handles task breakdown / assignment
 
 ## Implementation workflow
@@ -114,7 +123,9 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate**
 ## Security
 
 - Always validate user input / regularly check dependency CVEs
-- **3-layer defense**: hooks (Layer 1) → deny (Layer 2) → allow (Layer 3)
+- **Defense in depth**: sandbox (Layer 0, optional) → hooks (Layer 1) → deny/ask (Layer 2) → allow (Layer 3)
+- `.env`, private keys and `*.pem` are blocked from being read at all by `Read()` deny rules
+- Outbound, irreversible operations (push / merge / publish / apply) confirm every time via `ask`
 - Hooks remain active even with `--dangerously-skip-permissions`
 - SessionStart hook checks `project-config.md` / `docs/` / `settings.local.json` at session start
 - Detailed deny lists, protected files, and permissions guide are loaded by security-related skills (`/security-scan`, etc.)
@@ -153,7 +164,13 @@ Check existing code, patterns, and official docs before implementing. Priority: 
 
 Use subagents aggressively to avoid main-context bloat. 1 subagent = 1 task.
 
-### 4. Detailed procedures (loaded only when needed)
+### 4. Context preservation
+
+`/rewind` restores files and conversation from a checkpoint (`fileCheckpointingEnabled`).
+On compaction, PreCompact backs the transcript up and the marker dropped by PostCompact is
+collected on the next prompt to re-inject the core rules (see `@.claude/guardrails.md`).
+
+### 5. Detailed procedures (loaded only when needed)
 
 Self-improvement loop / pre-completion verification / pursuit of elegance / autonomous bug fixing /
 task management / core principles are loaded by individual skills from

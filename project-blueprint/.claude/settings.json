@@ -6,27 +6,17 @@
     "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/statusline.sh",
     "padding": 0
   },
+  "plansDirectory": "./output/plans",
+  "fileCheckpointingEnabled": true,
   "hooks": {
-    "Stop": [
+    "SessionStart": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh stop",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh notify",
-            "timeout": 15
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh",
+            "timeout": 10
           }
         ]
       }
@@ -55,7 +45,7 @@
         ]
       },
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
@@ -95,9 +85,11 @@
             "timeout": 10
           }
         ]
-      },
+      }
+    ],
+    "PostToolUseFailure": [
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -107,26 +99,14 @@
         ]
       }
     ],
-    "SessionStart": [
+    "SubagentStart": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-audit.sh",
             "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh",
-            "timeout": 15
           }
         ]
       }
@@ -154,6 +134,56 @@
           }
         ]
       }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-restore.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh stop",
+            "async": true,
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-claude.sh notify",
+            "async": true,
+            "timeout": 15
+          }
+        ]
+      }
     ]
   },
   "permissions": {
@@ -165,7 +195,53 @@
       "Bash(git push -f *)",
       "Bash(git reset --hard *)",
       "Bash(git clean -f *)",
-      "Bash(sudo *)"
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)",
+      "Bash(dd if=*)",
+      "Bash(mkfs*)",
+      "Bash(* --no-verify)",
+      "Bash(* --no-verify *)",
+      "Skill(skill:deploy)",
+      "Skill(skill:deploy-*)",
+      "Skill(skill:*-deploy)",
+      "Skill(skill:production-*)",
+      "Skill(skill:*-production)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(.npmrc)",
+      "Read(credentials.json)",
+      "Read(service-account.json)",
+      "Read(id_rsa)",
+      "Read(id_ed25519)",
+      "Read(id_ecdsa)",
+      "Read(id_dsa)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(*.p12)",
+      "Read(*.pfx)",
+      "Read(*.jks)",
+      "Read(*.keystore)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Edit(*.pem)",
+      "Edit(*.key)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh release *)",
+      "Bash(gh repo delete *)",
+      "Bash(npm publish *)",
+      "Bash(yarn publish *)",
+      "Bash(pnpm publish *)",
+      "Bash(docker push *)",
+      "Bash(kubectl apply *)",
+      "Bash(kubectl delete *)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)",
+      "Bash(curl *)",
+      "Bash(wget *)"
     ]
   },
   "enabledPlugins": {

@@ -32,7 +32,7 @@ project-blueprints/
 │   │   ├── teams/               # 6 team templates (TEAM_*.md files)
 │   │   ├── agents/              # 8 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
-│   │   ├── hooks/               # 12 hook scripts (safety + observability; .sh count)
+│   │   ├── hooks/               # 13 hook scripts (safety + observability; .sh count)
 │   │   └── tasks/               # Task instruction templates
 │   ├── docs/                    # AI-managed technical docs (stubs)
 │   ├── input/                   # Human requirements input
@@ -60,7 +60,7 @@ project-blueprints/
 
 **Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
-**Hook system** (12 hook scripts in `.claude/hooks/*.sh`, 13 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `SessionStart` / `SessionEnd` / `SubagentStop` / `PreCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup roles. See `.claude/guardrails.md`.
+**Hook system** (13 hook scripts in `.claude/hooks/*.sh`, 15 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup roles. See `.claude/guardrails.md`.
 
 **MCP + GitHub Actions**: `.mcp.json.template` for project-shared MCP servers; `.github/workflows/claude-review.yml.template` for `@claude` PR review automation.
 

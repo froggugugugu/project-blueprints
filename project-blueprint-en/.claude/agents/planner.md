@@ -2,10 +2,13 @@
 name: planner
 description: Use to devise a design or plan before implementation. For "how should I build X?", "impact analysis", "task breakdown", or "alignment check with existing architecture". Read-only.
 tools: Read, Grep, Glob
-model: claude-sonnet-4-6
-color: green
+model: sonnet
+effort: high
+maxTurns: 40
+memory: project
 skills:
   - adr
+color: green
 ---
 
 # Planner Agent — Design Planning Specialist

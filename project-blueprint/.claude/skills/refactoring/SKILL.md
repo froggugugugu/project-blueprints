@@ -7,7 +7,8 @@ description: >
   Covers feature responsibility migration, store split/merge, component decomposition, utility extraction, type consolidation, dependency rule fixes.
   Takes optional argument: /refactoring <target-directory or instruction>
 argument-hint: "<対象ディレクトリ or 指示>"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+effort: high
 context: main
 ---
 

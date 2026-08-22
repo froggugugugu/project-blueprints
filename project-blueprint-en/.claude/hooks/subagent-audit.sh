@@ -1,20 +1,29 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# subagent-audit.sh — SubagentStop hook
+# subagent-audit.sh — SubagentStart / SubagentStop hook
 #
-# Records subagent completion events as JSONL for observability in parallel
-# team workflows (TEAM_PJM --parallel etc.).
+# Records subagent start and completion events as JSONL for observability in
+# parallel team workflows (TEAM_PJM --parallel etc.).
 # Does NOT block subagent execution (observation only).
 #
-# Input:  JSON via stdin  {"hook_event":"SubagentStop", ...}
+# On SubagentStart it also returns additionalContext, injecting the harness's
+# minimum guardrails into the subagent's opening context.
+# (Official spec: SubagentStart is "Context only" — it can't block, but it can
+#  inject context. SubagentStop uses the Stop decision format; here we only log.)
+#
+# Input:  JSON via stdin
+#         start: {"hook_event_name":"SubagentStart","agent_id":"...","agent_type":"..."}
+#         stop : {"hook_event_name":"SubagentStop","agent_id":"...","agent_type":"...",
+#                 "last_assistant_message":"..."}
 # Output: appends one JSONL line to testreport/agents/<session>.jsonl
+#         On SubagentStart only, prints additionalContext JSON on stdout
 #
 # Policy: fail-open (if parsing fails, the event is allowed to proceed)
-# Note:   `SubagentStart` is NOT an official Claude Code hook event (as of 2026-04).
-#         Invocation-start events can be captured via PreToolUse matcher="Task" instead.
 # ==============================================================================
 
 set -uo pipefail
+
+PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 
 # --- Paths ---
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
@@ -34,14 +43,18 @@ if [[ -z "$INPUT" ]]; then
 fi
 
 # --- Extract event fields ---
+# `hook_event_name` is the official field name. `hook_event` / `hookEventName`
+# are kept for compatibility with legacy payloads.
 if command -v jq &>/dev/null; then
-    EVENT="$(echo "$INPUT" | jq -r '.hook_event // .hookEventName // "unknown"' 2>/dev/null)"
-    AGENT_NAME="$(echo "$INPUT" | jq -r '.subagent_type // .tool_input.subagent_type // "unknown"' 2>/dev/null)"
-    AGENT_ID="$(echo "$INPUT" | jq -r '.subagent_id // .agent_id // "unknown"' 2>/dev/null)"
+    EVENT="$(echo "$INPUT" | jq -r '.hook_event_name // .hook_event // .hookEventName // "unknown"' 2>/dev/null)"
+    AGENT_NAME="$(echo "$INPUT" | jq -r '.agent_type // .subagent_type // .tool_input.subagent_type // "unknown"' 2>/dev/null)"
+    AGENT_ID="$(echo "$INPUT" | jq -r '.agent_id // .subagent_id // "unknown"' 2>/dev/null)"
 else
     # Fallback: rough extraction without jq
-    EVENT="$(echo "$INPUT" | sed -n 's/.*"hook_event"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
-    AGENT_NAME="$(echo "$INPUT" | sed -n 's/.*"subagent_type"\s*:\s*"\([^"]*\)".*/\1/p' | head -1)"
+    EVENT="$(echo "$INPUT" | sed -n 's/.*"hook_event_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+    [[ -z "$EVENT" ]] && EVENT="$(echo "$INPUT" | sed -n 's/.*"hook_event"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+    AGENT_NAME="$(echo "$INPUT" | sed -n 's/.*"agent_type"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+    [[ -z "$AGENT_NAME" ]] && AGENT_NAME="unknown"
     AGENT_ID="unknown"
 fi
 
@@ -72,6 +85,24 @@ else
     printf '{"timestamp":"%s","event":"%s","agent_name":"%s","agent_id":"%s","session_id":"%s"}\n' \
         "$TIMESTAMP" "$(esc "$EVENT")" "$(esc "$AGENT_NAME")" "$(esc "$AGENT_ID")" "$(esc "$SESSION_ID")" \
         >> "$LOG_FILE" 2>/dev/null || true
+fi
+
+# --- SubagentStart: inject guardrails into the subagent ---
+# The minimal profile skips injection and only keeps the log line.
+if [[ "$EVENT" == "SubagentStart" && "$PROFILE" != "minimal" ]]; then
+    CTX="[harness guardrails] Conventions for this repository:
+  - Create new artifacts only under output/. Update docs/ with minimal diffs only
+  - Do not modify project-config.md outside §2 / §3 / §11 (human decision area)
+  - input/requirements/ and constitution.md are read-only
+  - Never read or emit secrets (.env / private keys / tokens)
+  - Pair every conclusion with evidence (file path:line number)"
+    if command -v jq &>/dev/null; then
+        jq -nc --arg t "$CTX" \
+            '{hookSpecificOutput:{hookEventName:"SubagentStart", additionalContext:$t}}'
+    else
+        esc2="$(printf '%s' "$CTX" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"SubagentStart","additionalContext":"%s"}}\n' "$esc2"
+    fi
 fi
 
 # Always exit 0 — this is observation only, never blocks

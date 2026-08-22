@@ -3,7 +3,30 @@
 ## Overview
 
 Provides 6 specialized team templates for different project activity phases.
-Each team is mapped to the 15 skills under `.claude/skills/`.
+Each team is mapped to the skills under `.claude/skills/`.
+
+### Relationship to the official Agent Teams feature
+
+`TEAM_*.md` files are **prompt-level orchestration definitions**, a different layer
+from Claude Code's official Agent Teams feature. The two are meant to be combined.
+
+| | `TEAM_*.md` (this template) | Official Agent Teams |
+| --- | --- | --- |
+| What it is | Markdown role definitions and phase procedures | Multiple Claude Code instances |
+| How it starts | Point Claude at the file path | Ask for teammates in natural language |
+| Context | Main session + subagents | Independent per teammate |
+| Enablement | None needed (always available) | Requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` |
+| Cost | Low to medium | High (a separate instance per teammate) |
+
+- **`TEAM_*.md` alone is the default** and is usually enough. For sequential phases or
+  work that edits the same files, it is more efficient than official Agent Teams
+- Add official Agent Teams only where **parallel exploration genuinely pays off**:
+  debugging competing hypotheses, cross-layer concurrent implementation, multi-angle review
+- When combining, `teammateMode` in `settings.local.json` selects where teammates are
+  **displayed** (`in-process` / `auto` / `tmux` / `iterm2`). `worktree` is not a teammateMode value
+- With official Agent Teams enabled, a subagent Claude names launches as a teammate, so a
+  team can form even when you did not ask for one
+- To apply quality gates to teammates as well, use the `TeammateIdle` / `TaskCompleted` hooks
 
 ## Quick Start
 
