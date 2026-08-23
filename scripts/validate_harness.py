@@ -499,6 +499,30 @@ def check_plugin_manifest(root: Path, rep: Report) -> None:
                         if m and not (root / m.group(1)).exists():
                             rep.error(str(hooks_file), f"{event} が参照する {m.group(1)} が存在しません")
 
+    # プラグインのコンポーネント型に存在しないものは、plugin 経由では配布されない。
+    # clone 経路では動くため ERROR ではなく WARN として毎回可視化する。
+    for missing_dir, why in (
+        (".claude/rules", "ルール用のコンポーネント型が公式仕様に存在しない"),
+        (".claude/teams", "チーム用のコンポーネント型が公式仕様に存在しない"),
+    ):
+        if (root / missing_dir).is_dir():
+            rep.warn(where, f"`{missing_dir}/` は plugin 配布されません ({why}) — clone 経路でのみ有効")
+
+    # skill 本文中の bare な相互参照は、plugin では名前空間化されて起動できない。
+    plugin_name = manifest.get("name", root.name)
+    bare_refs = 0
+    for sp in sorted((root / ".claude/skills").glob("*/SKILL.md")):
+        body = sp.read_text(encoding="utf-8")
+        for other in (root / ".claude/skills").iterdir():
+            if other.is_dir() and other.name != sp.parent.name:
+                bare_refs += len(re.findall(rf"(?<![\w:/]){re.escape('/' + other.name)}\b", body))
+    if bare_refs:
+        rep.warn(
+            where,
+            f"skill 本文に他 skill への bare 参照が {bare_refs} 箇所あります — "
+            f"plugin では `/{plugin_name}:<skill>` に名前空間化されるため、そのままでは起動できません",
+        )
+
     # プラグイン配布時、subagent の hooks / mcpServers / permissionMode は無視される。
     for entry in manifest.get("agents", []) or []:
         agent_path = plugin_rel(root, str(entry))

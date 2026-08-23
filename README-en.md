@@ -82,30 +82,42 @@ For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/R
 
 ## Two ways to install
 
-| | clone + `setup.sh` (**primary**) | plugin |
+> **The plugin path is a secondary route for using individual skills.**
+> For the full gated lifecycle, use clone. As the table shows, parts of the harness
+> are simply **not distributable** as a plugin.
+
+| | clone + `setup.sh` (**primary**) | plugin (secondary) |
 | --- | --- | --- |
 | Install | `bash setup.sh <dir> --profile <p>` | `/plugin marketplace add froggugugugu/project-blueprints` then `/plugin install project-blueprint-en@project-blueprints` |
 | Lands in | Real files copied into your project | Claude Code's plugin cache |
 | Editing | **Freely customizable per project** | Read-only (overwritten on update) |
-| Skill invocation | `/prd` | `/project-blueprint-en:prd` |
-| Profiles | `minimal` / `standard` / `full` | Full set only |
 | Updating | Re-run `setup.sh` | `/plugin update` |
-| `project-config.md`, `docs/`, `input/`, `output/` | Included | **Not included** (clone separately) |
+| Profiles | `minimal` / `standard` / `full` | Full set only |
+| skills (17) | ✅ `/prd` | ⚠️ `/project-blueprint-en:prd` (namespaced) |
+| agents (8) | ✅ | ⚠️ `permissionMode` ignored |
+| hooks (13) | ✅ | ✅ |
+| output-styles (4) | ✅ | ✅ |
+| **`.claude/rules/`** | ✅ | ❌ **Not distributed** (no rules component type in plugins) |
+| **`.claude/teams/` (6)** | ✅ | ❌ **Not distributed** (same reason) |
+| `project-config.md`, `docs/`, `input/`, `output/` | ✅ | ❌ Not distributed (clone separately) |
+| `constitution.md`, `guardrails.md`, `pitfalls.md` | ✅ | ❌ Not distributed |
 
-Choose **clone** when you want to tailor the harness to one project; choose **plugin**
-when you want the same harness across many projects and want updates to follow.
-Both point at the same file tree, so the skills, agents, and hooks are identical.
+### Known limitations of plugin distribution
 
-### What stops working under plugin distribution
-
-Per the official spec, `permissionMode`, `hooks`, and `mcpServers` frontmatter is
-**ignored** on plugin-shipped subagents (a security restriction). In this template:
-
-- `permissionMode: acceptEdits` on `doc-synchronizer` and `doc-writer` has no effect,
-  so they prompt for permission even inside `docs/` and `output/`
+1. **`.claude/rules/` does not load** — the plugin manifest has no field for rules.
+   That includes `git-conventions.md` (Conventional Commits), which otherwise loads in
+   every session. The `@import`s to `.claude/rules/` in 4 skills and `CLAUDE.md` do not resolve.
+2. **`.claude/teams/` is not distributed** — team templates such as `TEAM_PJM.md` are unavailable.
+3. **Cross-skill references are affected by namespacing** — skill bodies contain 75
+   references to other skills (`/implementing-features` x14, `/prd` x12, `/code-review` x11, …).
+   Under a plugin these become `/project-blueprint-en:implementing-features`, so a bare
+   `/implementing-features` in the prose no longer names an invocable command.
+4. **Subagent `permissionMode` / `hooks` / `mcpServers` are ignored** (official security
+   restriction). Here, `permissionMode: acceptEdits` on `doc-synchronizer` and `doc-writer`
+   has no effect, so they prompt even inside `docs/` and `output/`.
 
 Under clone distribution everything behaves as intended. The validation gate reports
-this difference as a WARN on every run.
+items 1–4 as WARNs on every run.
 
 > The plugin manifests (`.claude-plugin/`) are generated from `.claude/settings.json`
 > by `scripts/gen_plugin_manifest.py`. Regenerate rather than hand-edit — the gate

@@ -78,29 +78,41 @@ frontmatter の enum 逸脱、参照されない権限ルール(`Write(path)` �
 
 ## 2 つの導入方法
 
-| | clone + `setup.sh`（**主経路**） | plugin |
+> **plugin は「一部の skill を手軽に使う」ための副経路**であり、
+> 5 品質ゲートを含むフルライフサイクルを回すなら clone を使うこと。
+> 下表のとおり plugin ではハーネスの一部が**そもそも配布されない**。
+
+| | clone + `setup.sh`（**主経路**） | plugin（副経路） |
 | --- | --- | --- |
 | 導入 | `bash setup.sh <dir> --profile <p>` | `/plugin marketplace add froggugugugu/project-blueprints` → `/plugin install project-blueprint@project-blueprints` |
 | 配置先 | プロジェクトに実ファイルをコピー | Claude Code のプラグインキャッシュ |
 | 編集 | **プロジェクトごとに自由に改変できる** | 読み取り専用（更新で上書きされる） |
-| skill の呼び方 | `/prd` | `/project-blueprint:prd` |
-| プロファイル | `minimal` / `standard` / `full` を選べる | フル構成のみ |
 | 更新 | 再度 `setup.sh` を実行 | `/plugin update` |
-| `project-config.md`・`docs/`・`input/`・`output/` | 同梱される | **同梱されない**（別途 clone が必要） |
+| プロファイル | `minimal` / `standard` / `full` を選べる | フル構成のみ |
+| skills（17） | ✅ `/prd` | ⚠️ `/project-blueprint:prd`（名前空間化される） |
+| agents（8） | ✅ | ⚠️ `permissionMode` が無視される |
+| hooks（13） | ✅ | ✅ |
+| output-styles（4） | ✅ | ✅ |
+| **`.claude/rules/`** | ✅ | ❌ **配布されない**（plugin にルール用のコンポーネント型が無い） |
+| **`.claude/teams/`（6）** | ✅ | ❌ **配布されない**（同上） |
+| `project-config.md`・`docs/`・`input/`・`output/` | ✅ | ❌ 配布されない（別途 clone が必要） |
+| `constitution.md`・`guardrails.md`・`pitfalls.md` | ✅ | ❌ 配布されない |
 
-**プロジェクト固有にカスタマイズするなら clone**、**複数プロジェクトで同じ構成を使い回して
-更新も追随したいなら plugin** を選ぶ。両者は同じファイルツリーを指しているため、
-skill / agent / hook の中身は完全に一致する。
+### plugin 配布時の既知の制約
 
-### plugin 配布時に効かなくなるもの
+1. **`.claude/rules/` が読み込まれない** — プラグインマニフェストにルール用のフィールドが
+   存在しない。全セッション常時 load される `git-conventions.md`（Conventional Commits 規約）も
+   効かなくなる。`.claude/rules/` を参照する 4 skill と `CLAUDE.md` の `@import` も解決しない。
+2. **`.claude/teams/` が配布されない** — `TEAM_PJM.md` 等のチームテンプレートは使えない。
+3. **skill の相互参照が名前空間の影響を受ける** — skill 本文には他 skill への参照が
+   75 箇所ある（`/implementing-features` 14 / `/prd` 12 / `/code-review` 11 ...）。
+   plugin ではこれらが `/project-blueprint:implementing-features` になるため、本文中の
+   bare な `/implementing-features` はそのままでは起動できない。
+4. **subagent の `permissionMode` / `hooks` / `mcpServers` が無視される**（公式のセキュリティ制約）。
+   本テンプレートでは `doc-synchronizer` / `doc-writer` の `permissionMode: acceptEdits` が効かず、
+   `docs/` / `output/` への書き込みでも権限確認が出る。
 
-公式仕様上、プラグインが提供する subagent では `permissionMode` / `hooks` / `mcpServers`
-の frontmatter が**無視される**（セキュリティ上の制約）。本テンプレートでは:
-
-- `doc-synchronizer` / `doc-writer` の `permissionMode: acceptEdits` が効かず、
-  `docs/` / `output/` への書き込みでも権限確認が出る
-
-clone 配布ではすべて意図どおり動く。検証ゲートがこの差分を WARN として毎回報告する。
+clone 配布ではすべて意図どおり動く。検証ゲートが 1〜4 を毎回 WARN として報告する。
 
 > プラグインマニフェスト（`.claude-plugin/`）は `scripts/gen_plugin_manifest.py` が
 > `.claude/settings.json` から生成する。手編集せず再生成すること（ゲートが差分を検出する）。
