@@ -54,11 +54,23 @@ cd ./my-app && claude
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure / UserPromptSubmit /
-             SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
+13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
+             UserPromptSubmit / SessionStart / SessionEnd / SubagentStart / SubagentStop /
+             PreCompact / PostCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
 ```
+
+`.claude/` を編集したら、コミット前に検証ゲートを通す:
+
+```bash
+bash scripts/validate-harness.sh
+```
+
+frontmatter の enum 逸脱、参照されない権限ルール(`Write(path)` 等)、参照先の無い hook 登録、
+解決しない `@import`、constitution hash、日英構成の一致を **LLM を使わず決定論的に**チェックする。
+バリデータ自身の負のテストは `--test`、npm パッケージの実在確認は `--online`。
 
 詳細仕様は [`project-blueprint/README.md`](project-blueprint/README.md) と [`CHANGELOG.md`](CHANGELOG.md) を参照。
 

@@ -56,11 +56,25 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure / UserPromptSubmit /
-             SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
+13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
+             UserPromptSubmit / SessionStart / SessionEnd / SubagentStart / SubagentStop /
+             PreCompact / PostCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 1 gate      scripts/validate-harness.sh — CI gate that fails on harness spec drift
 ```
+
+After editing `.claude/`, run the validation gate before committing:
+
+```bash
+bash scripts/validate-harness.sh
+```
+
+It checks — **deterministically, with no LLM** — frontmatter values outside the official enums,
+permission rules the runtime never consults (`Write(path)` and friends), hook registrations
+pointing at missing scripts, unresolved `@import` targets, the constitution hash, and JP/EN
+structural parity. `--test` runs negative tests for the validator itself; `--online` also
+resolves the npm packages referenced by `.mcp.json.template`.
 
 For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/README.md) and [`CHANGELOG.md`](CHANGELOG.md).
 

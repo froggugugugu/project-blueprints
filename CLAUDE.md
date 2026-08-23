@@ -15,6 +15,11 @@ project-blueprints/
 ├── README.md                    # Root docs (Japanese)
 ├── README-en.md                 # Root docs (English)
 ├── CLAUDE.md                    # This file (repo-wide guidance)
+├── constitution.md              # Inviolable principles (7)
+├── scripts/                     # Harness validator (CI gate) — see Build / Test / Lint
+│   ├── validate-harness.sh      # Entry point
+│   ├── validate_harness.py      # Checks
+│   └── test_validate_harness.py # Negative tests for the checks
 ├── project-blueprint/           # The Japanese blueprint template
 │   ├── README.md                # Setup guide & quick start
 │   ├── setup.sh                 # One-command setup script
@@ -68,7 +73,22 @@ project-blueprints/
 
 ## Build / Test / Lint
 
-There are no build, test, or lint commands — this repository contains only Markdown templates and configuration files. Validation is manual review of template content and structure.
+There is no application build. The check that gates this repository is the harness validator:
+
+```bash
+bash scripts/validate-harness.sh          # both mirrors + JP/EN structural parity
+bash scripts/validate-harness.sh --online # also resolve the npm packages in .mcp.json.template
+bash scripts/validate-harness.sh --test   # negative tests for the validator itself
+```
+
+It is deterministic (no LLM) and enforces the parts of the official spec that are easy to
+drift from: frontmatter values outside the official enums, permission rules the runtime
+never consults (`Write(path)` and friends), hook registrations pointing at missing scripts,
+unresolved `@import` targets, the constitution hash, and JP/EN parity. Run it before every
+commit that touches `.claude/`. CI runs it on push and pull request
+(`.github/workflows/validate-harness.yml`).
+
+`/harness-refine` is the LLM-driven counterpart and runs *after* this gate passes.
 
 ## Editing Guidelines
 
