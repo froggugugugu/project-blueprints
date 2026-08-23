@@ -1,0 +1,132 @@
+---
+# Claude Code Scheduled Audit (template)
+#
+# Runs /security-scan and /legal-check weekly and collects the results in a GitHub Issue.
+# This catches problems that grow with time rather than with commits, which a
+# PR-triggered workflow such as claude-skills-ci.yml can never see:
+#   - New CVEs in dependencies (they appear without any code change)
+#   - License term changes and deprecations
+#
+# Why GitHub Actions:
+#   Claude Code's session-scoped scheduling (/loop, CronCreate) only fires **while a
+#   session is running and idle**, and recurring tasks expire after 7 days. That is
+#   unsuitable for unattended, durable automation. A repository audit belongs on the
+#   Actions schedule trigger (Routines is the other option for durable cloud runs).
+#
+# Enable it:
+#   1. cp .github/workflows/claude-scheduled-audit.yml.template .github/workflows/claude-scheduled-audit.yml
+#   2. Add ANTHROPIC_API_KEY to the repository Secrets
+#   3. Adjust the cron time to suit your team
+#
+# Cost: two skill runs per week — far cheaper than the per-PR workflow.
+
+name: Claude Scheduled Audit
+
+on:
+  schedule:
+    # Mondays at 03:17 UTC. Deliberately off :00, which is congested on Actions
+    # and therefore prone to delay.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: claude-scheduled-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      BLUEPRINT_HOOK_PROFILE: minimal
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1"
+      CLAUDE_ALLOWED_TOOLS: >-
+        Read,Grep,Glob,
+        Bash(git log *),Bash(git status *),
+        Bash(npm audit *),Bash(npm ls *),Bash(npm view *),
+        Edit(output/**),Edit(testreport/**)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@2
+
+      - name: Prepare output directories
+        run: mkdir -p output/reports/security output/reports/legal testreport/security
+
+      - name: Run /security-scan
+        run: |
+          claude -p "/security-scan Audit dependencies for known CVEs and the code for vulnerability patterns. Save the report as Markdown under output/reports/security/ and summarize CRITICAL and HIGH findings in your output." \
+            --permission-mode dontAsk \
+            --allowedTools "${CLAUDE_ALLOWED_TOOLS}" \
+            --model sonnet \
+            --max-turns 40 \
+            --output-format text \
+            | tee output/reports/security/_audit-stdout.md
+
+      - name: Run /legal-check
+        run: |
+          claude -p "/legal-check Audit the OSS licenses of dependencies and surface incompatibilities, deprecations, and changed terms. Save the report as Markdown under output/reports/legal/." \
+            --permission-mode dontAsk \
+            --allowedTools "${CLAUDE_ALLOWED_TOOLS}" \
+            --model sonnet \
+            --max-turns 40 \
+            --output-format text \
+            | tee output/reports/legal/_audit-stdout.md
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-scheduled-audit
+          path: |
+            output/reports/
+            testreport/
+          retention-days: 90
+
+      - name: Compose issue body
+        if: always()
+        run: |
+          {
+            echo "Scheduled audit results. Full reports are in the \`claude-scheduled-audit\` artifact on this run."
+            echo
+            echo "### /security-scan"
+            echo
+            cat output/reports/security/_audit-stdout.md 2>/dev/null || echo "_(no output)_"
+            echo
+            echo "### /legal-check"
+            echo
+            cat output/reports/legal/_audit-stdout.md 2>/dev/null || echo "_(no output)_"
+          } > /tmp/audit-body.md
+          head -c 60000 /tmp/audit-body.md > /tmp/audit-body.trimmed.md
+
+      # Opening a fresh issue every week would pile up, so comment on the open one if it exists.
+      - name: Open or update the audit issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: "🔍 Claude scheduled audit"
+        run: |
+          existing="$(gh issue list --state open --label claude-audit --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file /tmp/audit-body.trimmed.md
+          else
+            gh label create claude-audit --description "Scheduled audit by Claude" --color 0E8A16 2>/dev/null || true
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label claude-audit \
+              --body-file /tmp/audit-body.trimmed.md
+          fi

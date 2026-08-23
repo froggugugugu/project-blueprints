@@ -125,14 +125,19 @@ mv .github/workflows/claude-review.yml .github/workflows/claude-review.yml.disab
 
 本テンプレートは 2 種類のワークフローを同梱する。片方だけでも両方でも有効にできる。
 
-| | `claude-review.yml` | `claude-skills-ci.yml` |
-| --- | --- | --- |
-| 実装 | `anthropics/claude-code-action` | `claude -p`（headless CLI） |
-| 起動 | PR に `@claude` とメンション（人が起動） | 毎 PR で自動実行 |
-| 実行内容 | 自由記述の対話レビュー | `/code-review` と `/security-scan` を必ず実行 |
-| 出力 | PR コメント | PR コメント + artifact（`output/reports/`） |
-| ブループリントの skill | 使わない | **使う**（`.claude/skills/` を読み込む） |
-| 向くもの | 「ここ見て」と人が指定する追加レビュー | 品質ゲートの機械的な担保 |
+| | `claude-review.yml` | `claude-skills-ci.yml` | `claude-scheduled-audit.yml` |
+| --- | --- | --- | --- |
+| 実装 | `anthropics/claude-code-action` | `claude -p`（headless CLI） | `claude -p`（headless CLI） |
+| 起動 | PR に `@claude` とメンション（人が起動） | 毎 PR で自動実行 | 週次 cron + 手動実行 |
+| 実行内容 | 自由記述の対話レビュー | `/code-review` と `/security-scan` を必ず実行 | `/security-scan` と `/legal-check` |
+| 出力 | PR コメント | PR コメント + artifact（`output/reports/`） | GitHub Issue + artifact |
+| ブループリントの skill | 使わない | **使う** | **使う** |
+| 向くもの | 「ここ見て」と人が指定する追加レビュー | 品質ゲートの機械的な担保 | 時間経過で増える問題（新規 CVE・ライセンス変更） |
+
+`claude-scheduled-audit.yml` を GitHub Actions で回す理由: Claude Code の
+セッション内スケジュール（`/loop`・`CronCreate`）は**セッションが起動中かつ idle の
+ときだけ**発火し、recurring は 7 日で失効する。無人・恒久の定期実行には向かない。
+詳細は `@.claude/guardrails.md` の「定期実行の選び方」を参照。
 
 `claude-skills-ci.yml` の設計上のポイント:
 

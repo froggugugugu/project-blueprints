@@ -125,14 +125,19 @@ Delete the file if permanently removing.
 
 This template ships two workflows. Enable either one or both.
 
-| | `claude-review.yml` | `claude-skills-ci.yml` |
-| --- | --- | --- |
-| Implementation | `anthropics/claude-code-action` | `claude -p` (headless CLI) |
-| Trigger | `@claude` mention on a PR (human-initiated) | Automatic on every PR |
-| What it runs | Free-form conversational review | Always runs `/code-review` and `/security-scan` |
-| Output | PR comment | PR comment + artifact (`output/reports/`) |
-| Uses the blueprint's skills | No | **Yes** (loads `.claude/skills/`) |
-| Good for | Ad-hoc "take a look at this" reviews | Mechanically enforcing the quality gates |
+| | `claude-review.yml` | `claude-skills-ci.yml` | `claude-scheduled-audit.yml` |
+| --- | --- | --- | --- |
+| Implementation | `anthropics/claude-code-action` | `claude -p` (headless CLI) | `claude -p` (headless CLI) |
+| Trigger | `@claude` mention on a PR (human-initiated) | Automatic on every PR | Weekly cron + manual dispatch |
+| What it runs | Free-form conversational review | Always runs `/code-review` and `/security-scan` | `/security-scan` and `/legal-check` |
+| Output | PR comment | PR comment + artifact (`output/reports/`) | GitHub Issue + artifact |
+| Uses the blueprint's skills | No | **Yes** | **Yes** |
+| Good for | Ad-hoc "take a look at this" reviews | Mechanically enforcing the quality gates | Problems that grow with time (new CVEs, license changes) |
+
+Why `claude-scheduled-audit.yml` runs on GitHub Actions: Claude Code's session-scoped
+scheduling (`/loop`, `CronCreate`) fires **only while a session is running and idle**,
+and recurring tasks expire after 7 days — unsuitable for unattended, durable schedules.
+See "Choosing how to schedule work" in `@.claude/guardrails.md`.
 
 Design points in `claude-skills-ci.yml`:
 

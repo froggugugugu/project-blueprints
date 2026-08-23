@@ -57,12 +57,61 @@ related: [L0002, P12]    # 他 learning(L)・pitfalls(P)への参照
 
 ## CLAUDE.md / pitfalls との役割分担
 
-| 種類 | 何を書く | 更新頻度 | 場所 |
-| ---- | -------- | -------- | ---- |
-| CLAUDE.md | 横断ルール(must) | 低 | `.claude/CLAUDE.md` |
-| pitfalls.md | 失敗パターン(避けるべき) | 中 | `.claude/pitfalls.md` |
-| learnings/ | 成功パターン(再利用すべき) | 高 | `.claude/learnings/L*.md` |
-| auto memory | ユーザー固有の事実・嗜好 | 高 | `~/.claude/projects/<proj>/memory/` |
+| 種類 | 何を書く | 更新頻度 | 場所 | git |
+| ---- | -------- | -------- | ---- | --- |
+| CLAUDE.md | 横断ルール(must) | 低 | `.claude/CLAUDE.md` | ✅ コミット |
+| pitfalls.md | 失敗パターン(避けるべき) | 中 | `.claude/pitfalls.md` | ✅ コミット |
+| learnings/ | 成功パターン(再利用すべき) | 高 | `.claude/learnings/L*.md` | ✅ コミット |
+| auto memory | ユーザー個人の文脈 | 高 | `~/.claude/projects/<proj>/memory/` | ❌ **コミットされない** |
+
+## auto memory との使い分け
+
+Claude Code には**自動メモリ**が組み込まれている(既定で有効)。`learnings/` はこれを
+置き換えるものではなく、**補完**する。決定的な違いは git に入るかどうか:
+
+- **`learnings/` = チームの資産**。リポジトリにコミットされ、レビューを経て共有される。
+  「このプロジェクトではこの手が有効だった」を**全員**に効かせたいときはこちら
+- **auto memory = 個人の作業文脈**。`~/.claude/` 配下に保存され、コミットされない。
+  Claude が自律的に書き、他のメンバーには一切共有されない
+
+auto memory が保存する 4 種別(公式):
+
+| type | 内容 |
+| ---- | ---- |
+| `user` | 役割・専門性・作業の好み |
+| `feedback` | ユーザーからの指摘と、承認された進め方 |
+| `project` | 進行中の作業・締切・コードや git 履歴から導けない決定事項 |
+| `reference` | 外部リソースへのポインタ(Issue トラッカー、ダッシュボード等) |
+
+コードから導ける事項(アーキテクチャ・ファイルパス・過去の修正)と、CLAUDE.md に
+既に書いてある事項は auto memory に保存されない。
+
+### どちらに書くかの判断
+
+| 内容 | 書く場所 |
+| ---- | -------- |
+| 再現性が確認された技術的判断(sample_size ≥ 3) | `learnings/` |
+| チームで合意した進め方 | `learnings/` または `CLAUDE.md` |
+| 「このユーザーは TypeScript の型を厳密に書く」 | auto memory (`user`) |
+| 「この人はコミット前に必ずテストを求める」 | auto memory (`feedback`) |
+| 「Q3 までにこの機能を出す」 | auto memory (`project`) |
+
+### 設定
+
+```json
+// .claude/settings.json（プロジェクト単位で無効化する場合）
+{ "autoMemoryEnabled": false }
+
+// 保存先を変える場合（絶対パスか ~/ 始まり）
+{ "autoMemoryDirectory": "~/my-memory-dir" }
+```
+
+CI では実行の再現性のため `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` を設定する
+(同梱の `claude-skills-ci.yml.template` は設定済み)。
+
+> **注意**: auto memory はセッションをまたいで蓄積されるが、
+> **書かれた時点の事実のスナップショット**でしかない。ファイル名・関数名・フラグに
+> 言及するメモは、参照する前に現物を確認すること。
 
 ## 自動参照
 

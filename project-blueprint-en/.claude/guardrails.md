@@ -40,6 +40,49 @@ UserPromptSubmit → user-prompt-submit.sh collects the marker and re-injects
 > at all** (it cannot even return `additionalContext`) — it is a side-effect-only
 > event. Only `UserPromptSubmit` can inject context, so the marker bridges the two.
 
+### Behavior per runtime
+
+Hooks fire on **the same events** in the terminal, the IDE extension, the Desktop
+app, and Claude Code on the web. What they can reach differs, though, and this
+template has hooks that write to disk and send outbound notifications.
+
+| | Terminal / IDE / Desktop | Claude Code on the web (cloud) | CI (`claude -p`) |
+| --- | --- | --- | --- |
+| Local files | ✅ Persistent | ⚠️ **Fresh clone**; `testreport/` is lost when the session ends | ⚠️ Lost when the job ends (upload as an artifact) |
+| `notify-claude.sh` (ntfy) | ✅ | ⚠️ Depends on the environment's network access (restricted by default) | ❌ Pointless — stop it with `BLUEPRINT_HOOK_PROFILE=minimal` |
+| `session-end.sh` / `pre-compact-backup.sh` | ✅ | ⚠️ Output does not persist | ⚠️ Same |
+| `safety-check.sh` / `protect-files.sh` | ✅ | ✅ | ✅ |
+| MCP servers | `.mcp.json` | Connectors configured per environment | `.mcp.json` (not read under `--bare`) |
+| Permission prompts | Interactive | Autonomous (no prompts) | Follows `--permission-mode` |
+
+**Recommended settings**:
+
+- Set `BLUEPRINT_HOOK_PROFILE=minimal` in cloud and CI runs. It avoids paying the
+  write cost of observation hooks whose output does not persist there
+- When you want an audit trail from a cloud run, extract `testreport/` explicitly
+  (in CI, `actions/upload-artifact`)
+- Cloud environments restrict network access by default. Check the environment
+  configuration before relying on a skill that needs `WebFetch` or an external MCP server
+
+### Choosing how to schedule work
+
+For recurring work such as a weekly security audit there are three options, and
+their **durability differs sharply**.
+
+| | In-session (`/loop`, `CronCreate`) | GitHub Actions `schedule` | Routines (cloud) |
+| --- | --- | --- | --- |
+| Needs a running session | **Yes** (fires only when idle) | No | No |
+| Durability | ⚠️ Recurring tasks **expire after 7 days** | ✅ | ✅ |
+| Minimum interval | 1 minute | 5 minutes (delays in practice) | 1 hour |
+| Local files | ✅ | ✅ (clone) | ❌ (fresh clone) |
+| Cleared by a new conversation | **Yes** | — | — |
+
+- **Use GitHub Actions for repository audits.** The bundled
+  `claude-scheduled-audit.yml.template` runs `/security-scan` and `/legal-check`
+  weekly and collects the results in an issue
+- Keep `/loop` for short-lived in-session polling (waiting on a build, say)
+- Avoid `:00` in an Actions cron — that slot is congested and prone to delay
+
 ### Hook profile switch
 
 `BLUEPRINT_HOOK_PROFILE` switches behavior

@@ -40,6 +40,49 @@ UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
 > (`additionalContext` も返せない)side-effect 専用イベントである。
 > 文脈を注入できるのは `UserPromptSubmit` 側なので、マーカーで橋渡しする。
 
+### 実行環境ごとの挙動
+
+フックはターミナル / IDE 拡張 / Desktop アプリ / Claude Code on the web の
+**すべてで同じイベントが発火する**。ただし到達できる先が異なるため、
+本テンプレートのフックは環境によって効き方が変わる。
+
+| | ターミナル / IDE / Desktop | Claude Code on the web（クラウド） | CI（`claude -p`） |
+| --- | --- | --- | --- |
+| ローカルファイル | ✅ 永続 | ⚠️ **fresh clone**。`testreport/` はセッション終了で消える | ⚠️ ジョブ終了で消える（artifact 化が必要） |
+| `notify-claude.sh`（ntfy 送信） | ✅ | ⚠️ 環境のネットワーク設定に依存（既定は制限あり） | ❌ 無意味（`BLUEPRINT_HOOK_PROFILE=minimal` で止める） |
+| `session-end.sh` / `pre-compact-backup.sh` | ✅ | ⚠️ 出力は永続しない | ⚠️ 同左 |
+| `safety-check.sh` / `protect-files.sh` | ✅ | ✅ | ✅ |
+| MCP サーバー | `.mcp.json` | 環境ごとに設定したコネクタ | `.mcp.json`（`--bare` 時は読まれない） |
+| 権限プロンプト | 対話 | 自律実行（プロンプトなし） | `--permission-mode` に従う |
+
+**推奨設定**:
+
+- クラウド / CI では `BLUEPRINT_HOOK_PROFILE=minimal` にする。
+  観測系フックの出力が永続しない環境で書き込みコストだけ払うのを避けられる
+- 監査ログを残したいクラウド実行では、`testreport/` を成果物として
+  明示的に取り出す（CI なら `actions/upload-artifact`）
+- クラウド環境ではネットワークアクセスが既定で制限される。
+  `WebFetch` や外部 MCP に依存する skill は事前に環境設定を確認する
+
+### 定期実行の選び方
+
+「毎週セキュリティ監査を回す」のような定期実行には 3 つの選択肢があり、
+**恒久性が大きく異なる**。
+
+| | セッション内（`/loop`・`CronCreate`） | GitHub Actions `schedule` | Routines（クラウド） |
+| --- | --- | --- | --- |
+| セッション起動が必要 | **必要**（idle のときだけ発火） | 不要 | 不要 |
+| 恒久性 | ⚠️ recurring は **7 日で失効** | ✅ | ✅ |
+| 最小間隔 | 1 分 | 5 分（実際は遅延あり） | 1 時間 |
+| ローカルファイル | ✅ | ✅（clone） | ❌（fresh clone） |
+| 新規会話で消える | **消える** | — | — |
+
+- **リポジトリの定期監査には GitHub Actions を使う**。同梱の
+  `claude-scheduled-audit.yml.template` が週次で `/security-scan` と
+  `/legal-check` を回し、結果を Issue に集約する
+- `/loop` はセッション中の短期ポーリング（ビルド待ち等）に限る
+- Actions の cron は `:00` を避ける（混雑して遅延しやすい）
+
 ### Hook profile 切替
 
 `BLUEPRINT_HOOK_PROFILE` 環境変数で挙動を切替可能
