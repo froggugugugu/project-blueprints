@@ -4,7 +4,6 @@ description: 曖昧な要求メモから前提を Socratic 質問で炙り出す
 allowed-tools: Read, Grep, Glob, Edit(output/**), AskUserQuestion
 disallowed-tools: Edit, NotebookEdit
 argument-hint: <要求メモのファイルパス、または整理したいトピック>
-context: fork
 ---
 
 # `/brainstorm` — `/prd` 前段の Socratic ブレスト

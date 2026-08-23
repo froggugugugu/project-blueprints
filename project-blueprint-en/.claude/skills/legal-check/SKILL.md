@@ -10,6 +10,7 @@ argument-hint: "<target-scope or instruction>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
 context: fork
+background: false
 ---
 
 # IT Legal Check

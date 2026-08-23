@@ -45,18 +45,6 @@
       "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)",
       "  ⚠️  Always run 'npm show <package> version' to verify a package exists before use"
     ],
-    "fetch": {
-      "_warning": "@modelcontextprotocol/server-fetch is deprecated. Use Claude Code's built-in WebFetch tool instead",
-      "_deprecated": true,
-      "_alternative": "Use the Claude Code built-in WebFetch tool",
-      "_example_if_needed": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-fetch"
-        ]
-      }
-    },
     "filesystem": {
       "_verify": "Run 'npm show @modelcontextprotocol/server-filesystem version' to confirm the package is current",
       "_warning": "The MCP filesystem server can traverse everything under the given root. Scoping is done by **listing only the safe subdirectories as positional arguments** — the server has no CLI-level exclude flag (as of 2026-04). Use multiple defense layers for secret protection:",
@@ -144,6 +132,7 @@
       },
       "_deprecated": true,
       "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
-    }
+    },
+    "_comment_fetch_removed": "Use Claude Code's built-in WebFetch tool for web retrieval. The previously listed @modelcontextprotocol/server-fetch does not exist on npm (checked 2026-08) and was removed."
   }
 }

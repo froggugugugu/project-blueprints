@@ -10,6 +10,7 @@ description: >
 argument-hint: "<description or file-path>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(project-config.md), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 context: fork
+background: false
 ---
 
 # Plan

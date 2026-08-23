@@ -7,7 +7,6 @@ description: >
 allowed-tools: Read, Grep, Glob, Edit(output/**), AskUserQuestion
 disallowed-tools: Edit, NotebookEdit
 argument-hint: <requirement-note path, or topic to clarify>
-context: fork
 ---
 
 # `/brainstorm` — Pre-`/prd` Socratic clarification

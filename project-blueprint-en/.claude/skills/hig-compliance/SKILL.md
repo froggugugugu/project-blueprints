@@ -8,7 +8,6 @@ description: >
   Takes optional argument: /hig-compliance <target-directory or instruction>
 argument-hint: "<target-directory or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
-context: main
 ---
 
 # HIG Compliance — Apple Human Interface Guidelines Compliance Check & Correction

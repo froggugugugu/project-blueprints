@@ -11,6 +11,7 @@ allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFet
 disallowed-tools: Edit, NotebookEdit
 effort: high
 context: fork
+background: false
 ---
 
 # Architecture Designer

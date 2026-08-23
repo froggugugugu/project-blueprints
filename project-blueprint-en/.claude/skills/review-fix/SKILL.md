@@ -7,7 +7,6 @@ description: >
   Takes optional argument: /review-fix <PR number>
 argument-hint: "<PR number>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Bash(gh *), Agent, WebSearch, WebFetch
-context: main
 ---
 
 # Review Fix
