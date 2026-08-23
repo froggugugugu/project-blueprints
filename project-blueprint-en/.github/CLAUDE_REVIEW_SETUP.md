@@ -121,8 +121,32 @@ mv .github/workflows/claude-review.yml .github/workflows/claude-review.yml.disab
 
 Delete the file if permanently removing.
 
+## Choosing between the two workflows
+
+This template ships two workflows. Enable either one or both.
+
+| | `claude-review.yml` | `claude-skills-ci.yml` |
+| --- | --- | --- |
+| Implementation | `anthropics/claude-code-action` | `claude -p` (headless CLI) |
+| Trigger | `@claude` mention on a PR (human-initiated) | Automatic on every PR |
+| What it runs | Free-form conversational review | Always runs `/code-review` and `/security-scan` |
+| Output | PR comment | PR comment + artifact (`output/reports/`) |
+| Uses the blueprint's skills | No | **Yes** (loads `.claude/skills/`) |
+| Good for | Ad-hoc "take a look at this" reviews | Mechanically enforcing the quality gates |
+
+Design points in `claude-skills-ci.yml`:
+
+- **No `--bare`** — the project's `.claude/` (skills / settings / hooks) must load
+- `--permission-mode dontAsk` auto-denies anything outside `--allowedTools`
+- `BLUEPRINT_HOOK_PROFILE=minimal` passes hooks through, which stops
+  `notify-claude.sh` from sending outbound notifications from CI
+- Forked PRs are skipped because they receive no secrets
+- Untrusted input (PR title, body) is never interpolated into `run:` —
+  values are passed through `env:` to avoid command injection
+
 ## Related
 
 - Official docs: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
+- Headless mode: [docs.claude.com/en/docs/claude-code/headless](https://docs.claude.com/en/docs/claude-code/headless)
 - Cost guardrail patterns: `@.claude/pitfalls.md` #6
 - Project review conventions: `@.claude/skills/code-review/SKILL.md`

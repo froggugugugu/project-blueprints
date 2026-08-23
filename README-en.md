@@ -62,6 +62,8 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
  1 gate      scripts/validate-harness.sh — CI gate that fails on harness spec drift
+ 2 CI        claude-review.yml (@claude conversational review) /
+             claude-skills-ci.yml (claude -p runs /code-review + /security-scan on every PR)
 ```
 
 After editing `.claude/`, run the validation gate before committing:

@@ -60,6 +60,8 @@ cd ./my-app && claude
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
  1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
+ 2 CI        claude-review.yml（@claude 対話レビュー）/
+             claude-skills-ci.yml（claude -p で毎 PR に /code-review + /security-scan）
 ```
 
 `.claude/` を編集したら、コミット前に検証ゲートを通す:

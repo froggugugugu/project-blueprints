@@ -121,8 +121,33 @@ mv .github/workflows/claude-review.yml .github/workflows/claude-review.yml.disab
 
 恒久的に不要な場合はファイル自体を削除する。
 
+## 2 つのワークフローの使い分け
+
+本テンプレートは 2 種類のワークフローを同梱する。片方だけでも両方でも有効にできる。
+
+| | `claude-review.yml` | `claude-skills-ci.yml` |
+| --- | --- | --- |
+| 実装 | `anthropics/claude-code-action` | `claude -p`（headless CLI） |
+| 起動 | PR に `@claude` とメンション（人が起動） | 毎 PR で自動実行 |
+| 実行内容 | 自由記述の対話レビュー | `/code-review` と `/security-scan` を必ず実行 |
+| 出力 | PR コメント | PR コメント + artifact（`output/reports/`） |
+| ブループリントの skill | 使わない | **使う**（`.claude/skills/` を読み込む） |
+| 向くもの | 「ここ見て」と人が指定する追加レビュー | 品質ゲートの機械的な担保 |
+
+`claude-skills-ci.yml` の設計上のポイント:
+
+- `--bare` は**付けない**。プロジェクトの `.claude/`（skills / settings / hooks）を
+  読み込ませる必要があるため
+- `--permission-mode dontAsk` で、`--allowedTools` に無いものは全て自動拒否する
+- `BLUEPRINT_HOOK_PROFILE=minimal` でフックをパススルーにする
+  （`notify-claude.sh` の外部送信を CI から止める）
+- fork からの PR は secrets が渡らないためスキップする
+- PR タイトル・本文などの信頼できない入力を `run:` に展開しない
+  （コマンドインジェクション対策。値は必ず `env:` 経由で渡す）
+
 ## 関連
 
 - 公式ドキュメント: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
+- headless 実行: [docs.claude.com/en/docs/claude-code/headless](https://docs.claude.com/en/docs/claude-code/headless)
 - コスト guardrail のパターン: `@.claude/pitfalls.md` #6
 - プロジェクトのレビュー規約: `@.claude/skills/code-review/SKILL.md`

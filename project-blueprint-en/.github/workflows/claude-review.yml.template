@@ -48,9 +48,9 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Model selection (cost / quality trade-off)
-          # - Opus 4.7: high-quality review, high cost
-          # - Sonnet 4.6: standard review (recommended)
-          # - Haiku 4.5: lightweight review, quick checks
+          # - opus (Opus 5): high-quality review, high cost
+          # - sonnet (Sonnet 5): standard review (recommended)
+          # - haiku (Haiku 4.5): lightweight review, quick checks
           model: claude-sonnet-5
           # Cost guardrail: max turns
           max_turns: 10
