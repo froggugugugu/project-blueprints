@@ -76,6 +76,39 @@ frontmatter の enum 逸脱、参照されない権限ルール(`Write(path)` �
 
 ---
 
+## 2 つの導入方法
+
+| | clone + `setup.sh`（**主経路**） | plugin |
+| --- | --- | --- |
+| 導入 | `bash setup.sh <dir> --profile <p>` | `/plugin marketplace add froggugugugu/project-blueprints` → `/plugin install project-blueprint@project-blueprints` |
+| 配置先 | プロジェクトに実ファイルをコピー | Claude Code のプラグインキャッシュ |
+| 編集 | **プロジェクトごとに自由に改変できる** | 読み取り専用（更新で上書きされる） |
+| skill の呼び方 | `/prd` | `/project-blueprint:prd` |
+| プロファイル | `minimal` / `standard` / `full` を選べる | フル構成のみ |
+| 更新 | 再度 `setup.sh` を実行 | `/plugin update` |
+| `project-config.md`・`docs/`・`input/`・`output/` | 同梱される | **同梱されない**（別途 clone が必要） |
+
+**プロジェクト固有にカスタマイズするなら clone**、**複数プロジェクトで同じ構成を使い回して
+更新も追随したいなら plugin** を選ぶ。両者は同じファイルツリーを指しているため、
+skill / agent / hook の中身は完全に一致する。
+
+### plugin 配布時に効かなくなるもの
+
+公式仕様上、プラグインが提供する subagent では `permissionMode` / `hooks` / `mcpServers`
+の frontmatter が**無視される**（セキュリティ上の制約）。本テンプレートでは:
+
+- `doc-synchronizer` / `doc-writer` の `permissionMode: acceptEdits` が効かず、
+  `docs/` / `output/` への書き込みでも権限確認が出る
+
+clone 配布ではすべて意図どおり動く。検証ゲートがこの差分を WARN として毎回報告する。
+
+> プラグインマニフェスト（`.claude-plugin/`）は `scripts/gen_plugin_manifest.py` が
+> `.claude/settings.json` から生成する。手編集せず再生成すること（ゲートが差分を検出する）。
+
+---
+
+---
+
 ## 段階的に使う
 
 | ステップ | 記入セクション | 動くようになるもの |

@@ -137,6 +137,23 @@ def m_claude_md_too_long(root: Path) -> None:
     p.write_text(p.read_text() + "\n<!-- pad -->" * 0 + "\n".join(["- pad"] * 120) + "\n")
 
 
+
+def m_plugin_bad_path(root: Path) -> None:
+    p = root / ".claude-plugin/plugin.json"
+    d = json.loads(p.read_text())
+    d["skills"] = "./.claude/nope/"
+    p.write_text(json.dumps(d, indent=2, ensure_ascii=False))
+
+
+def m_plugin_project_dir_ref(root: Path) -> None:
+    p = root / ".claude-plugin/hooks.json"
+    p.write_text(p.read_text().replace("${CLAUDE_PLUGIN_ROOT}", "$CLAUDE_PROJECT_DIR"))
+
+
+def m_plugin_missing_hook_script(root: Path) -> None:
+    (root / ".claude/hooks/session-end.sh").unlink()
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -155,6 +172,9 @@ CASES = [
     ("不正な effort 値", m_bad_effort, "`effort: highest` は不正"),
     ("不正な memory スコープ", m_bad_memory, "`memory: global` は不正"),
     ("CLAUDE.md がハード上限超過", m_claude_md_too_long, "ハード上限"),
+    ("plugin.json のパス切れ", m_plugin_bad_path, "が存在しません"),
+    ("plugin hooks が $CLAUDE_PROJECT_DIR を使用", m_plugin_project_dir_ref, "${CLAUDE_PLUGIN_ROOT}"),
+    ("plugin hooks の参照先スクリプト欠落", m_plugin_missing_hook_script, "が存在しません"),
 ]
 
 

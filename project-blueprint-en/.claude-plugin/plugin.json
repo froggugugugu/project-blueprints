@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "project-blueprint-en",
+  "displayName": "Project Blueprint (English)",
+  "version": "0.3.0",
+  "description": "Full-lifecycle harness for AI-collaborative development with Claude Code (English). 17 skills / 8 agents / 13 hooks / 5 quality gates / defense in depth.",
+  "author": {
+    "name": "froggugugugu",
+    "url": "https://github.com/froggugugugu"
+  },
+  "repository": "https://github.com/froggugugugu/project-blueprints",
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "spec-driven",
+    "quality-gates",
+    "english",
+    "harness"
+  ],
+  "skills": "./.claude/skills/",
+  "agents": [
+    "./.claude/agents/doc-synchronizer.md",
+    "./.claude/agents/doc-writer.md",
+    "./.claude/agents/explorer.md",
+    "./.claude/agents/performance-analyst.md",
+    "./.claude/agents/planner.md",
+    "./.claude/agents/researcher.md",
+    "./.claude/agents/security-reviewer.md",
+    "./.claude/agents/test-writer.md"
+  ],
+  "outputStyles": "./.claude/output-styles/",
+  "hooks": "./.claude-plugin/hooks.json"
+}

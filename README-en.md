@@ -80,6 +80,41 @@ For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/R
 
 ---
 
+## Two ways to install
+
+| | clone + `setup.sh` (**primary**) | plugin |
+| --- | --- | --- |
+| Install | `bash setup.sh <dir> --profile <p>` | `/plugin marketplace add froggugugugu/project-blueprints` then `/plugin install project-blueprint-en@project-blueprints` |
+| Lands in | Real files copied into your project | Claude Code's plugin cache |
+| Editing | **Freely customizable per project** | Read-only (overwritten on update) |
+| Skill invocation | `/prd` | `/project-blueprint-en:prd` |
+| Profiles | `minimal` / `standard` / `full` | Full set only |
+| Updating | Re-run `setup.sh` | `/plugin update` |
+| `project-config.md`, `docs/`, `input/`, `output/` | Included | **Not included** (clone separately) |
+
+Choose **clone** when you want to tailor the harness to one project; choose **plugin**
+when you want the same harness across many projects and want updates to follow.
+Both point at the same file tree, so the skills, agents, and hooks are identical.
+
+### What stops working under plugin distribution
+
+Per the official spec, `permissionMode`, `hooks`, and `mcpServers` frontmatter is
+**ignored** on plugin-shipped subagents (a security restriction). In this template:
+
+- `permissionMode: acceptEdits` on `doc-synchronizer` and `doc-writer` has no effect,
+  so they prompt for permission even inside `docs/` and `output/`
+
+Under clone distribution everything behaves as intended. The validation gate reports
+this difference as a WARN on every run.
+
+> The plugin manifests (`.claude-plugin/`) are generated from `.claude/settings.json`
+> by `scripts/gen_plugin_manifest.py`. Regenerate rather than hand-edit — the gate
+> fails on drift.
+
+---
+
+---
+
 ## Adopt incrementally
 
 | Stage | Sections to fill | Unlocks |
