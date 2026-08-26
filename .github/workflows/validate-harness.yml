@@ -37,9 +37,6 @@ jobs:
       - name: バリデータ自身の負のテスト
         run: bash scripts/validate-harness.sh --test
 
-      - name: プラグインマニフェストが生成物と一致するか
-        run: python3 scripts/gen_plugin_manifest.py --check
-
   validate-online:
     # npm レジストリに触るため PR ごとには回さない。
     # main への push と手動実行のときだけ、テンプレートが参照するパッケージの実在を確認する。

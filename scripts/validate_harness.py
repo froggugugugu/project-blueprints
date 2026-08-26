@@ -439,107 +439,6 @@ def check_npm_packages(root: Path, rep: Report) -> None:
             rep.warn(str(tmpl), f"npm パッケージ `{pkg}` は deprecated です: {dep.stdout.strip()[:70]}")
 
 
-def plugin_rel(root: Path, entry: str) -> Path:
-    """Resolve a `./x` manifest path against the plugin root.
-
-    `str.lstrip("./")` strips a character set, so it would eat the leading dot of
-    `./.claude/...` as well. Strip the prefix explicitly instead.
-    """
-    e = str(entry)
-    if e in (".", "./"):
-        return root
-    if e.startswith("./"):
-        e = e[2:]
-    return root / e
-
-
-def check_plugin_manifest(root: Path, rep: Report) -> None:
-    """Validate the additive plugin packaging layer.
-
-    The manifests are generated from the harness itself (scripts/gen_plugin_manifest.py),
-    so the checks here are about paths resolving and about frontmatter fields that
-    plugin-shipped agents silently lose.
-    """
-    manifest_path = root / ".claude-plugin/plugin.json"
-    if not manifest_path.exists():
-        return
-    where = str(manifest_path)
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-
-    for field in ("skills", "agents", "outputStyles", "hooks", "commands", "mcpServers"):
-        val = manifest.get(field)
-        if val is None or isinstance(val, dict):
-            continue
-        for entry in (val if isinstance(val, list) else [val]):
-            entry = str(entry)
-            if not entry.startswith("./") and entry not in (".", "./"):
-                rep.error(where, f"`{field}` のパス `{entry}` は `./` で始める必要があります")
-                continue
-            if not plugin_rel(root, entry).exists():
-                rep.error(where, f"`{field}` が参照する `{entry}` が存在しません")
-
-    hooks_ref = manifest.get("hooks")
-    if isinstance(hooks_ref, str):
-        hooks_file = plugin_rel(root, hooks_ref)
-        if hooks_file.exists():
-            cfg = json.loads(hooks_file.read_text(encoding="utf-8"))
-            for event, groups in cfg.get("hooks", {}).items():
-                if event not in HOOK_EVENTS:
-                    rep.error(str(hooks_file), f"`{event}` は公式のフックイベント名ではありません")
-                for group in groups:
-                    for hook in group.get("hooks", []):
-                        cmd = hook.get("command", "")
-                        if "$CLAUDE_PROJECT_DIR" in cmd:
-                            rep.error(
-                                str(hooks_file),
-                                f"{event}: プラグインのフックは `${{CLAUDE_PLUGIN_ROOT}}` を使います "
-                                "($CLAUDE_PROJECT_DIR はプラグイン配布では解決しません)",
-                            )
-                        m = re.search(r"\$\{CLAUDE_PLUGIN_ROOT\}\"?/([\w./-]+\.sh)", cmd)
-                        if m and not (root / m.group(1)).exists():
-                            rep.error(str(hooks_file), f"{event} が参照する {m.group(1)} が存在しません")
-
-    # プラグインのコンポーネント型に存在しないものは、plugin 経由では配布されない。
-    # clone 経路では動くため ERROR ではなく WARN として毎回可視化する。
-    for missing_dir, why in (
-        (".claude/rules", "ルール用のコンポーネント型が公式仕様に存在しない"),
-        (".claude/teams", "チーム用のコンポーネント型が公式仕様に存在しない"),
-    ):
-        if (root / missing_dir).is_dir():
-            rep.warn(where, f"`{missing_dir}/` は plugin 配布されません ({why}) — clone 経路でのみ有効")
-
-    # skill 本文中の bare な相互参照は、plugin では名前空間化されて起動できない。
-    plugin_name = manifest.get("name", root.name)
-    bare_refs = 0
-    for sp in sorted((root / ".claude/skills").glob("*/SKILL.md")):
-        body = sp.read_text(encoding="utf-8")
-        for other in (root / ".claude/skills").iterdir():
-            if other.is_dir() and other.name != sp.parent.name:
-                bare_refs += len(re.findall(rf"(?<![\w:/]){re.escape('/' + other.name)}\b", body))
-    if bare_refs:
-        rep.warn(
-            where,
-            f"skill 本文に他 skill への bare 参照が {bare_refs} 箇所あります — "
-            f"plugin では `/{plugin_name}:<skill>` に名前空間化されるため、そのままでは起動できません",
-        )
-
-    # プラグイン配布時、subagent の hooks / mcpServers / permissionMode は無視される。
-    for entry in manifest.get("agents", []) or []:
-        agent_path = plugin_rel(root, str(entry))
-        if not agent_path.exists():
-            continue
-        fm = parse_frontmatter(agent_path, rep)
-        if not fm:
-            continue
-        for field in ("permissionMode", "hooks", "mcpServers"):
-            if fm.get(field) is not None:
-                rep.warn(
-                    str(agent_path),
-                    f"`{field}` はプラグイン配布された subagent では無視されます — "
-                    "clone 配布時のみ有効になる点を README に明記してください",
-                )
-
-
 def check_mirror_parity(a: Path, b: Path, rep: Report) -> None:
     def tree(root: Path) -> set[str]:
         return {
@@ -564,21 +463,8 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_rules(root, rep)
     check_imports_and_limits(root, rep)
     check_constitution(root, rep)
-    check_plugin_manifest(root, rep)
     if online:
         check_npm_packages(root, rep)
-
-
-def check_generated_manifests(rep: Report) -> None:
-    """Plugin manifests are generated; a hand edit would silently drift."""
-    gen = Path(__file__).resolve().parent / "gen_plugin_manifest.py"
-    if not gen.exists():
-        return
-    proc = subprocess.run([sys.executable, str(gen), "--check"], capture_output=True, text=True)
-    if proc.returncode != 0:
-        for line in (proc.stdout + proc.stderr).strip().split("\n"):
-            if line.strip():
-                rep.error("plugin manifest", line.strip())
 
 
 def main() -> int:
@@ -611,8 +497,6 @@ def main() -> int:
     if parity:
         print("日英ミラー構成の一致を検証中")
         check_mirror_parity(roots[0], roots[1], rep)
-        print("プラグインマニフェストが生成物と一致するか検証中")
-        check_generated_manifests(rep)
 
     print()
     for w in rep.warnings:
