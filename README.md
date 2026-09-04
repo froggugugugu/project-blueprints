@@ -26,7 +26,7 @@ cd ./my-app && claude
 ![5 行 quickstart デモ](.github/demo/quickstart.gif)
 
 > 5 行を実行すると `git clone` → `setup.sh`(constitution.md・skills・hooks 配置)
-> → `printf` で §2 追記 → `claude` 起動 → `/plan ログイン機能の設計` を Opus 4.7
+> → `printf` で §2 追記 → `claude` 起動 → `/plan ログイン機能の設計` を Opus 5
 > が受理 — までを **30 秒で確認**できます。
 
 ---
@@ -54,13 +54,57 @@ cd ./my-app && claude
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
-             SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
+13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
+             UserPromptSubmit / SessionStart / SessionEnd / SubagentStart / SubagentStop /
+             PreCompact / PostCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
+ 3 CI        claude-review.yml（@claude 対話レビュー）/
+             claude-skills-ci.yml（毎 PR に /code-review + /security-scan）/
+             claude-scheduled-audit.yml（週次 /security-scan + /legal-check → Issue）
 ```
 
+`.claude/` を編集したら、コミット前に検証ゲートを通す:
+
+```bash
+bash scripts/validate-harness.sh
+```
+
+frontmatter の enum 逸脱、参照されない権限ルール(`Write(path)` 等)、参照先の無い hook 登録、
+解決しない `@import`、constitution hash、日英構成の一致を **LLM を使わず決定論的に**チェックする。
+バリデータ自身の負のテストは `--test`、npm パッケージの実在確認は `--online`。
+
 詳細仕様は [`project-blueprint/README.md`](project-blueprint/README.md) と [`CHANGELOG.md`](CHANGELOG.md) を参照。
+
+---
+
+## 導入方法は clone + `setup.sh` のみ
+
+```bash
+bash setup.sh <ターゲットディレクトリ> --profile <minimal|standard|full>
+```
+
+**plugin / marketplace 配布は採用していません。** 2026-04 に一度導入し、2026-06 に撤回、
+2026-08 に再評価して再び撤回しました。理由は好みではなく構造的なものです。
+
+plugin が宣言できるコンポーネントは `skills` / `agents` / `outputStyles` / `hooks` の 4 種だけで、
+`project-config.md` / `docs/` / `input/` / `output/` / `.claude/rules/` / `.claude/teams/` は配布できません。
+一方このハーネスは:
+
+```
+17 / 17 skill が、plugin 配布では提供されないファイルを参照している
+
+  docs/               16 / 17        project-config.md   14 / 17
+  output/             15 / 17        pitfalls.md         12 / 17
+  quality-gates.md    15 / 17        .claude/rules/       4 / 17
+```
+
+つまり plugin 単体でインストールしても、**全 skill が前提を欠いた状態で動きます**。
+本リポジトリは汎用ツール集ではなく**プロジェクトの scaffold** であり、
+「skill だけ配って周辺ファイルは配らない」形式とは相性が合いません。
+
+> 再検討するなら、上記の依存が解消されたという新しい根拠が必要です。
 
 ---
 

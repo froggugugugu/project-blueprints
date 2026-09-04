@@ -37,8 +37,8 @@ Description:
 
 Profiles (--profile, defaults to full):
   minimal   5 skills / 2 agents / 2 hooks / no teams — fastest way to try it out
-  standard  17 skills / 8 agents / 12 hooks / no teams — everything but team mode
-  full      17 skills / 8 agents / 12 hooks / 6 teams — default, matches current behavior
+  standard  17 skills / 8 agents / 13 hooks / no teams — everything but team mode
+  full      17 skills / 8 agents / 13 hooks / 6 teams — default, matches current behavior
 
   Note: minimal also trims safeguard hooks (e.g. session-start) for a lighter footprint.
   This is a separate axis from the "minimal/recommended/full" guidance in project-config.md

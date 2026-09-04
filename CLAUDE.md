@@ -15,6 +15,11 @@ project-blueprints/
 ├── README.md                    # Root docs (Japanese)
 ├── README-en.md                 # Root docs (English)
 ├── CLAUDE.md                    # This file (repo-wide guidance)
+├── constitution.md              # Inviolable principles (7)
+├── scripts/                     # Harness validator (CI gate) — see Build / Test / Lint
+│   ├── validate-harness.sh      # Entry point
+│   ├── validate_harness.py      # Checks
+│   └── test_validate_harness.py # Negative tests for the checks
 ├── project-blueprint/           # The Japanese blueprint template
 │   ├── README.md                # Setup guide & quick start
 │   ├── setup.sh                 # One-command setup script
@@ -32,7 +37,7 @@ project-blueprints/
 │   │   ├── teams/               # 6 team templates (TEAM_*.md files)
 │   │   ├── agents/              # 8 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
-│   │   ├── hooks/               # 12 hook scripts (safety + observability; .sh count)
+│   │   ├── hooks/               # 13 hook scripts (safety + observability; .sh count)
 │   │   └── tasks/               # Task instruction templates
 │   ├── docs/                    # AI-managed technical docs (stubs)
 │   ├── input/                   # Human requirements input
@@ -60,15 +65,32 @@ project-blueprints/
 
 **Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
-**Hook system** (12 hook scripts in `.claude/hooks/*.sh`, 13 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `SessionStart` / `SessionEnd` / `SubagentStop` / `PreCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup roles. See `.claude/guardrails.md`.
+**Hook system** (13 hook scripts in `.claude/hooks/*.sh`, 15 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup roles. See `.claude/guardrails.md`.
 
-**MCP + GitHub Actions**: `.mcp.json.template` for project-shared MCP servers; `.github/workflows/claude-review.yml.template` for `@claude` PR review automation.
+**Distribution**: `setup.sh` + clone only. Plugin packaging was evaluated twice (adopted 2026-04, withdrawn 2026-06, re-evaluated and withdrawn again 2026-08) and does not fit: a plugin can only declare `skills`/`agents`/`outputStyles`/`hooks`, while **17 of 17 skills reference files a plugin cannot ship** (`docs/` 16, `output/` 15, `quality-gates.md` 15, `project-config.md` 14, `pitfalls.md` 12, `.claude/rules/` 4). Do not re-open this without new evidence that those dependencies have gone away.
+
+**MCP + GitHub Actions**: `.mcp.json.template` for project-shared MCP servers. Two workflow templates: `claude-review.yml.template` (conversational `@claude` PR review via `anthropics/claude-code-action`) and `claude-skills-ci.yml.template` (headless `claude -p` running `/code-review` and `/security-scan` on every PR, with `--permission-mode dontAsk` and no `--bare` so the project's `.claude/` loads), plus `claude-scheduled-audit.yml.template` (weekly `/security-scan` + `/legal-check` into a GitHub Issue). Durable scheduling belongs on Actions, not on session-scoped `/loop`/`CronCreate`, which fire only while a session is idle and expire after 7 days.
 
 **Quality gates**: 5 checkpoints (post-PRD, post-design, post-task-decomposition, post-implementation, post-verification) where humans can review and approve.
 
 ## Build / Test / Lint
 
-There are no build, test, or lint commands — this repository contains only Markdown templates and configuration files. Validation is manual review of template content and structure.
+There is no application build. The check that gates this repository is the harness validator:
+
+```bash
+bash scripts/validate-harness.sh          # both mirrors + JP/EN structural parity
+bash scripts/validate-harness.sh --online # also resolve the npm packages in .mcp.json.template
+bash scripts/validate-harness.sh --test   # negative tests for the validator itself
+```
+
+It is deterministic (no LLM) and enforces the parts of the official spec that are easy to
+drift from: frontmatter values outside the official enums, permission rules the runtime
+never consults (`Write(path)` and friends), hook registrations pointing at missing scripts,
+unresolved `@import` targets, the constitution hash, and JP/EN parity. Run it before every
+commit that touches `.claude/`. CI runs it on push and pull request
+(`.github/workflows/validate-harness.yml`).
+
+`/harness-refine` is the LLM-driven counterpart and runs *after* this gate passes.
 
 ## Editing Guidelines
 

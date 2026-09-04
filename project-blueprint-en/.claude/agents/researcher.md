@@ -2,9 +2,11 @@
 name: researcher
 description: Use when investigation of external technical information is needed — libraries, frameworks, standards, official documentation. Handles tasks like "what are the current React best practices?" or "what does OWASP say about X?" that require sources outside the repository. Read-only.
 tools: Read, Grep, Glob, WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
-model: claude-sonnet-4-6
-color: purple
+model: sonnet
+effort: medium
+maxTurns: 30
 memory: project
+color: purple
 ---
 
 # Researcher Agent — External Technical Investigation
@@ -20,7 +22,7 @@ Surveys official documentation, standards, and trustworthy technical articles, t
 | ---- | ---------- | ------------ |
 | Target | Files and code inside the repository | **External technical sources** (official docs / specs / articles) |
 | Tools | Read / Grep / Glob | + WebSearch / WebFetch / Context7 |
-| Model | Haiku 4.5 (lightweight) | Sonnet 4.6 (needs evidence evaluation) |
+| Model | `haiku` (lightweight) | `sonnet` (needs evidence evaluation) |
 | Output | Paths and line numbers | URLs with quotes and summaries |
 
 Use `explorer` for in-repo investigation; use this agent for external technical research.

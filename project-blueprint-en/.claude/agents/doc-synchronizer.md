@@ -2,9 +2,12 @@
 name: doc-synchronizer
 description: Use to minimally update `docs/` files (project.md / architecture.md / data-model.md / development-patterns.md) in response to implementation changes. Lightweight and deterministic.
 tools: Read, Edit, Write, Grep, Glob
-model: claude-haiku-4-5
-color: cyan
+model: haiku
+effort: low
+permissionMode: acceptEdits
+maxTurns: 25
 memory: project
+color: cyan
 ---
 
 # Doc Synchronizer Agent — Documentation Sync Specialist

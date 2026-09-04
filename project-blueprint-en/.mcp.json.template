@@ -5,20 +5,27 @@
     "context7": {
       "_comment": "Official documentation / API reference retrieval. Complement WebFetch when needed",
       "command": "npx",
-      "args": ["-y", "@context7/mcp-server"]
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "_verify": "Run 'npm view @upstash/context7-mcp version' to check the version"
     },
     "playwright": {
       "_comment": "Browser automation / E2E test debugging",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp"]
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ]
     },
     "github": {
-      "_comment": "GitHub API (Issues / PR / Actions). Export $GITHUB_TOKEN first. Keep scopes minimal (repo:status, public_repo)",
-      "_verify": "Run 'npm show @modelcontextprotocol/server-github version' to confirm the package is current",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      "_comment": "GitHub API (Issues / PR / Actions). GitHub's official remote MCP server. Export $GITHUB_TOKEN first. Keep scopes minimal (repo:status, public_repo)",
+      "_note": "The old stdio package @modelcontextprotocol/server-github is deprecated on npm; this uses the official remote server instead",
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
       }
     }
   },
@@ -38,15 +45,6 @@
       "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)",
       "  ⚠️  Always run 'npm show <package> version' to verify a package exists before use"
     ],
-    "fetch": {
-      "_warning": "@modelcontextprotocol/server-fetch is deprecated. Use Claude Code's built-in WebFetch tool instead",
-      "_deprecated": true,
-      "_alternative": "Use the Claude Code built-in WebFetch tool",
-      "_example_if_needed": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-fetch"]
-      }
-    },
     "filesystem": {
       "_verify": "Run 'npm show @modelcontextprotocol/server-filesystem version' to confirm the package is current",
       "_warning": "The MCP filesystem server can traverse everything under the given root. Scoping is done by **listing only the safe subdirectories as positional arguments** — the server has no CLI-level exclude flag (as of 2026-04). Use multiple defense layers for secret protection:",
@@ -59,28 +57,49 @@
       "_example_safe": {
         "_note": "Recommended: pass only secret-free subdirs as positional args",
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}/src", "${PROJECT_ROOT}/docs", "${PROJECT_ROOT}/tests"]
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "${PROJECT_ROOT}/src",
+          "${PROJECT_ROOT}/docs",
+          "${PROJECT_ROOT}/tests"
+        ]
       },
       "_example_full_root_with_hooks": {
         "_note": "Passing the full root requires the protect-files.sh / safety-check.sh hooks to be active",
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${PROJECT_ROOT}"]
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "${PROJECT_ROOT}"
+        ]
       }
     },
     "postgres": {
       "_warning": "Direct DB access is high risk. Use read-only only; never point to a production DSN",
       "_example": {
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"]
-      }
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-postgres",
+          "${DATABASE_URL}"
+        ]
+      },
+      "_deprecated": true,
+      "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
     },
     "sentry": {
       "_warning": "Useful for production error investigation. Export $SENTRY_AUTH_TOKEN first",
       "_recommended_for": "Production phase. Useful for /security-scan and /code-review to fetch error context",
       "_example": {
         "command": "npx",
-        "args": ["-y", "@sentry/mcp-server"],
-        "env": { "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}" }
+        "args": [
+          "-y",
+          "@sentry/mcp-server"
+        ],
+        "env": {
+          "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
+        }
       }
     },
     "brave-search": {
@@ -88,17 +107,32 @@
       "_recommended_for": "Air-gapped / corporate environments where WebSearch is restricted",
       "_example": {
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-        "env": { "BRAVE_API_KEY": "${BRAVE_API_KEY}" }
-      }
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-brave-search"
+        ],
+        "env": {
+          "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+        }
+      },
+      "_deprecated": true,
+      "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
     },
     "slack": {
       "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN. Restrict scope to chat:write only",
       "_example": {
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-slack"],
-        "env": { "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}" }
-      }
-    }
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-slack"
+        ],
+        "env": {
+          "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+        }
+      },
+      "_deprecated": true,
+      "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
+    },
+    "_comment_fetch_removed": "Use Claude Code's built-in WebFetch tool for web retrieval. The previously listed @modelcontextprotocol/server-fetch does not exist on npm (checked 2026-08) and was removed."
   }
 }

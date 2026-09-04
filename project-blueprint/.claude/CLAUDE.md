@@ -67,6 +67,13 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - **一次更新責務**: `docs/*.md` と `project-config.md` §2/§3 は `/implementing-features` skill が集約。他 skill は発見事項を報告
 - **詳細**(競合防止表 / docs 更新の細則):`/implementing-features` が起動時に `@.claude/rules/document-management.md` を load
 
+## ルール階層(`.claude/rules/`)
+
+- `paths:` なし = 全セッション常時 load(`git-conventions.md` のみ)
+- `paths:` あり = 該当ファイルを触ったときだけ load(`document-management.md` / `workflow-advanced.md`)
+- 言語別・レイヤー別ルールは `.example` をコピーし `paths:` を編集して有効化する
+- タスク固有の手順は rules ではなく skill に置く
+
 ## アーキテクチャガバナンス
 
 - レイヤー間の依存方向制限。詳細は `project-config.md` §4.4
@@ -84,7 +91,9 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 - 同一ファイルの同時編集は禁止
 - 共有レイヤー変更は逐次
-- `teammateMode`: `in-process`(高速)/ `worktree`(分離)を `settings.local.json` で
+- Agent Teams は `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` で有効化(既定は無効)
+- `teammateMode` は teammate の**表示先**(`in-process` / `auto` / `tmux` / `iterm2`)。
+  リポジトリを分離したいときは subagent の `isolation: worktree` を使う
 - PJM チームは `input/` を読み `output/` に成果物生成、PL がタスク分解・割り当て
 
 ## 実装ワークフロー
@@ -114,7 +123,9 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 ## セキュリティ
 
 - ユーザー入力は必ずバリデート / 依存 CVE を定期確認
-- **3 層防御**: フック(Layer 1) → deny(Layer 2) → allow(Layer 3)
+- **多層防御**: sandbox(Layer 0・任意) → フック(Layer 1) → deny/ask(Layer 2) → allow(Layer 3)
+- `.env` / 秘密鍵 / `*.pem` は `Read()` deny で読み取り自体を遮断
+- 外向き・不可逆操作(push / merge / publish / apply)は `ask` で毎回確認
 - フックは `--dangerously-skip-permissions` でも有効
 - SessionStart フックが起動時に `project-config.md` / `docs/` / `settings.local.json` をチェック
 - 詳細(deny ルール一覧、保護ファイル、permissions ガイド)は `/security-scan` 等のセキュリティ系 skill 起動時に load
@@ -153,7 +164,13 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 メインコンテキストを圧迫しないよう subagent を積極活用。1 subagent = 1 task。
 
-### 4. 詳細手順(必要時のみ load)
+### 4. コンテキスト保全
+
+`/rewind` でファイル・会話をチェックポイントから復元できる(`fileCheckpointingEnabled`)。
+コンパクト時は PreCompact でバックアップし、PostCompact が置いたマーカーを次プロンプトで
+回収して中核ルールを再注入する(詳細は `@.claude/guardrails.md`)。
+
+### 5. 詳細手順(必要時のみ load)
 
 自己改善ループ / 完了前検証 / エレガンス追求 / 自律バグ修正 / タスク管理 / 基本原則は
 `.claude/rules/workflow-advanced.md` を必要 skill が load する。

@@ -48,10 +48,10 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # モデル指定（コスト/品質のトレードオフ）
-          # - Opus 4.7: 高品質レビュー、コスト高
-          # - Sonnet 4.6: 標準レビュー、推奨
-          # - Haiku 4.5: 軽量レビュー、簡易チェック
-          model: claude-sonnet-4-6
+          # - opus (Opus 5): 高品質レビュー、コスト高
+          # - sonnet (Sonnet 5): 標準レビュー、推奨
+          # - haiku (Haiku 4.5): 軽量レビュー、簡易チェック
+          model: claude-sonnet-5
           # コスト guardrail: 最大ターン数
           max_turns: 10
           # 追加プロンプト（プロジェクト固有のレビュー観点）

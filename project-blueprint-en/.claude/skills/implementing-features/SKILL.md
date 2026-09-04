@@ -6,8 +6,7 @@ description: >
   Covers: components, stores, schemas, utilities, styling, docs/ and project-config.md synchronization.
   Takes optional argument: /implementing-features <task-file or instruction>
 argument-hint: "<task-file or instruction>"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs
-context: main
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
 
 # Implementing Features

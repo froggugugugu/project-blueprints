@@ -1,6 +1,16 @@
+---
+paths:
+  - "src/**/*"
+  - "app/**/*"
+  - "lib/**/*"
+  - "packages/**/*"
+  - "tests/**/*"
+---
 # Workflow Control — Self-improvement, verification, autonomy
 
-> Imported by `CLAUDE.md` to prevent CLAUDE.md bloat.
+> **path-specific rule**: auto-loads only when Claude touches the implementation source tree
+
+> Split out of CLAUDE.md to keep it small. It loads automatically per the frontmatter above, and skills can still reference it explicitly with `@import`.
 > Plan-first / Research-first / Subagent strategy stay in CLAUDE.md proper;
 > this file aggregates the "self-improvement loop and beyond" advanced guidance.
 

@@ -44,7 +44,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | Dangerous commands slip through even though the hook "should" block |
 | **Cause** | Hook returns `exit 1`, but Claude Code treats only `exit 2` as a block |
-| **Mitigation** | Always `exit 2` for block hooks. Use `exit 0` + stderr for warnings. See `safety-check.sh` for a reference |
+| **Mitigation** | Always `exit 2` for block hooks (stderr is returned to Claude as the block reason). **`exit 0` + stderr does not reach anyone** — on exit 0 stderr only goes to the debug log. Emit warnings as `{"hookSpecificOutput":{"additionalContext":"..."}}` on stdout. See `safety-check.sh` (block) and `console-warn.sh` (warn) for references |
 
 ### 6. ANTHROPIC_API_KEY scope too broad — billing accident
 
@@ -174,6 +174,22 @@ common in long-running Claude Code sessions.
 | **Symptom** | A "please investigate" task ends up reading 100+ files, exhausts context, and reaches no conclusion |
 | **Cause** | The exploration runs in the parent session instead of a subagent |
 | **Mitigation** | Delegate investigations to the `explorer` subagent (separate context, summary returned). Always bound the scope: "max 3 files" or "only under X/" |
+
+### 21. Rules lost after compaction
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Partway through a long session, rules stop being followed — output locations and prohibitions are forgotten |
+| **Cause** | Context compaction produces a summary, and the fine-grained rules from CLAUDE.md do not survive into it |
+| **Mitigation** | Save the transcript on `PreCompact`, drop a marker on `PostCompact`, and collect it on `UserPromptSubmit` to re-inject the core rules (implemented in this template). Note that `PostCompact` itself has no decision control and cannot inject context |
+
+### 22. `Write(path)` permission rules are ignored
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | `Write(output/**)` is in `allowed-tools`, yet every write still prompts — and a warning appears at startup |
+| **Cause** | File-path permissions are checked against `Edit(path)` and `Read(path)` only. Path rules for `Write` / `NotebookEdit` / `Glob` / `MultiEdit` are accepted but never consulted |
+| **Mitigation** | Write `Edit(output/**)` even when what you want to permit is a Write. A `Read(path)` deny rule blocks Edit and Write on the same path too |
 
 ## Recommended session-management commands
 

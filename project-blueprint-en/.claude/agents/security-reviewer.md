@@ -2,11 +2,13 @@
 name: security-reviewer
 description: Use for security audits. For "is this code safe?", "vulnerability check", "validate the authentication implementation", and similar. Evaluates against OWASP Top 10 / CWE / dependency CVEs. Read-only — returns findings and recommendations, never modifies code.
 tools: Read, Grep, Glob
-model: claude-opus-4-7
-color: red
-isolation: worktree
+model: opus
+effort: high
+maxTurns: 40
+memory: project
 skills:
   - security-scan
+color: red
 ---
 
 # Security Reviewer Agent — Security Audit Specialist

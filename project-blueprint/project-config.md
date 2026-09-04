@@ -399,15 +399,33 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 ### 13.1 Tier 定義
 
-| Tier | モデル（2026-04 時点） | 用途 | コスト感 |
-| ---- | ---------------------- | ---- | -------- |
-| **Critical** | `claude-opus-4-7` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
-| **Complex** | `claude-sonnet-4-6` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
-| **Operational** | `claude-haiku-4-5-20251001` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
+| Tier | エイリアス | 固定 ID | 用途 | コスト感 |
+| ---- | ---------- | ------- | ---- | -------- |
+| **Critical** | `opus` | `claude-opus-5` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
+| **Complex** | `sonnet` | `claude-sonnet-5` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
+| **Operational** | `haiku` | `claude-haiku-4-5-20251001` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
 
-> **モデル ID の注記**: Opus 4.7 / Sonnet 4.6 はエイリアス（Anthropic 側で最新バージョンに自動更新される）。Haiku は具体的な日付付きバージョン ID。エイリアスが将来的に廃止される可能性があるため、本番運用では日付付き ID への固定を検討する。最新・正確な ID は [Anthropic Console の Models 一覧](https://console.anthropic.com/settings/models) で確認。
+> **エイリアスを既定にする**: `.claude/agents/*.md` の `model:` にはエイリアス（`opus` / `sonnet` / `haiku`）を書く。
+> モデル世代が上がっても追随でき、ID の陳腐化でエージェントが起動しなくなる事故を防げる。
+> バージョンを固定したい本番運用でのみ固定 ID を使う。最新・正確な ID は
+> [Anthropic Console の Models 一覧](https://console.anthropic.com/settings/models) で確認。
 
 旧モデル（`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5` 等）は本テンプレートでは非推奨。
+
+### 13.1b effort（推論深度）の軸
+
+モデル選択とは独立に **effort** で推論の深さを制御できる（`low` / `medium` / `high` / `xhigh` / `max`）。
+同じモデルでもコスト・品質のダイヤルとして機能するため、**Pro 契約など Opus 枠が限られる環境では
+モデルを上げるより effort を上げる方が費用対効果が高い**。
+
+| 設定箇所 | フィールド | 例 |
+| -------- | ---------- | -- |
+| skill | `effort:` | `/security-scan`・`/code-review`・`/architecture`・`/refactoring`・`/harness-refine` = `high`、`/adr` = `low` |
+| subagent | `effort:` | `security-reviewer`・`planner`・`performance-analyst` = `high`、`explorer` = `low` |
+| セッション全体 | `/effort <level>` または `settings.json` の `effortLevel` | — |
+
+> 本テンプレートの skill / agent は **`model:` を固定せず `effort:` のみ指定**している。
+> どのモデルで走らせるかはセッション側（`/model`）の判断に委ね、本節はその指針として使う。
 
 ### 13.2 スキル × モデル推奨マッピング
 

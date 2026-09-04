@@ -6,8 +6,10 @@ description: >
   Creates and manages Architecture Decision Records (ADRs) to capture the context, rationale, and consequences of architectural decisions.
   Takes optional argument: /adr <decision title or instruction>
 argument-hint: "<decision title or instruction>"
-allowed-tools: Read, Glob, Grep, Bash(git *), Write(output/**), Agent, WebSearch, WebFetch
+allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch
+effort: low
 context: fork
+background: false
 ---
 
 # ADR — Architecture Decision Records

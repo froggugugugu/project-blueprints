@@ -1,0 +1,59 @@
+name: validate-harness
+
+# ハーネス(.claude/)の仕様乖離を CI で落とす。
+# 人間のレビュー待ちにしていた結果、参照されない権限ルール・存在しない npm パッケージ・
+# パース不能な frontmatter が長期間放置されたため、決定論的なゲートを常設する。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      online:
+        description: "npm レジストリへの問い合わせも行う"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: PyYAML を導入（frontmatter の厳密パース用）
+        run: pip install --quiet pyyaml
+
+      - name: ハーネス検証（日英ミラー + 構成一致）
+        run: bash scripts/validate-harness.sh
+
+      - name: バリデータ自身の負のテスト
+        run: bash scripts/validate-harness.sh --test
+
+  validate-online:
+    # npm レジストリに触るため PR ごとには回さない。
+    # main への push と手動実行のときだけ、テンプレートが参照するパッケージの実在を確認する。
+    if: github.event_name == 'push' || github.event.inputs.online == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - run: pip install --quiet pyyaml
+
+      - name: ハーネス検証（npm パッケージの実在確認を含む）
+        run: bash scripts/validate-harness.sh --online

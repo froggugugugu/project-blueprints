@@ -1,3 +1,7 @@
+---
+paths:
+  - "backend/**/*"
+---
 # `backend/**/*` Rules (sample)
 
 > This file is a sample with the `.example` extension. Activate by copying without the extension:

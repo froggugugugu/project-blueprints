@@ -28,7 +28,7 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
 ![5-line quickstart demo](.github/demo/quickstart.gif)
 
 > The 5 lines walk through `git clone` → `setup.sh` (places constitution.md, skills, hooks)
-> → `printf` to add §2 → launching `claude` → `/plan` accepted by Opus 4.7 —
+> → `printf` to add §2 → launching `claude` → `/plan` accepted by Opus 5 —
 > all visible in **30 seconds**.
 
 ---
@@ -56,13 +56,60 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-12 hooks     PreToolUse(Bash/Edit/Write/Skill) / PostToolUse / UserPromptSubmit /
-             SessionStart / SessionEnd / SubagentStop / PreCompact / Stop / Notification
+13 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
+             UserPromptSubmit / SessionStart / SessionEnd / SubagentStart / SubagentStop /
+             PreCompact / PostCompact / Stop / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 1 gate      scripts/validate-harness.sh — CI gate that fails on harness spec drift
+ 3 CI        claude-review.yml (@claude conversational review) /
+             claude-skills-ci.yml (/code-review + /security-scan on every PR) /
+             claude-scheduled-audit.yml (weekly /security-scan + /legal-check -> Issue)
 ```
 
+After editing `.claude/`, run the validation gate before committing:
+
+```bash
+bash scripts/validate-harness.sh
+```
+
+It checks — **deterministically, with no LLM** — frontmatter values outside the official enums,
+permission rules the runtime never consults (`Write(path)` and friends), hook registrations
+pointing at missing scripts, unresolved `@import` targets, the constitution hash, and JP/EN
+structural parity. `--test` runs negative tests for the validator itself; `--online` also
+resolves the npm packages referenced by `.mcp.json.template`.
+
 For the full spec, see [`project-blueprint-en/README.md`](project-blueprint-en/README.md) and [`CHANGELOG.md`](CHANGELOG.md).
+
+---
+
+## The only install path is clone + `setup.sh`
+
+```bash
+bash setup.sh <target-directory> --profile <minimal|standard|full>
+```
+
+**Plugin / marketplace distribution is not used.** It was adopted in 2026-04, withdrawn
+in 2026-06, re-evaluated in 2026-08 and withdrawn again. The reason is structural, not
+a matter of taste.
+
+A plugin can only declare four component types — `skills`, `agents`, `outputStyles`,
+`hooks` — so `project-config.md`, `docs/`, `input/`, `output/`, `.claude/rules/`, and
+`.claude/teams/` cannot ship with it. Meanwhile, in this harness:
+
+```
+17 of 17 skills reference a file that plugin distribution cannot ship
+
+  docs/               16 / 17        project-config.md   14 / 17
+  output/             15 / 17        pitfalls.md         12 / 17
+  quality-gates.md    15 / 17        .claude/rules/       4 / 17
+```
+
+Installing the plugin alone therefore leaves **every skill missing its premises**.
+This repository is a project **scaffold**, not a general-purpose tool collection, so a
+format that ships the skills but none of the surrounding files does not fit.
+
+> Re-opening this needs new evidence that those dependencies have gone away.
 
 ---
 

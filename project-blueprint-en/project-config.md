@@ -400,15 +400,34 @@ output/reports/                <- Human-readable summaries (Git-managed)
 
 ### 13.1 Tier definitions
 
-| Tier | Model (as of 2026-04) | Use | Cost level |
-| ---- | --------------------- | --- | ---------- |
-| **Critical** | `claude-opus-4-7` | Architecture decisions, security audits, complex refactors | High |
-| **Complex** | `claude-sonnet-4-6` | Design, implementation, code review, E2E authoring | Medium (recommended) |
-| **Operational** | `claude-haiku-4-5-20251001` | Exploration, doc sync, lightweight repetitive work | Low |
+| Tier | Alias | Pinned ID | Use | Cost level |
+| ---- | ----- | --------- | --- | ---------- |
+| **Critical** | `opus` | `claude-opus-5` | Architecture decisions, security audits, complex refactors | High |
+| **Complex** | `sonnet` | `claude-sonnet-5` | Design, implementation, code review, E2E authoring | Medium (recommended) |
+| **Operational** | `haiku` | `claude-haiku-4-5-20251001` | Exploration, doc sync, lightweight repetitive work | Low |
 
-> **Model ID notes**: Opus 4.7 and Sonnet 4.6 are alias IDs (Anthropic auto-updates them to the latest revision). Haiku uses a date-pinned version ID. Since aliases can be retired, production deployments should consider pinning to a dated ID. Check the exact current IDs on the [Anthropic Console Models page](https://console.anthropic.com/settings/models).
+> **Prefer aliases**: write an alias (`opus` / `sonnet` / `haiku`) in the `model:` field of
+> `.claude/agents/*.md`. Aliases follow model generations, which avoids the failure mode where a
+> stale ID stops an agent from launching. Use a pinned ID only in production deployments that must
+> lock a version. Check the exact current IDs on the
+> [Anthropic Console Models page](https://console.anthropic.com/settings/models).
 
 Older models (`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5`, etc.) are discouraged in this template.
+
+### 13.1b The effort (reasoning depth) axis
+
+Independently of model choice, **effort** controls reasoning depth (`low` / `medium` / `high` /
+`xhigh` / `max`). It acts as a cost/quality dial within a single model, so **where the Opus budget
+is limited (for example on a Pro plan), raising effort is more cost-effective than raising the model tier**.
+
+| Where | Field | Example |
+| ----- | ----- | ------- |
+| skill | `effort:` | `/security-scan`, `/code-review`, `/architecture`, `/refactoring`, `/harness-refine` = `high`; `/adr` = `low` |
+| subagent | `effort:` | `security-reviewer`, `planner`, `performance-analyst` = `high`; `explorer` = `low` |
+| whole session | `/effort <level>` or `effortLevel` in `settings.json` | — |
+
+> The skills and agents in this template **pin `effort:` but deliberately leave `model:` unpinned**.
+> Which model to run is left to the session (`/model`); this section is the guidance for that choice.
 
 ### 13.2 Skill × model recommendations
 

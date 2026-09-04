@@ -6,7 +6,8 @@
 #   1. ハーネス自身(.claude/, .mcp.json*, settings.json) の secret/逸脱検出
 #   2. constitution.md の hash 監視(改竄検出)
 #   3. 高リスク skill(deploy 系)を tool_input.skill で実効ブロック
-#      ↑ Skill(name) permission deny が公式未対応のため hook で代替
+#      ↑ settings.json の Skill(skill:deploy*) 等の deny と二重化した層。
+#        deny は絶対、本フックは profile で緩められる運用層として機能する。
 #
 # Profile 切替: $BLUEPRINT_HOOK_PROFILE
 #   - minimal:  通過のみ
@@ -19,6 +20,23 @@
 # ==============================================================================
 
 set -uo pipefail
+
+# ── Claude へ所見を届けるための共通エミッタ ────────────────────────────
+# 公式仕様: exit 0 時の stderr は debug log にしか残らず、Claude にもユーザーにも
+# 届かない。Claude に伝えるには stdout に hookSpecificOutput.additionalContext を出す。
+emit_context() {
+    local event="$1"; shift
+    local text="$*"
+    [[ -z "$text" ]] && return 0
+    if command -v jq &>/dev/null; then
+        jq -nc --arg e "$event" --arg t "$text" \
+            '{hookSpecificOutput:{hookEventName:$e, additionalContext:$t}}'
+    else
+        local esc
+        esc="$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$esc"
+    fi
+}
 
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
@@ -41,7 +59,7 @@ case "$SKILL" in
     #     明示的な deploy / production プレフィックスのみブロック対象とする
     deploy|deploy-*|*-deploy|production-*|*-production)
         echo "🛡️  scan-harness: 高リスク skill '$SKILL' は実効ブロックされます" >&2
-        echo "  理由: 本テンプレートは deploy/production 系 skill を deny 対象としています(公式 Skill() 未対応のため hook で代替)" >&2
+        echo "  理由: 本テンプレートは deploy/production 系 skill を deny 対象としています(settings.json の Skill(skill:...) deny と二重化)" >&2
         echo "  許可するには: settings.local.json で BLUEPRINT_HOOK_PROFILE=minimal を設定" >&2
         exit 2
         ;;
@@ -121,17 +139,21 @@ if [[ ${#ISSUES[@]} -eq 0 ]]; then
     exit 0
 fi
 
-echo "🛡️  scan-harness: 自己 SAST で ${#ISSUES[@]} 件の問題を検出" >&2
+SUMMARY="scan-harness: 自己 SAST で ${#ISSUES[@]} 件の問題を検出"
 for i in "${ISSUES[@]}"; do
-    echo "  - $i" >&2
+    SUMMARY="$SUMMARY"$'\n'"  - $i"
 done
 
 case "$PROFILE" in
     strict)
+        # exit 2 は stderr が Claude に渡る唯一の経路(公式仕様)
+        printf '%s\n' "$SUMMARY" >&2
         echo "(BLUEPRINT_HOOK_PROFILE=strict のため skill 起動をブロックします)" >&2
         exit 2
         ;;
     standard|*)
+        # non-blocking: stdout の additionalContext で Claude に伝える
+        emit_context PreToolUse "$SUMMARY"
         exit 0
         ;;
 esac

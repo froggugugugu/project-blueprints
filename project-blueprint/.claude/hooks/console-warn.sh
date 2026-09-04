@@ -6,12 +6,30 @@
 #   console.log, console.debug, debugger, print() (Python), dd() (PHP/Laravel)
 #
 # Input:  JSON via stdin  {"tool_name":"Edit","tool_input":{"file_path":"..."}}
-# Output: exit 0 = allow (warnings via stderr)
+# Output: exit 0 + stdout JSON hookSpecificOutput.additionalContext
+#         (stderr on exit 0 is invisible to Claude — official spec)
 #
 # Policy: warn-only (never blocks, provides feedback)
 # ==============================================================================
 
 set -uo pipefail
+
+# ── Claude へ所見を届けるための共通エミッタ ────────────────────────────
+# 公式仕様: exit 0 時の stderr は debug log にしか残らず、Claude にもユーザーにも
+# 届かない。Claude に伝えるには stdout に hookSpecificOutput.additionalContext を出す。
+emit_context() {
+    local event="$1"; shift
+    local text="$*"
+    [[ -z "$text" ]] && return 0
+    if command -v jq &>/dev/null; then
+        jq -nc --arg e "$event" --arg t "$text" \
+            '{hookSpecificOutput:{hookEventName:$e, additionalContext:$t}}'
+    else
+        local esc
+        esc="$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$esc"
+    fi
+}
 
 # --- Extract the file path from stdin JSON ---
 INPUT="$(cat)"
@@ -70,12 +88,13 @@ for entry in "${DEBUG_PATTERNS[@]}"; do
     fi
 done
 
-# --- Output warnings ---
+# --- Claude へ警告を通知 ---
 if [[ ${#WARNINGS[@]} -gt 0 ]]; then
-    echo "⚠ デバッグステートメント検出（コミット前に削除を検討してください）:" >&2
+    MSG="デバッグステートメントを検出しました(コミット前に削除を検討してください):"
     for w in "${WARNINGS[@]}"; do
-        echo "  $w" >&2
+        MSG="$MSG"$'\n'"  $w"
     done
+    emit_context PostToolUse "$MSG"
 fi
 
 exit 0

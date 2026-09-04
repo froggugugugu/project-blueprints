@@ -2,9 +2,12 @@
 name: doc-synchronizer
 description: 実装変更に合わせて docs/ 配下（project.md / architecture.md / data-model.md / development-patterns.md）を最小差分で更新するときに使用する。軽量・決定論的に整合性を保つ。
 tools: Read, Edit, Write, Grep, Glob
-model: claude-haiku-4-5
-color: cyan
+model: haiku
+effort: low
+permissionMode: acceptEdits
+maxTurns: 25
 memory: project
+color: cyan
 ---
 
 # Doc Synchronizer Agent — ドキュメント同期専門

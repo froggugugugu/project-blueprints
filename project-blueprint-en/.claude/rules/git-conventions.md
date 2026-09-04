@@ -1,6 +1,8 @@
 # Git Operations and Commit Conventions
 
-> Imported by `CLAUDE.md` to prevent CLAUDE.md bloat.
+> **always-on rule**: has no `paths:`, so it loads in every session on purpose (a commit can happen at any time)
+
+> Split out of CLAUDE.md to keep it small. It loads automatically per the frontmatter above, and skills can still reference it explicitly with `@import`.
 
 ## Git operations policy
 

@@ -1,6 +1,8 @@
 # Git 操作・コミット規約
 
-> 本ファイルは `CLAUDE.md` から `@import` される。CLAUDE.md 肥大化防止のため切り出し。
+> **always-on rule**: `paths:` を持たないため全セッションで自動 load される(コミットは常に発生しうるため意図的)
+
+> CLAUDE.md 肥大化防止のため切り出したルール。上の frontmatter に従って自動 load され、必要な skill からは `@import` でも明示参照できる。
 
 ## Git 操作ポリシー
 

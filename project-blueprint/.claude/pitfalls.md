@@ -44,7 +44,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | 危険コマンドをブロックしたはずが通ってしまう |
 | **原因** | Hook で `exit 1` を返しているが、Claude Code は `exit 2` のみをブロック扱いする |
-| **対策** | ブロック系は必ず `exit 2`。警告系は `exit 0` + stderr にメッセージ。既存 `safety-check.sh` を参考に |
+| **対策** | ブロック系は必ず `exit 2`(stderr がブロック理由として Claude に返る)。**警告系で `exit 0` + stderr は届かない** — exit 0 の stderr は debug log 止まり。警告は stdout に `{"hookSpecificOutput":{"additionalContext":"..."}}` を出す。既存 `safety-check.sh`(ブロック)/ `console-warn.sh`(警告)を参考に |
 
 ### 6. ANTHROPIC_API_KEY スコープ過大による課金事故
 
@@ -173,6 +173,22 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **現象** | 「調査して」と振ったら 100 ファイル以上読み、context を食い尽くしてから何も結論が出ない |
 | **原因** | 探索範囲を限定せずに subagent ではなく親セッションで実行している |
 | **対策** | 調査は `explorer` subagent に委譲する(別 context で実行され、要約のみ親に戻る)。調査範囲は「3 ファイル以内」「特定ディレクトリ配下のみ」と必ず縛る |
+
+### 21. コンパクト後のルール消失
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 長時間セッションの途中からルールを守らなくなる。出力先や禁止事項を忘れる |
+| **原因** | context のコンパクトで要約が作られ、CLAUDE.md 由来の細則が要約に残らない |
+| **対策** | `PreCompact` で会話履歴を退避し、`PostCompact` でマーカーを置き、`UserPromptSubmit` で回収して中核ルールを再注入する(本テンプレートは実装済み)。`PostCompact` 自体は decision control を持たず文脈注入できない点に注意 |
+
+### 22. `Write(path)` 権限ルールが無視される
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `allowed-tools` に `Write(output/**)` と書いたのに毎回権限確認が出る。起動時に警告も出る |
+| **原因** | ファイルパス権限は `Edit(path)` と `Read(path)` だけが参照される。`Write` / `NotebookEdit` / `Glob` / `MultiEdit` のパスルールは受理されるが一度も参照されない |
+| **対策** | Write を許可したい場合も `Edit(output/**)` と書く。`Read(path)` の deny は Edit/Write も同時にブロックする |
 
 ## 推奨セッション運用コマンド
 

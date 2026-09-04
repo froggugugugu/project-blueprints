@@ -7,7 +7,6 @@ description: >
   Tech-stack agnostic (Web/Qt/QML/mobile). Takes optional argument: /design-system-audit <target-directory or instruction>
 argument-hint: "<対象ディレクトリ or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
-context: main
 ---
 
 # Design System Audit スキル

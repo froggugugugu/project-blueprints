@@ -62,9 +62,9 @@ Cost vs quality trade-off:
 
 | Model | Use | Cost estimate |
 | ----- | --- | ------------- |
-| `claude-opus-4-7` | High-quality review, architecture audits | High ($0.30+/PR) |
-| `claude-sonnet-4-6` | Standard review (recommended) | Medium ($0.10/PR) |
-| `claude-haiku-4-5` | Lightweight review, quick checks | Low ($0.02/PR) |
+| `claude-opus-5` | High-quality review, architecture audits | High ($0.30+/PR) |
+| `claude-sonnet-5` | Standard review (recommended) | Medium ($0.10/PR) |
+| `claude-haiku-4-5-20251001` | Lightweight review, quick checks | Low ($0.02/PR) |
 
 ### Customize review axes
 
@@ -121,8 +121,37 @@ mv .github/workflows/claude-review.yml .github/workflows/claude-review.yml.disab
 
 Delete the file if permanently removing.
 
+## Choosing between the two workflows
+
+This template ships two workflows. Enable either one or both.
+
+| | `claude-review.yml` | `claude-skills-ci.yml` | `claude-scheduled-audit.yml` |
+| --- | --- | --- | --- |
+| Implementation | `anthropics/claude-code-action` | `claude -p` (headless CLI) | `claude -p` (headless CLI) |
+| Trigger | `@claude` mention on a PR (human-initiated) | Automatic on every PR | Weekly cron + manual dispatch |
+| What it runs | Free-form conversational review | Always runs `/code-review` and `/security-scan` | `/security-scan` and `/legal-check` |
+| Output | PR comment | PR comment + artifact (`output/reports/`) | GitHub Issue + artifact |
+| Uses the blueprint's skills | No | **Yes** | **Yes** |
+| Good for | Ad-hoc "take a look at this" reviews | Mechanically enforcing the quality gates | Problems that grow with time (new CVEs, license changes) |
+
+Why `claude-scheduled-audit.yml` runs on GitHub Actions: Claude Code's session-scoped
+scheduling (`/loop`, `CronCreate`) fires **only while a session is running and idle**,
+and recurring tasks expire after 7 days — unsuitable for unattended, durable schedules.
+See "Choosing how to schedule work" in `@.claude/guardrails.md`.
+
+Design points in `claude-skills-ci.yml`:
+
+- **No `--bare`** — the project's `.claude/` (skills / settings / hooks) must load
+- `--permission-mode dontAsk` auto-denies anything outside `--allowedTools`
+- `BLUEPRINT_HOOK_PROFILE=minimal` passes hooks through, which stops
+  `notify-claude.sh` from sending outbound notifications from CI
+- Forked PRs are skipped because they receive no secrets
+- Untrusted input (PR title, body) is never interpolated into `run:` —
+  values are passed through `env:` to avoid command injection
+
 ## Related
 
 - Official docs: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
+- Headless mode: [docs.claude.com/en/docs/claude-code/headless](https://docs.claude.com/en/docs/claude-code/headless)
 - Cost guardrail patterns: `@.claude/pitfalls.md` #6
 - Project review conventions: `@.claude/skills/code-review/SKILL.md`

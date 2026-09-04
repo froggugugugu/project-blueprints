@@ -58,12 +58,61 @@ related: [L0002, P12]    # links to other learnings (L) / pitfalls (P)
 
 ## Role split with CLAUDE.md / pitfalls
 
-| Type | What goes here | Update freq | Location |
-| ---- | -------------- | ----------- | -------- |
-| CLAUDE.md | Cross-cutting rules (must) | low | `.claude/CLAUDE.md` |
-| pitfalls.md | Failure patterns (avoid) | medium | `.claude/pitfalls.md` |
-| learnings/ | Success patterns (reuse) | high | `.claude/learnings/L*.md` |
-| auto memory | User-specific facts/preferences | high | `~/.claude/projects/<proj>/memory/` |
+| Kind | What goes in it | Update frequency | Location | git |
+| ---- | --------------- | ---------------- | -------- | --- |
+| CLAUDE.md | Cross-cutting rules (must) | Low | `.claude/CLAUDE.md` | ✅ committed |
+| pitfalls.md | Failure patterns (to avoid) | Medium | `.claude/pitfalls.md` | ✅ committed |
+| learnings/ | Success patterns (to reuse) | High | `.claude/learnings/L*.md` | ✅ committed |
+| auto memory | One person's working context | High | `~/.claude/projects/<proj>/memory/` | ❌ **never committed** |
+
+## How this relates to auto memory
+
+Claude Code has **auto memory** built in (on by default). `learnings/` does not replace
+it — it complements it. The decisive difference is whether it enters git:
+
+- **`learnings/` is a team asset**. It is committed, reviewed, and shared. Use it when
+  "this approach worked on this project" should apply to **everyone**
+- **auto memory is one person's working context**. It lives under `~/.claude/`, is never
+  committed, is written autonomously by Claude, and is shared with nobody
+
+The four kinds auto memory records (official):
+
+| type | Content |
+| ---- | ------- |
+| `user` | Role, expertise, working preferences |
+| `feedback` | Corrections you gave, and approaches you confirmed |
+| `project` | Ongoing work, deadlines, decisions not derivable from code or git history |
+| `reference` | Pointers to external resources (issue tracker, dashboards) |
+
+Auto memory skips anything derivable from the codebase (architecture, file paths, past
+fixes) and anything the CLAUDE.md files already say.
+
+### Deciding where something goes
+
+| Content | Where |
+| ------- | ----- |
+| A technical decision confirmed reproducible (sample_size ≥ 3) | `learnings/` |
+| An approach the team agreed on | `learnings/` or `CLAUDE.md` |
+| "This person writes strict TypeScript types" | auto memory (`user`) |
+| "This person always wants tests before a commit" | auto memory (`feedback`) |
+| "This feature ships by Q3" | auto memory (`project`) |
+
+### Settings
+
+```json
+// .claude/settings.json (to disable per project)
+{ "autoMemoryEnabled": false }
+
+// To relocate storage (absolute path, or starting with ~/)
+{ "autoMemoryDirectory": "~/my-memory-dir" }
+```
+
+In CI, set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` so runs stay reproducible (the bundled
+`claude-skills-ci.yml.template` already does).
+
+> **Caution**: auto memory accumulates across sessions, but each note is a
+> **point-in-time snapshot**. If a note names a file, function, or flag, verify it still
+> exists before acting on it.
 
 ## Auto-reference
 

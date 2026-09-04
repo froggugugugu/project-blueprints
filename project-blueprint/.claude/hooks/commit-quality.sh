@@ -7,12 +7,30 @@
 #   2. Secret detection in staged files
 #
 # Input:  JSON via stdin  {"tool_name":"Bash","tool_input":{"command":"..."},"tool_output":"..."}
-# Output: exit 0 = allow (warnings via stderr)
+# Output: exit 0 + stdout JSON hookSpecificOutput.additionalContext
+#         (stderr on exit 0 is invisible to Claude — official spec)
 #
 # Policy: warn-only (never blocks, provides feedback)
 # ==============================================================================
 
 set -uo pipefail
+
+# ── Claude へ所見を届けるための共通エミッタ ────────────────────────────
+# 公式仕様: exit 0 時の stderr は debug log にしか残らず、Claude にもユーザーにも
+# 届かない。Claude に伝えるには stdout に hookSpecificOutput.additionalContext を出す。
+emit_context() {
+    local event="$1"; shift
+    local text="$*"
+    [[ -z "$text" ]] && return 0
+    if command -v jq &>/dev/null; then
+        jq -nc --arg e "$event" --arg t "$text" \
+            '{hookSpecificOutput:{hookEventName:$e, additionalContext:$t}}'
+    else
+        local esc
+        esc="$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')"
+        printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$esc"
+    fi
+}
 
 # --- Extract the command from stdin JSON ---
 INPUT="$(cat)"
@@ -84,12 +102,13 @@ if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null
     fi
 fi
 
-# --- Output warnings ---
+# --- Claude へ警告を通知 ---
 if [[ ${#WARNINGS[@]} -gt 0 ]]; then
-    echo "⚠ commit-quality チェック:" >&2
+    MSG="commit-quality チェックで指摘があります:"
     for w in "${WARNINGS[@]}"; do
-        echo "  - $w" >&2
+        MSG="$MSG"$'\n'"  - $w"
     done
+    emit_context PostToolUse "$MSG"
 fi
 
 exit 0
