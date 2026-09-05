@@ -6,6 +6,7 @@
 > **本ファイルは "core" として軽量化されている**(Pro 契約 friendly)。
 > 詳細は各 skill / team / agent が必要時に `@import` で個別に取得する。
 > プロジェクト固有のパラメータは `project-config.md` に集約。
+> 各行は「消すと Claude が間違えるか?」で判定して残す(公式ガイド)。
 
 ## 全般
 
@@ -13,6 +14,7 @@
 - 調査やデバッグにはサブエージェントを活用してコンテキストを節約する
 - 重要な決定事項は定期的にマークダウンファイルに記録する
 - CLAUDE.md は横断ルールのみ記載し、詳細な手順はスキルに委譲する
+- **完了報告には証拠を添える**(テスト出力・実行コマンドと結果・スクリーンショット)。証拠のない「完了」は禁止
 
 ## スキル一覧(全引数省略可)
 
@@ -28,15 +30,16 @@
 | `/hig-compliance <対象>` | Apple HIG 準拠のシステム横断 UI 一貫性チェック |
 | `/design-system-audit <対象>` | デザイントークン整合性監査・標準化 |
 | `/e2e-testing <対象機能>` | Playwright E2E テスト作成 |
-| `/code-review <対象>` | コードレビュー(読取専用) |
+| `/code-review <対象>` | コードレビュー(読取専用)。同梱の bundled 版は `/review` |
 | `/security-scan <対象>` | 脆弱性スキャン・OWASP / CVE 監査(読取専用) |
 | `/legal-check <対象>` | OSS ライセンス・プライバシー・知財チェック(読取専用) |
 | `/performance <対象>` | 計測ファーストのパフォーマンス最適化 |
 | `/refactoring <対象>` | 大規模コード再構成・責務移動 |
-| `/review-fix <PR番号>` | CodeRabbit/Copilot レビュー指摘の自動修正 |
-| `/harness-refine <対象 or 指示>` | ハーネス骨格の自己採点 → 強化 → セルフレビュー(2 ラウンド固定 / 日英ミラー同期必須) |
+| `/review-fix <PR番号>` | CodeRabbit/Copilot レビュー指摘の自動修正(手動起動のみ) |
+| `/harness-refine <対象 or 指示>` | ハーネス骨格の自己採点 → 強化 → セルフレビュー(手動起動のみ / 日英ミラー同期必須) |
 
-各 skill は起動時に必要な詳細(`pitfalls.md`、`guardrails.md` 等)を個別に `@import` する。
+各 skill は起動時に必要な詳細(`pitfalls.md`、`guardrails.md` 等)を個別に `@import` する。同梱の bundled skill も併用する:
+`/verify`(実アプリで動作確認)/ `/btw`(文脈を汚さない脇質問)/ `/goal <完了条件>`(条件を満たすまで継続)/ `/batch`(大量ファイル並列変更)。
 
 ## チームテンプレート
 
@@ -47,8 +50,7 @@
 - 設計: `TEAM_PLANNING.md` / デザイン: `TEAM_DESIGN.md` / リファクタ: `TEAM_REFACTOR.md`
 
 team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が自動 load される。
-
-> **プロファイル別の同梱について**: `.claude/teams/` は `full` プロファイル(`bash setup.sh <dir> --profile full`、デフォルト)でのみ同梱される。`minimal` / `standard` プロファイルではこのディレクトリ自体が存在せず、チーム機能(`TEAM_*.md`)は利用できない。個別の `/skill` コマンドは各プロファイルの同梱範囲内で通常通り利用できる。
+`.claude/teams/` は `full` プロファイル(`setup.sh` の既定)でのみ同梱。`minimal` / `standard` では個別 skill のみ使える。
 
 ## 開発原則
 
@@ -72,7 +74,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - `paths:` なし = 全セッション常時 load(`git-conventions.md` のみ)
 - `paths:` あり = 該当ファイルを触ったときだけ load(`document-management.md` / `workflow-advanced.md`)
 - 言語別・レイヤー別ルールは `.example` をコピーし `paths:` を編集して有効化する
-- タスク固有の手順は rules ではなく skill に置く
+- タスク固有の手順は rules ではなく skill に置く。「毎回必ず X」は指示ではなくフックにする
 
 ## アーキテクチャガバナンス
 
@@ -86,6 +88,8 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - カバレッジ目標は `project-config.md` §6
 - **5 つの品質ゲート**: PRD / 設計 / タスク分解 / 実装 / 検証(各 phase で人間介入可)
 - 各 phase skill が起動時に `@.claude/quality-gates.md` を load し、ゲート基準を参照する
+- **検証手段を先に用意する**: 着手前に pass/fail を返すチェック(テスト / ビルド / lint / スクリーンショット比較)を決め、完了時にその結果を貼る
+- Stop フック `verify-gate.sh` がソース編集後の未検証終了を検知する(standard=警告 / strict=1 回差し戻し)
 
 ## 並行開発
 
@@ -98,8 +102,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 ## 実装ワークフロー
 
-要件確認 → 影響調査 → テスト設計 → **🚏 設計ゲート**
-→ 実装 → リファクター → **🚏 実装ゲート** → セルフレビュー → **🚏 最終ゲート**
+要件確認 → 影響調査 → テスト設計 → **🚏 設計ゲート** → 実装 → リファクター → **🚏 実装ゲート** → セルフレビュー → **🚏 最終ゲート**
 
 ## 実装チェックリスト(提出前)
 
@@ -107,18 +110,18 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - [ ] コアアルゴリズム(丸め・書式・集計)を明確化
 - [ ] 受け入れ基準との対応 / 既存テスト破壊なし / エッジケース考慮
 - [ ] 実装変更に伴い `docs/` 更新、依存方向違反なし、`--no-verify` 不使用
+- [ ] 検証コマンドの実行結果(pass/fail 件数・エラー数)を報告に添付
 
 ## コミュニケーション規約
 
-- 技術的判断には根拠を添える
-- 仕様変更は影響範囲を提示してから着手
-- レビュー指摘は修正内容と理由をセットで回答
-- 不確実な仮定は「【仮定】」と明示
+- 技術的判断には根拠を添える / 仕様変更は影響範囲を提示してから着手
+- レビュー指摘は修正内容と理由をセットで回答 / 不確実な仮定は「【仮定】」と明示
 
 ## ツール利用方針
 
 - ドキュメント参照: 1) `docs/` → 2) WebFetch 公式 → 3) Context7 MCP → 4) WebSearch
 - Playwright MCP: E2E デバッグ・ビジュアル確認 / draw.io MCP: 図表
+- 外部サービスは CLI(`gh` / `aws` / `gcloud` 等)を優先する(最もコンテキスト効率が良い)
 
 ## セキュリティ
 
@@ -126,8 +129,9 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - **多層防御**: sandbox(Layer 0・任意) → フック(Layer 1) → deny/ask(Layer 2) → allow(Layer 3)
 - `.env` / 秘密鍵 / `*.pem` は `Read()` deny で読み取り自体を遮断
 - 外向き・不可逆操作(push / merge / publish / apply)は `ask` で毎回確認
+- auto mode(Pro/Max/Team の既定モード)でも `ask` は必ず確認され、`deny` は分類器より前に効く。分類器は本ファイルも読む
 - フックは `--dangerously-skip-permissions` でも有効
-- SessionStart フックが起動時に `project-config.md` / `docs/` / `settings.local.json` をチェック
+- SessionStart フックが起動時に `project-config.md` / `docs/` / `settings.local.json` をチェックし、`output/tasks/PROGRESS.md` があれば冒頭を注入する
 - 詳細(deny ルール一覧、保護ファイル、permissions ガイド)は `/security-scan` 等のセキュリティ系 skill 起動時に load
 - `project-config.md` §10 にプロジェクト固有ポリシーを定義
 
@@ -142,7 +146,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 ## フェーズ別出力スタイル
 
-`.claude/output-styles/` に 4 種同梱(`/output-style phase-prd` 等で切替):
+`.claude/output-styles/` に 4 種同梱(`/output-style phase-prd` 等で切替。いずれも `keep-coding-instructions: true`):
 
 - 要件定義: `phase-prd` / 設計: `phase-design` / 実装: `phase-implementation` / レビュー: `phase-review`
 
@@ -152,7 +156,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 ### 1. 計画ファースト
 
-非自明タスク(3+ ステップ or アーキテクチャ判断)は計画モードで開始。検証ステップも計画に含める。
+非自明タスク(3+ ステップ or アーキテクチャ判断)は計画モードで開始。差分を 1 文で説明できる作業は計画を省く。検証ステップも計画に含める。
 
 ### 2. 調査ファースト
 
@@ -162,18 +166,28 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 @.claude/agents/README.md  <!-- 既定 subagent 定義集と使い分けガイド -->
 
-メインコンテキストを圧迫しないよう subagent を積極活用。1 subagent = 1 task。
+メインコンテキストを圧迫しないよう subagent を積極活用。1 subagent = 1 task。subagent は既定でバックグラウンド実行され要約だけが戻る。
+実装後は fresh context のレビュー subagent(`/code-review`)に「正確性・要件に影響する gap のみ」を報告させる。
 
 ### 4. コンテキスト保全
 
-`/rewind` でファイル・会話をチェックポイントから復元できる(`fileCheckpointingEnabled`)。
-コンパクト時は PreCompact でバックアップし、PostCompact が置いたマーカーを次プロンプトで
-回収して中核ルールを再注入する(詳細は `@.claude/guardrails.md`)。
+`/rewind` でファイル・会話をチェックポイントから復元できる(`fileCheckpointingEnabled`)。無関係なタスクの前に `/clear`。
+同じ修正を 2 回繰り返したら `/clear` して指示を書き直す。コンパクト時は PreCompact でバックアップし、
+PostCompact が置いたマーカーを次プロンプトで回収して中核ルールを再注入する(詳細は `@.claude/guardrails.md`)。
 
-### 5. 詳細手順(必要時のみ load)
+### 5. 長期タスクの引き継ぎ
 
-自己改善ループ / 完了前検証 / エレガンス追求 / 自律バグ修正 / タスク管理 / 基本原則は
-`.claude/rules/workflow-advanced.md` を必要 skill が load する。
+複数セッションにまたがる作業は `output/tasks/PROGRESS.md`(雛形 `.claude/tasks/PROGRESS_TEMPLATE.md`)で引き継ぐ。
+1 セッション 1 機能、着手前にスモークテスト、終了時はテスト緑 + コミット + PROGRESS 更新。
+
+### 6. 詳細手順(必要時のみ load)
+
+自己改善ループ / 完了前検証 / 自律バグ修正 / タスク管理 / 長期タスクの詳細は `.claude/rules/workflow-advanced.md` を必要 skill が load する。
+
+## コンパクト時の指示(Compact instructions)
+
+コンパクト(要約)では次を必ず保持する: 変更したファイル一覧 / 実行した検証コマンドと結果 /
+未完了タスクと次の一手 / 採用・却下した設計判断 / 出力先(`output/`)の規約。ツール出力の生データは捨ててよい。
 
 ## プロジェクト固有情報(常時 load)
 

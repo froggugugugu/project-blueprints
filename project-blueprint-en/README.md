@@ -338,9 +338,12 @@ project-blueprint-en/
 |   |   +-- session-end.sh                   Session-end logging (SessionEnd)
 |   |   +-- commit-quality.sh                Commit quality check (PostToolUse)
 |   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
-|   |   +-- post-failure-log.sh              Tool failure logging (PostToolUse)
-|   |   +-- subagent-audit.sh                Subagent run auditing (SubagentStop)
+|   |   +-- verify-gate.sh                   Verification gate: detects unverified stops after edits (PostToolUse/Stop)
+|   |   +-- permission-denied-log.sh         Auto mode denial log (PermissionDenied)
+|   |   +-- post-failure-log.sh              Tool failure logging (PostToolUseFailure)
+|   |   +-- subagent-audit.sh                Subagent run auditing (SubagentStart/Stop)
 |   |   +-- pre-compact-backup.sh            Transcript backup before compaction (PreCompact)
+|   |   +-- post-compact-restore.sh          Re-injection marker after compaction (PostCompact)
 |   |   +-- notify-claude.sh                 Completion/confirmation push notifications (Stop/Notification)
 |   |
 |   +-- skills/                            <-- [Generic] 17 skill definitions
@@ -379,6 +382,7 @@ project-blueprint-en/
 |       +-- TASK_TEMPLATE.md                 Feature development instructions
 |       +-- TASK_REVIEW_TEMPLATE.md          Review instructions
 |       +-- LESSONS_TEMPLATE.md              Lessons learned template
+|       +-- PROGRESS_TEMPLATE.md             Multi-session progress handoff note
 |
 +-- docs/                                  <-- [AI-generated] Technical documentation
     +-- project.md                           Routing, stores, commands

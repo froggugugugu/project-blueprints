@@ -14,13 +14,13 @@ This file contains **universal, template-wide pitfalls** only.
 | **Cause** | Above ~200 lines, important rules get buried in low-priority noise. Token cost also grows per session |
 | **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use concrete `@import` paths like `@docs/*.md` / `@.claude/*.md` (root-relative) |
 
-### 2. Subagents don't inherit parent skills / rules
+### 2. Subagents don't get the parent's skills automatically (CLAUDE.md / rules ARE inherited)
 
 | Field | Content |
 | ----- | ------- |
-| **Symptom** | Calling a skill from a subagent doesn't apply the parent's CLAUDE.md or rules |
-| **Cause** | Claude Code semantics: subagents spin up in isolated contexts and don't share parent memory |
-| **Mitigation** | Restate required rules and prerequisites in the subagent `prompt`. Also document them in the agent file body |
+| **Symptom** | A subagent doesn't know the procedure of a skill the parent session was using. Conversely, assuming "CLAUDE.md isn't read", the agent body restates every rule and wastes tokens |
+| **Cause** | Official spec: custom subagents **inherit** the CLAUDE.md hierarchy (including `.claude/rules/`) and the git status (only the built-in `Explore` / `Plan` skip them). What is not inherited: **skill bodies, conversation history, the parent's auto memory**. Only skills listed in the `skills:` frontmatter are preloaded in full |
+| **Mitigation** | List required skills in the agent's `skills:`. Pass premises decided in conversation explicitly in the `prompt`. No need to restate CLAUDE.md |
 
 ### 3. `~/.claude/skills/` must be flat
 
@@ -190,6 +190,46 @@ common in long-running Claude Code sessions.
 | **Symptom** | `Write(output/**)` is in `allowed-tools`, yet every write still prompts — and a warning appears at startup |
 | **Cause** | File-path permissions are checked against `Edit(path)` and `Read(path)` only. Path rules for `Write` / `NotebookEdit` / `Glob` / `MultiEdit` are accepted but never consulted |
 | **Mitigation** | Write `Edit(output/**)` even when what you want to permit is a Write. A `Read(path)` deny rule blocks Edit and Write on the same path too |
+
+### 23. Assuming something was confirmed in auto mode
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Auto mode is the default on Pro / Max / Team, so work proceeds with no permission prompts, and a boundary that relied only on "never do X" in CLAUDE.md is crossed |
+| **Cause** | Auto mode routes each action through a classifier model. Prompted instructions can be lost in long sessions or through prompt injection from a file |
+| **Mitigation** | Use `permissions.deny` for actions that must never run (applies before the classifier) and `permissions.ask` for actions to confirm every time (always prompts, even in auto mode). Hooks (Layer 1) stay active. The classifier also reads CLAUDE.md, so write prohibitions there too. Denials are recorded by `permission-denied-log.sh` under `testreport/denials/` |
+
+### 24. Mid-session edits to CLAUDE.md / output styles don't apply
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | You fix CLAUDE.md or an output style during a session and nothing changes |
+| **Cause** | Root / user CLAUDE.md and the output style are read once at session start. A mid-session edit neither invalidates the cache nor takes effect |
+| **Mitigation** | Apply with `/clear` or a restart. Path-scoped rules and subdirectory CLAUDE.md files use the content as of their first load |
+
+### 25. `defaultMode: auto` / `autoMode` in project settings are ignored
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | `"permissions": {"defaultMode": "auto"}` or `autoMode.environment` in `.claude/settings.json` has no effect |
+| **Cause** | Official spec: `auto` / `bypassPermissions` as `defaultMode`, and the `autoMode` block, are not read from project / local settings (prevents privilege escalation through a checked-in repo) |
+| **Mitigation** | Put them in your personal `~/.claude/settings.json` or managed settings. `/auto-mode-setup` drafts them. Share only `deny` / `ask` (those do work in project settings) |
+
+### 26. A skill with the same name overrides a bundled skill
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Typing `/code-review` runs this template's skill instead of the bundled diff bug review (or you expected the opposite) |
+| **Cause** | Project / user skills override a bundled skill with the same name. The bundled alias (`/review`) is not overridden |
+| **Mitigation** | State the override explicitly in the skill (this template does). Use `/review` when you want the bundled fresh-subagent bug hunt |
+
+### 27. Stop hook loops / forced end after 8 blocks
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | A Stop hook that keeps sending Claude back to "run the tests" repeats the same block, or Claude Code force-ends the turn on the 8th |
+| **Cause** | A Stop hook re-fires after every block. Blocking without checking `stop_hook_active: true` reacts to its own block again. Per the official spec the hook is overridden after 8 consecutive blocks |
+| **Mitigation** | Always pass when `stop_hook_active` is true (block only once). Also pass when `background_tasks` is non-empty (paused, not finished). This template's `verify-gate.sh` follows this contract |
 
 ## Recommended session-management commands
 

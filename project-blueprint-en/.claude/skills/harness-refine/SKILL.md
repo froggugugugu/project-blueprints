@@ -14,6 +14,7 @@ description: >
 argument-hint: "<target-directory or refinement instruction (optional)>"
 allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 effort: high
+disable-model-invocation: true
 ---
 
 # Harness Refine — Self-strengthening best-practice refinement (Round 0 refresh + 2 fixed rounds)
@@ -315,9 +316,12 @@ Write to `output/reports/harness-refine/REFINE_<YYYY-MM-DD>_<HHMM>.md`:
 
 | Source | Purpose | Rubric items |
 | ------ | ------- | ------------ |
-| platform.claude.com/docs `agent-skills/best-practices` | SKILL.md / frontmatter / progressive disclosure / eval-first | 3, 11, 12, 15 |
-| docs.claude.com `claude-code/sub-agents` | subagent least privilege / single responsibility / summary return | 13 |
-| docs.claude.com `claude-code/memory` | CLAUDE.md line count / `@import` doesn't cut context / path-scoped rules | 2 |
+| platform.claude.com/docs `agents-and-tools/agent-skills/best-practices` | SKILL.md / frontmatter / progressive disclosure / eval-first | 3, 11, 12, 15 |
+| code.claude.com/docs `best-practices` | giving Claude verification / plan → code / adversarial review / auto mode / failure patterns | 9, 10, 15 |
+| code.claude.com/docs `sub-agents` / `skills` / `hooks` / `permissions` / `settings-reference` | official enums and defaults (fork mode / bundled skill override / `Tool(param:value)` rules etc.) | 3, 5, 10, 13 |
+| code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md line count / startup load cost / cache invalidation / compact instructions | 2, 12 |
+| claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | when to use CLAUDE.md / rules / skills / hooks / subagents / output styles | 4, 10 |
+| code.claude.com/docs `whats-new` (last 8 weeks) | detecting new features and default changes (input to rubric self-evolution) | all |
 | anthropic.com/engineering `writing-tools-for-agents` | tool-definition clarity / token efficiency | 10, 11 |
 | anthropic.com/engineering `effective-context-engineering-for-ai-agents` | context curation / sub-agent isolation | 12, 13 |
 | anthropic.com/engineering `effective-harnesses-for-long-running-agents` | startup orientation / verification loop | 9, 15 |

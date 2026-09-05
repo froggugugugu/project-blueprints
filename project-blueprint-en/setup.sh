@@ -256,22 +256,28 @@ fi
 
 # -- Add testreport/ to .gitignore ---------------------------------
 GITIGNORE="$TARGET_DIR/.gitignore"
-if [[ -f "$GITIGNORE" ]]; then
-    if ! grep -q '^testreport/' "$GITIGNORE" 2>/dev/null; then
-        echo "" >> "$GITIGNORE"
-        echo "# Raw tool output (AI-generated data)" >> "$GITIGNORE"
-        echo "testreport/" >> "$GITIGNORE"
-        info "Added testreport/ to .gitignore"
-    else
-        info "testreport/ is already in .gitignore"
-    fi
-else
-    cat > "$GITIGNORE" <<'GITIGNORE_EOF'
-# Raw tool output (AI-generated data)
-testreport/
-GITIGNORE_EOF
-    info "Created .gitignore with testreport/"
+# Also exclude the local state Claude Code writes inside the repository:
+#   testreport/                 raw tool output / observation-hook logs
+#   .claude/settings.local.json personal allow rules (sharing them leaks permissions)
+#   .claude/worktrees/          worktrees from --worktree / isolation: worktree
+#   .claude/agent-memory-local/ subagent memory for memory: local
+GITIGNORE_ENTRIES=(testreport/ .claude/settings.local.json .claude/worktrees/ .claude/agent-memory-local/)
+if [[ ! -f "$GITIGNORE" ]]; then
+    printf '%s\n' "# Claude Code local state (AI-generated data, personal settings)" > "$GITIGNORE"
+    info "Created .gitignore"
 fi
+for entry in "${GITIGNORE_ENTRIES[@]}"; do
+    if ! grep -qxF "$entry" "$GITIGNORE" 2>/dev/null; then
+        if [[ "$entry" == "testreport/" ]] && ! grep -q '^# ' "$GITIGNORE"; then
+            echo "" >> "$GITIGNORE"
+            echo "# Claude Code local state (AI-generated data, personal settings)" >> "$GITIGNORE"
+        fi
+        echo "$entry" >> "$GITIGNORE"
+        info "Added to .gitignore: $entry"
+    else
+        info "Already in .gitignore: $entry"
+    fi
+done
 
 # -- Done ----------------------------------------------------------
 echo ""

@@ -116,6 +116,20 @@ Agent({
 - agent は **CLAUDE.md 階層(`.claude/rules/*.md` を含む)と git status のスナップショットを既定で継承する**(Claude Code 公式仕様。ビルトインの `Explore` / `Plan` のみ両方をスキップして最小コンテキストで動く)。skill は `skills:` frontmatter で明示指定したもののみ全文プリロードされる — それ以外は `Skill` ツール経由で個別に呼び出せる
 - agent は `input/`（人間入力）を書き換えない。成果物は `output/` か、agent ごとに定義されたスコープ内に
 
+## 公式仕様の補足(2026-09 確認)
+
+- **実行形態**: 対話セッションでは fork mode が既定で ON になり、subagent は**バックグラウンドで実行**される。
+  結果は完了時に会話へ届く。`background: true` を書くと常時バックグラウンドを強制できる
+- **継承するもの / しないもの**: CLAUDE.md 階層・`.claude/rules/`・git status は継承(ビルトインの `Explore` / `Plan` を除く)。
+  会話履歴・親の auto memory・skill 本文は継承しない(skill は `skills:` で明示プリロード)
+- **ネスト**: 公式には subagent が subagent を最大 5 階層まで spawn できるが、本テンプレートは constitution ④ により
+  **agent の `tools` に `Agent` を含めない**(循環と暴走の防止)。並列 fan-out が必要なら team か dynamic workflows を使う
+- **description の予算**: カスタム agent の description 合計が 15,000 トークンを超えると起動時に警告が出る。1〜2 文を守る
+- **権限ルール**: `Agent(<name>)` で特定 agent を deny でき、`Agent(model:opus)` / `Agent(isolation:worktree)` のように
+  パラメータ単位の deny / ask も書ける(`Tool(param:value)` 構文)
+- **メモリ**: `memory: project` の学習は `.claude/agent-memory/<name>/` に保存され、**git にコミットされる**(チーム共有が目的)。
+  個人限定にしたいときは `local`(`.claude/agent-memory-local/`、gitignore 済み)
+
 ## 落とし穴
 
 - agent の `description` が長すぎると発動条件が曖昧になり誤発動を招く。**1〜2 文**に絞る

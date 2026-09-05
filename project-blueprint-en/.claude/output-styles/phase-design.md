@@ -1,5 +1,6 @@
 ---
 name: phase-design
+keep-coding-instructions: true
 description: Design phase. Optimized for architectural decisions, trade-off analysis, and ADR drafting.
 ---
 

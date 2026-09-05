@@ -6,6 +6,7 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
 > **This file is the slim "core"** (Pro-plan friendly).
 > Each skill / team / agent loads its own details via `@import` when invoked.
 > Project-specific parameters live in `project-config.md`.
+> Keep a line only if removing it would make Claude make mistakes (official guidance).
 
 ## General
 
@@ -13,6 +14,7 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
 - Use subagents for research and debugging to conserve context
 - Record important decisions periodically in markdown files
 - CLAUDE.md contains only cross-cutting rules; details delegated to skills
+- **Attach evidence to every completion report** (test output, the command run and its result, screenshots). A "done" without evidence is not allowed
 
 ## Skill catalog (all arguments optional)
 
@@ -28,15 +30,16 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
 | `/hig-compliance <target>` | Apple HIG-based system-wide UI consistency |
 | `/design-system-audit <target>` | Design token consistency audit |
 | `/e2e-testing <feature>` | Playwright E2E test creation |
-| `/code-review <target>` | Code review (read-only) |
+| `/code-review <target>` | Code review (read-only). The bundled version remains available as `/review` |
 | `/security-scan <target>` | Vulnerability scan / OWASP / CVE audit (read-only) |
 | `/legal-check <target>` | OSS license / privacy / IP compliance (read-only) |
 | `/performance <target>` | Measurement-first performance optimization |
 | `/refactoring <target>` | Large-scale restructuring / responsibility migration |
-| `/review-fix <PR#>` | Auto-fix CodeRabbit/Copilot review comments |
-| `/harness-refine <target or instruction>` | Self-score → improve → review the harness scaffolding (2 fixed rounds / JP-EN mirror parity required) |
+| `/review-fix <PR#>` | Auto-fix CodeRabbit/Copilot review comments (manual invocation only) |
+| `/harness-refine <target or instruction>` | Self-score → improve → review the harness scaffolding (manual invocation only / JP-EN mirror parity required) |
 
-Each skill loads its own details (`pitfalls.md`, `guardrails.md`, etc.) at invocation time.
+Each skill loads its own details (`pitfalls.md`, `guardrails.md`, etc.) at invocation time. Use the bundled skills alongside them:
+`/verify` (confirm against the running app) / `/btw` (side question kept out of context) / `/goal <condition>` (keep working until it holds) / `/batch` (parallel change across files).
 
 ## Team templates
 
@@ -47,8 +50,7 @@ Run a `TEAM_*.md` from `.claude/teams/` to launch a multi-agent team:
 - Planning: `TEAM_PLANNING.md` / Design: `TEAM_DESIGN.md` / Refactor: `TEAM_REFACTOR.md`
 
 Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
-
-> **Profile note**: `.claude/teams/` is only bundled with the `full` profile (`bash setup.sh <dir> --profile full`, the default). Under `minimal` / `standard` profiles this directory does not exist and team templates (`TEAM_*.md`) are unavailable. Individual `/skill` commands remain usable within whatever that profile bundles.
+`.claude/teams/` ships only with the `full` profile (the `setup.sh` default). `minimal` / `standard` profiles get individual skills only.
 
 ## Development principles
 
@@ -72,7 +74,7 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - No `paths:` = loaded in every session (only `git-conventions.md`)
 - With `paths:` = loaded only when Claude touches a matching file (`document-management.md` / `workflow-advanced.md`)
 - Enable language- or layer-specific rules by copying a `.example` and editing its `paths:`
-- Task-specific procedures belong in a skill, not in a rule
+- Task-specific procedures belong in a skill, not in a rule. "Every time, always do X" belongs in a hook, not in an instruction
 
 ## Architecture governance
 
@@ -86,6 +88,8 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - Coverage targets in `project-config.md` §6
 - **5 quality gates**: PRD / Design / Task breakdown / Implementation / Verification (each is an optional human intervention point)
 - Each phase skill loads `@.claude/quality-gates.md` at invocation to consult gate criteria
+- **Set up the verification first**: before starting, decide on a check that returns pass/fail (tests / build / lint / screenshot comparison) and paste its result when done
+- The Stop hook `verify-gate.sh` detects a turn ending after source edits without a verification command (standard = warning / strict = sent back once)
 
 ## Concurrent development
 
@@ -98,8 +102,7 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 
 ## Implementation workflow
 
-Requirements → Impact analysis → Test design → **🚏 Design Gate**
-→ Implementation → Refactor → **🚏 Implementation Gate** → Self-review → **🚏 Final Gate**
+Requirements → Impact analysis → Test design → **🚏 Design Gate** → Implementation → Refactor → **🚏 Implementation Gate** → Self-review → **🚏 Final Gate**
 
 ## Implementation checklist (before submission)
 
@@ -107,18 +110,18 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate**
 - [ ] Core algorithms (rounding/formatting/aggregation) clarified
 - [ ] Acceptance-criteria correspondence shown / existing tests intact / edge cases considered
 - [ ] `docs/` updated to reflect implementation, no dependency-direction violations, no `--no-verify`
+- [ ] Verification command results (pass/fail counts, error counts) attached to the report
 
 ## Communication standards
 
-- Always provide rationale for technical decisions
-- Present impact scope before starting spec changes
-- Reply to review feedback with both fix and reason
-- Mark uncertain assumptions as "[Assumption]"
+- Always provide rationale for technical decisions / present impact scope before starting spec changes
+- Reply to review feedback with both fix and reason / mark uncertain assumptions as "[Assumption]"
 
 ## Tool usage
 
 - Documentation lookup: 1) `docs/` → 2) WebFetch official → 3) Context7 MCP → 4) WebSearch
 - Playwright MCP: E2E debugging / visual verification / draw.io MCP: diagrams
+- Prefer CLI tools (`gh` / `aws` / `gcloud` etc.) for external services (the most context-efficient path)
 
 ## Security
 
@@ -126,8 +129,9 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate**
 - **Defense in depth**: sandbox (Layer 0, optional) → hooks (Layer 1) → deny/ask (Layer 2) → allow (Layer 3)
 - `.env`, private keys and `*.pem` are blocked from being read at all by `Read()` deny rules
 - Outbound, irreversible operations (push / merge / publish / apply) confirm every time via `ask`
+- Even in auto mode (the default on Pro/Max/Team), `ask` always prompts and `deny` applies before the classifier. The classifier also reads this file
 - Hooks remain active even with `--dangerously-skip-permissions`
-- SessionStart hook checks `project-config.md` / `docs/` / `settings.local.json` at session start
+- SessionStart hook checks `project-config.md` / `docs/` / `settings.local.json` at session start and injects the head of `output/tasks/PROGRESS.md` when present
 - Detailed deny lists, protected files, and permissions guide are loaded by security-related skills (`/security-scan`, etc.)
 - Project-specific policy in `project-config.md` §10
 
@@ -142,7 +146,7 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate**
 
 ## Phase-specific output styles
 
-`.claude/output-styles/` ships 4 styles (switch via `/output-style phase-prd` etc.):
+`.claude/output-styles/` ships 4 styles (switch via `/output-style phase-prd` etc.; all set `keep-coding-instructions: true`):
 
 - Requirements: `phase-prd` / Design: `phase-design` / Implementation: `phase-implementation` / Review: `phase-review`
 
@@ -152,7 +156,7 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate**
 
 ### 1. Plan first
 
-Start non-trivial tasks (3+ steps or architectural decisions) in plan mode. Include verification steps in the plan.
+Start non-trivial tasks (3+ steps or architectural decisions) in plan mode. Skip planning when the diff can be described in one sentence. Include verification steps in the plan.
 
 ### 2. Research first
 
@@ -162,19 +166,28 @@ Check existing code, patterns, and official docs before implementing. Priority: 
 
 @.claude/agents/README.md  <!-- Project default subagent definitions and selection guide -->
 
-Use subagents aggressively to avoid main-context bloat. 1 subagent = 1 task.
+Use subagents aggressively to avoid main-context bloat. 1 subagent = 1 task. Subagents run in the background by default and return only a summary.
+After implementing, have a fresh-context review subagent (`/code-review`) report only gaps that affect correctness or the stated requirements.
 
 ### 4. Context preservation
 
-`/rewind` restores files and conversation from a checkpoint (`fileCheckpointingEnabled`).
-On compaction, PreCompact backs the transcript up and the marker dropped by PostCompact is
-collected on the next prompt to re-inject the core rules (see `@.claude/guardrails.md`).
+`/rewind` restores files and conversation from a checkpoint (`fileCheckpointingEnabled`). Run `/clear` before an unrelated task.
+After correcting the same issue twice, `/clear` and rewrite the prompt. On compaction, PreCompact backs the transcript up and
+the marker dropped by PostCompact is collected on the next prompt to re-inject the core rules (see `@.claude/guardrails.md`).
 
-### 5. Detailed procedures (loaded only when needed)
+### 5. Long-running task handoff
 
-Self-improvement loop / pre-completion verification / pursuit of elegance / autonomous bug fixing /
-task management / core principles are loaded by individual skills from
-`.claude/rules/workflow-advanced.md`.
+Work spanning multiple sessions is handed over through `output/tasks/PROGRESS.md` (template: `.claude/tasks/PROGRESS_TEMPLATE.md`).
+One feature per session, smoke-test before starting, and finish with tests green + a commit + PROGRESS updated.
+
+### 6. Detailed procedures (loaded only when needed)
+
+Self-improvement loop / pre-completion verification / autonomous bug fixing / task management / long-running task details are loaded by individual skills from `.claude/rules/workflow-advanced.md`.
+
+## Compact instructions
+
+When compacting, always preserve: the list of modified files / the verification commands run and their results /
+unfinished tasks and the next step / design decisions adopted or rejected / the output-location conventions (`output/`). Raw tool output may be dropped.
 
 ## Project-specific info (always loaded)
 

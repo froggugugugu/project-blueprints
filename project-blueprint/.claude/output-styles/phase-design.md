@@ -1,5 +1,6 @@
 ---
 name: phase-design
+keep-coding-instructions: true
 description: 設計フェーズ用。アーキテクチャ判断・トレードオフ・ADR起票に最適化した出力姿勢。
 ---
 

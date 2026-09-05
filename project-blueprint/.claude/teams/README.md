@@ -27,6 +27,9 @@ Claude Code 公式の Agent Teams 機能とは別レイヤーにある。両者�
 - 公式 Agent Teams 有効時は、Claude が名前を付けた subagent が teammate として起動する。
   意図せずチームが形成されることがある点に注意
 - 品質ゲートを teammate にも効かせたい場合は `TeammateIdle` / `TaskCompleted` フックを使う
+- 数十〜数百の subagent を並列に回す作業(コードベース全体の監査、大量ファイルの一括移行)には
+  公式の **dynamic workflows**(プロンプトに `ultracode` を含める / `/batch`)が向く。計画をスクリプトに
+  移すので中間結果がコンテキストに載らない。`TEAM_*.md` は人間ゲート付きのライフサイクル運用に使い分ける
 
 ## クイックスタート
 

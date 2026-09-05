@@ -9,9 +9,12 @@
 output/reports/sessions/
 output/brainstorm/
 
-# --- Auto memory (Claude Code Auto Memory, project-scope) ---
-# Auto memory is per-machine; should not be committed.
-.claude/memory/
+# --- Claude Code local state (per machine, never committed) ---
+# Auto memory lives in ~/.claude/projects/<project>/memory/ and never enters the repo.
+# Worktrees created by --worktree / isolation: worktree, and `memory: local` subagent
+# memory are written inside .claude/ and must stay out of git.
+.claude/worktrees/
+.claude/agent-memory-local/
 
 # --- Tool raw output (machine-generated, not for review) ---
 # Note: observability hooks (post-failure-log.sh, subagent-audit.sh) write

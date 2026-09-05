@@ -60,13 +60,36 @@ if [[ ! -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
     warnings+=("settings.local.json not created. Use settings.local.json.template as a reference.")
 fi
 
+# --- Progress handoff note (resuming multi-session work) ---
+# If output/tasks/PROGRESS.md exists, inject its head (state + feature list + next steps).
+# Official long-running-agent finding: a fresh context starts from git log and a progress note.
+HANDOFF=""
+PROGRESS="$PROJECT_DIR/output/tasks/PROGRESS.md"
+if [[ -f "$PROGRESS" ]]; then
+    EXCERPT="$(head -n 60 "$PROGRESS" 2>/dev/null | head -c 3500 || true)"
+    if [[ -n "$EXCERPT" ]]; then
+        HANDOFF="[progress handoff] output/tasks/PROGRESS.md detected. Before resuming work:
+  1. Read \`git log --oneline -10\` and the note below to see where the last session stopped
+  2. Run the recorded smoke test; if anything is broken, fix it before starting a new feature
+  3. Pick only the highest-priority unfinished feature (passes=❌) from the feature list
+  4. Finish with tests green + a commit + PROGRESS.md updated (append a session log entry)
+--- PROGRESS.md (first 60 lines) ---
+$EXCERPT"
+    fi
+fi
+
 # --- Report state to Claude ---
+MSG=""
 if [[ ${#warnings[@]} -gt 0 ]]; then
     MSG="Project readiness check (project-blueprint SessionStart):"
     for w in "${warnings[@]}"; do
         MSG="$MSG"$'\n'"  - $w"
     done
-    emit_context SessionStart "$MSG"
 fi
+if [[ -n "$HANDOFF" ]]; then
+    [[ -n "$MSG" ]] && MSG="$MSG"$'\n\n'
+    MSG="$MSG$HANDOFF"
+fi
+[[ -n "$MSG" ]] && emit_context SessionStart "$MSG"
 
 exit 0

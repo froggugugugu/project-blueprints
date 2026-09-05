@@ -18,7 +18,7 @@
     "- Layer 1: hooks (defined in settings.json; active even with --dangerously-skip-permissions)",
     "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
     "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
-    "    + PreCompact/PostCompact + Stop/Notification",
+    "    + PreCompact/PostCompact + Stop(verify-gate verification gate / notify) / Notification + PermissionDenied(denial log)",
     "- Layer 2: deny / ask rules (already in settings.json; do not override them here)",
     "- Layer 3: allow rules (this file, active in normal mode)",
     "- meta : self-SAST via scan-harness.sh (constitution hash / secret leakage / deny weakening)",
@@ -31,6 +31,24 @@
     "Write(path) / NotebookEdit(path) / Glob(path) / MultiEdit(path) are accepted but",
     "never consulted, and produce a startup warning. Use Edit(path) even when what",
     "you want to permit is a Write."
+  ],
+  "_comment_auto_mode": [
+    "Relation to auto mode (the default permission mode on Pro / Max / Team):",
+    "- deny rules in settings.json apply before the classifier; ask rules always prompt, even in auto mode",
+    "- `permissions.defaultMode: \"auto\"` and `autoMode.*` are NOT read from project / local settings (official spec).",
+    "  Put them in your personal ~/.claude/settings.json or managed settings; /auto-mode-setup drafts them",
+    "- The classifier also reads CLAUDE.md, so project-specific prohibitions belong in CLAUDE.md too",
+    "- Classifier denials are logged by permission-denied-log.sh under testreport/denials/. Add repeatedly",
+    "  denied legitimate actions to the allow list in this file"
+  ],
+  "_comment_stop_gate": [
+    "Choosing a verification gate (Stop hook):",
+    "- Default: verify-gate.sh (deterministic). standard = warning / strict = sent back once when no verification ran after edits",
+    "- To keep working toward a condition within one conversation: /goal <condition> (model-judged every turn, session-scoped)",
+    "- For a permanent model-judged gate, add a prompt-type Stop hook to this file:",
+    "  \"hooks\": { \"Stop\": [ { \"hooks\": [ { \"type\": \"prompt\",",
+    "    \"prompt\": \"Evaluate if Claude should stop: $ARGUMENTS. Block only if tests were not run after code changes.\" } ] } ] }",
+    "  NOTE: Claude Code overrides the hook after 8 consecutive blocks. Check stop_hook_active and block only once"
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",

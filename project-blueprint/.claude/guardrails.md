@@ -5,7 +5,7 @@
 
 ---
 
-## フック一覧(13 スクリプト / 15 登録)
+## フック一覧(15 スクリプト / 18 登録)
 
 | フック | イベント | 対象 | 動作 | 説明 |
 | ------ | -------- | ---- | ---- | ---- |
@@ -17,6 +17,9 @@
 | `session-end.sh` | SessionEnd | — | 観測 | セッション終了サマリを `output/reports/sessions/<date>.md` に追記 |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | 警告 | Conventional Commits 形式チェック・シークレット検出 |
 | `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント(console.log 等)の残存検出 |
+| `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | 観測 | ソース編集 / 検証コマンド実行の時刻を記録(`testreport/.verify/`) |
+| `verify-gate.sh gate` | **Stop** | — | 警告/差し戻し | 編集後に検証コマンドが無ければ standard=警告 / strict=1 回差し戻し(検証ゲート) |
+| `permission-denied-log.sh` | **PermissionDenied** | `*` | 観測 | auto mode の分類器による拒否を記録(`testreport/denials/`) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | 観測 | ツール失敗時の構造化エラーログ(`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | 観測 + 文脈注入 | 起動記録 + サブエージェントへガードレールを注入 |
 | `subagent-audit.sh` | SubagentStop | — | 観測 | 完了記録(`testreport/agents/`) |
@@ -39,6 +42,24 @@ UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
 > **なぜ 2 段か**: `PostCompact` は公式仕様上 **decision control を一切持たない**
 > (`additionalContext` も返せない)side-effect 専用イベントである。
 > 文脈を注入できるのは `UserPromptSubmit` 側なので、マーカーで橋渡しする。
+
+### 検証ゲート(Stop フック)
+
+公式ベストプラクティス「Claude に検証手段を与え、Stop フックで決定論的にゲートする」の実装。
+「動くはず」で終わる trust-then-verify gap(pitfalls #19)を機械的に塞ぐ。
+
+```text
+PostToolUse → verify-gate.sh track   ソース編集 / 検証コマンドのタイムスタンプを記録
+Stop        → verify-gate.sh gate    最後の編集より後に検証コマンドが無ければ:
+                                        standard: systemMessage で人間に警告
+                                        strict:   decision:block で 1 回だけ差し戻し
+```
+
+- 検証コマンドの判定: `npm test` / `vitest` / `jest` / `pytest` / `cargo test` / `go test` / `tsc` /
+  `eslint` / `biome` / `playwright test` / `make test` など(スクリプト内 `VERIFY_PATTERNS`。プロジェクトに合わせて追記可)
+- 対象外: `docs/` `output/` `input/` `.claude/` `.github/` と `.md` / `.json` / `.yaml` / `.toml` の編集
+- `stop_hook_active: true`(自分の差し戻し後)と `background_tasks` 非空(待機中)は必ず通す(pitfalls #27)
+- 会話内で柔軟な完了条件を判定させたいときは `/goal <条件>`(モデル評価、セッション限り)を併用する
 
 ### 実行環境ごとの挙動
 
@@ -86,13 +107,14 @@ UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
 ### Hook profile 切替
 
 `BLUEPRINT_HOOK_PROFILE` 環境変数で挙動を切替可能
-(`user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh` / `post-compact-restore.sh` / `subagent-audit.sh` 対応):
+(`user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh` / `post-compact-restore.sh` / `subagent-audit.sh` /
+`verify-gate.sh` / `permission-denied-log.sh` 対応):
 
 | profile | 用途 | 挙動 |
 | ------- | ---- | ---- |
 | `minimal` | CI / 自動化 | パススルー(検査スキップ)。最小オーバーヘッド |
 | `standard`(既定) | 通常開発 | 検出時は警告のみ(non-blocking) |
-| `strict` | 高リスク作業 | 検出時に skill / プロンプトをブロック |
+| `strict` | 高リスク作業 | 検出時に skill / プロンプトをブロック。未検証の終了を差し戻し |
 
 `.envrc` や `direnv` で切り替えるのが推奨。
 
@@ -110,6 +132,9 @@ UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
   - ただし async フックは `decision` / `permissionDecision` / `continue` を返せない
   - 本テンプレートでは `notify-claude.sh`(ntfy 送信)のみ async
 - フックは `--dangerously-skip-permissions` モードでも有効(多層防御)
+- **Stop フックの差し戻しは 8 回連続で Claude Code に無視される**。`stop_hook_active` を見て 1 回で通す設計にする
+- ハンドラの追加フィールド: `if`(権限ルール構文で発火条件を絞る。例 `"if": "Bash(git *)"`)/ `once`(初回成功後に解除)/
+  `asyncRewake`(バックグラウンド実行し exit 2 で Claude を起こす)/ `args`(exec 形式)/ `statusMessage`
 
 ### イベント別の decision 可否(抜粋)
 
@@ -128,9 +153,10 @@ UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
 | `prompt` | AI に判断を委ねる。文脈依存の柔軟な判定が必要な場合 | 「この Bash コマンドは本番環境で安全か評価せよ」 |
 | `http` | 外部エンドポイントに POST。集中管理・監査基盤との連携 | 組織共通の監査サーバー |
 | `mcp_tool` | MCP ツールを直接呼ぶ | — |
+| `agent` | subagent がツール(Read / Grep / Bash 等)で条件を検証してから判定 | Stop 時に「テストが全件通っているか実行して確認せよ」(実験的) |
 
 - デフォルトは `command` を推奨(決定論的で高速)
-- `prompt` はコンテキスト依存の判断が必要な場合のみ(トークンを消費する)
+- `prompt` / `agent` はコンテキスト依存の判断が必要な場合のみ(トークンを消費する)。`/goal` は prompt 型 Stop フックのセッション限定版
 - 同一イベントに複数タイプを併用可能
 
 ### 未使用の公式フックイベント(拡張の余地)
@@ -142,7 +168,7 @@ UserPromptSubmit → user-prompt-submit.sh マーカーを回収して
 | `Setup` | `--init-only` / `-p --init` 実行時 | CI での依存インストール・定期クリーンアップ |
 | `InstructionsLoaded` | CLAUDE.md / rules 読込時 | ルール適用の可観測性 |
 | `PermissionRequest` | 権限ダイアログ発生時 | 組織ポリシーによる自動 allow/deny |
-| `PermissionDenied` | auto モードで自動拒否されたとき | 拒否イベントの集計 |
+| `PreModelSwitch` / `PostModelSwitch` | `/model` 等でモデルを切り替える前後 | 高コストモデルへの切替の確認・監査(切替はキャッシュを無効化する) |
 | `PostToolBatch` | 並列ツール実行の一括完了時 | バッチ単位の検証 |
 | `TaskCreated` / `TaskCompleted` | タスク作成・完了時 | タスク命名規約の強制・品質ゲート |
 | `TeammateIdle` | チームメイトが手待ちになったとき | エージェントチームの品質ゲート |

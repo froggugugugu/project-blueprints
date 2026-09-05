@@ -137,6 +137,37 @@ def m_claude_md_too_long(root: Path) -> None:
     p.write_text(p.read_text() + "\n<!-- pad -->" * 0 + "\n".join(["- pad"] * 120) + "\n")
 
 
+def m_bad_hook_type(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"]["PreToolUse"][0]["hooks"][0]["type"] = "shell"
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_prompt_hook_without_prompt(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"]["Stop"] = [{"matcher": "", "hooks": [{"type": "prompt", "timeout": 30}]}]
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_project_default_mode_auto(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["defaultMode"] = "auto"
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_output_style_drops_coding(root: Path) -> None:
+    p = root / ".claude/output-styles/phase-prd.md"
+    p.write_text(p.read_text().replace("keep-coding-instructions: true\n", "", 1))
+
+
+def m_bad_disable_model_invocation(root: Path) -> None:
+    p = root / ".claude/skills/review-fix/SKILL.md"
+    p.write_text(p.read_text().replace("disable-model-invocation: true", "disable-model-invocation: yes", 1))
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -155,6 +186,11 @@ CASES = [
     ("不正な effort 値", m_bad_effort, "`effort: highest` は不正"),
     ("不正な memory スコープ", m_bad_memory, "`memory: global` は不正"),
     ("CLAUDE.md がハード上限超過", m_claude_md_too_long, "ハード上限"),
+    ("不正な hook type", m_bad_hook_type, "公式のフックタイプではありません"),
+    ("prompt 型 hook に prompt が無い", m_prompt_hook_without_prompt, "`prompt` が必要"),
+    ("project settings の defaultMode: auto", m_project_default_mode_auto, "project settings では無視"),
+    ("output style が coding instructions を落とす", m_output_style_drops_coding, "keep-coding-instructions"),
+    ("disable-model-invocation の非 boolean 値", m_bad_disable_model_invocation, "true / false のみ"),
 ]
 
 

@@ -53,6 +53,8 @@ Inter-phase approval points for the PJM team. Refer to `.claude/teams/TEAM_PJM.m
 - Coverage does not fall below the target
 - Zero static analysis errors
 - Auto-pass if the above are met. Seek human judgment if not met
+- Show the basis for passing as **evidence** (test output / command return values / screenshots). Passing on assertion alone is not allowed
+- At the implementation and verification gates, include confirmation against the running app (`/verify` or E2E) in the evidence
 
 ## Gate 5 Verification Criteria (Quantitative Measurement Table)
 
