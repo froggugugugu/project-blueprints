@@ -197,6 +197,13 @@ if [[ "$PROFILE" == "minimal" ]]; then
 else
     rm -f "$TARGET_DIR/.claude/settings.minimal.json"
 fi
+
+# -- Generate settings.local.json from the template (if missing) ----------
+# Personal allow rules. Gitignored; the SessionStart hook warns when it is missing.
+if [[ -f "$TARGET_DIR/.claude/settings.local.json.template" && ! -f "$TARGET_DIR/.claude/settings.local.json" ]]; then
+    cp "$TARGET_DIR/.claude/settings.local.json.template" "$TARGET_DIR/.claude/settings.local.json"
+    info "Generated .claude/settings.local.json from the template (adjust the allow list to your build tools)"
+fi
 # constitution.md (immutable principles) — referenced by scan-harness.sh / CLAUDE.md
 # Note: avoid SC2015 (`&& A || B`) since `cp -n` returns 0 even when it skips —
 #       use an explicit existence check instead.

@@ -65,7 +65,7 @@ project-blueprints/
 
 **Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
-**Hook system** (15 hook scripts in `.claude/hooks/*.sh`, 18 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials. See `.claude/guardrails.md`.
+**Hook system** (15 hook scripts in `.claude/hooks/*.sh`, 19 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` / `TaskCompleted` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop + TaskCompleted) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials. See `.claude/guardrails.md`.
 
 **Distribution**: `setup.sh` + clone only. Plugin packaging was evaluated twice (adopted 2026-04, withdrawn 2026-06, re-evaluated and withdrawn again 2026-08) and does not fit: a plugin can only declare `skills`/`agents`/`outputStyles`/`hooks`, while **17 of 17 skills reference files a plugin cannot ship** (`docs/` 16, `output/` 15, `quality-gates.md` 15, `project-config.md` 14, `pitfalls.md` 12, `.claude/rules/` 4). Do not re-open this without new evidence that those dependencies have gone away.
 
@@ -81,6 +81,7 @@ There is no application build. The check that gates this repository is the harne
 bash scripts/validate-harness.sh          # both mirrors + JP/EN structural parity
 bash scripts/validate-harness.sh --online # also resolve the npm packages in .mcp.json.template
 bash scripts/validate-harness.sh --test   # negative tests for the validator itself
+bash scripts/validate-harness.sh --hooks  # functional tests of the hook scripts (feeds hook JSON on stdin; needs jq)
 ```
 
 It is deterministic (no LLM) and enforces the parts of the official spec that are easy to

@@ -29,8 +29,23 @@ All notable changes to this project will be documented in this file.
   警告、`disable-model-invocation` / `user-invocable` の厳密値、output style の
   `keep-coding-instructions` 警告。負のテスト +5(22/22)。
 
+- **`scripts/test_hooks.sh`**(`validate-harness.sh --hooks`): 全フックに hook JSON を流して
+  exit code / 出力を検証する機能テスト 54 ケース(JP/EN 両ミラー)。CI に組み込み。
+- **`verify-gate.sh task`**(TaskCompleted): 検証コマンド未実行のタスク完了マークを
+  standard=警告 / strict=exit 2 で差し止め(品質ゲート③の機械強制)。
+- **`.claude/managed-settings.example.json`**: 組織ポリシー例(deny / sandbox / OpenTelemetry /
+  `requiredMinimumVersion`)。`settings.local.json.template` に OTel と `modelPricing` の指針を追加。
+- **`rules/README.md`**: monorepo 指針(per-directory skill / `claudeMdExcludes` /
+  `worktree.sparsePaths` / `skillOverrides`)。
+- **`/plan` / `/implementing-features`**: PROGRESS.md の機能リスト初期化と `passes` /
+  セッションログ更新を手順化(複数セッション引き継ぎの自動化)。
+- **`session-start.sh`**: 常時 `@import` される `docs/*.md` が 300 行を超えたら切り出しを警告。
+- **`setup.sh`**: `settings.local.json` を雛形から自動生成。
+
 ### Changed
 
+- **`.mcp.json.template`**: 有効サーバーをバージョン固定(`@upstash/context7-mcp@4.0.5` /
+  `@playwright/mcp@0.0.80`)。validator `--online` が固定版の解決を検証し、未固定を WARN。
 - **output styles(4 × JP/EN)**: `keep-coding-instructions: true` を追加。これまでは
   Claude Code 標準のソフトウェアエンジニアリング指示(検証習慣・変更スコープ)を丸ごと
   落としていた(公式 output-styles 仕様)。

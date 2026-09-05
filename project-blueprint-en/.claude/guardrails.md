@@ -5,7 +5,7 @@ Rules that are scattered across `CLAUDE.md` sections are consolidated here.
 
 ---
 
-## Hook inventory (15 scripts / 18 registrations)
+## Hook inventory (15 scripts / 19 registrations)
 
 | Hook | Event | Target | Behavior | Description |
 | ---- | ----- | ------ | -------- | ----------- |
@@ -19,6 +19,7 @@ Rules that are scattered across `CLAUDE.md` sections are consolidated here.
 | `console-warn.sh` | PostToolUse | Edit\|Write | warn | Detects leftover debug statements (console.log etc.) |
 | `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | observe | Records timestamps of source edits / verification commands (`testreport/.verify/`) |
 | `verify-gate.sh gate` | **Stop** | — | warn/send back | If no verification command ran after the last edit: standard = warning / strict = sent back once (verification gate) |
+| `verify-gate.sh task` | **TaskCompleted** | — | warn/refuse | Same condition on the completion mark: standard = warning / strict = exit 2 refuses it (mechanical enforcement of quality gate ③) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | observe | Records auto mode classifier denials (`testreport/denials/`) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | observe | Structured error log on tool failure (`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | observe + context | Logs the launch and injects guardrails into the subagent |
@@ -61,6 +62,7 @@ Stop        → verify-gate.sh gate    if no verification command ran after the 
 - Not counted as source: edits under `docs/` `output/` `input/` `.claude/` `.github/` and `.md` / `.json` / `.yaml` / `.toml` files
 - `stop_hook_active: true` (after our own block) and a non-empty `background_tasks` (paused) always pass (pitfalls #27)
 - For a flexible, model-judged completion condition inside one conversation, combine with `/goal <condition>`
+- Regression test: `bash scripts/validate-harness.sh --hooks` feeds hook JSON to every hook and checks exit codes / output (also runs in CI)
 
 ### Behavior per runtime
 
@@ -104,6 +106,14 @@ their **durability differs sharply**.
   weekly and collects the results in an issue
 - Keep `/loop` for short-lived in-session polling (waiting on a build, say)
 - Avoid `:00` in an Actions cron — that slot is congested and prone to delay
+
+### Organization rollout (managed settings / OpenTelemetry)
+
+Use managed settings to pin policy that individuals cannot override. The bundled
+`.claude/managed-settings.example.json` shows deny rules / `disableBypassPermissionsMode` / sandbox /
+OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY` + an OTLP exporter) / `requiredMinimumVersion`.
+This template's `testreport/` logs are machine-local, so aggregate team-wide usage and skill adoption through OTel
+(`OTEL_LOG_TOOL_DETAILS=1` records skill names so unused skills can be identified).
 
 ### Hook profile switch
 

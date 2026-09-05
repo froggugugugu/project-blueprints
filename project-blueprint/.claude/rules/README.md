@@ -86,6 +86,19 @@ ln -s ~/shared-claude-rules .claude/rules/shared
 
 タスク固有の手順は rules ではなく skill に置く(公式ガイダンス)。
 
+## 大規模リポジトリ / monorepo での使い方
+
+| 課題 | 公式の解 |
+| ---- | -------- |
+| パッケージ固有の手順が他パッケージ作業時にも候補に載る | **per-directory skill**: `packages/<name>/.claude/skills/` に置く。そのディレクトリを触るときだけ候補になり、名前が衝突すると `/packages/<name>:skill` に自動で名前空間化される |
+| 規約をどこに書くか | ディレクトリ所有者が保守する規約は `packages/<name>/CLAUDE.md`(そのディレクトリのファイルを読んだときに load)。散在するパスに同じ規約を効かせるなら本ディレクトリの path-scoped rule |
+| 他チームの CLAUDE.md が読み込まれる | `.claude/settings.local.json` の `claudeMdExcludes`(絶対パスの glob) |
+| worktree が重い | `worktree.sparsePaths` で必要なディレクトリだけ checkout |
+| 生成物・vendored コードを読んでしまう | `permissions.deny` に `Read(./dist/**)` 等を追加して探索コストを下げる |
+| skill が増えて description が切り詰められる | `/doctor` で一覧コストを確認し、不要な skill は `skillOverrides` で非表示、`skillListingBudgetFraction` で予算を調整 |
+
+ルートの `CLAUDE.md` は横断ルールのみに保ち、パッケージ固有の情報を持ち込まない(pitfalls #1)。
+
 ## コンセプト整合
 
 - `.claude/rules/` は汎用テンプレート層の一部(プロジェクト固有値は `project-config.md` や `docs/` に)

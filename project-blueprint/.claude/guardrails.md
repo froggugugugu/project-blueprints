@@ -5,7 +5,7 @@
 
 ---
 
-## フック一覧(15 スクリプト / 18 登録)
+## フック一覧(15 スクリプト / 19 登録)
 
 | フック | イベント | 対象 | 動作 | 説明 |
 | ------ | -------- | ---- | ---- | ---- |
@@ -19,6 +19,7 @@
 | `console-warn.sh` | PostToolUse | Edit\|Write | 警告 | デバッグステートメント(console.log 等)の残存検出 |
 | `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | 観測 | ソース編集 / 検証コマンド実行の時刻を記録(`testreport/.verify/`) |
 | `verify-gate.sh gate` | **Stop** | — | 警告/差し戻し | 編集後に検証コマンドが無ければ standard=警告 / strict=1 回差し戻し(検証ゲート) |
+| `verify-gate.sh task` | **TaskCompleted** | — | 警告/差し止め | 同条件でタスクの完了マークを standard=警告 / strict=exit 2 で差し止め(品質ゲート③の機械強制) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | 観測 | auto mode の分類器による拒否を記録(`testreport/denials/`) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | 観測 | ツール失敗時の構造化エラーログ(`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | 観測 + 文脈注入 | 起動記録 + サブエージェントへガードレールを注入 |
@@ -60,6 +61,7 @@ Stop        → verify-gate.sh gate    最後の編集より後に検証コマ�
 - 対象外: `docs/` `output/` `input/` `.claude/` `.github/` と `.md` / `.json` / `.yaml` / `.toml` の編集
 - `stop_hook_active: true`(自分の差し戻し後)と `background_tasks` 非空(待機中)は必ず通す(pitfalls #27)
 - 会話内で柔軟な完了条件を判定させたいときは `/goal <条件>`(モデル評価、セッション限り)を併用する
+- 回帰テスト: `bash scripts/validate-harness.sh --hooks` が全フックに hook JSON を流して exit code / 出力を検証する(CI でも実行)
 
 ### 実行環境ごとの挙動
 
@@ -103,6 +105,14 @@ Stop        → verify-gate.sh gate    最後の編集より後に検証コマ�
   `/legal-check` を回し、結果を Issue に集約する
 - `/loop` はセッション中の短期ポーリング（ビルド待ち等）に限る
 - Actions の cron は `:00` を避ける（混雑して遅延しやすい）
+
+### 組織展開(managed settings / OpenTelemetry)
+
+個人が上書きできない組織ポリシーとして固定する場合は managed settings を使う。同梱の
+`.claude/managed-settings.example.json` に deny / `disableBypassPermissionsMode` / sandbox /
+OpenTelemetry(`CLAUDE_CODE_ENABLE_TELEMETRY` + OTLP エクスポータ)/ `requiredMinimumVersion` の例を置いている。
+本テンプレートの `testreport/` ログは machine-local なので、チーム横断の利用量・skill 使用率は OTel で集約する
+(`OTEL_LOG_TOOL_DETAILS=1` で skill 名が記録され、未使用 skill を特定できる)。
 
 ### Hook profile 切替
 

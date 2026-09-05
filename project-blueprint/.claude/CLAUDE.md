@@ -89,7 +89,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - **5 つの品質ゲート**: PRD / 設計 / タスク分解 / 実装 / 検証(各 phase で人間介入可)
 - 各 phase skill が起動時に `@.claude/quality-gates.md` を load し、ゲート基準を参照する
 - **検証手段を先に用意する**: 着手前に pass/fail を返すチェック(テスト / ビルド / lint / スクリーンショット比較)を決め、完了時にその結果を貼る
-- Stop フック `verify-gate.sh` がソース編集後の未検証終了を検知する(standard=警告 / strict=1 回差し戻し)
+- `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted)を検知する(standard=警告 / strict=差し止め)
 
 ## 並行開発
 

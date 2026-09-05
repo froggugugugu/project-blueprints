@@ -71,7 +71,10 @@ When a file path is specified, read its contents to understand the design target
 4. **Parallelization Analysis** — Classify tasks into parallelizable and sequential groups
 5. **Test Strategy** — Define targets and approach for unit tests and E2E tests
 6. **Documentation Impact** — State impact on `project-config.md` and `docs/`
-7. **Submit for Review** — Output the design document and await human approval
+7. **Progress Note Initialization** — If `output/tasks/PROGRESS.md` doesn't exist, create it from `.claude/tasks/PROGRESS_TEMPLATE.md`,
+   then append each task from the breakdown as a feature-list row (`passes` = ❌, acceptance criteria verifiable end-to-end).
+   If it exists, **only append rows**; never delete rows or rewrite acceptance criteria (the basis for multi-session handoff)
+8. **Submit for Review** — Output the design document and await human approval
 
 ## Output Contract
 
@@ -185,6 +188,7 @@ When the following are discovered during design investigation, update `project-c
 ## Output Files
 
 - When `output/` directory exists: `output/tasks/PLAN_<feature-name>.md`
+- At the same time, append the tasks to the feature list in `output/tasks/PROGRESS.md` (create from the template if missing)
 - When `output/` directory doesn't exist: Present design document in conversation
 
 ## Prohibited Actions

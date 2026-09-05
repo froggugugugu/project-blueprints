@@ -81,8 +81,11 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 2. **テスト作成** — テストフレームワーク（`docs/project.md` 参照）で正常系・異常系・境界値を書く
 3. **最小実装** — テストが通るコードを書く
 4. **リファクタリング** — テストが通ったまま整理
-5. **検証** — プロジェクトの検証コマンド（`docs/project.md` 参照）を実行
+5. **検証** — プロジェクトの検証コマンド（`docs/project.md` 参照）を実行し、結果（pass/fail 件数・エラー数）を証拠として報告に貼る
 6. **ドキュメント更新** — 下記「ドキュメント同期」に従い `docs/` と `project-config.md` を更新
+7. **進捗更新** — `output/tasks/PROGRESS.md` があれば、検証済みの機能だけ `passes` を ✅ にし、
+   セッションログ（やったこと / 検証結果 / コミット / 申し送り / 却下した案）を追記する。
+   1 セッションで扱うのは機能リストの未完了 1 件が原則（複数セッション引き継ぎ）
 
 ## 出力契約
 
@@ -211,6 +214,8 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 - ユーザーデータの暗黙的な削除・上書き
 - `--no-verify` によるフック迂回
 - `docs/development-patterns.md` に記載されたアンチパターンの使用
+- `output/tasks/PROGRESS.md` の機能行の削除・受け入れ条件の書き換え（`passes` とセッションログの更新のみ可）
+- 検証コマンドを実行せずに機能を `passes` = ✅ にすること
 
 ## 関連参照(必要に応じて Claude が load)
 

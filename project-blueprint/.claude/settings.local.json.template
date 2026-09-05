@@ -18,7 +18,7 @@
     "- Layer 1: フック群（settings.json で定義、--dangerously-skip-permissions でも有効）",
     "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
     "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
-    "    + PreCompact/PostCompact + Stop(verify-gate 検証ゲート / notify) / Notification + PermissionDenied(拒否記録)",
+    "    + PreCompact/PostCompact + Stop(verify-gate 検証ゲート / notify) / Notification + PermissionDenied(拒否記録) + TaskCompleted(検証ゲート)",
     "- Layer 2: deny / ask ルール（settings.json に定義済み。このファイルでは上書きしないこと）",
     "- Layer 3: allow ルール（このファイル、通常モード時に有効）",
     "- meta : scan-harness.sh による self-SAST（constitution hash / secret 混入 / deny 弱体化検出）",
@@ -48,6 +48,14 @@
     "  \"hooks\": { \"Stop\": [ { \"hooks\": [ { \"type\": \"prompt\",",
     "    \"prompt\": \"Evaluate if Claude should stop: $ARGUMENTS. Block only if tests were not run after code changes.\" } ] } ] }",
     "  ※ 8 回連続ブロックで Claude Code が強制終了する。stop_hook_active を見て 1 回で通す設計にする"
+  ],
+  "_comment_telemetry": [
+    "可観測性 / コスト(組織展開時): OpenTelemetry で利用量を集約する場合は env に次を追加する:",
+    "  CLAUDE_CODE_ENABLE_TELEMETRY=1 / OTEL_METRICS_EXPORTER=otlp / OTEL_LOGS_EXPORTER=otlp /",
+    "  OTEL_EXPORTER_OTLP_PROTOCOL=grpc / OTEL_EXPORTER_OTLP_ENDPOINT=http://<collector>:4317 /",
+    "  OTEL_LOG_TOOL_DETAILS=1(skill 名を記録し、未使用 skill を特定できる)",
+    "契約価格で /usage の金額を合わせるには managed settings の modelPricing を使う。",
+    "組織全体で固定する例は .claude/managed-settings.example.json を参照(deny / sandbox / OTel / requiredMinimumVersion)。"
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",

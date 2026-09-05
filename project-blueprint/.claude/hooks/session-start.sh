@@ -51,6 +51,9 @@ for doc in project.md architecture.md data-model.md development-patterns.md; do
         content_lines=${content_lines:-0}
         if [[ "$content_lines" -lt 5 ]]; then
             warnings+=("docs/$doc はスタブ状態です。実装進行に伴い内容を生成してください。")
+        elif [[ "$content_lines" -gt 300 ]]; then
+            # docs/*.md は CLAUDE.md から常時 @import されるため、育ちすぎると毎セッションの起動コストになる
+            warnings+=("docs/$doc が ${content_lines} 行あります(目安 300 行)。常時 load されるため、詳細は skill の references/ や path-scoped rule に切り出してください。")
         fi
     fi
 done

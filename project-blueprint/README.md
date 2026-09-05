@@ -325,7 +325,8 @@ project-blueprint/
 ├── .claude/
 │   ├── CLAUDE.md                          ← [汎用] 開発ガイド
 │   ├── settings.json                      ← [汎用] プラグイン・フック設定
-│   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
+│   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
+│   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
 │   │
 │   ├── hooks/                             ← [汎用] 安全フック（多層防御・15本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
@@ -336,7 +337,7 @@ project-blueprint/
 │   │   ├── session-end.sh                   セッション終了記録（SessionEnd）
 │   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
 │   │   ├── console-warn.sh                  デバッグコード検出（PostToolUse）
-│   │   ├── verify-gate.sh                   検証ゲート: 編集後の未検証終了を検知（PostToolUse/Stop）
+│   │   ├── verify-gate.sh                   検証ゲート: 編集後の未検証終了・完了マークを検知（PostToolUse/Stop/TaskCompleted）
 │   │   ├── permission-denied-log.sh         auto mode の拒否記録（PermissionDenied）
 │   │   ├── post-failure-log.sh              ツール失敗ログ記録（PostToolUseFailure）
 │   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStart/Stop）

@@ -142,3 +142,4 @@ permissions-guide のスコープは **Layer 2 + Layer 3**。Layer 1 のフッ�
 - `@.claude/guardrails.md` — フック・deny ルール・保護ファイル一覧
 - `@.claude/pitfalls.md` — #23 auto mode / #25 project settings の無視 / #27 Stop フック
 - `settings.local.json.template` — 雛形(ビルドツール別の差し替えパターン・auto mode / Stop ゲートの注記込み)
+- `managed-settings.example.json` — 組織ポリシーとして固定する場合の例(deny / sandbox / OpenTelemetry)

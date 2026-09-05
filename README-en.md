@@ -58,7 +58,7 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
              performance-analyst, doc-synchronizer, doc-writer, test-writer
 15 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
              PermissionDenied / UserPromptSubmit / SessionStart / SessionEnd / SubagentStart /
-             SubagentStop / PreCompact / PostCompact / Stop(verification gate) / Notification
+             SubagentStop / TaskCompleted / PreCompact / PostCompact / Stop(verification gate) / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
  1 gate      scripts/validate-harness.sh — CI gate that fails on harness spec drift

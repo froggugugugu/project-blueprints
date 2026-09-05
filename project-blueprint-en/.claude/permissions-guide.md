@@ -142,3 +142,4 @@ these tiers, so an operation that slipped through auto mode by mistake is still 
 - `@.claude/guardrails.md` — hooks, deny rules, protected files
 - `@.claude/pitfalls.md` — #23 auto mode / #25 ignored project settings / #27 Stop hooks
 - `settings.local.json.template` — starter file (build-tool swap patterns, auto mode / Stop gate notes)
+- `managed-settings.example.json` — example for pinning policy organization-wide (deny / sandbox / OpenTelemetry)

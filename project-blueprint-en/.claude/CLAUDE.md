@@ -89,7 +89,7 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - **5 quality gates**: PRD / Design / Task breakdown / Implementation / Verification (each is an optional human intervention point)
 - Each phase skill loads `@.claude/quality-gates.md` at invocation to consult gate criteria
 - **Set up the verification first**: before starting, decide on a check that returns pass/fail (tests / build / lint / screenshot comparison) and paste its result when done
-- The Stop hook `verify-gate.sh` detects a turn ending after source edits without a verification command (standard = warning / strict = sent back once)
+- `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted) after source edits (standard = warning / strict = refused)
 
 ## Concurrent development
 

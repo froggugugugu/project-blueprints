@@ -9,12 +9,16 @@
 # Usage (settings.json):
 #   PostToolUse (Bash|Edit|Write|NotebookEdit) → verify-gate.sh track
 #   Stop                                       → verify-gate.sh gate
+#   TaskCompleted                              → verify-gate.sh task
 #
 # track: record timestamps of source edits / verification commands in testreport/.verify/
 # gate : if no verification command ran after the last source edit
 #          standard: warn the human via systemMessage (non-blocking)
 #          strict  : {"decision":"block"} once, sending Claude back to verify
 #          minimal : do nothing
+# task : same condition on TaskCompleted (right before a task is marked complete)
+#          standard: warn via systemMessage / strict: exit 2 refuses the completion mark
+#          (mechanically enforces quality gate ③ "never complete without verification")
 #
 # Infinite-loop protection (per official spec):
 #   - stop_hook_active == true (a stop after our own block) always passes
@@ -88,14 +92,16 @@ case "$MODE" in
         exit 0
         ;;
 
-    gate)
+    gate|task)
         [[ -f "$EDIT_MARK" ]] || exit 0
 
-        ACTIVE="$(printf '%s' "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)"
-        [[ "$ACTIVE" == "true" ]] && exit 0
+        if [[ "$MODE" == "gate" ]]; then
+            ACTIVE="$(printf '%s' "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)"
+            [[ "$ACTIVE" == "true" ]] && exit 0
 
-        BG="$(printf '%s' "$INPUT" | jq -r '(.background_tasks // []) | length' 2>/dev/null)"
-        [[ -n "$BG" && "$BG" != "0" ]] && exit 0
+            BG="$(printf '%s' "$INPUT" | jq -r '(.background_tasks // []) | length' 2>/dev/null)"
+            [[ -n "$BG" && "$BG" != "0" ]] && exit 0
+        fi
 
         EDIT_TS="$(cat "$EDIT_MARK" 2>/dev/null || echo 0)"
         VERIFY_TS=0
@@ -103,6 +109,16 @@ case "$MODE" in
         [[ "$EDIT_TS" =~ ^[0-9]+$ ]] || exit 0
         [[ "$VERIFY_TS" =~ ^[0-9]+$ ]] || VERIFY_TS=0
         (( VERIFY_TS >= EDIT_TS )) && exit 0
+
+        if [[ "$MODE" == "task" ]]; then
+            # TaskCompleted: exit 2 (stderr goes back to Claude) refuses the completion mark
+            if [[ "$PROFILE" == "strict" ]]; then
+                echo "verify-gate (strict): this task cannot be marked complete because no verification command ran after the last source edit. Run tests / lint / type checks and show the result before completing it." >&2
+                exit 2
+            fi
+            jq -nc --arg m "verify-gate: a task was marked complete without a verification command having run. Check that the completion report includes verification results (evidence)." '{systemMessage:$m}'
+            exit 0
+        fi
 
         if [[ "$PROFILE" == "strict" ]]; then
             REASON="verify-gate (strict): no verification command (tests / lint / type check / build) was recorded after the last source edit. Run the project's verification command (project-config.md §3 or docs/project.md) and present the result (pass/fail counts, error counts) as evidence before finishing. If no verification tooling exists yet, state 'not run (N/A) + reason + next action' explicitly and finish."

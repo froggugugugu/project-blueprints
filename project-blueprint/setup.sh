@@ -196,6 +196,13 @@ if [[ "$PROFILE" == "minimal" ]]; then
 else
     rm -f "$TARGET_DIR/.claude/settings.minimal.json"
 fi
+
+# ── settings.local.json を雛形から生成(無ければ) ─────────────
+# 個人の allow ルール。gitignore 済みで、SessionStart フックが未作成を警告する対象。
+if [[ -f "$TARGET_DIR/.claude/settings.local.json.template" && ! -f "$TARGET_DIR/.claude/settings.local.json" ]]; then
+    cp "$TARGET_DIR/.claude/settings.local.json.template" "$TARGET_DIR/.claude/settings.local.json"
+    info ".claude/settings.local.json を雛形から生成(ビルドツールに合わせて allow を調整してください)"
+fi
 # constitution.md(不変原則)を配置 — scan-harness.sh / CLAUDE.md が参照する
 # 注: SC2015 回避のため `&& A || B` ではなく明示的な if 分岐を使用する
 #     (cp -n は上書きしないが exit 0 を返すので、存在チェックで判定する)

@@ -495,23 +495,59 @@ def check_constitution(root: Path, rep: Report) -> None:
         )
 
 
+NPM_SPEC_RE = re.compile(r"^(@?[\w.-]+(?:/[\w.-]+)?)(?:@([\w.^~<>=*-]+))?$")
+
+
+def collect_npx_specs(obj, active: bool, out: dict) -> None:
+    """Walk the MCP template and collect `npx -y <spec>` package specs.
+
+    Servers under the top-level `mcpServers` are *active* (must be version-pinned);
+    everything else (`_example` blocks) only has to resolve.
+    """
+    if isinstance(obj, dict):
+        args = obj.get("args")
+        if isinstance(args, list) and "-y" in args:
+            idx = args.index("-y")
+            if idx + 1 < len(args) and isinstance(args[idx + 1], str):
+                spec = args[idx + 1]
+                out[spec] = out.get(spec, False) or active
+        for k, v in obj.items():
+            collect_npx_specs(v, active and not str(k).startswith("_"), out)
+    elif isinstance(obj, list):
+        for v in obj:
+            collect_npx_specs(v, active, out)
+
+
 def check_npm_packages(root: Path, rep: Report) -> None:
     tmpl = root / ".mcp.json.template"
     if not tmpl.exists():
         return
-    text = tmpl.read_text(encoding="utf-8")
-    pkgs = sorted(set(re.findall(r'"(@?[\w.-]+/?[\w.-]*)"[,\s]*\]', text)) |
-                  set(re.findall(r'"-y",\s*"([^"]+)"', text)))
-    for pkg in pkgs:
-        if not re.match(r"^@?[\w.-]+(/[\w.-]+)?$", pkg) or pkg in ("-y",):
+    cfg = json.loads(tmpl.read_text(encoding="utf-8"))
+    specs: dict = {}
+    collect_npx_specs(cfg.get("mcpServers", {}), True, specs)
+    for k, v in cfg.items():
+        if k != "mcpServers":
+            collect_npx_specs(v, False, specs)
+
+    for spec, active in sorted(specs.items()):
+        m = NPM_SPEC_RE.match(spec)
+        if not m:
             continue
-        ver = subprocess.run(["npm", "view", pkg, "version"], capture_output=True, text=True)
-        if ver.returncode != 0 or not ver.stdout.strip():
-            rep.error(str(tmpl), f"npm パッケージ `{pkg}` が解決できません")
+        name, ver = m.group(1), m.group(2)
+        if active and not ver:
+            rep.warn(
+                str(tmpl),
+                f"有効な MCP サーバーの npm パッケージ `{name}` がバージョン固定されていません"
+                " — サプライチェーン対策として `name@<version>` で固定してください",
+            )
+        target = f"{name}@{ver}" if ver else name
+        res = subprocess.run(["npm", "view", target, "version"], capture_output=True, text=True)
+        if res.returncode != 0 or not res.stdout.strip():
+            rep.error(str(tmpl), f"npm パッケージ `{target}` が解決できません")
             continue
-        dep = subprocess.run(["npm", "view", pkg, "deprecated"], capture_output=True, text=True)
+        dep = subprocess.run(["npm", "view", name, "deprecated"], capture_output=True, text=True)
         if dep.stdout.strip():
-            rep.warn(str(tmpl), f"npm パッケージ `{pkg}` は deprecated です: {dep.stdout.strip()[:70]}")
+            rep.warn(str(tmpl), f"npm パッケージ `{name}` は deprecated です: {dep.stdout.strip()[:70]}")
 
 
 def check_mirror_parity(a: Path, b: Path, rep: Report) -> None:

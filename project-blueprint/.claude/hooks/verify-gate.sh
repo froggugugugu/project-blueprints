@@ -9,12 +9,16 @@
 # 使い方(settings.json):
 #   PostToolUse (Bash|Edit|Write|NotebookEdit) → verify-gate.sh track
 #   Stop                                       → verify-gate.sh gate
+#   TaskCompleted                              → verify-gate.sh task
 #
 # track: ソースファイル編集 / 検証コマンド実行の時刻を testreport/.verify/ に記録
 # gate : 最後の編集より後に検証コマンドが無ければ
 #          standard: systemMessage で人間に警告(non-blocking)
 #          strict  : {"decision":"block"} で 1 回だけ差し戻し
 #          minimal : 何もしない
+# task : TaskCompleted(タスクを完了にマークする直前)で同じ条件を判定
+#          standard: systemMessage で警告 / strict: exit 2 で完了マークを差し止め
+#          (品質ゲート③「検証なしに完了にしない」を機械的に強制する)
 #
 # 無限ループ防止(公式仕様準拠):
 #   - stop_hook_active == true(自分の差し戻し後の再停止)は必ず通す
@@ -88,14 +92,16 @@ case "$MODE" in
         exit 0
         ;;
 
-    gate)
+    gate|task)
         [[ -f "$EDIT_MARK" ]] || exit 0
 
-        ACTIVE="$(printf '%s' "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)"
-        [[ "$ACTIVE" == "true" ]] && exit 0
+        if [[ "$MODE" == "gate" ]]; then
+            ACTIVE="$(printf '%s' "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)"
+            [[ "$ACTIVE" == "true" ]] && exit 0
 
-        BG="$(printf '%s' "$INPUT" | jq -r '(.background_tasks // []) | length' 2>/dev/null)"
-        [[ -n "$BG" && "$BG" != "0" ]] && exit 0
+            BG="$(printf '%s' "$INPUT" | jq -r '(.background_tasks // []) | length' 2>/dev/null)"
+            [[ -n "$BG" && "$BG" != "0" ]] && exit 0
+        fi
 
         EDIT_TS="$(cat "$EDIT_MARK" 2>/dev/null || echo 0)"
         VERIFY_TS=0
@@ -103,6 +109,16 @@ case "$MODE" in
         [[ "$EDIT_TS" =~ ^[0-9]+$ ]] || exit 0
         [[ "$VERIFY_TS" =~ ^[0-9]+$ ]] || VERIFY_TS=0
         (( VERIFY_TS >= EDIT_TS )) && exit 0
+
+        if [[ "$MODE" == "task" ]]; then
+            # TaskCompleted は exit 2(stderr が Claude へ返る)で完了マークを差し止める
+            if [[ "$PROFILE" == "strict" ]]; then
+                echo "verify-gate(strict): ソース編集後に検証コマンドが実行されていないため、このタスクを完了にできません。テスト / lint / 型チェックを実行し、結果を示してから完了にしてください。" >&2
+                exit 2
+            fi
+            jq -nc --arg m "verify-gate: 検証コマンド未実行のままタスクが完了にマークされました。完了報告に検証結果(証拠)があるか確認してください。" '{systemMessage:$m}'
+            exit 0
+        fi
 
         if [[ "$PROFILE" == "strict" ]]; then
             REASON="verify-gate(strict): ソース編集後に検証コマンド(テスト / lint / 型チェック / ビルド)の実行が記録されていません。project-config.md §3 または docs/project.md の検証コマンドを実行し、結果(pass/fail 件数・エラー数)を証拠として提示してから完了してください。検証基盤が未導入なら「未実施(N/A)+ 理由 + 次アクション」を明記して終了してください。"

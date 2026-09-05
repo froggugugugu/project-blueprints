@@ -18,7 +18,7 @@
     "- Layer 1: hooks (defined in settings.json; active even with --dangerously-skip-permissions)",
     "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
     "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
-    "    + PreCompact/PostCompact + Stop(verify-gate verification gate / notify) / Notification + PermissionDenied(denial log)",
+    "    + PreCompact/PostCompact + Stop(verify-gate verification gate / notify) / Notification + PermissionDenied(denial log) + TaskCompleted(verification gate)",
     "- Layer 2: deny / ask rules (already in settings.json; do not override them here)",
     "- Layer 3: allow rules (this file, active in normal mode)",
     "- meta : self-SAST via scan-harness.sh (constitution hash / secret leakage / deny weakening)",
@@ -49,6 +49,14 @@
     "  \"hooks\": { \"Stop\": [ { \"hooks\": [ { \"type\": \"prompt\",",
     "    \"prompt\": \"Evaluate if Claude should stop: $ARGUMENTS. Block only if tests were not run after code changes.\" } ] } ] }",
     "  NOTE: Claude Code overrides the hook after 8 consecutive blocks. Check stop_hook_active and block only once"
+  ],
+  "_comment_telemetry": [
+    "Observability / cost (organization rollout): to aggregate usage with OpenTelemetry, add to env:",
+    "  CLAUDE_CODE_ENABLE_TELEMETRY=1 / OTEL_METRICS_EXPORTER=otlp / OTEL_LOGS_EXPORTER=otlp /",
+    "  OTEL_EXPORTER_OTLP_PROTOCOL=grpc / OTEL_EXPORTER_OTLP_ENDPOINT=http://<collector>:4317 /",
+    "  OTEL_LOG_TOOL_DETAILS=1 (records skill names verbatim so unused skills can be identified)",
+    "To make /usage match contracted rates, use modelPricing in managed settings.",
+    "See .claude/managed-settings.example.json for an org-wide example (deny / sandbox / OTel / requiredMinimumVersion)."
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",

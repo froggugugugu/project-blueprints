@@ -56,7 +56,7 @@ cd ./my-app && claude
              performance-analyst, doc-synchronizer, doc-writer, test-writer
 15 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
              PermissionDenied / UserPromptSubmit / SessionStart / SessionEnd / SubagentStart /
-             SubagentStop / PreCompact / PostCompact / Stop(検証ゲート) / Notification
+             SubagentStop / TaskCompleted / PreCompact / PostCompact / Stop(検証ゲート) / Notification
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  4 rules     document-management, git-conventions, workflow-advanced (+ README)
  1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証

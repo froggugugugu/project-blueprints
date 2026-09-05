@@ -68,8 +68,37 @@
 2. `strict` プロファイルで運用するかは各プロジェクトで決める(既定 `standard` は警告のみ)
 3. `.claude/settings.json` の編集はテンプレート自身の `protect-files.sh` に阻まれるため、今回はシェル経由で JSON を書き換えた。差分は `git diff project-blueprint/.claude/settings.json` で確認できる
 
-## ミラー差分検証
+## ミラー差分検証(Round 1 時点)
 
 - `.claude/` 配下ファイル数: JP 83 / EN 83(新規 3 ずつ、差分 0)
 - `bash scripts/validate-harness.sh`: ERROR 0 / WARN 0(日英 + 構成一致)
 - `bash scripts/validate-harness.sh --test`: 22/22 検出
+
+---
+
+## Round 2 — 観点別評価で S 未達だった項目の解消(2026-09-06)
+
+Round 1 後に 12 観点で世界標準基準の評価を行い、総合 A(S 目前)と判定した。
+S に届かない要因は (1) 自律運用の自動化不足 (2) 評価基盤の欠如 (3) 組織展開層の未整備の 3 つ。
+本ラウンドでそれぞれを解消した。
+
+| 観点 | Round 1 | 対応 | Round 2 |
+| ---- | ------- | ---- | ------- |
+| 3 検証ループ | A- | `scripts/test_hooks.sh`(54 ケース、JP/EN 両ミラー)を新設し `--hooks` として CI に組み込み。フックが「存在するだけ」にならない回帰テスト | **S** |
+| 6 長期自律運用 | B+ | `/plan` が PROGRESS.md の機能リストを初期化し、`/implementing-features` が `passes` とセッションログを更新する手順を skill 本文と禁止事項に組み込み | **A+** |
+| 7 仕様駆動ライフサイクル | S- | `verify-gate.sh task` を **TaskCompleted** に登録。検証コマンド未実行のタスク完了マークを standard=警告 / strict=exit 2 で差し止め(品質ゲート③の機械強制) | **S** |
+| 8 サプライチェーン | A- | `.mcp.json.template` の有効サーバーをバージョン固定(`@upstash/context7-mcp@4.0.5` / `@playwright/mcp@0.0.80`)。validator `--online` が固定版の解決を検証し、未固定の有効サーバーを WARN | **A+** |
+| 10 可観測性・コスト | B+ | `managed-settings.example.json`(deny / sandbox / OTel / `requiredMinimumVersion`)を同梱し、`settings.local.json.template` に OTel と `modelPricing` の指針を追加 | **A** |
+| 11 導入体験 | A- | `setup.sh` が `settings.local.json` を雛形から自動生成。SessionStart の未作成警告が初回から消える | **A+** |
+| 12 可搬性・大規模リポ | B | `rules/README.md` に monorepo 指針(per-directory skill / `claudeMdExcludes` / `worktree.sparsePaths` / `skillOverrides`)を追加 | **A** |
+| 1 指示の階層化 | A+ | SessionStart が常時 `@import` される `docs/*.md` の肥大化(300 行超)を警告 | **S-** |
+
+**Round 2 後の総合: S-**。残る差は観点 5(dynamic workflows の同梱スクリプト無し)と観点 2(sandbox 既定 OFF、`prompt` / `agent` 型フックは例示のみ)で、いずれも公式機能の成熟待ちか各プロジェクトの判断領域。
+
+### Round 2 検証
+
+- `bash scripts/validate-harness.sh`: ERROR 0 / WARN 0
+- `bash scripts/validate-harness.sh --test`: 22/22 検出
+- `bash scripts/validate-harness.sh --hooks`: PASS 54 / FAIL 0(JP 27 + EN 27)
+- `bash scripts/validate-harness.sh --online`: 固定バージョンが npm で解決することを確認
+- `.claude/CLAUDE.md`: JP 199 行 / EN 199 行(上限 200 行以内)
