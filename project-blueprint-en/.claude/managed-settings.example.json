@@ -1,0 +1,44 @@
+{
+  "_comment": [
+    "Example managed-settings.json for organization rollout (pinning this template's project settings as org policy).",
+    "Location: macOS /Library/Application Support/ClaudeCode/managed-settings.json,",
+    "          Linux /etc/claude-code/managed-settings.json, or MDM / server-managed settings.",
+    "Managed settings outrank user / project / local settings and cannot be overridden by individuals.",
+    "Claude Code does not read this file itself (reference only). Copy only the keys you need and replace the values.",
+    "Draft auto mode trusted infrastructure (autoMode.environment) with /auto-mode-setup and transcribe it here."
+  ],
+  "permissions": {
+    "deny": [
+      "Bash(curl *)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ],
+    "disableBypassPermissionsMode": "disable"
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": false,
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "github.com",
+        "api.anthropic.com"
+      ]
+    }
+  },
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://collector.example.com:4317",
+    "OTEL_LOG_TOOL_DETAILS": "1"
+  },
+  "claudeMd": "Every completion report must include the verification command's result (pass/fail counts). Never force-push.",
+  "requiredMinimumVersion": "2.1.228",
+  "cleanupPeriodDays": 30,
+  "companyAnnouncements": [
+    "This repository runs on the project-blueprint harness. See .claude/guardrails.md for the guardrails."
+  ]
+}

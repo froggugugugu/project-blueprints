@@ -81,8 +81,11 @@ Follow the principles below. For project-specific application, refer to `docs/de
 2. **Write Tests** — Write normal, error, and boundary value cases with the test framework (see `docs/project.md`)
 3. **Minimum Implementation** — Write code that passes the tests
 4. **Refactoring** — Clean up while keeping tests green
-5. **Verification** — Run the project's verification commands (see `docs/project.md`)
+5. **Verification** — Run the project's verification commands (see `docs/project.md`) and paste the result (pass/fail counts, error counts) into the report as evidence
 6. **Documentation Update** — Update `docs/` and `project-config.md` per "Documentation Sync" below
+7. **Progress Update** — If `output/tasks/PROGRESS.md` exists, set `passes` to ✅ only for verified features and
+   append a session log entry (done / verification result / commit / handoff notes / rejected options).
+   One unfinished feature per session is the rule (multi-session handoff)
 
 ## Output Contract
 
@@ -211,6 +214,8 @@ When implementation is complete, run the dependency direction check command
 - Implicitly deleting or overwriting user data
 - Bypassing hooks with `--no-verify`
 - Using anti-patterns documented in `docs/development-patterns.md`
+- Deleting feature rows or rewriting acceptance criteria in `output/tasks/PROGRESS.md` (only `passes` and the session log may change)
+- Setting a feature to `passes` = ✅ without running the verification command
 
 ## Related references (loaded on demand by Claude)
 

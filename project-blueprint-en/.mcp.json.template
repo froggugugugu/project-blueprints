@@ -7,16 +7,16 @@
       "command": "npx",
       "args": [
         "-y",
-        "@upstash/context7-mcp"
+        "@upstash/context7-mcp@4.0.5"
       ],
-      "_verify": "Run 'npm view @upstash/context7-mcp version' to check the version"
+      "_verify": "Versions are pinned as a supply-chain measure (latest as of 2026-09-06). To update, check `npm view @upstash/context7-mcp version` and verify resolution with `bash scripts/validate-harness.sh --online`"
     },
     "playwright": {
       "_comment": "Browser automation / E2E test debugging",
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp"
+        "@playwright/mcp@0.0.80"
       ]
     },
     "github": {

@@ -27,6 +27,9 @@ from Claude Code's official Agent Teams feature. The two are meant to be combine
 - With official Agent Teams enabled, a subagent Claude names launches as a teammate, so a
   team can form even when you did not ask for one
 - To apply quality gates to teammates as well, use the `TeammateIdle` / `TaskCompleted` hooks
+- For work that fans out to dozens or hundreds of subagents (whole-codebase audits, bulk migrations),
+  the official **dynamic workflows** (include `ultracode` in the prompt, or `/batch`) fit better: the plan moves into a
+  script, so intermediate results never enter context. Keep `TEAM_*.md` for the human-gated lifecycle
 
 ## Quick Start
 

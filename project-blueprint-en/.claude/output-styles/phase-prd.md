@@ -1,5 +1,6 @@
 ---
 name: phase-prd
+keep-coding-instructions: true
 description: PRD phase. Optimized for requirement elicitation, presenting alternatives, and surfacing ambiguity.
 ---
 

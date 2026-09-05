@@ -33,6 +33,11 @@ Provides structured feedback based on `CLAUDE.md` conventions and the project-sp
 - State severity clearly (MUST / SHOULD / CONSIDER)
 - Mention good points as well (don't make it findings-only)
 - Verify compliance with specification requirements (task file) as the top priority
+- **Limit findings to gaps that affect correctness, requirements, or project conventions**. Producing findings is not the goal
+  (a reviewer told to find gaps reports some even for sound code; acting on all of them causes over-engineering — official guidance)
+
+> **Relation to the bundled `/code-review`**: this skill overrides Claude Code's bundled `/code-review` by name.
+> To use the bundled version (a lightweight bug hunt on the diff in a fresh subagent), type the alias `/review`.
 
 ## Usage
 

@@ -37,6 +37,9 @@ jobs:
       - name: バリデータ自身の負のテスト
         run: bash scripts/validate-harness.sh --test
 
+      - name: フックスクリプトの機能テスト（stdin に hook JSON を流して exit code / 出力を検証）
+        run: bash scripts/validate-harness.sh --hooks
+
   validate-online:
     # npm レジストリに触るため PR ごとには回さない。
     # main への push と手動実行のときだけ、テンプレートが参照するパッケージの実在を確認する。

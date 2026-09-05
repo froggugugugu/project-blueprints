@@ -14,13 +14,13 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **原因** | 200 行を超えると重要度の低い指示に埋もれて参照精度が落ちる。全セクションを毎セッション読み込むためトークンコストも肥大 |
 | **対策** | 横断ルールのみに絞る。詳細は skill / `docs/` / `.claude/rules/` に分離。`@docs/*.md` / `@.claude/*.md` 等の具体パスで `@import` する(ルート相対) |
 
-### 2. subagent は親の skill / rules を継承しない
+### 2. subagent に親の skill が自動では載らない(CLAUDE.md / rules は継承される)
 
 | 項目 | 内容 |
 | ---- | ---- |
-| **現象** | `subagent` から skill を呼ぶと、親の CLAUDE.md や rules が読まれず期待通り動かない |
-| **原因** | Claude Code の仕様。subagent は独立コンテキストで起動し、親の memory を共有しない |
-| **対策** | subagent の `prompt` に必要なルール・前提を明示的に書く。agent 定義ファイル本文にも再掲する |
+| **現象** | subagent が親セッションで使っていた skill の手順を知らない。逆に「CLAUDE.md が読まれない」と誤解して agent 本文にルールを全文再掲し、トークンを浪費する |
+| **原因** | 公式仕様: カスタム subagent は CLAUDE.md 階層(`.claude/rules/` 含む)と git status を**継承する**(ビルトインの `Explore` / `Plan` だけがスキップ)。継承しないのは **skill 本文・会話履歴・親の auto memory**。skill は `skills:` frontmatter に書いたものだけ全文プリロードされる |
+| **対策** | 必要な skill は agent の `skills:` に列挙する。会話で決めた前提は `prompt` に明示的に渡す。CLAUDE.md の再掲は不要 |
 
 ### 3. `~/.claude/skills/` はフラット構造必須
 
@@ -189,6 +189,46 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **現象** | `allowed-tools` に `Write(output/**)` と書いたのに毎回権限確認が出る。起動時に警告も出る |
 | **原因** | ファイルパス権限は `Edit(path)` と `Read(path)` だけが参照される。`Write` / `NotebookEdit` / `Glob` / `MultiEdit` のパスルールは受理されるが一度も参照されない |
 | **対策** | Write を許可したい場合も `Edit(output/**)` と書く。`Read(path)` の deny は Edit/Write も同時にブロックする |
+
+### 23. auto mode で「確認したつもり」
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | Pro / Max / Team では auto mode が既定になり、権限プロンプトが出ないまま作業が進む。CLAUDE.md の「〜しない」だけに頼った境界が破られる |
+| **原因** | auto mode は分類器モデルが各操作を審査する方式。プロンプト指示は長時間セッションやファイル経由のプロンプトインジェクションで抜けうる |
+| **対策** | 絶対に通したくない操作は `permissions.deny`(分類器より前に効く)、毎回確認したい操作は `permissions.ask`(auto mode でも必ず確認)。フック(Layer 1)は常時有効。分類器は CLAUDE.md も読むので禁止事項は CLAUDE.md にも書く。拒否履歴は `permission-denied-log.sh` が `testreport/denials/` に残す |
+
+### 24. CLAUDE.md / output style の途中編集が効かない
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | セッション中に CLAUDE.md や output style を直したのに挙動が変わらない |
+| **原因** | ルート / ユーザーの CLAUDE.md と output style はセッション開始時に 1 回だけ読まれる。途中の編集はキャッシュを壊さない代わりに反映もされない |
+| **対策** | `/clear` か再起動で反映する。path-scoped rule と subdirectory の CLAUDE.md は初回 load 時点の内容が使われる |
+
+### 25. project settings に `defaultMode: auto` / `autoMode` を書いても無視される
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `.claude/settings.json` に `"permissions": {"defaultMode": "auto"}` や `autoMode.environment` を書いたのに効かない |
+| **原因** | 公式仕様: `auto` / `bypassPermissions` の `defaultMode` と `autoMode` ブロックは project / local settings から読まれない(リポジトリ経由の権限昇格を防ぐため) |
+| **対策** | 個人の `~/.claude/settings.json` か managed settings に書く。`/auto-mode-setup` が下書きを生成する。共有するのは `deny` / `ask` だけ(こちらは project settings で有効) |
+
+### 26. 同名 skill が bundled skill を上書きする
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `/code-review` を打つと同梱(bundled)の差分バグレビューではなく本テンプレートの skill が起動する(または逆を期待していた) |
+| **原因** | project / user の skill は同名の bundled skill を上書きする。ただし bundled のエイリアス(`/review`)は上書きされない |
+| **対策** | 意図的な上書きとして skill 側に明記する(本テンプレートは記載済み)。bundled 版の fresh-subagent バグ探しが欲しいときは `/review` |
+
+### 27. Stop フックの無限ループ / 8 回で強制終了
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | Stop フックで「テストを回せ」と差し戻し続けた結果、同じ差し戻しが繰り返される、または 8 回目で Claude Code がターンを強制終了する |
+| **原因** | Stop フックは差し戻しのたびに再発火する。`stop_hook_active: true` を見ずにブロックすると自分の差し戻しに反応し続ける。公式仕様で 8 回連続ブロック後は無視される |
+| **対策** | `stop_hook_active` が true なら必ず通す(1 回だけ差し戻す)。`background_tasks` が空でないときも通す(完了ではなく待機中)。本テンプレートの `verify-gate.sh` はこの規約で実装済み |
 
 ## 推奨セッション運用コマンド
 

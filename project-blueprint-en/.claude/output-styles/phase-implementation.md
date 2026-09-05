@@ -1,5 +1,6 @@
 ---
 name: phase-implementation
+keep-coding-instructions: true
 description: Implementation phase. Optimized for TDD, minimal diffs, and verification-first behavior.
 ---
 

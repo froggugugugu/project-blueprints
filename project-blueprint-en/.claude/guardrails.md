@@ -5,7 +5,7 @@ Rules that are scattered across `CLAUDE.md` sections are consolidated here.
 
 ---
 
-## Hook inventory (13 scripts / 15 registrations)
+## Hook inventory (15 scripts / 19 registrations)
 
 | Hook | Event | Target | Behavior | Description |
 | ---- | ----- | ------ | -------- | ----------- |
@@ -17,6 +17,10 @@ Rules that are scattered across `CLAUDE.md` sections are consolidated here.
 | `session-end.sh` | SessionEnd | — | observe | Appends a session summary to `output/reports/sessions/<date>.md` |
 | `commit-quality.sh` | PostToolUse | Bash (git commit) | warn | Conventional Commits format check and secret detection |
 | `console-warn.sh` | PostToolUse | Edit\|Write | warn | Detects leftover debug statements (console.log etc.) |
+| `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | observe | Records timestamps of source edits / verification commands (`testreport/.verify/`) |
+| `verify-gate.sh gate` | **Stop** | — | warn/send back | If no verification command ran after the last edit: standard = warning / strict = sent back once (verification gate) |
+| `verify-gate.sh task` | **TaskCompleted** | — | warn/refuse | Same condition on the completion mark: standard = warning / strict = exit 2 refuses it (mechanical enforcement of quality gate ③) |
+| `permission-denied-log.sh` | **PermissionDenied** | `*` | observe | Records auto mode classifier denials (`testreport/denials/`) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | observe | Structured error log on tool failure (`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | observe + context | Logs the launch and injects guardrails into the subagent |
 | `subagent-audit.sh` | SubagentStop | — | observe | Logs completion (`testreport/agents/`) |
@@ -39,6 +43,26 @@ UserPromptSubmit → user-prompt-submit.sh collects the marker and re-injects
 > **Why two stages**: per the official spec, `PostCompact` has **no decision control
 > at all** (it cannot even return `additionalContext`) — it is a side-effect-only
 > event. Only `UserPromptSubmit` can inject context, so the marker bridges the two.
+
+### Verification gate (Stop hook)
+
+Implements the official best practice "give Claude a way to verify its work and gate the
+stop deterministically with a Stop hook". Mechanically closes the trust-then-verify gap
+(pitfalls #19) where work ends on "it should work".
+
+```text
+PostToolUse → verify-gate.sh track   records timestamps of source edits / verification commands
+Stop        → verify-gate.sh gate    if no verification command ran after the last edit:
+                                        standard: warns the human via systemMessage
+                                        strict:   decision:block, sending Claude back once
+```
+
+- Verification commands: `npm test` / `vitest` / `jest` / `pytest` / `cargo test` / `go test` / `tsc` /
+  `eslint` / `biome` / `playwright test` / `make test` and so on (`VERIFY_PATTERNS` in the script; extend per project)
+- Not counted as source: edits under `docs/` `output/` `input/` `.claude/` `.github/` and `.md` / `.json` / `.yaml` / `.toml` files
+- `stop_hook_active: true` (after our own block) and a non-empty `background_tasks` (paused) always pass (pitfalls #27)
+- For a flexible, model-judged completion condition inside one conversation, combine with `/goal <condition>`
+- Regression test: `bash scripts/validate-harness.sh --hooks` feeds hook JSON to every hook and checks exit codes / output (also runs in CI)
 
 ### Behavior per runtime
 
@@ -83,16 +107,25 @@ their **durability differs sharply**.
 - Keep `/loop` for short-lived in-session polling (waiting on a build, say)
 - Avoid `:00` in an Actions cron — that slot is congested and prone to delay
 
+### Organization rollout (managed settings / OpenTelemetry)
+
+Use managed settings to pin policy that individuals cannot override. The bundled
+`.claude/managed-settings.example.json` shows deny rules / `disableBypassPermissionsMode` / sandbox /
+OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY` + an OTLP exporter) / `requiredMinimumVersion`.
+This template's `testreport/` logs are machine-local, so aggregate team-wide usage and skill adoption through OTel
+(`OTEL_LOG_TOOL_DETAILS=1` records skill names so unused skills can be identified).
+
 ### Hook profile switch
 
 `BLUEPRINT_HOOK_PROFILE` switches behavior
-(honored by `user-prompt-submit.sh`, `session-end.sh`, `scan-harness.sh`, `post-compact-restore.sh`, `subagent-audit.sh`):
+(honored by `user-prompt-submit.sh`, `session-end.sh`, `scan-harness.sh`, `post-compact-restore.sh`, `subagent-audit.sh`,
+`verify-gate.sh`, `permission-denied-log.sh`):
 
 | Profile | Use for | Behavior |
 | ------- | ------- | -------- |
 | `minimal` | CI / automation | Pass-through (skip inspection). Minimal overhead |
 | `standard` (default) | Everyday development | Warn only on detection (non-blocking) |
-| `strict` | High-risk work | Block the skill / prompt on detection |
+| `strict` | High-risk work | Block the skill / prompt on detection. Send an unverified stop back |
 
 Switching through `.envrc` or `direnv` is recommended.
 
@@ -110,6 +143,9 @@ Switching through `.envrc` or `direnv` is recommended.
   - Async hooks cannot return `decision` / `permissionDecision` / `continue`
   - In this template only `notify-claude.sh` (ntfy delivery) is async
 - Hooks stay active under `--dangerously-skip-permissions` (defense in depth)
+- **Claude Code overrides a Stop hook after 8 consecutive blocks**. Check `stop_hook_active` and block only once
+- Extra handler fields: `if` (narrow the trigger with permission-rule syntax, e.g. `"if": "Bash(git *)"`) / `once` (removed after the first success) /
+  `asyncRewake` (runs in the background and wakes Claude on exit 2) / `args` (exec form) / `statusMessage`
 
 ### Decision control by event (excerpt)
 
@@ -128,9 +164,10 @@ Switching through `.envrc` or `direnv` is recommended.
 | `prompt` | Delegate the judgement to the model when it is context-dependent | "Assess whether this Bash command is safe in production" |
 | `http` | POST to an external endpoint. Centralized auditing | An organization-wide audit server |
 | `mcp_tool` | Call an MCP tool directly | — |
+| `agent` | A subagent verifies the condition with tools (Read / Grep / Bash) before deciding | On Stop: "run the test suite and confirm everything passes" (experimental) |
 
 - Prefer `command` by default (deterministic and fast)
-- Use `prompt` only when context-dependent judgement is required (it costs tokens)
+- Use `prompt` / `agent` only when context-dependent judgement is required (they cost tokens). `/goal` is a session-scoped prompt-type Stop hook
 - Multiple types can be combined on the same event
 
 ### Unused official hook events (room to extend)
@@ -142,7 +179,7 @@ Events this template does not use but a project can add:
 | `Setup` | `--init-only` / `-p --init` | Dependency install in CI, scheduled cleanup |
 | `InstructionsLoaded` | CLAUDE.md / rules loaded | Observability of rule application |
 | `PermissionRequest` | A permission dialog appears | Automatic allow/deny by org policy |
-| `PermissionDenied` | Auto-denied in auto mode | Aggregating denial events |
+| `PreModelSwitch` / `PostModelSwitch` | Before / after a model switch via `/model` etc. | Confirming or auditing switches to expensive models (a switch invalidates the cache) |
 | `PostToolBatch` | A parallel tool batch completes | Per-batch verification |
 | `TaskCreated` / `TaskCompleted` | Task created / completed | Enforcing task naming, quality gates |
 | `TeammateIdle` | A teammate goes idle | Quality gates for agent teams |

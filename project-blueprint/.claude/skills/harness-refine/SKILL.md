@@ -14,6 +14,7 @@ description: >
 argument-hint: "<対象ディレクトリ or 補正指示(省略可)>"
 allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 effort: high
+disable-model-invocation: true
 ---
 
 # Harness Refine — 自己強化型ベストプラクティス補正(Round 0 リフレッシュ + 2 ラウンド固定)
@@ -305,9 +306,12 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 
 | ソース | 用途 | rubric 対応 |
 | ------ | ---- | ----------- |
-| platform.claude.com/docs `agent-skills/best-practices` | SKILL.md / frontmatter / progressive disclosure / eval-first | 3, 11, 12, 15 |
-| docs.claude.com `claude-code/sub-agents` | subagent 最小権限・単一責務・要約返却 | 13 |
-| docs.claude.com `claude-code/memory` | CLAUDE.md 行数 / `@import` は context 削減せず / path-scoped rules | 2 |
+| platform.claude.com/docs `agents-and-tools/agent-skills/best-practices` | SKILL.md / frontmatter / progressive disclosure / eval-first | 3, 11, 12, 15 |
+| code.claude.com/docs `best-practices` | 検証手段の付与 / plan → code / 敵対的レビュー / auto mode / 失敗パターン | 9, 10, 15 |
+| code.claude.com/docs `sub-agents` / `skills` / `hooks` / `permissions` / `settings-reference` | 公式 enum・既定値(fork mode / bundled skill 上書き / `Tool(param:value)` ルール等) | 3, 5, 10, 13 |
+| code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md 行数 / 起動時 load コスト / キャッシュ無効化要因 / compact 指示 | 2, 12 |
+| claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | CLAUDE.md / rules / skills / hooks / subagents / output styles の使い分け | 4, 10 |
+| code.claude.com/docs `whats-new`(直近 8 週) | 新機能・既定値変更の検知(rubric 自己進化の入力) | 全項目 |
 | anthropic.com/engineering `writing-tools-for-agents` | ツール定義の明確さ・トークン効率 | 10, 11 |
 | anthropic.com/engineering `effective-context-engineering-for-ai-agents` | コンテキスト curation / sub-agent 隔離 | 12, 13 |
 | anthropic.com/engineering `effective-harnesses-for-long-running-agents` | 起動オリエンテーション / 検証ループ | 9, 15 |

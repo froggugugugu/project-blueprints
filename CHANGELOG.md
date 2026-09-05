@@ -8,6 +8,62 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (official best-practice alignment, 2026-09)
+
+- **`verify-gate.sh`**(PostToolUse + Stop): 公式「Claude に検証手段を与え Stop フックで
+  決定論的にゲートする」の実装。ソース編集後に検証コマンド(テスト / lint / 型チェック /
+  ビルド)が走らずに終了しようとすると standard=警告 / strict=1 回差し戻し。
+  `stop_hook_active` と `background_tasks` を尊重しループしない。
+- **`permission-denied-log.sh`**(PermissionDenied): auto mode(Pro / Max / Team の既定)の
+  分類器による拒否を `testreport/denials/` に記録し、allow ルール / `/auto-mode-setup` の
+  改善入力にする。
+- **`.claude/tasks/PROGRESS_TEMPLATE.md`** + `session-start.sh` の自動注入: Anthropic の
+  長時間エージェント運用知見(進捗ノート / 機能リスト / 1 セッション 1 機能 / スモークテスト)。
+- **`CLAUDE.md`**: 証拠ルール(証拠のない完了報告禁止)、`Compact instructions` 節、bundled
+  skill(`/verify` `/btw` `/goal` `/batch`)連携、auto mode での deny / ask の位置づけ、
+  長期タスク引き継ぎ。199 行(目安 200 行以内を維持)。
+- **`pitfalls.md` #23〜#27**: auto mode / CLAUDE.md 途中編集無効 / project settings で無視される
+  `defaultMode: auto` `autoMode` / bundled skill の同名上書き / Stop フックの 8 回上限。
+- **`validate_harness.py`**: `PreModelSwitch` / `PostModelSwitch`、hook handler の `type` /
+  `prompt` / boolean / `timeout` 検証、project settings の `defaultMode: auto` / `autoMode`
+  警告、`disable-model-invocation` / `user-invocable` の厳密値、output style の
+  `keep-coding-instructions` 警告。負のテスト +5(22/22)。
+
+- **`scripts/test_hooks.sh`**(`validate-harness.sh --hooks`): 全フックに hook JSON を流して
+  exit code / 出力を検証する機能テスト 54 ケース(JP/EN 両ミラー)。CI に組み込み。
+- **`verify-gate.sh task`**(TaskCompleted): 検証コマンド未実行のタスク完了マークを
+  standard=警告 / strict=exit 2 で差し止め(品質ゲート③の機械強制)。
+- **`.claude/managed-settings.example.json`**: 組織ポリシー例(deny / sandbox / OpenTelemetry /
+  `requiredMinimumVersion`)。`settings.local.json.template` に OTel と `modelPricing` の指針を追加。
+- **`rules/README.md`**: monorepo 指針(per-directory skill / `claudeMdExcludes` /
+  `worktree.sparsePaths` / `skillOverrides`)。
+- **`/plan` / `/implementing-features`**: PROGRESS.md の機能リスト初期化と `passes` /
+  セッションログ更新を手順化(複数セッション引き継ぎの自動化)。
+- **`session-start.sh`**: 常時 `@import` される `docs/*.md` が 300 行を超えたら切り出しを警告。
+- **`setup.sh`**: `settings.local.json` を雛形から自動生成。
+
+### Changed
+
+- **`.mcp.json.template`**: 有効サーバーをバージョン固定(`@upstash/context7-mcp@4.0.5` /
+  `@playwright/mcp@0.0.80`)。validator `--online` が固定版の解決を検証し、未固定を WARN。
+- **output styles(4 × JP/EN)**: `keep-coding-instructions: true` を追加。これまでは
+  Claude Code 標準のソフトウェアエンジニアリング指示(検証習慣・変更スコープ)を丸ごと
+  落としていた(公式 output-styles 仕様)。
+- **`pitfalls.md` #2**: 「subagent は親の skill / rules を継承しない」は公式仕様と矛盾。
+  CLAUDE.md 階層 / `.claude/rules/` / git status は継承し、継承しないのは skill 本文・
+  会話履歴・auto memory に訂正。
+- **`permissions-guide.md`**: auto mode 既定化(v2.1.228+)、評価順序
+  (deny → ask → 分類器 → フック)、設定の置き場所表、拒否ログ活用を反映して全面改訂。
+- **`review-fix` / `harness-refine`**: `disable-model-invocation: true`(副作用のある
+  ワークフローは手動起動のみ)。
+- **`code-review`**: 「正確性・要件に影響する gap のみ報告」原則、bundled `/review` との関係。
+- **`agents/README.md`**: fork mode 既定 ON / 背景実行、継承範囲、ネスト禁止(constitution ④)、
+  description 予算、`Agent(param:value)`、`agent-memory` の保存先。
+- **`guardrails.md`**: フック一覧 15 スクリプト / 18 登録、検証ゲート節、`if` / `once` /
+  `asyncRewake`、`agent` 型、`PreModelSwitch`。
+- **`.gitignore` / `setup.sh`**: `.claude/worktrees/` / `.claude/agent-memory-local/` /
+  `.claude/settings.local.json` を除外対象に追加。
+
 ### Removed
 
 - **`.claude-plugin/marketplace.json`**: プラグインマーケットプレイス配布を見送り削除。

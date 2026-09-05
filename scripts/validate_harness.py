@@ -36,14 +36,17 @@ HOOK_EVENTS = {
     "Notification", "SubagentStart", "SubagentStop", "TaskCreated",
     "TaskCompleted", "Stop", "StopFailure", "TeammateIdle", "ConfigChange",
     "CwdChanged", "DirectoryAdded", "FileChanged", "WorktreeCreate",
-    "WorktreeRemove", "PreCompact", "PostCompact", "SessionEnd",
-    "Elicitation", "ElicitationResult",
+    "WorktreeRemove", "PreCompact", "PostCompact", "PreModelSwitch",
+    "PostModelSwitch", "SessionEnd", "Elicitation", "ElicitationResult",
 }
+HOOK_TYPES = {"command", "http", "mcp_tool", "prompt", "agent"}
 AGENT_COLORS = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"}
 MODEL_ALIASES = {"opus", "sonnet", "haiku", "fable", "inherit"}
 EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
 PERMISSION_MODES = {"default", "acceptEdits", "auto", "dontAsk", "bypassPermissions", "plan", "manual"}
 MEMORY_SCOPES = {"user", "project", "local"}
+# project / local settings からは読まれない(公式仕様)。書いても無視される。
+PROJECT_IGNORED_DEFAULT_MODES = {"auto", "bypassPermissions"}
 
 # ファイルパス権限は Edit(path) / Read(path) だけが参照される。
 # 下記ツールにパス指定を書いても一切参照されず、起動時に警告が出る。
@@ -181,12 +184,14 @@ def check_settings(root: Path, rep: Report) -> set[str]:
         perms = cfg.get("permissions", {})
         for bucket in ("allow", "deny", "ask"):
             check_permission_rules(f"{where} [permissions.{bucket}]", perms.get(bucket, []), rep)
+        check_project_scope_keys(where, cfg, rep)
 
         for event, groups in cfg.get("hooks", {}).items():
             if event not in HOOK_EVENTS:
                 rep.error(where, f"`{event}` は公式のフックイベント名ではありません")
             for group in groups:
                 for hook in group.get("hooks", []):
+                    check_hook_handler(f"{where} [hooks.{event}]", hook, rep)
                     cmd = hook.get("command", "")
                     m = re.search(r"/\.claude/hooks/([\w.-]+\.sh)", cmd)
                     if not m:
@@ -204,8 +209,51 @@ def check_settings(root: Path, rep: Report) -> set[str]:
             check_permission_rules(f"{local} [permissions.{bucket}]", perms.get(bucket, []), rep)
         if "deny" in perms:
             rep.error(str(local), "permissions.deny を定義しています — 共有 settings.json の deny を弱体化させます")
+        check_project_scope_keys(str(local), cfg, rep)
+        for event, groups in cfg.get("hooks", {}).items():
+            if event not in HOOK_EVENTS:
+                rep.error(str(local), f"`{event}` は公式のフックイベント名ではありません")
+            for group in groups:
+                for hook in group.get("hooks", []):
+                    check_hook_handler(f"{local} [hooks.{event}]", hook, rep)
 
     return referenced
+
+
+def check_hook_handler(where: str, hook: dict, rep: Report) -> None:
+    """Validate one hook handler object against the official field list."""
+    htype = hook.get("type")
+    if htype not in HOOK_TYPES:
+        rep.error(where, f"`type: {htype}` は公式のフックタイプではありません ({', '.join(sorted(HOOK_TYPES))})")
+        return
+    if htype == "command" and not str(hook.get("command", "")).strip():
+        rep.error(where, "`type: command` のフックに `command` がありません")
+    if htype in ("prompt", "agent") and not str(hook.get("prompt", "")).strip():
+        rep.error(where, f"`type: {htype}` のフックには `prompt` が必要です")
+    if htype == "http" and not str(hook.get("url", "")).strip():
+        rep.error(where, "`type: http` のフックには `url` が必要です")
+    for key in ("async", "asyncRewake", "once"):
+        val = hook.get(key)
+        if val is not None and not isinstance(val, bool):
+            rep.error(where, f"`{key}: {val}` は true / false のみ指定できます")
+    timeout = hook.get("timeout")
+    if timeout is not None and (not isinstance(timeout, (int, float)) or timeout <= 0):
+        rep.error(where, f"`timeout: {timeout}` は正の秒数である必要があります")
+    if hook.get("async") and htype in ("prompt", "agent"):
+        rep.warn(where, f"`async: true` の {htype} フックは decision を返せません")
+
+
+def check_project_scope_keys(where: str, cfg: dict, rep: Report) -> None:
+    """Keys the runtime ignores in project / local settings (repo-borne privilege escalation guard)."""
+    mode = cfg.get("permissions", {}).get("defaultMode")
+    if mode in PROJECT_IGNORED_DEFAULT_MODES:
+        rep.warn(
+            where,
+            f"`permissions.defaultMode: {mode}` は project settings では無視されます"
+            " — ~/.claude/settings.json か managed settings に置いてください",
+        )
+    if "autoMode" in cfg:
+        rep.warn(where, "`autoMode` は project settings から読まれません — ~/.claude/settings.json か managed settings に置いてください")
 
 
 def check_hook_scripts(root: Path, referenced: set[str], rep: Report) -> None:
@@ -319,6 +367,13 @@ def check_skills(root: Path, rep: Report) -> set[str]:
         if model is not None and model not in MODEL_ALIASES and not re.fullmatch(r"claude-[\w.-]+", str(model)):
             rep.error(where, f"`model: {model}` は不正です")
 
+        # YAML 1.1 パーサは `yes` / `on` も真と解釈してしまうため、生テキストで厳密に検査する。
+        raw_block = FM_RE.match(p.read_text(encoding="utf-8"))
+        for key in ("disable-model-invocation", "user-invocable"):
+            mm = re.search(rf"(?m)^{re.escape(key)}:[ \t]*(.*?)[ \t]*$", raw_block.group(1) if raw_block else "")
+            if mm and mm.group(1).strip('"\'') not in ("true", "false"):
+                rep.error(where, f"`{key}: {mm.group(1)}` は true / false のみ指定できます")
+
         ctx = fm.get("context")
         if ctx is not None and ctx != "fork":
             rep.error(where, f"`context: {ctx}` は不正です (`fork` のみ。既定の main 実行は行を書かない)")
@@ -353,6 +408,26 @@ def check_skills(root: Path, rep: Report) -> set[str]:
                 )
 
     return names
+
+
+def check_output_styles(root: Path, rep: Report) -> None:
+    """A custom output style replaces Claude Code's coding instructions unless it opts to keep them."""
+    styles_dir = root / ".claude/output-styles"
+    if not styles_dir.is_dir():
+        return
+    for p in sorted(styles_dir.glob("*.md")):
+        fm = parse_frontmatter(p, rep)
+        if fm is None:
+            continue
+        if not str(fm.get("name", "")).strip():
+            rep.error(str(p), "`name` が未設定です")
+        keep = str(fm.get("keep-coding-instructions", "")).strip().lower()
+        if keep != "true":
+            rep.warn(
+                str(p),
+                "`keep-coding-instructions: true` がありません — カスタム出力スタイルは"
+                " Claude Code 標準のソフトウェアエンジニアリング指示(変更スコープ・検証習慣等)を丸ごと落とします",
+            )
 
 
 def check_rules(root: Path, rep: Report) -> None:
@@ -420,23 +495,59 @@ def check_constitution(root: Path, rep: Report) -> None:
         )
 
 
+NPM_SPEC_RE = re.compile(r"^(@?[\w.-]+(?:/[\w.-]+)?)(?:@([\w.^~<>=*-]+))?$")
+
+
+def collect_npx_specs(obj, active: bool, out: dict) -> None:
+    """Walk the MCP template and collect `npx -y <spec>` package specs.
+
+    Servers under the top-level `mcpServers` are *active* (must be version-pinned);
+    everything else (`_example` blocks) only has to resolve.
+    """
+    if isinstance(obj, dict):
+        args = obj.get("args")
+        if isinstance(args, list) and "-y" in args:
+            idx = args.index("-y")
+            if idx + 1 < len(args) and isinstance(args[idx + 1], str):
+                spec = args[idx + 1]
+                out[spec] = out.get(spec, False) or active
+        for k, v in obj.items():
+            collect_npx_specs(v, active and not str(k).startswith("_"), out)
+    elif isinstance(obj, list):
+        for v in obj:
+            collect_npx_specs(v, active, out)
+
+
 def check_npm_packages(root: Path, rep: Report) -> None:
     tmpl = root / ".mcp.json.template"
     if not tmpl.exists():
         return
-    text = tmpl.read_text(encoding="utf-8")
-    pkgs = sorted(set(re.findall(r'"(@?[\w.-]+/?[\w.-]*)"[,\s]*\]', text)) |
-                  set(re.findall(r'"-y",\s*"([^"]+)"', text)))
-    for pkg in pkgs:
-        if not re.match(r"^@?[\w.-]+(/[\w.-]+)?$", pkg) or pkg in ("-y",):
+    cfg = json.loads(tmpl.read_text(encoding="utf-8"))
+    specs: dict = {}
+    collect_npx_specs(cfg.get("mcpServers", {}), True, specs)
+    for k, v in cfg.items():
+        if k != "mcpServers":
+            collect_npx_specs(v, False, specs)
+
+    for spec, active in sorted(specs.items()):
+        m = NPM_SPEC_RE.match(spec)
+        if not m:
             continue
-        ver = subprocess.run(["npm", "view", pkg, "version"], capture_output=True, text=True)
-        if ver.returncode != 0 or not ver.stdout.strip():
-            rep.error(str(tmpl), f"npm パッケージ `{pkg}` が解決できません")
+        name, ver = m.group(1), m.group(2)
+        if active and not ver:
+            rep.warn(
+                str(tmpl),
+                f"有効な MCP サーバーの npm パッケージ `{name}` がバージョン固定されていません"
+                " — サプライチェーン対策として `name@<version>` で固定してください",
+            )
+        target = f"{name}@{ver}" if ver else name
+        res = subprocess.run(["npm", "view", target, "version"], capture_output=True, text=True)
+        if res.returncode != 0 or not res.stdout.strip():
+            rep.error(str(tmpl), f"npm パッケージ `{target}` が解決できません")
             continue
-        dep = subprocess.run(["npm", "view", pkg, "deprecated"], capture_output=True, text=True)
+        dep = subprocess.run(["npm", "view", name, "deprecated"], capture_output=True, text=True)
         if dep.stdout.strip():
-            rep.warn(str(tmpl), f"npm パッケージ `{pkg}` は deprecated です: {dep.stdout.strip()[:70]}")
+            rep.warn(str(tmpl), f"npm パッケージ `{name}` は deprecated です: {dep.stdout.strip()[:70]}")
 
 
 def check_mirror_parity(a: Path, b: Path, rep: Report) -> None:
@@ -460,6 +571,7 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_agents(root, skill_names, rep)
     referenced = check_settings(root, rep)
     check_hook_scripts(root, referenced, rep)
+    check_output_styles(root, rep)
     check_rules(root, rep)
     check_imports_and_limits(root, rep)
     check_constitution(root, rep)

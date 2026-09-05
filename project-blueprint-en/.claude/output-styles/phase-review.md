@@ -1,5 +1,6 @@
 ---
 name: phase-review
+keep-coding-instructions: true
 description: Review / QA phase. Optimized for severity classification, evidence-based findings, and actionable suggestions.
 ---
 

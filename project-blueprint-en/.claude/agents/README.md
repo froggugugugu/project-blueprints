@@ -115,6 +115,20 @@ If unspecified, the session default is inherited.
 - Agents **inherit the CLAUDE.md hierarchy (including `.claude/rules/*.md`) and a git status snapshot by default** (Claude Code official semantics; only the built-in `Explore`/`Plan` agents skip both to stay minimal). Skills are preloaded in full only when named in the `skills:` frontmatter field — any other skill can still be invoked individually via the `Skill` tool
 - Agents never modify `input/` (human domain). Deliverables go to `output/` or role-scoped locations
 
+## Official-spec notes (verified 2026-09)
+
+- **Execution**: in interactive sessions fork mode is on by default and subagents **run in the background**.
+  The result arrives in the conversation on completion. `background: true` forces background execution always
+- **What is inherited / not inherited**: the CLAUDE.md hierarchy, `.claude/rules/`, and git status are inherited (except by the built-in `Explore` / `Plan`).
+  Conversation history, the parent's auto memory, and skill bodies are not (preload skills explicitly with `skills:`)
+- **Nesting**: officially a subagent may spawn subagents up to five levels deep, but this template follows constitution ④ and
+  **never lists `Agent` in an agent's `tools`** (prevents cycles and runaway trees). For parallel fan-out use a team or dynamic workflows
+- **Description budget**: when the combined descriptions of custom agents exceed 15,000 tokens, Claude Code warns at startup. Keep to 1-2 sentences
+- **Permission rules**: `Agent(<name>)` denies a specific agent, and parameter-level deny / ask rules such as
+  `Agent(model:opus)` / `Agent(isolation:worktree)` are supported (`Tool(param:value)` syntax)
+- **Memory**: `memory: project` learnings are stored in `.claude/agent-memory/<name>/` and **committed to git** (meant for team sharing).
+  Use `local` (`.claude/agent-memory-local/`, gitignored) to keep them personal
+
 ## Pitfalls
 
 - A too-long `description` blurs invocation conditions and causes misfires. Keep to **1-2 sentences**

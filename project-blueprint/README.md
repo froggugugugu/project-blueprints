@@ -325,9 +325,10 @@ project-blueprint/
 ├── .claude/
 │   ├── CLAUDE.md                          ← [汎用] 開発ガイド
 │   ├── settings.json                      ← [汎用] プラグイン・フック設定
-│   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート
+│   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
+│   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
 │   │
-│   ├── hooks/                             ← [汎用] 安全フック（多層防御・12本）
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御・15本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
 │   │   ├── scan-harness.sh                  ハーネス自己SAST・危険skillブロック（PreToolUse）
@@ -336,9 +337,12 @@ project-blueprint/
 │   │   ├── session-end.sh                   セッション終了記録（SessionEnd）
 │   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
 │   │   ├── console-warn.sh                  デバッグコード検出（PostToolUse）
-│   │   ├── post-failure-log.sh              ツール失敗ログ記録（PostToolUse）
-│   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStop）
+│   │   ├── verify-gate.sh                   検証ゲート: 編集後の未検証終了・完了マークを検知（PostToolUse/Stop/TaskCompleted）
+│   │   ├── permission-denied-log.sh         auto mode の拒否記録（PermissionDenied）
+│   │   ├── post-failure-log.sh              ツール失敗ログ記録（PostToolUseFailure）
+│   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStart/Stop）
 │   │   ├── pre-compact-backup.sh            コンパクト前トランスクリプト退避（PreCompact）
+│   │   ├── post-compact-restore.sh          コンパクト後の再注入マーカー設置（PostCompact）
 │   │   └── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
 │   │
 │   ├── skills/                            ← [汎用] 17スキル定義
@@ -376,7 +380,8 @@ project-blueprint/
 │   └── tasks/                             ← [汎用] タスクテンプレート
 │       ├── TASK_TEMPLATE.md                 機能開発指示書
 │       ├── TASK_REVIEW_TEMPLATE.md          レビュー指示書
-│       └── LESSONS_TEMPLATE.md              学びの記録テンプレート
+│       ├── LESSONS_TEMPLATE.md              学びの記録テンプレート
+│       └── PROGRESS_TEMPLATE.md             複数セッションの進捗引き継ぎノート
 │
 └── docs/                                  ← [AI生成] 技術ドキュメント
     ├── project.md                           ルーティング・ストア・コマンド

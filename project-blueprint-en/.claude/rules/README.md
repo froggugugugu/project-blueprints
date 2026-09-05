@@ -87,6 +87,19 @@ ln -s ~/shared-claude-rules .claude/rules/shared
 
 Task-specific procedures belong in a skill, not in a rule (official guidance).
 
+## Large repositories and monorepos
+
+| Problem | Official answer |
+| ------- | --------------- |
+| Package-specific procedures show up while working on other packages | **Per-directory skills**: put them in `packages/<name>/.claude/skills/`. They are candidates only while that directory is touched, and a name clash is namespaced automatically as `/packages/<name>:skill` |
+| Where a convention belongs | Conventions maintained by the directory owner go in `packages/<name>/CLAUDE.md` (loaded when Claude reads a file there). A rule that must apply to scattered paths goes in this directory as a path-scoped rule |
+| Other teams' CLAUDE.md files get loaded | `claudeMdExcludes` in `.claude/settings.local.json` (globs over absolute paths) |
+| Worktrees are heavy | `worktree.sparsePaths` checks out only the directories you need |
+| Generated or vendored code gets read | Add `Read(./dist/**)` and similar to `permissions.deny` to cut exploration cost |
+| Skill descriptions get truncated as skills multiply | Check the listing cost with `/doctor`, hide unneeded skills via `skillOverrides`, adjust the budget with `skillListingBudgetFraction` |
+
+Keep the root `CLAUDE.md` to cross-cutting rules only; never pull package-specific information into it (pitfalls #1).
+
 ## Concept alignment
 
 - `.claude/rules/` is part of the generic template layer (project-specific values go in `project-config.md` or `docs/`)

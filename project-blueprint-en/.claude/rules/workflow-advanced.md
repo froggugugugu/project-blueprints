@@ -29,6 +29,10 @@ paths:
 - Ask yourself: "Would a senior engineer approve this?"
 - Run tests, check logs, and demonstrate correctness
 - For UI changes, include visual verification via Playwright MCP
+- **Show evidence**: not "it should work" but the test output, the command run and its return value, or a screenshot.
+  If no verification exists yet, build it first (a test / script / diff against a fixture / `/verify` against the running app)
+- Tell review subagents to "report only gaps that affect correctness or the stated requirements".
+  Acting on every finding of a reviewer asked to find gaps leads to over-engineering
 
 ## 3. Pursuit of elegance (balanced)
 
@@ -62,6 +66,22 @@ paths:
 
 1. Record results: Add a review section upon completion
 2. Accumulate lessons: Record corrections in `.claude/tasks/LESSONS_TEMPLATE.md` format
+
+## 6. Long-running task handoff (multiple context windows)
+
+Based on Anthropic's long-running agent harness findings (initializer / coding agent pattern).
+Don't try to build everything in one session; finish in a state **the next session can resume without guessing**.
+
+| Failure pattern | Countermeasure |
+| --------------- | -------------- |
+| Trying to one-shot the work and running out of context mid-way | **One feature per session**. Pick only the highest-priority unfinished item from the feature list in `output/tasks/PROGRESS.md` |
+| Intermediate state left undocumented, so the next session starts from guesses | Before finishing, **commit + update PROGRESS.md** (what was done / verification results / next step / rejected options) |
+| Seeing progress and declaring the project done too early | `passes` in the feature list becomes ✅ **only after verification**. Never delete rows or rewrite acceptance criteria |
+| Rediscovering how to start the app every time | Pin the start → smoke-test steps in PROGRESS.md, run them at the top of the session, and fix anything broken before starting new work |
+
+Session start routine: `pwd` → `git log --oneline -10` → PROGRESS.md → smoke test → start one feature.
+Template: `.claude/tasks/PROGRESS_TEMPLATE.md`. The SessionStart hook injects the head of PROGRESS.md automatically.
+To keep going until a condition holds within one conversation use `/goal <condition>`; for recurring cross-session runs use GitHub Actions.
 
 ## Core principles
 

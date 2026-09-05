@@ -196,6 +196,13 @@ if [[ "$PROFILE" == "minimal" ]]; then
 else
     rm -f "$TARGET_DIR/.claude/settings.minimal.json"
 fi
+
+# ── settings.local.json を雛形から生成(無ければ) ─────────────
+# 個人の allow ルール。gitignore 済みで、SessionStart フックが未作成を警告する対象。
+if [[ -f "$TARGET_DIR/.claude/settings.local.json.template" && ! -f "$TARGET_DIR/.claude/settings.local.json" ]]; then
+    cp "$TARGET_DIR/.claude/settings.local.json.template" "$TARGET_DIR/.claude/settings.local.json"
+    info ".claude/settings.local.json を雛形から生成(ビルドツールに合わせて allow を調整してください)"
+fi
 # constitution.md(不変原則)を配置 — scan-harness.sh / CLAUDE.md が参照する
 # 注: SC2015 回避のため `&& A || B` ではなく明示的な if 分岐を使用する
 #     (cp -n は上書きしないが exit 0 を返すので、存在チェックで判定する)
@@ -255,22 +262,28 @@ fi
 
 # ── .gitignore に testreport/ を追記 ────────────────────────
 GITIGNORE="$TARGET_DIR/.gitignore"
-if [[ -f "$GITIGNORE" ]]; then
-    if ! grep -q '^testreport/' "$GITIGNORE" 2>/dev/null; then
-        echo "" >> "$GITIGNORE"
-        echo "# ツール直接出力（AI生成の生データ）" >> "$GITIGNORE"
-        echo "testreport/" >> "$GITIGNORE"
-        info ".gitignore に testreport/ を追記"
-    else
-        info ".gitignore に testreport/ は既に含まれています"
-    fi
-else
-    cat > "$GITIGNORE" <<'GITIGNORE_EOF'
-# ツール直接出力（AI生成の生データ）
-testreport/
-GITIGNORE_EOF
-    info ".gitignore を作成し testreport/ を追記"
+# Claude Code がリポジトリ内に作るローカル状態も一緒に除外する:
+#   testreport/                 ツール直接出力 / 観測フックのログ
+#   .claude/settings.local.json 個人の allow ルール(共有すると権限が漏れる)
+#   .claude/worktrees/          --worktree / isolation: worktree の作業木
+#   .claude/agent-memory-local/ memory: local の subagent メモリ
+GITIGNORE_ENTRIES=(testreport/ .claude/settings.local.json .claude/worktrees/ .claude/agent-memory-local/)
+if [[ ! -f "$GITIGNORE" ]]; then
+    printf '%s\n' "# Claude Code ローカル状態（AI生成の生データ・個人設定）" > "$GITIGNORE"
+    info ".gitignore を作成"
 fi
+for entry in "${GITIGNORE_ENTRIES[@]}"; do
+    if ! grep -qxF "$entry" "$GITIGNORE" 2>/dev/null; then
+        if [[ "$entry" == "testreport/" ]] && ! grep -q '^# ' "$GITIGNORE"; then
+            echo "" >> "$GITIGNORE"
+            echo "# Claude Code ローカル状態（AI生成の生データ・個人設定）" >> "$GITIGNORE"
+        fi
+        echo "$entry" >> "$GITIGNORE"
+        info ".gitignore に追記: $entry"
+    else
+        info ".gitignore に既に含まれています: $entry"
+    fi
+done
 
 # ── 完了メッセージ ──────────────────────────────────────────
 echo ""
