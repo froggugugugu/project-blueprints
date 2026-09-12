@@ -188,6 +188,8 @@ prune_dir "$TARGET_DIR/.claude/hooks"  "${KEEP_HOOKS[@]}"
 
 if [[ "${#KEEP_TEAMS[@]}" -eq 0 ]]; then
     rm -rf "$TARGET_DIR/.claude/teams"
+    # saved workflow は team 層(オーケストレーション)なので teams と同じ扱い
+    rm -rf "$TARGET_DIR/.claude/workflows"
 fi
 
 # ── settings.json の profile 差し替え ────────────────────────
@@ -267,7 +269,8 @@ GITIGNORE="$TARGET_DIR/.gitignore"
 #   .claude/settings.local.json 個人の allow ルール(共有すると権限が漏れる)
 #   .claude/worktrees/          --worktree / isolation: worktree の作業木
 #   .claude/agent-memory-local/ memory: local の subagent メモリ
-GITIGNORE_ENTRIES=(testreport/ .claude/settings.local.json .claude/worktrees/ .claude/agent-memory-local/)
+#   .claude/skills/*-workspace/ skill-creator の eval 作業ディレクトリ
+GITIGNORE_ENTRIES=(testreport/ .claude/settings.local.json .claude/worktrees/ .claude/agent-memory-local/ .claude/skills/*-workspace/)
 if [[ ! -f "$GITIGNORE" ]]; then
     printf '%s\n' "# Claude Code ローカル状態（AI生成の生データ・個人設定）" > "$GITIGNORE"
     info ".gitignore を作成"

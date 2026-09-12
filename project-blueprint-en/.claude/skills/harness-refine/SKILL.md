@@ -1,16 +1,8 @@
 ---
 name: harness-refine
 description: >
-  This skill should be used when the user asks to "refine the harness", "self-improve the blueprint",
-  "restructure .claude/ to match best practices", "audit harness configuration",
-  or mentions "harness refine", "best-practice alignment", "self-refine",
-  "harness self-audit", "rework skill/agent/team layout".
-  Self-scores and refines the `.claude/` harness scaffolding (skills / agents / teams / rules)
-  under `project-blueprint/` and `project-blueprint-en/` against refreshed official best practices,
-  in lockstep across both language mirrors. Source code and `docs/`/`output/` content are out of scope.
-  Runs a non-mutating Round 0 best-practice refresh, then self-score → self-improve → self-review
-  for 2 fixed rounds, escalating to a human if not approved.
-  Takes optional argument: /harness-refine <target-dir or instruction>
+  Self-scores and refines the .claude/ harness (skills, agents, teams, rules, hook settings) against the latest official best practices and keeps the JP/EN mirrors in sync.
+  Use when asked to refine or self-audit the harness. Manual invocation only.
 argument-hint: "<target-directory or refinement instruction (optional)>"
 allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 effort: high
@@ -153,7 +145,7 @@ condition holds, with evidence attached.
 | 5 | 3-layer defense preserved (principle ⑤) | Hooks removed | Count preserved | + Responsibility header comment on each hook |
 | 6 | JP/EN mirror sync (principle ②) | File count / structure diff | File count matches | + Headings & line counts match (mechanical diff = 0) |
 | 7 | Rules opt-in pattern | `.example` missing or directly loaded | `.example` present | + Naming convention (`language-*`, `path-*`, `rule-*`) held |
-| 8 | 5 quality gates (principle ③) | Reduced | All 5 present | + Each skill `@import`s `@.claude/quality-gates.md` |
+| 8 | 5 quality gates (principle ③) | Reduced | All 5 present | + Each skill points to gate criteria (`.claude/quality-gates.md`) with a reading condition (no line-start `@` attachment) |
 
 **Group B — Anthropic official best practices + GitHub TOP5 essence**
 
@@ -161,11 +153,11 @@ condition holds, with evidence attached.
 | - | ---- | ----- | ---- | ----- |
 | 9 | Pipeline links & discoverability (superpowers style) | No upstream/downstream note / dead skills | Partial | "prev → this → next" table on all skills + no skill orphaned from every entry path |
 | 10 | Official best-practice compliance | Outdated form | Partial | Conforms to the latest form fetched in Round 0 |
-| 11 | Skill description quality (third person / explicit triggers) | First/second person or vague | Third person | + ≤1024 chars / concrete triggers / no duplicate triggers |
-| 12 | Progressive disclosure | SKILL.md bloated (>500 lines) / verbose background | ≤500 lines | + Mutually-exclusive detail split into 3rd tier (reference files) |
-| 13 | Agent least privilege & single responsibility | Read-only agent has Write/Edit / multi-responsibility | tools allowlist present | + Read-only agents lack Write / 1 agent = 1 task / "returns summary only" contract stated |
+| 11 | Skill description quality (third person / what + when) | First/second person or vague | Third person | + ≤1024 chars (aim for 300) / key use case first / no constraints or argument help / no duplicate triggers |
+| 12 | Progressive disclosure | SKILL.md bloated (>500 lines) / verbose background | ≤500 lines | + No line-start `@` attachments / detail in `references/` one level deep / ToC on references over 100 lines |
+| 13 | Agent least privilege & single responsibility | Read-only agent has Write/Edit / multi-responsibility | tools allowlist present | + Read-only agents lack Write / write-capable agents enforce scope with frontmatter hooks / "returns summary only" contract stated |
 | 14 | Model tier placement (§13 / BMAD style) | No tier note | Tier noted | + Sound placement: planning = high tier / mechanical work = low tier |
-| 15 | Eval-first / acceptance checklist (spec-kit style) | No verification angle | Output contract present | + Representative scenarios + PASS conditions stated in SKILL.md |
+| 15 | Eval-first / acceptance checklist | No verification angle | Output contract present | + Every skill has `evals/evals.json` (typical + boundary cases, verifiable assertions) |
 
 **Targets** (expressed as % so future item additions don't break them): round 1 ≥ **80% (≥24/30)**, round 2 ≥ **95% (≥28/30)**.
 
@@ -177,7 +169,7 @@ Judge items 10 / 11 / 12 against the latest official guidance fetched in Round 0
 Address every item scoring 0 / 1, in this priority order (recurring findings promoted in Round 0 come first):
 
 1. **Constitution violations**: halt → human confirmation (never auto-fix; report bullet-by-bullet)
-2. **CLAUDE.md overflow**: extract a topic into `@.claude/rules/<topic>.md` → path-scope it to truly cut context
+2. **CLAUDE.md overflow**: extract a topic into `.claude/rules/<topic>.md` → path-scope it to truly cut context
 3. **Missing frontmatter / naming drift / description quality**: unify to third person, explicit triggers, least-privilege allowlist
 4. **3-layer separation violations**: re-orient calls to one direction (skill → agent OK, agent → team forbidden)
 5. **Mirror divergence**: copy to the missing side, translate prose to match `README-en.md` tone
@@ -322,6 +314,8 @@ Write to `output/reports/harness-refine/REFINE_<YYYY-MM-DD>_<HHMM>.md`:
 | code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md line count / startup load cost / cache invalidation / compact instructions | 2, 12 |
 | claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | when to use CLAUDE.md / rules / skills / hooks / subagents / output styles | 4, 10 |
 | code.claude.com/docs `whats-new` (last 8 weeks) | detecting new features and default changes (input to rubric self-evolution) | all |
+| agentskills.io `specification` / `skill-creation/evaluating-skills` | description limit / `evals/evals.json` format / writing assertions | 11, 15 |
+| claude.com/blog `a-harness-for-every-task-dynamic-workflows-in-claude-code` | workflow patterns (fan-out / adversarial verify / loop-until-done) | 4, 9 |
 | anthropic.com/engineering `writing-tools-for-agents` | tool-definition clarity / token efficiency | 10, 11 |
 | anthropic.com/engineering `effective-context-engineering-for-ai-agents` | context curation / sub-agent isolation | 12, 13 |
 | anthropic.com/engineering `effective-harnesses-for-long-running-agents` | startup orientation / verification loop | 9, 15 |
@@ -329,9 +323,11 @@ Write to `output/reports/harness-refine/REFINE_<YYYY-MM-DD>_<HHMM>.md`:
 
 > Flag any source that fails to fetch as degraded; score the corresponding rubric items provisionally against the prior criteria.
 
-## See also (loaded on demand)
+## Related references
 
-@.claude/guardrails.md
-@.claude/quality-gates.md
-@.claude/rules/workflow-advanced.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/guardrails.md` — when checking how hooks and deny rules behave
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/rules/workflow-advanced.md` — when checking pre-completion verification or long-running handoff steps
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

@@ -149,7 +149,9 @@ TEAM_PJM の並行モード（`--parallel`）から起動された場合、以�
 - 他の TEAM_FEATURE インスタンスとは直接連携しない（PJM が統合管理を担当する）
 - 完了時に PJM に完了を報告する（PJM が TaskUpdate で進捗を管理する）
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/teams/README.md
-@.claude/agents/README.md
+起動したら最初に次の 2 ファイルを Read する:
+
+- `.claude/teams/README.md` — チーム選定・起動パターン・subagent dispatch ガイド
+- `.claude/agents/README.md` — subagent の使い分けと権限

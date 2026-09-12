@@ -1,5 +1,13 @@
 # Scan Category Detail
 
+## Contents
+
+- 1. Dependency Package Vulnerability Scan (SCA)
+- 2. Static Application Security Testing (SAST)
+- 3. Dynamic Application Security Testing (DAST)
+- 4. Secret Detection
+- 5. Security Header & Configuration Analysis
+
 Execution commands, checklists, and judgment criteria for the 5 categories `security-scan` performs.
 
 ## 1. Dependency Package Vulnerability Scan (SCA)

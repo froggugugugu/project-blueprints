@@ -1,10 +1,8 @@
 ---
 name: ui-ux-design
 description: >
-  This skill should be used when the user asks to "review UI design", "improve styling", "add dark mode",
-  "fix accessibility", "make responsive", or mentions "デザインレビュー", "UI改善", "デザイン整合性".
-  Covers visual consistency, design system compliance, accessibility, responsive design, dark mode, and system-wide design consistency audit.
-  Takes optional argument: /ui-ux-design <target-file or instruction>
+  デザインシステムに沿って UI/UX をレビュー・実装・監査する(一貫性・アクセシビリティ・レスポンシブ・ダークモード)。
+  「デザインレビュー」「UI 改善」「ダークモード対応」「アクセシビリティ」の依頼で使う。
 argument-hint: "<対象ファイル or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
@@ -351,7 +349,9 @@ style={{ padding: '13px', gap: '7px' }}
 - 仕様書にないUI要素の追加
 - `--no-verify` によるフック迂回
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

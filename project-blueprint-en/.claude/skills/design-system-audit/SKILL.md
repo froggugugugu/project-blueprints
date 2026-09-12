@@ -1,10 +1,8 @@
 ---
 name: design-system-audit
 description: >
-  This skill should be used when the user asks to "audit design tokens", "unify spacing", "standardize typography",
-  or mentions "design tokens", "spacing inconsistency", "design is inconsistent", "ratio", "design consistency audit".
-  Validates design tokens (spacing, typography, color) against ratio principles (golden/silver ratio).
-  Tech-stack agnostic (Web/Qt/QML/mobile). Takes optional argument: /design-system-audit <target-directory or instruction>
+  Audits design tokens (spacing, typography, color, sizing) against ratio principles, records inconsistencies, and standardizes them.
+  Use when asked to audit design tokens, unify spacing, or fix an inconsistent design. Works for Web, Qt, and mobile.
 argument-hint: "<target-directory or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
 ---
@@ -273,7 +271,9 @@ Store in the project's `design-system.md` or `DESIGN_TOKENS.md` with the followi
 Detailed audit checklist → `references/audit-checklist.md`
 Ratio calculation reference → `references/ratio-reference.md`
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

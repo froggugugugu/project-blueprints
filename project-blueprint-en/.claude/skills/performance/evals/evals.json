@@ -1,0 +1,26 @@
+{
+  "skill_name": "performance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The dashboard's initial render is slow. Find the cause and improve it",
+      "expected_output": "It measures before changing anything to find the bottleneck, re-measures under the same conditions after optimizing, and shows Before / After numbers and test results.",
+      "assertions": [
+        "A baseline measurement is recorded before optimizing",
+        "The bottleneck is identified from measurements",
+        "A Before / After numeric comparison is shown",
+        "Tests pass at least as well as the baseline",
+        "No optimization is proposed without a measurement"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "just wrap every component in React.memo to make it faster",
+      "expected_output": "It does not apply blanket memoization without measurement; it measures first and optimizes only where it helps.",
+      "assertions": [
+        "React.memo is not applied to every component wholesale",
+        "It lays out measuring first to decide the targets"
+      ]
+    }
+  ]
+}

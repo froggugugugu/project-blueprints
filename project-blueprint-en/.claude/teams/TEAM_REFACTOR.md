@@ -120,7 +120,9 @@ PL: Step completion decision → Next step or done
 
 All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/teams/README.md
-@.claude/agents/README.md
+Read these two files first when the team starts:
+
+- `.claude/teams/README.md` — team selection, launch patterns, subagent dispatch guide
+- `.claude/agents/README.md` — when to use which subagent, and their permissions

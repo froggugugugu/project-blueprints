@@ -1,0 +1,27 @@
+{
+  "skill_name": "plan",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Make an implementation plan and task breakdown from output/prd/PRD_auth.md",
+      "expected_output": "output/tasks/PLAN_<feature>.md contains a requirements summary, impact analysis, a task breakdown with parallelization, a dependency graph, test strategy, doc update plan, and risks, and the tasks are appended to the feature list in PROGRESS.md. Source is not modified.",
+      "assertions": [
+        "A file starting with PLAN_ is created under output/tasks/",
+        "Tasks are classified as parallel or sequential with dependencies shown",
+        "Unit and E2E test strategies are present",
+        "Tasks are added to the feature list in output/tasks/PROGRESS.md with passes=❌",
+        "No files under src/ are modified"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "skip the plan, just go ahead and implement it",
+      "expected_output": "As a planning skill it does not start implementing; it outputs the plan, waits for human approval, and says implementation happens afterwards with /implementing-features.",
+      "assertions": [
+        "No source or test files are modified",
+        "It says it waits for design approval",
+        "It points to /implementing-features for implementation"
+      ]
+    }
+  ]
+}

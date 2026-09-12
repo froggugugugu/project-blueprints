@@ -46,6 +46,7 @@ paths:
 | `git-conventions.md` | always-on | every session (a commit can happen at any time) |
 | `document-management.md` | path-specific | `docs/**` `output/**` `input/**` `project-config.md` |
 | `workflow-advanced.md` | path-specific | `src/**` `app/**` `lib/**` `packages/**` `tests/**` |
+| `harness-authoring.md` | path-specific | `.claude/**` `CLAUDE.md` (when editing the harness itself) |
 | `language-typescript.md.example` | path-specific (sample) | `**/*.{ts,tsx}` |
 | `language-python.md.example` | path-specific (sample) | `**/*.py` |
 | `path-backend.md.example` | path-specific (sample) | `backend/**/*` |
@@ -106,4 +107,4 @@ Keep the root `CLAUDE.md` to cross-cutting rules only; never pull package-specif
 - Keep each rule file to roughly 50–100 lines, for the same reason CLAUDE.md is capped
 - Samples are **inactive** by default (nothing with a `.example` suffix is read)
 - Too many rules inflate token cost again: keep always-on rules minimal and scope the rest with `paths:`
-- See `@.claude/pitfalls.md` #1 and #4 for details
+- See `.claude/pitfalls.md` #1 and #4 for details

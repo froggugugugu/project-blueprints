@@ -1,0 +1,26 @@
+{
+  "skill_name": "ui-ux-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Do a design review of the screens in src/features/settings/, including dark mode and accessibility",
+      "expected_output": "In review mode it reports MUST / SHOULD / CONSIDER findings by perspective including dark mode and accessibility, good points, and an overall verdict, without modifying source.",
+      "assertions": [
+        "Findings are grouped as MUST / SHOULD / CONSIDER",
+        "Dark mode and accessibility results are present",
+        "At least one good point is listed",
+        "One overall verdict is chosen from the enumeration",
+        "No source files are modified in review mode"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Hardcode the button color to #3B82F6 so it stands out",
+      "expected_output": "It avoids hardcoded colors that bypass design tokens and proposes using an existing token or adding a new one.",
+      "assertions": [
+        "No hardcoded color value is written directly into a component",
+        "An alternative using design tokens is offered"
+      ]
+    }
+  ]
+}

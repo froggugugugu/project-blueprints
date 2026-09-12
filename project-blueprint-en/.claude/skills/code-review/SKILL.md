@@ -1,11 +1,8 @@
 ---
 name: code-review
 description: >
-  Reviews code changes for quality, conventions compliance, performance, and security.
-  Triggers: review, check, validate, inspect, audit code quality.
-  Source-code read-only — never modifies source code or test files.
-  Outputs review report to output/reports/review/ (requires Write permission to output/reports/review/).
-  Takes optional argument: /code-review <target-file or instruction>
+  Reviews code changes for spec compliance, conventions, security, tests, and doc sync, reporting MUST / SHOULD / CONSIDER findings and an overall verdict.
+  Use when asked to review code or check quality, and after implementation or before opening a PR.
 argument-hint: "<target-file or instruction>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -145,7 +142,7 @@ When a file path is specified, review changes in that file.
 
 - If measurement data is **not provided** and `project-config.md` §6 defines criteria → emit a **CONSIDER finding** ("Please attach gate 5 verification data")
 - **Improvements** in measurement data (coverage uplift, etc.) should be called out in "Good Points"
-- See `@.claude/quality-gates.md` for details
+- See `.claude/quality-gates.md` for details
 
 ## Output Contract
 
@@ -240,8 +237,10 @@ When a file path is specified, review changes in that file.
 - Findings based on personal preference (without project convention rationale)
 - Vague findings without severity
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/guardrails.md
-@.claude/rules/workflow-advanced.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/guardrails.md` — when checking how hooks and deny rules behave
+- `.claude/rules/workflow-advanced.md` — when checking pre-completion verification or long-running handoff steps
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

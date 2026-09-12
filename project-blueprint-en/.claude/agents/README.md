@@ -51,9 +51,9 @@ Each agent's `tools` field contains the **minimum set required for its role**.
 - Exploratory agents (`explorer`, `planner`) have no write access at all
 - Audit agents are read-focused. Only `performance-analyst` has Bash (for measurement commands); `security-reviewer` is fully read-only
 - Write-capable agents (`doc-synchronizer`, `doc-writer`, `test-writer`) are scoped to specific paths by role
-- `doc-synchronizer` and `doc-writer` set `permissionMode: acceptEdits` to skip permission prompts.
-  That is acceptable because their remit is confined to `docs/` and `output/`. Do not set it on an
-  agent that touches the source tree
+- `doc-synchronizer` and `doc-writer` set `permissionMode: acceptEdits` to skip permission prompts. In exchange, their
+  frontmatter registers `scope-guard.sh docs` / `scope-guard.sh output` under `hooks.PreToolUse`, which stops out-of-scope writes with exit 2.
+  `test-writer` uses `scope-guard.sh tests` to block writes outside test files. Never grant write access on prose constraints alone
 
 Even if the parent session has broad permissions, agents won't cause unintended file changes.
 
@@ -73,6 +73,7 @@ On top of that, the `SubagentStart` hook (`subagent-audit.sh`) injects the harne
 | `memory` | `user` / `project` / `local` — cross-session learning |
 | `skills` | Skills to preload in full at startup |
 | `isolation` | `worktree` runs the agent in a temporary git worktree (branched from the default branch) |
+| `hooks` | Hooks active only while this agent runs. Used here to enforce write scope (`scope-guard.sh`). Project agents need workspace trust first |
 | `color` | Only `red` / `blue` / `green` / `yellow` / `purple` / `orange` / `pink` / `cyan` |
 
 > `isolation: worktree` **branches from the default branch**, so never set it on a read-only agent
@@ -137,4 +138,4 @@ If unspecified, the session default is inherited.
 - A `color` outside the official eight (e.g. `magenta`) breaks the display
 - A `model` ID that does not exist makes the agent fail to launch — use an alias
 
-See `@.claude/pitfalls.md` for more.
+See `.claude/pitfalls.md` for more.

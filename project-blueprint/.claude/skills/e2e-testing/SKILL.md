@@ -1,10 +1,8 @@
 ---
 name: e2e-testing
 description: >
-  This skill should be used when the user asks to "create E2E tests", "write scenario tests", "test user flow",
-  or mentions "E2Eテスト", "シナリオテスト", "Playwright".
-  Creates and maintains Playwright E2E tests. Covers Page Object design, test data management, stability patterns, and reporting.
-  Takes optional argument: /e2e-testing <target-feature or instruction>
+  Playwright で E2E テスト(Page Object・テストデータ・安定化)を作成・保守し、結果を testreport/e2e/ と output/reports/test/ に残す。
+  「E2E テスト」「シナリオテスト」「ユーザーフローのテスト」の依頼や、機能実装後の検証で使う。
 argument-hint: "<対象機能 or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_click, mcp__plugin_playwright_playwright__browser_take_screenshot
 ---
@@ -191,7 +189,9 @@ test.describe('[機能名]', () => {
 - [ ] 機能横断シナリオがある
 - [ ] E2Eテストが安定してパスする
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

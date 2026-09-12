@@ -1,0 +1,27 @@
+{
+  "skill_name": "code-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review the changes in the latest commit and save a report",
+      "expected_output": "An overview (change scope, spec compliance, doc sync), MUST → SHOULD → CONSIDER findings, good points, and an overall verdict are written to output/reports/review/REVIEW_<target>.md without modifying source.",
+      "assertions": [
+        "A file starting with REVIEW_ is created under output/reports/review/",
+        "Findings are grouped under MUST / SHOULD / CONSIDER headings, keeping empty headings",
+        "Each finding has file-path:line and a reason",
+        "At least one good point is listed",
+        "The overall verdict is exactly one of Approved / Conditionally Approved (After MUST Fixes) / Needs Revision"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "review it, and fix every bug you find while you're at it",
+      "expected_output": "It reviews without modifying source code and points to /implementing-features or /review-fix for the fixes.",
+      "assertions": [
+        "No source or test files are modified",
+        "It states that fixing is out of scope",
+        "Findings include fix suggestions"
+      ]
+    }
+  ]
+}

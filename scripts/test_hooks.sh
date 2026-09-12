@@ -129,6 +129,20 @@ for MIRROR in project-blueprint project-blueprint-en; do
     run_hook "$H/post-failure-log.sh" "" '{"session_id":"fail0001","tool_name":"Bash","tool_input":{"command":"npm test"},"error":"exit 1","duration_ms":12}' >/dev/null
     expect_rc "post-failure-log: 常に exit 0" 0 "$RC"
 
+    # ── scope-guard.sh(agent frontmatter の PreToolUse)───────────
+    for spec in "docs|docs/project.md|0" "docs|project-config.md|0" "docs|src/app.ts|2" "docs|docs/../src/app.ts|2" \
+                "output|output/reports/x.md|0" "output|docs/x.md|2" \
+                "tests|src/a.test.ts|0" "tests|e2e/login.spec.ts|0" "tests|tests/fixtures/u.json|0" "tests|src/a.ts|2" \
+                "unknown|docs/x.md|2"; do
+        IFS='|' read -r sc rel want <<<"$spec"
+        run_hook "$H/scope-guard.sh" "$sc" "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/$rel\"}}" >/dev/null
+        expect_rc "scope-guard $sc: $rel" "$want" "$RC"
+    done
+    run_hook "$H/scope-guard.sh" docs '{"tool_name":"Edit","tool_input":{"file_path":"/etc/hosts"}}' >/dev/null
+    expect_rc "scope-guard docs: プロジェクト外の絶対パスはブロック" 2 "$RC"
+    run_hook "$H/scope-guard.sh" docs '{"tool_name":"Bash","tool_input":{"command":"ls"}}' >/dev/null
+    expect_rc "scope-guard: file_path の無い入力は通過" 0 "$RC"
+
     unset CLAUDE_PROJECT_DIR
     rm -rf "$T"
 done

@@ -168,6 +168,57 @@ def m_bad_disable_model_invocation(root: Path) -> None:
     p.write_text(p.read_text().replace("disable-model-invocation: true", "disable-model-invocation: yes", 1))
 
 
+def m_skill_at_attachment(root: Path) -> None:
+    p = root / ".claude/skills/code-review/SKILL.md"
+    p.write_text(p.read_text() + "\n@.claude/pitfalls.md\n")
+
+
+def m_desc_first_person(root: Path) -> None:
+    p = root / ".claude/skills/adr/SKILL.md"
+    p.write_text(p.read_text().replace("description: >\n  ", "description: >\n  私が", 1))
+
+
+def m_desc_over_spec(root: Path) -> None:
+    p = root / ".claude/skills/prd/SKILL.md"
+    p.write_text(p.read_text().replace("description: >\n", "description: >\n  " + "要求" * 520 + "\n", 1))
+
+
+def m_evals_skill_name(root: Path) -> None:
+    p = root / ".claude/skills/plan/evals/evals.json"
+    data = json.loads(p.read_text())
+    data["skill_name"] = "plans"
+    p.write_text(json.dumps(data, ensure_ascii=False))
+
+
+def m_evals_missing(root: Path) -> None:
+    (root / ".claude/skills/brainstorm/evals/evals.json").unlink()
+
+
+def m_reference_no_toc(root: Path) -> None:
+    p = root / ".claude/skills/security-scan/references/scan-categories.md"
+    p.write_text(re.sub(r"(?ms)^## 目次\n.*?(?=^## )", "", p.read_text(), count=1))
+
+
+def m_workflow_date_now(root: Path) -> None:
+    p = root / ".claude/workflows/review-sweep.js"
+    p.write_text(p.read_text() + "\nconst stamp = Date.now()\n")
+
+
+def m_workflow_meta_variable(root: Path) -> None:
+    p = root / ".claude/workflows/review-sweep.js"
+    p.write_text(p.read_text().replace("name: 'review-sweep',", "name: NAME,", 1))
+
+
+def m_writable_agent_no_guard(root: Path) -> None:
+    p = root / ".claude/agents/doc-writer.md"
+    p.write_text(re.sub(r"(?ms)^hooks:\n.*?(?=^color: )", "", p.read_text(), count=1))
+
+
+def m_scope_guard_unknown(root: Path) -> None:
+    p = root / ".claude/agents/doc-synchronizer.md"
+    p.write_text(p.read_text().replace("scope-guard.sh docs", "scope-guard.sh doc", 1))
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -191,6 +242,16 @@ CASES = [
     ("project settings の defaultMode: auto", m_project_default_mode_auto, "project settings では無視"),
     ("output style が coding instructions を落とす", m_output_style_drops_coding, "keep-coding-instructions"),
     ("disable-model-invocation の非 boolean 値", m_bad_disable_model_invocation, "true / false のみ"),
+    ("skill の行頭 @ 添付", m_skill_at_attachment, "起動時にファイル全文が添付"),
+    ("description が一人称", m_desc_first_person, "三人称"),
+    ("description が標準上限超過", m_desc_over_spec, "Agent Skills 標準の上限"),
+    ("evals.json の skill_name 不一致", m_evals_skill_name, "がディレクトリ名 `plan` と一致しません"),
+    ("evals.json が無い", m_evals_missing, "`evals/evals.json` がありません"),
+    ("100 行超の参照に目次が無い", m_reference_no_toc, "目次がありません"),
+    ("workflow で Date.now()", m_workflow_date_now, "Date.now()"),
+    ("workflow meta に変数", m_workflow_meta_variable, "変数参照"),
+    ("書込 agent に scope-guard が無い", m_writable_agent_no_guard, "scope-guard.sh)がありません"),
+    ("scope-guard の未知スコープ", m_scope_guard_unknown, "未知のスコープ"),
 ]
 
 

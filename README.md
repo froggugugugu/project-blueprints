@@ -54,11 +54,13 @@ cd ./my-app && claude
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-15 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
+16 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
              PermissionDenied / UserPromptSubmit / SessionStart / SessionEnd / SubagentStart /
              SubagentStop / TaskCompleted / PreCompact / PostCompact / Stop(検証ゲート) / Notification
+             + agent frontmatter の scope-guard(書込範囲の強制)
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
- 4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 5 rules     document-management, git-conventions, workflow-advanced, harness-authoring (+ README)
+ 1 workflow  review-sweep — 4 観点並列レビュー + MUST 指摘の反証検証(saved dynamic workflow)
  1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
  3 CI        claude-review.yml（@claude 対話レビュー）/
              claude-skills-ci.yml（毎 PR に /code-review + /security-scan）/

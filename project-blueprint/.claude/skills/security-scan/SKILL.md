@@ -1,11 +1,8 @@
 ---
 name: security-scan
 description: >
-  This skill should be used when the user asks to "run security scan", "check vulnerabilities", "audit dependencies",
-  or mentions "セキュリティスキャン", "脆弱性", "OWASP", "npm audit", "シークレット検出", "CVE".
-  Source-code read-only — never modifies source code or test files.
-  Outputs scan report to output/reports/security/ and raw data to testreport/security/ (requires Write permission to both).
-  Takes optional argument: /security-scan <target-scope or instruction>
+  依存 CVE・OWASP Top 10・シークレット混入・セキュリティヘッダーを監査し、output/reports/security/ に重大度別で報告する。
+  「セキュリティスキャン」「脆弱性チェック」「npm audit」「シークレット検出」の依頼や、リリース前に使う。
 argument-hint: "<対象範囲 or 指示>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(testreport/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -242,9 +239,11 @@ pip install semgrep
 - 検出された機密情報のレポートへの転記（マスクする）
 - 「問題なし」の断定（「スキャン範囲内で検出なし」と表現する）
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/guardrails.md
-@.claude/permissions-guide.md
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/guardrails.md` — フック・deny ルールの挙動を確認するとき
+- `.claude/permissions-guide.md` — 権限モードと allow / ask / deny の設計を確認するとき
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

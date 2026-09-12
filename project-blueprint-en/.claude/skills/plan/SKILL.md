@@ -1,12 +1,8 @@
 ---
 name: plan
 description: >
-  Generates design documents and task breakdowns for feature implementation.
-  Triggers: plan, design, decompose, analyze impact, task breakdown.
-  Source-code read-only — never modifies source code or test files.
-  Outputs structured plan to output/tasks/ (requires Write permission to output/tasks/).
-  Updates project-config.md §11 when new patterns or pitfalls are identified.
-  Takes optional argument: /plan <description or file-path>
+  Breaks feature requirements into implementation tasks with impact, dependencies, parallelization, and test strategy, writing them to output/tasks/.
+  Use when asked to plan an implementation, decompose tasks, or analyze impact, after design approval and before coding.
 argument-hint: "<description or file-path>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(project-config.md), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 context: fork
@@ -197,6 +193,8 @@ When the following are discovered during design investigation, update `project-c
 - Starting implementation tasks without design approval
 - Including project-specific data (IDs, passwords, etc.) in documentation
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table

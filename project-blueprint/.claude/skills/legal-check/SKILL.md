@@ -1,11 +1,8 @@
 ---
 name: legal-check
 description: >
-  This skill should be used when the user asks to "check licenses", "audit compliance", "review privacy policy",
-  or mentions "ライセンス", "法務チェック", "GDPR", "OSSライセンス", "知的財産", "コンプライアンス".
-  Source-code read-only — never modifies source code or test files.
-  Outputs legal check report to output/reports/legal/ (requires Write permission to output/reports/legal/).
-  Takes optional argument: /legal-check <target-scope or instruction>
+  OSS ライセンス・プライバシー(GDPR 等)・知的財産・利用規約の観点でコードと依存を監査し、output/reports/legal/ に報告する。
+  「ライセンス確認」「法務チェック」「GDPR」「コンプライアンス」の依頼や、依存追加・リリース前に使う。
 argument-hint: "<対象範囲 or 指示>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -230,7 +227,9 @@ npx license-checker --csv --out licenses.csv
 - 根拠なき「問題なし」の断定
 - リスクの過小評価（不明な場合は専門家への相談を推奨する）
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

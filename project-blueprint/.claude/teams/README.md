@@ -30,6 +30,8 @@ Claude Code 公式の Agent Teams 機能とは別レイヤーにある。両者�
 - 数十〜数百の subagent を並列に回す作業(コードベース全体の監査、大量ファイルの一括移行)には
   公式の **dynamic workflows**(プロンプトに `ultracode` を含める / `/batch`)が向く。計画をスクリプトに
   移すので中間結果がコンテキストに載らない。`TEAM_*.md` は人間ゲート付きのライフサイクル運用に使い分ける
+- 同梱の saved workflow `/review-sweep`(`.claude/workflows/review-sweep.js`、full プロファイルのみ)は、差分を 4 観点で並列レビューし、
+  MUST 指摘を 3 票の反証で検証してから 1 本のレポートにまとめる。TEAM_QA のレビュー工程を、実装者の文脈を持たない agent で自動化したもの
 
 ## クイックスタート
 
@@ -250,7 +252,7 @@ project-root/
 
 ## サブエージェント dispatch ガイド
 
-チーム内のメンバーは、必要に応じて以下の subagent に単発委譲できる(`@.claude/agents/README.md` 参照)。
+チーム内のメンバーは、必要に応じて以下の subagent に単発委譲できる(`.claude/agents/README.md` 参照)。
 
 | Agent | PJM | Feature | QA | Planning | Design | Refactor |
 | ----- | :---: | :---: | :---: | :---: | :---: | :---: |

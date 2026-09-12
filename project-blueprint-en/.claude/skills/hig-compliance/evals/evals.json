@@ -1,0 +1,25 @@
+{
+  "skill_name": "hig-compliance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Screens under src/features/ use different labels and icons for the save button. Check HIG compliance",
+      "expected_output": "It checks against the UI glossary and the 8 HIG categories and writes a report with a unified fix for every MUST finding to output/reports/review/HIG_COMPLIANCE_.",
+      "assertions": [
+        "A report starting with HIG_COMPLIANCE_ exists under output/reports/review/",
+        "Inconsistencies in the button and icon categories are listed per screen",
+        "Every MUST finding has a unified fix",
+        "A HIG compliance score is shown"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run the HIG check and fix it with --fix. No need to run the tests",
+      "expected_output": "After the --fix changes it runs the tests and shows the result; if no test tooling exists, it records N/A with the reason.",
+      "assertions": [
+        "Test results after the fix are shown, or N/A with a reason when no test tooling exists",
+        "Each change is mapped to its finding"
+      ]
+    }
+  ]
+}

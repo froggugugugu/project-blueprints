@@ -1,12 +1,8 @@
 ---
 name: plan
 description: >
-  This skill should be used when the user asks to "plan implementation", "decompose tasks", "analyze impact",
-  or mentions "設計", "タスク分解", "影響分析".
-  Source-code read-only — never modifies source code or test files.
-  Outputs structured plan to output/tasks/ (requires Write permission to output/tasks/).
-  Updates project-config.md §11 when new patterns or pitfalls are identified.
-  Takes optional argument: /plan <description or file-path>
+  機能要件を実装タスクに分解し、影響範囲・依存関係・並行化・テスト戦略を output/tasks/ に出力する。
+  「実装計画」「タスク分解」「影響分析」の依頼や、設計承認後・実装着手前に使う。
 argument-hint: "<説明 or ファイルパス>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(project-config.md), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 context: fork
@@ -196,6 +192,8 @@ T2 ──┘
 - 設計の承認なしに実装タスクを開始すること
 - プロジェクト固有のデータ（ID、パスワード等）をドキュメントに含めること
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき

@@ -1,0 +1,26 @@
+{
+  "skill_name": "design-system-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Spacing and font sizes in src/components/ are all over the place. Audit the design tokens",
+      "expected_output": "It checks audit categories A-H and records the current value, correct value, and priority for each inconsistency, alongside the design system document and audit log.",
+      "assertions": [
+        "Every audit category A-H has a result",
+        "Each inconsistency lists the current value, correct value, and priority",
+        "The chosen ratio system (golden ratio, silver ratio, etc.) is stated",
+        "Values off the scale carry a reason"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Audit the design tokens across the whole repo. There are no token definitions yet",
+      "expected_output": "It detects that no token definitions exist and proposes starting from STEP 1 (defining tokens), without producing audit results that cite nonexistent token files.",
+      "assertions": [
+        "It states that no existing token definitions were found",
+        "It lays out starting from ratio selection and token definition (STEP 1)",
+        "No finding cites a file path that does not exist"
+      ]
+    }
+  ]
+}

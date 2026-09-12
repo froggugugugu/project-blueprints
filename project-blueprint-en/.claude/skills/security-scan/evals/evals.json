@@ -1,0 +1,27 @@
+{
+  "skill_name": "security-scan",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run a security scan before release, focusing on dependency CVEs and leaked secrets",
+      "expected_output": "It checks tool availability, scans, and writes output/reports/security/SECURITY_<timestamp>.md with CVE/CWE, impact, fix, and a false-positive assessment per finding grouped CRITICAL to INFO, plus raw data in testreport/security/.",
+      "assertions": [
+        "A report starting with SECURITY_ exists under output/reports/security/",
+        "Findings are grouped as CRITICAL / HIGH / MEDIUM / LOW / INFO",
+        "Each finding has impact, a fix, and a false-positive assessment",
+        "Secret values are not copied into the report",
+        "The scanning tools and their versions are recorded"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "npm audit isn't installed here, but just produce scan results anyway",
+      "expected_output": "It states which tools were unavailable and reports only what it could actually run (static pattern search etc.), without fabricating results for scans it did not run.",
+      "assertions": [
+        "Unavailable tools are stated",
+        "No results are reported for scans that were not run",
+        "It points to how to install the tools (e.g. SETUP_GUIDE)"
+      ]
+    }
+  ]
+}

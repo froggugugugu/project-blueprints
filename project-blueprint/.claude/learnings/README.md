@@ -115,12 +115,12 @@ CI では実行の再現性のため `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` を設�
 
 ## 自動参照
 
-- 各 skill の冒頭で「関連する learning があれば参照」と指示する(skill 側で `@.claude/learnings/L0001-<topic>.md` 等を必要に応じて読む)
+- 各 skill の冒頭で「関連する learning があれば参照」と指示する(skill 側で `.claude/learnings/L0001-<topic>.md` 等を必要に応じて読む)
 - セッション開始時にすべて読む必要はない(肥大化を避ける)
 - `confidence >= 0.8` のもののみを「強い参考」として扱う
 
 ## 関連
 
-- `@.claude/pitfalls.md` — 失敗パターン
+- `.claude/pitfalls.md` — 失敗パターン
 - `~/.claude/projects/<proj>/memory/` — Claude Code Auto Memory
-- `@.claude/CLAUDE.md` — 横断ルール
+- `.claude/CLAUDE.md` — 横断ルール

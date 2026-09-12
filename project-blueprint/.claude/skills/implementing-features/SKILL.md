@@ -1,10 +1,8 @@
 ---
 name: implementing-features
 description: >
-  This skill should be used when the user asks to "implement a feature", "fix a bug", "create a component",
-  or mentions "実装", "機能追加", "バグ修正", "コンポーネント作成".
-  Follows TDD workflow. Covers components, stores, schemas, utilities, styling, docs/ and project-config.md synchronization.
-  Takes optional argument: /implementing-features <task-file or instruction>
+  TDD で機能実装・バグ修正を行い、検証結果を証拠として示し、docs/・project-config.md・進捗ノートを同期する。
+  「実装して」「機能追加」「バグ修正」「コンポーネント作成」の依頼や、タスク分解済みの作業に着手するときに使う。
 argument-hint: "<タスクファイル or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
@@ -217,10 +215,11 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 - `output/tasks/PROGRESS.md` の機能行の削除・受け入れ条件の書き換え（`passes` とセッションログの更新のみ可）
 - 検証コマンドを実行せずに機能を `passes` = ✅ にすること
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/rules/document-management.md
-@.claude/rules/git-conventions.md
-@.claude/rules/workflow-advanced.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/rules/document-management.md` — docs/ と project-config.md の更新責務を確認するとき
+- `.claude/rules/workflow-advanced.md` — 完了前検証や長期タスク引き継ぎの手順を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

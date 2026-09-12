@@ -51,8 +51,9 @@ Agent({
 - 探索系（`explorer`, `planner`）は書き込みを一切持たない
 - 監査系は読取中心。Bash を持つのは計測コマンド実行が必要な `performance-analyst` のみ（`security-reviewer` は完全読み取り専用）
 - 書き込み系（`doc-synchronizer`, `doc-writer`, `test-writer`）は対象パスを役割でスコープする
-- `doc-synchronizer` / `doc-writer` は `permissionMode: acceptEdits` で権限確認を省く。担当範囲が
-  `docs/` / `output/` に閉じているため許容できる。ソースツリーを触る agent には付けない
+- `doc-synchronizer` / `doc-writer` は `permissionMode: acceptEdits` で権限確認を省く。代わりに frontmatter の
+  `hooks.PreToolUse` に `scope-guard.sh docs` / `scope-guard.sh output` を登録し、範囲外への書込を exit 2 で止める。
+  `test-writer` も `scope-guard.sh tests` でテストファイル以外への書込を止める。散文の制約だけで書込権限を渡さない
 
 これにより、親セッションが広い権限を持っていても、agent 側では意図せぬファイル変更が起きない。
 
@@ -72,6 +73,7 @@ Agent({
 | `memory` | `user` / `project` / `local` — セッションをまたいだ学習 |
 | `skills` | 起動時に全文プリロードする skill 名 |
 | `isolation` | `worktree` で一時 git worktree に隔離（既定ブランチから分岐） |
+| `hooks` | この agent の実行中だけ有効なフック。書込範囲の強制(`scope-guard.sh`)に使う。project agent は workspace trust 後に有効 |
 | `color` | `red` / `blue` / `green` / `yellow` / `purple` / `orange` / `pink` / `cyan` のみ |
 
 > `isolation: worktree` は**既定ブランチから分岐**するため、作業中の差分をレビューさせたい
@@ -138,4 +140,4 @@ Agent({
 - `color` に公式 8 色以外（例: `magenta`）を書くと表示が壊れる
 - `model` に存在しない ID を書くと起動に失敗する。エイリアスを使う
 
-詳細は `@.claude/pitfalls.md` を参照。
+詳細は `.claude/pitfalls.md` を参照。

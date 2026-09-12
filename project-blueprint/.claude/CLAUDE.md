@@ -4,7 +4,7 @@
 全ロール(PM / PdM / 開発 / レビュー / テスト)共通で参照する。
 
 > **本ファイルは "core" として軽量化されている**(Pro 契約 friendly)。
-> 詳細は各 skill / team / agent が必要時に `@import` で個別に取得する。
+> 詳細は各 skill / team / agent が必要時に Read する(skill の行頭 `@` は起動時に全文添付されるため使わない)。
 > プロジェクト固有のパラメータは `project-config.md` に集約。
 > 各行は「消すと Claude が間違えるか?」で判定して残す(公式ガイド)。
 
@@ -38,7 +38,7 @@
 | `/review-fix <PR番号>` | CodeRabbit/Copilot レビュー指摘の自動修正(手動起動のみ) |
 | `/harness-refine <対象 or 指示>` | ハーネス骨格の自己採点 → 強化 → セルフレビュー(手動起動のみ / 日英ミラー同期必須) |
 
-各 skill は起動時に必要な詳細(`pitfalls.md`、`guardrails.md` 等)を個別に `@import` する。同梱の bundled skill も併用する:
+各 skill は詳細(`pitfalls.md` 等)を必要時に Read し、期待動作の基準を `evals/evals.json` に持つ。同梱 skill も併用する:
 `/verify`(実アプリで動作確認)/ `/btw`(文脈を汚さない脇質問)/ `/goal <完了条件>`(条件を満たすまで継続)/ `/batch`(大量ファイル並列変更)。
 
 ## チームテンプレート
@@ -49,7 +49,7 @@
 - 機能開発: `TEAM_FEATURE.md` / 品質保証: `TEAM_QA.md`
 - 設計: `TEAM_PLANNING.md` / デザイン: `TEAM_DESIGN.md` / リファクタ: `TEAM_REFACTOR.md`
 
-team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が自動 load される。
+team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` を Read する。差分の網羅レビューは saved workflow `/review-sweep`。
 `.claude/teams/` は `full` プロファイル(`setup.sh` の既定)でのみ同梱。`minimal` / `standard` では個別 skill のみ使える。
 
 ## 開発原則
@@ -67,12 +67,12 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - **AI 管理**: `docs/*.md`(プロジェクト派生情報) / `output/`(成果物) / `testreport/`(ツール生データ)
 - **AI が更新可能なセクション**: `project-config.md` §2(技術スタック)/ §3(コマンド)/ §11(既知の落とし穴)のみ。§1 / §4-§10 / §12 / §13 は人間決定領域(改変不可)
 - **一次更新責務**: `docs/*.md` と `project-config.md` §2/§3 は `/implementing-features` skill が集約。他 skill は発見事項を報告
-- **詳細**(競合防止表 / docs 更新の細則):`/implementing-features` が起動時に `@.claude/rules/document-management.md` を load
+- **詳細**(競合防止表 / docs 更新の細則): `.claude/rules/document-management.md`(docs/・output/ を触ると自動 load)
 
 ## ルール階層(`.claude/rules/`)
 
 - `paths:` なし = 全セッション常時 load(`git-conventions.md` のみ)
-- `paths:` あり = 該当ファイルを触ったときだけ load(`document-management.md` / `workflow-advanced.md`)
+- `paths:` あり = 該当ファイルを触ったときだけ load(`document-management.md` / `workflow-advanced.md` / `harness-authoring.md`)
 - 言語別・レイヤー別ルールは `.example` をコピーし `paths:` を編集して有効化する
 - タスク固有の手順は rules ではなく skill に置く。「毎回必ず X」は指示ではなくフックにする
 
@@ -87,7 +87,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - TDD(`project-config.md` §6 で有効化時)、ユニット + E2E
 - カバレッジ目標は `project-config.md` §6
 - **5 つの品質ゲート**: PRD / 設計 / タスク分解 / 実装 / 検証(各 phase で人間介入可)
-- 各 phase skill が起動時に `@.claude/quality-gates.md` を load し、ゲート基準を参照する
+- 各 phase skill は `.claude/quality-gates.md` のゲート基準を必要時に参照する
 - **検証手段を先に用意する**: 着手前に pass/fail を返すチェック(テスト / ビルド / lint / スクリーンショット比較)を決め、完了時にその結果を貼る
 - `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted)を検知する(standard=警告 / strict=差し止め)
 
@@ -132,7 +132,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 - auto mode(Pro/Max/Team の既定モード)でも `ask` は必ず確認され、`deny` は分類器より前に効く。分類器は本ファイルも読む
 - フックは `--dangerously-skip-permissions` でも有効
 - SessionStart フックが起動時に `project-config.md` / `docs/` / `settings.local.json` をチェックし、`output/tasks/PROGRESS.md` があれば冒頭を注入する
-- 詳細(deny ルール一覧、保護ファイル、permissions ガイド)は `/security-scan` 等のセキュリティ系 skill 起動時に load
+- 詳細(deny ルール一覧、保護ファイル、権限設計)は `.claude/guardrails.md` と `.claude/permissions-guide.md`
 - `project-config.md` §10 にプロジェクト固有ポリシーを定義
 
 > **不変原則** (`constitution.md` で全文管理 / `scan-harness.sh` が改変を検知):
@@ -142,7 +142,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 ## Git 操作
 
 - `--no-verify` 禁止 / `--force` 原則禁止 / フック失敗時はフックを無効化せず原因修正
-- Conventional Commits 必須(詳細は `/review-fix` / `/implementing-features` skill が `@.claude/rules/git-conventions.md` を load)
+- Conventional Commits 必須(詳細は常時 load される `.claude/rules/git-conventions.md`)
 
 ## フェーズ別出力スタイル
 
@@ -164,7 +164,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 ### 3. サブエージェント戦略
 
-@.claude/agents/README.md  <!-- 既定 subagent 定義集と使い分けガイド -->
+定義集と使い分けは `.claude/agents/README.md`(常時 import しない)。書込可能な 3 agent は `scope-guard.sh` が書込範囲を強制する。
 
 メインコンテキストを圧迫しないよう subagent を積極活用。1 subagent = 1 task。subagent は既定でバックグラウンド実行され要約だけが戻る。
 実装後は fresh context のレビュー subagent(`/code-review`)に「正確性・要件に影響する gap のみ」を報告させる。
@@ -173,7 +173,7 @@ team 起動時に `.claude/teams/README.md` と `.claude/agents/README.md` が�
 
 `/rewind` でファイル・会話をチェックポイントから復元できる(`fileCheckpointingEnabled`)。無関係なタスクの前に `/clear`。
 同じ修正を 2 回繰り返したら `/clear` して指示を書き直す。コンパクト時は PreCompact でバックアップし、
-PostCompact が置いたマーカーを次プロンプトで回収して中核ルールを再注入する(詳細は `@.claude/guardrails.md`)。
+PostCompact が置いたマーカーを次プロンプトで回収して中核ルールを再注入する(詳細は `.claude/guardrails.md`)。
 
 ### 5. 長期タスクの引き継ぎ
 
@@ -182,7 +182,7 @@ PostCompact が置いたマーカーを次プロンプトで回収して中核�
 
 ### 6. 詳細手順(必要時のみ load)
 
-自己改善ループ / 完了前検証 / 自律バグ修正 / タスク管理 / 長期タスクの詳細は `.claude/rules/workflow-advanced.md` を必要 skill が load する。
+自己改善ループ / 完了前検証 / 自律バグ修正 / タスク管理 / 長期タスクの詳細は `.claude/rules/workflow-advanced.md`(ソースを触ると自動 load)。
 
 ## コンパクト時の指示(Compact instructions)
 

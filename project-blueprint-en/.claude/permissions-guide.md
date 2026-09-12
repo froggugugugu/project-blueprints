@@ -124,7 +124,7 @@ network at the OS level. To make it a shared setting, use the `sandbox` key in `
 
 ## Alignment with the 3-layer defense model
 
-This template's guardrails (`@.claude/guardrails.md`) use three layers of defense:
+This template's guardrails (`.claude/guardrails.md`) use three layers of defense:
 
 ```text
 Layer 1: hooks (always active, even under --dangerously-skip-permissions)
@@ -139,7 +139,7 @@ these tiers, so an operation that slipped through auto mode by mistake is still 
 
 ## Related documents
 
-- `@.claude/guardrails.md` — hooks, deny rules, protected files
-- `@.claude/pitfalls.md` — #23 auto mode / #25 ignored project settings / #27 Stop hooks
+- `.claude/guardrails.md` — hooks, deny rules, protected files
+- `.claude/pitfalls.md` — #23 auto mode / #25 ignored project settings / #27 Stop hooks
 - `settings.local.json.template` — starter file (build-tool swap patterns, auto mode / Stop gate notes)
 - `managed-settings.example.json` — example for pinning policy organization-wide (deny / sandbox / OpenTelemetry)

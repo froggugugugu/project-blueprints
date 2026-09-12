@@ -1,10 +1,8 @@
 ---
 name: review-fix
 description: >
-  This skill should be used when the user asks to "fix review comments", "address PR feedback", "fix CodeRabbit issues",
-  or mentions "レビュー修正", "レビュー指摘修正", "PRレビュー対応", "review-fix".
-  Auto-fetches CodeRabbit/Copilot review comments from GitHub PRs, analyzes, and executes fix, test, commit, and push.
-  Takes optional argument: /review-fix <PR-number>
+  GitHub PR の CodeRabbit / Copilot レビュー指摘を取得・分類し、修正・テスト・コミット・push まで行う。
+  「レビュー指摘を直して」「PR レビュー対応」の依頼で使う。手動起動のみ。
 argument-hint: "<PR番号>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Bash(gh *), Agent, WebSearch, WebFetch
 disable-model-invocation: true
@@ -257,8 +255,9 @@ Phase 7 で以下の形式で報告する:
 - 指摘されていないファイルへの変更（波及修正は除く）
 - ユーザーデータの暗黙的な削除・上書き
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/rules/git-conventions.md
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

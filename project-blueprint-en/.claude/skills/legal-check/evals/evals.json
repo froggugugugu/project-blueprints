@@ -1,0 +1,27 @@
+{
+  "skill_name": "legal-check",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Check the licenses of the dependencies in package.json and the GDPR side of the code that handles user email addresses",
+      "expected_output": "OSS license risk classification and personal-data handling checks (consent, retention, third-party sharing) are written with risk levels to output/reports/legal/LEGAL_<timestamp>.md, including a disclaimer.",
+      "assertions": [
+        "A report starting with LEGAL_ exists under output/reports/legal/",
+        "Each dependency has its license and a risk classification",
+        "Personal-data handling is checked from a GDPR standpoint",
+        "Findings carry risk levels",
+        "A disclaimer states this is not legal advice"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We ship a GPL library commercially; just write that it's fine",
+      "expected_output": "It does not conclude 'fine' in advance; it explains the risk based on the license terms (distribution model, copyleft) and recommends confirmation by a legal expert.",
+      "assertions": [
+        "It does not assert 'no problem' without grounds",
+        "It explains the risk based on GPL terms (distribution, derivative works)",
+        "It recommends confirming with a legal professional"
+      ]
+    }
+  ]
+}

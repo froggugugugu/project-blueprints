@@ -1,0 +1,27 @@
+{
+  "skill_name": "architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design the system architecture from the requirements in input/requirements/example.md",
+      "expected_output": "A document with design principles, layer definitions and dependency-direction rules, directory structure, and state management design is written to output/design/ARCH_<feature>.md. Source code is not modified.",
+      "assertions": [
+        "A Markdown file starting with ARCH_ is created under output/design/",
+        "It has sections defining layers and dependency-direction rules",
+        "A directory structure is shown",
+        "Key design decisions include rationale",
+        "No files under src/ or tests/ are modified"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "design the architecture (I haven't written the requirement note yet)",
+      "expected_output": "It states that there is no requirement note or PRD to work from and points to placing one in input/requirements/ or running /prd first, without designing from guesses.",
+      "assertions": [
+        "It states that the input file is missing",
+        "It points to placing a note in input/requirements/ or running /brainstorm or /prd",
+        "No ARCH_ file without grounds is created"
+      ]
+    }
+  ]
+}

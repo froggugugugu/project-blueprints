@@ -1,11 +1,8 @@
 ---
 name: legal-check
 description: >
-  Reviews code, documents, and configurations for IT legal compliance.
-  Triggers: legal, license, compliance, privacy, GDPR, copyright, terms, contract, OSS license, intellectual property, data protection.
-  Source-code read-only — never modifies source code or test files.
-  Outputs legal check report to output/reports/legal/ (requires Write permission to output/reports/legal/).
-  Takes optional argument: /legal-check <target-scope or instruction>
+  Audits code and dependencies for OSS licenses, privacy (GDPR etc.), intellectual property, and terms of use, reporting to output/reports/legal/.
+  Use when asked to check licenses or legal compliance, and before adding dependencies or releasing.
 argument-hint: "<target-scope or instruction>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -230,7 +227,9 @@ Please consult legal professionals for critical decisions.
 - Definitively stating "no issues" without basis
 - Underestimating risks (when uncertain, recommend consulting specialists)
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

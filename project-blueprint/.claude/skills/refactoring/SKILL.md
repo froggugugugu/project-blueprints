@@ -1,11 +1,8 @@
 ---
 name: refactoring
 description: >
-  This skill should be used when the user asks to "refactor code", "restructure", "extract component", "split store",
-  or mentions "リファクタリング", "再構成", "責務分離", "コンポーネント分割".
-  Executes safe, incremental refactoring with rollback capability.
-  Covers feature responsibility migration, store split/merge, component decomposition, utility extraction, type consolidation, dependency rule fixes.
-  Takes optional argument: /refactoring <target-directory or instruction>
+  外部から見た動作を変えずに、コードを段階的に再構成する(責務移動・ストア分割・コンポーネント分解・依存方向の修正)。
+  「リファクタリング」「再構成」「責務分離」「コンポーネント分割」の依頼で使う。
 argument-hint: "<対象ディレクトリ or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 effort: high
@@ -252,7 +249,9 @@ effort: high
 - `docs/development-patterns.md` に記載されたアンチパターンの使用
 - `--no-verify` によるフック迂回
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

@@ -12,7 +12,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | CLAUDE.md が長くなるほど、書いた指示が守られなくなる |
 | **原因** | 200 行を超えると重要度の低い指示に埋もれて参照精度が落ちる。全セクションを毎セッション読み込むためトークンコストも肥大 |
-| **対策** | 横断ルールのみに絞る。詳細は skill / `docs/` / `.claude/rules/` に分離。`@docs/*.md` / `@.claude/*.md` 等の具体パスで `@import` する(ルート相対) |
+| **対策** | 横断ルールのみに絞る。詳細は skill / `docs/` / `.claude/rules/` に分離。`docs/*.md` / `.claude/*.md` 等の具体パスで `@import` する(ルート相対) |
 
 ### 2. subagent に親の skill が自動では載らない(CLAUDE.md / rules は継承される)
 
@@ -36,7 +36,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | skill / agent 実行が遅い。コストが想定の 10 倍かかる |
 | **原因** | skill 本文や agent prompt で巨大ファイルを `Read` で全読みしている |
-| **対策** | Grep で候補行を絞ってから Read。Read の `limit` / `offset` を使う。大きい docs は `@docs/...` の import に分離 |
+| **対策** | Grep で候補行を絞ってから Read。Read の `limit` / `offset` を使う。大きい docs は `docs/...` の import に分離 |
 
 ### 5. Hooks: exit 1（非ブロック）と exit 2（ブロック）の混同
 
@@ -118,9 +118,9 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 
 | 項目 | 内容 |
 | ---- | ---- |
-| **現象** | `@.claude/pitfalls.md` が見つからず、CLAUDE.md の参照が壊れる |
+| **現象** | `.claude/pitfalls.md` が見つからず、CLAUDE.md の参照が壊れる |
 | **原因** | `@` import は Claude Code がリポジトリルートからのパスとして解決する。CLAUDE.md 自身のディレクトリからの相対ではない |
-| **対策** | 既存の `@docs/*.md` / `@.claude/*.md` パターンに倣う（ルート相対）。迷ったら `ls` で存在を確認 |
+| **対策** | 既存の `docs/*.md` / `.claude/*.md` パターンに倣う（ルート相対）。迷ったら `ls` で存在を確認 |
 
 ### 15. Git フック迂回の誘惑
 
@@ -229,6 +229,30 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **現象** | Stop フックで「テストを回せ」と差し戻し続けた結果、同じ差し戻しが繰り返される、または 8 回目で Claude Code がターンを強制終了する |
 | **原因** | Stop フックは差し戻しのたびに再発火する。`stop_hook_active: true` を見ずにブロックすると自分の差し戻しに反応し続ける。公式仕様で 8 回連続ブロック後は無視される |
 | **対策** | `stop_hook_active` が true なら必ず通す(1 回だけ差し戻す)。`background_tasks` が空でないときも通す(完了ではなく待機中)。本テンプレートの `verify-gate.sh` はこの規約で実装済み |
+
+### 28. skill の行頭 `@path` が起動のたびにファイルを丸ごと添付する
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 「関連参照(必要に応じて load)」のつもりで SKILL.md の末尾に `@.claude/pitfalls.md` などを並べると、skill を起動するたびに全文が context に入り、後続ターンにも残り続ける |
+| **原因** | 公式仕様: ローカル skill では本文中の `@` 参照が指すファイルが起動時に添付される。skill の内容は会話に残り、コンパクト後も skill ごとに最大 5,000 トークンまで再添付される |
+| **対策** | 参照は「パス — 読む条件」の箇条書きにし、必要なときに Read させる。validator が SKILL.md の行頭 `@` を WARN で検出する |
+
+### 29. skill が増えると description が落ちて自動発動しなくなる
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | skill を追加していくと、以前は自動で選ばれていた skill が選ばれなくなる |
+| **原因** | skill 一覧の予算は context window の 1%(`skillListingBudgetFraction` 既定 0.01)。溢れると使用頻度の低い skill から description が落ちて名前だけになる。制約文や引数説明を description に書くと予算を浪費する |
+| **対策** | description は「何をするか + いつ使うか」だけにし、目安は 300 字。制約は本文、引数は `argument-hint` に置く。一覧コストは `/doctor`、未使用 skill は `/skill-doctor` で確認する |
+
+### 30. acceptEdits の subagent が範囲外に書き込む
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 「docs/ だけ更新する」と本文に書いた agent が、確認なしでソースや設定を書き換える |
+| **原因** | `permissionMode: acceptEdits` はファイル編集を自動承認する。本文の範囲制限は指示でしかなく、長い作業やプロンプトインジェクションで破られる |
+| **対策** | frontmatter の `hooks.PreToolUse` に `scope-guard.sh <docs / output / tests>` を登録し、範囲外の Edit / Write を exit 2 で止める。本テンプレートは 3 agent に適用済み(workspace trust 後に有効) |
 
 ## 推奨セッション運用コマンド
 
