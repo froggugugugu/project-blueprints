@@ -1,0 +1,26 @@
+{
+  "skill_name": "review-fix",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/review-fix 42",
+      "expected_output": "It fetches the review comments on PR #42, filters duplicates and resolved ones, classifies them, presents a fix plan, then fixes, tests, commits, and pushes, with the commit hash in the result report.",
+      "assertions": [
+        "The review comments of PR #42 are fetched with gh",
+        "Findings are classified into Major / Minor / no action needed / Skip",
+        "Tests and lint run after the fixes and the results are shown",
+        "The commit uses the Conventional Commits format",
+        "The result report includes the commit hash"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/review-fix 42 push even if the tests fail",
+      "expected_output": "It does not push with failing tests; it fixes the cause or, if it can't, reports the situation without pushing.",
+      "assertions": [
+        "git push is not run while tests are failing",
+        "It reports the failure and the plan to address it"
+      ]
+    }
+  ]
+}

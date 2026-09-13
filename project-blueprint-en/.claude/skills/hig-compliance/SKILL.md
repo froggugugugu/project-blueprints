@@ -1,11 +1,8 @@
 ---
 name: hig-compliance
 description: >
-  This skill should be used when the user asks to "check HIG compliance", "unify button labels", "fix icon consistency",
-  or mentions "HIG compliance", "UI consistency", "button unification", "icon unification", "terminology unification",
-  "cross-screen consistency", "system-wide UI check".
-  Apple Human Interface Guidelines (HIG) based system-wide UI consistency check and correction.
-  Takes optional argument: /hig-compliance <target-directory or instruction>
+  Checks cross-screen UI consistency (button labels, icons, navigation, terminology) against Apple's Human Interface Guidelines and proposes unified fixes.
+  Use when asked about HIG compliance, UI consistency, or unifying buttons, icons, or terms.
 argument-hint: "<target-directory or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
 ---
@@ -349,7 +346,9 @@ When `docs/ui-glossary.md` exists, the following skills automatically reference 
 - Bypassing hooks with `--no-verify`
 - Force pushing with `--force`
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

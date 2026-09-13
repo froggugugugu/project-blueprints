@@ -328,7 +328,7 @@ project-blueprint/
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
 │   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
 │   │
-│   ├── hooks/                             ← [汎用] 安全フック（多層防御・15本）
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御・16本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
 │   │   ├── scan-harness.sh                  ハーネス自己SAST・危険skillブロック（PreToolUse）
@@ -339,13 +339,14 @@ project-blueprint/
 │   │   ├── console-warn.sh                  デバッグコード検出（PostToolUse）
 │   │   ├── verify-gate.sh                   検証ゲート: 編集後の未検証終了・完了マークを検知（PostToolUse/Stop/TaskCompleted）
 │   │   ├── permission-denied-log.sh         auto mode の拒否記録（PermissionDenied）
+│   │   ├── scope-guard.sh                   書込可能 agent の書込範囲を強制（agent frontmatter）
 │   │   ├── post-failure-log.sh              ツール失敗ログ記録（PostToolUseFailure）
 │   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStart/Stop）
 │   │   ├── pre-compact-backup.sh            コンパクト前トランスクリプト退避（PreCompact）
 │   │   ├── post-compact-restore.sh          コンパクト後の再注入マーカー設置（PostCompact）
 │   │   └── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
 │   │
-│   ├── skills/                            ← [汎用] 17スキル定義
+│   ├── skills/                            ← [汎用] 17スキル定義（各 evals/evals.json 付き）
 │   │   ├── brainstorm/SKILL.md              前提整理（/prd前段）
 │   │   ├── prd/SKILL.md                     PRD生成
 │   │   ├── architecture/SKILL.md            アーキテクチャ設計
@@ -376,6 +377,9 @@ project-blueprint/
 │   │   ├── TEAM_PLANNING.md                 設計フェーズ
 │   │   ├── TEAM_REFACTOR.md                 リファクタリング
 │   │   └── TEAM_DESIGN.md                   デザインチーム
+│   │
+│   ├── workflows/                         ← [汎用] saved workflow（full プロファイルのみ）
+│   │   └── review-sweep.js                  4 観点並列レビュー + MUST 指摘の反証検証
 │   │
 │   └── tasks/                             ← [汎用] タスクテンプレート
 │       ├── TASK_TEMPLATE.md                 機能開発指示書

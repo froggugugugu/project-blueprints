@@ -34,7 +34,7 @@ Anthropic Console で:
 2. **Spend limit** を設定（例: 月額 $50）
 3. **Workspace** を専用に分離（本番キーと混ぜない）
 
-**これをやらないと課金事故のリスクあり**（`@.claude/pitfalls.md` #6 参照）。
+**これをやらないと課金事故のリスクあり**（`.claude/pitfalls.md` #6 参照）。
 
 ### 4. 動作確認
 
@@ -137,7 +137,7 @@ mv .github/workflows/claude-review.yml .github/workflows/claude-review.yml.disab
 `claude-scheduled-audit.yml` を GitHub Actions で回す理由: Claude Code の
 セッション内スケジュール（`/loop`・`CronCreate`）は**セッションが起動中かつ idle の
 ときだけ**発火し、recurring は 7 日で失効する。無人・恒久の定期実行には向かない。
-詳細は `@.claude/guardrails.md` の「定期実行の選び方」を参照。
+詳細は `.claude/guardrails.md` の「定期実行の選び方」を参照。
 
 `claude-skills-ci.yml` の設計上のポイント:
 
@@ -154,5 +154,5 @@ mv .github/workflows/claude-review.yml .github/workflows/claude-review.yml.disab
 
 - 公式ドキュメント: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
 - headless 実行: [docs.claude.com/en/docs/claude-code/headless](https://docs.claude.com/en/docs/claude-code/headless)
-- コスト guardrail のパターン: `@.claude/pitfalls.md` #6
-- プロジェクトのレビュー規約: `@.claude/skills/code-review/SKILL.md`
+- コスト guardrail のパターン: `.claude/pitfalls.md` #6
+- プロジェクトのレビュー規約: `.claude/skills/code-review/SKILL.md`

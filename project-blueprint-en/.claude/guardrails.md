@@ -5,7 +5,7 @@ Rules that are scattered across `CLAUDE.md` sections are consolidated here.
 
 ---
 
-## Hook inventory (15 scripts / 19 registrations)
+## Hook inventory (16 scripts / 19 settings registrations + 3 agent-frontmatter registrations)
 
 | Hook | Event | Target | Behavior | Description |
 | ---- | ----- | ------ | -------- | ----------- |
@@ -21,6 +21,7 @@ Rules that are scattered across `CLAUDE.md` sections are consolidated here.
 | `verify-gate.sh gate` | **Stop** | — | warn/send back | If no verification command ran after the last edit: standard = warning / strict = sent back once (verification gate) |
 | `verify-gate.sh task` | **TaskCompleted** | — | warn/refuse | Same condition on the completion mark: standard = warning / strict = exit 2 refuses it (mechanical enforcement of quality gate ③) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | observe | Records auto mode classifier denials (`testreport/denials/`) |
+| `scope-guard.sh <scope>` | PreToolUse (**agent frontmatter**) | Edit\|Write\|NotebookEdit | block | Stops out-of-scope writes by write-capable subagents (doc-synchronizer=docs / doc-writer=output / test-writer=tests) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | observe | Structured error log on tool failure (`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | observe + context | Logs the launch and injects guardrails into the subagent |
 | `subagent-audit.sh` | SubagentStop | — | observe | Logs completion (`testreport/agents/`) |

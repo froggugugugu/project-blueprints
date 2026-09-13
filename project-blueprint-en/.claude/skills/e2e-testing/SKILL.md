@@ -1,10 +1,8 @@
 ---
 name: e2e-testing
 description: >
-  Creates and maintains Playwright E2E tests for SPAs.
-  Triggers: E2E test, scenario test, user flow, cross-feature, Playwright.
-  Covers: Page Object design, test data management, stability patterns, and reporting.
-  Takes optional argument: /e2e-testing <target-feature or instruction>
+  Creates and maintains Playwright E2E tests (Page Objects, test data, stability patterns) and records results in testreport/e2e/ and output/reports/test/.
+  Use when asked for E2E, scenario, or user-flow tests, and to verify a feature after implementation.
 argument-hint: "<target-feature or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_click, mcp__plugin_playwright_playwright__browser_take_screenshot
 ---
@@ -191,7 +189,9 @@ test.describe('[Feature Name]', () => {
 - [ ] Cross-feature scenarios exist
 - [ ] E2E tests pass stably
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

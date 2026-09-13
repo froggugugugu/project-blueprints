@@ -1,10 +1,8 @@
 ---
 name: adr
 description: >
-  This skill should be used when the user asks to "record a design decision", "create an ADR", "document architecture decisions",
-  or mentions "ADR", "architecture decision record", "design rationale", "why this design", "decision log".
-  Creates and manages Architecture Decision Records (ADRs) to capture the context, rationale, and consequences of architectural decisions.
-  Takes optional argument: /adr <decision title or instruction>
+  Records and updates architecture decisions as ADRs, capturing context, alternatives, and consequences.
+  Use when asked to create an ADR, record a design decision, or explain why a design was chosen, and right after settling a technology or architecture choice.
 argument-hint: "<decision title or instruction>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch
 effort: low

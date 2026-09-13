@@ -5,7 +5,7 @@
 
 ---
 
-## フック一覧(15 スクリプト / 19 登録)
+## フック一覧(16 スクリプト / settings 19 登録 + agent frontmatter 3 登録)
 
 | フック | イベント | 対象 | 動作 | 説明 |
 | ------ | -------- | ---- | ---- | ---- |
@@ -21,6 +21,7 @@
 | `verify-gate.sh gate` | **Stop** | — | 警告/差し戻し | 編集後に検証コマンドが無ければ standard=警告 / strict=1 回差し戻し(検証ゲート) |
 | `verify-gate.sh task` | **TaskCompleted** | — | 警告/差し止め | 同条件でタスクの完了マークを standard=警告 / strict=exit 2 で差し止め(品質ゲート③の機械強制) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | 観測 | auto mode の分類器による拒否を記録(`testreport/denials/`) |
+| `scope-guard.sh <scope>` | PreToolUse(**agent frontmatter**) | Edit\|Write\|NotebookEdit | ブロック | 書込可能な subagent の範囲外書込を阻止(doc-synchronizer=docs / doc-writer=output / test-writer=tests) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | 観測 | ツール失敗時の構造化エラーログ(`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | 観測 + 文脈注入 | 起動記録 + サブエージェントへガードレールを注入 |
 | `subagent-audit.sh` | SubagentStop | — | 観測 | 完了記録(`testreport/agents/`) |

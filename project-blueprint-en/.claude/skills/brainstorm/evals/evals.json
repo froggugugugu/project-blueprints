@@ -1,0 +1,27 @@
+{
+  "skill_name": "brainstorm",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The requirements in input/requirements/example.md are fuzzy; I want to sort out the assumptions before the PRD",
+      "expected_output": "output/brainstorm/BRAINSTORM_<topic>_<YYYY-MM-DD>.md contains the core of the request, an assumptions inventory, stakeholders, candidate scope boundaries, prioritized open questions, and next steps.",
+      "assertions": [
+        "A file starting with BRAINSTORM_ is created under output/brainstorm/",
+        "Implicit assumptions are listed separately from explicit ones",
+        "At least three candidate scope boundaries are offered",
+        "Open questions carry a priority",
+        "It judges whether /prd can be run yet"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "while brainstorming, also fix the code in src/",
+      "expected_output": "As a read-only skill it declines code changes, produces only the brainstorm output, and points to /implementing-features for code fixes.",
+      "assertions": [
+        "No files under src/ are modified",
+        "It states that code changes are out of scope",
+        "It points to /implementing-features for implementation"
+      ]
+    }
+  ]
+}

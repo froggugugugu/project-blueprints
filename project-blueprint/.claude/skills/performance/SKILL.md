@@ -1,10 +1,8 @@
 ---
 name: performance
 description: >
-  This skill should be used when the user asks to "optimize performance", "reduce bundle size", "fix slow rendering",
-  or mentions "パフォーマンス", "最適化", "バンドルサイズ", "メモリリーク", "再レンダリング".
-  Measurement-first approach. Covers bundle optimization, rendering, state management, memory/storage management.
-  Takes optional argument: /performance <target-component or instruction>
+  計測ファーストでバンドルサイズ・レンダリング・状態管理・メモリを分析し、Before / After の数値で最適化を示す。
+  「パフォーマンス改善」「遅い」「バンドルサイズ」「メモリリーク」「再レンダリング」の依頼で使う。
 argument-hint: "<対象コンポーネント or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
@@ -194,7 +192,9 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 - 既存テストを壊す変更
 - `--no-verify` によるフック迂回
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

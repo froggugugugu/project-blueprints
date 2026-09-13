@@ -122,6 +122,6 @@ In CI, set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` so runs stay reproducible (the bu
 
 ## Related
 
-- `@.claude/pitfalls.md` — failure patterns
+- `.claude/pitfalls.md` — failure patterns
 - `~/.claude/projects/<proj>/memory/` — Claude Code Auto Memory
-- `@.claude/CLAUDE.md` — cross-cutting rules
+- `.claude/CLAUDE.md` — cross-cutting rules

@@ -12,7 +12,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | As CLAUDE.md grows, Claude stops following earlier instructions |
 | **Cause** | Above ~200 lines, important rules get buried in low-priority noise. Token cost also grows per session |
-| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use concrete `@import` paths like `@docs/*.md` / `@.claude/*.md` (root-relative) |
+| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use concrete `@import` paths like `docs/*.md` / `.claude/*.md` (root-relative) |
 
 ### 2. Subagents don't get the parent's skills automatically (CLAUDE.md / rules ARE inherited)
 
@@ -36,7 +36,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | Skill / agent runs slow, cost is 10× expected |
 | **Cause** | A skill body or agent prompt is reading huge files with `Read` in full |
-| **Mitigation** | Narrow with Grep first, then Read. Use Read's `limit`/`offset`. Split large docs into `@docs/...` imports |
+| **Mitigation** | Narrow with Grep first, then Read. Use Read's `limit`/`offset`. Split large docs into `docs/...` imports |
 
 ### 5. Hook exit code confusion (1 vs 2)
 
@@ -118,9 +118,9 @@ This file contains **universal, template-wide pitfalls** only.
 
 | Field | Content |
 | ----- | ------- |
-| **Symptom** | `@.claude/pitfalls.md` can't be found; CLAUDE.md references break |
+| **Symptom** | `.claude/pitfalls.md` can't be found; CLAUDE.md references break |
 | **Cause** | `@` imports are resolved relative to the repository root (via Claude Code), not CLAUDE.md's own directory |
-| **Mitigation** | Existing `@docs/*.md` / `@.claude/*.md` patterns are repo-root relative. When in doubt, verify with `ls` |
+| **Mitigation** | Existing `docs/*.md` / `.claude/*.md` patterns are repo-root relative. When in doubt, verify with `ls` |
 
 ### 15. Temptation to bypass Git hooks
 
@@ -230,6 +230,30 @@ common in long-running Claude Code sessions.
 | **Symptom** | A Stop hook that keeps sending Claude back to "run the tests" repeats the same block, or Claude Code force-ends the turn on the 8th |
 | **Cause** | A Stop hook re-fires after every block. Blocking without checking `stop_hook_active: true` reacts to its own block again. Per the official spec the hook is overridden after 8 consecutive blocks |
 | **Mitigation** | Always pass when `stop_hook_active` is true (block only once). Also pass when `background_tasks` is non-empty (paused, not finished). This template's `verify-gate.sh` follows this contract |
+
+### 28. A line-start `@path` in a skill attaches the whole file on every invocation
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Listing `@.claude/pitfalls.md` and similar at the end of SKILL.md as "related references (loaded on demand)" puts the full files into context on every invocation, where they stay for later turns |
+| **Cause** | Official spec: in a local skill, files named by `@` references in the body are attached at invocation. Skill content stays in the conversation and is re-attached after compaction, up to 5,000 tokens per skill |
+| **Mitigation** | List references as "path — reading condition" bullets and let Claude Read them when needed. The validator flags line-start `@` in SKILL.md as a WARN |
+
+### 29. Skills stop triggering as descriptions get dropped from the listing
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | As skills are added, a skill that used to be picked automatically stops being chosen |
+| **Cause** | The skill listing budget is 1% of the context window (`skillListingBudgetFraction`, default 0.01). On overflow, the least-used skills lose their descriptions and keep only their names. Constraints or argument help in the description waste that budget |
+| **Mitigation** | Keep the description to "what it does + when to use it", about 300 characters. Put constraints in the body and arguments in `argument-hint`. Check listing cost with `/doctor` and unused skills with `/skill-doctor` |
+
+### 30. An acceptEdits subagent writes outside its scope
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | An agent whose body says "update docs/ only" rewrites source or configuration without a prompt |
+| **Cause** | `permissionMode: acceptEdits` auto-approves file edits. A scope limit in the body is only an instruction and breaks under long work or prompt injection |
+| **Mitigation** | Register `scope-guard.sh <docs / output / tests>` under `hooks.PreToolUse` in the frontmatter so out-of-scope Edit / Write exits 2. This template applies it to 3 agents (active after workspace trust) |
 
 ## Recommended session-management commands
 

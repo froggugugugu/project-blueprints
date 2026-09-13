@@ -124,7 +124,7 @@ auto mode でも毎回人間の確認を通る。
 
 ## 3 層防御モデルとの整合
 
-本テンプレートのガードレール(`@.claude/guardrails.md`)は 3 層防御を採る:
+本テンプレートのガードレール(`.claude/guardrails.md`)は 3 層防御を採る:
 
 ```text
 Layer 1: フック(常時有効、--dangerously-skip-permissions でも有効)
@@ -139,7 +139,7 @@ permissions-guide のスコープは **Layer 2 + Layer 3**。Layer 1 のフッ�
 
 ## 関連ドキュメント
 
-- `@.claude/guardrails.md` — フック・deny ルール・保護ファイル一覧
-- `@.claude/pitfalls.md` — #23 auto mode / #25 project settings の無視 / #27 Stop フック
+- `.claude/guardrails.md` — フック・deny ルール・保護ファイル一覧
+- `.claude/pitfalls.md` — #23 auto mode / #25 project settings の無視 / #27 Stop フック
 - `settings.local.json.template` — 雛形(ビルドツール別の差し替えパターン・auto mode / Stop ゲートの注記込み)
 - `managed-settings.example.json` — 組織ポリシーとして固定する場合の例(deny / sandbox / OpenTelemetry)

@@ -34,7 +34,7 @@ In the Anthropic Console:
 2. Set **Spend limit** (e.g., $50 per month)
 3. Use a dedicated **Workspace** (don't mix with production keys)
 
-**Skipping this invites billing incidents** (see `@.claude/pitfalls.md` #6).
+**Skipping this invites billing incidents** (see `.claude/pitfalls.md` #6).
 
 ### 4. Verify it works
 
@@ -137,7 +137,7 @@ This template ships two workflows. Enable either one or both.
 Why `claude-scheduled-audit.yml` runs on GitHub Actions: Claude Code's session-scoped
 scheduling (`/loop`, `CronCreate`) fires **only while a session is running and idle**,
 and recurring tasks expire after 7 days — unsuitable for unattended, durable schedules.
-See "Choosing how to schedule work" in `@.claude/guardrails.md`.
+See "Choosing how to schedule work" in `.claude/guardrails.md`.
 
 Design points in `claude-skills-ci.yml`:
 
@@ -153,5 +153,5 @@ Design points in `claude-skills-ci.yml`:
 
 - Official docs: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)
 - Headless mode: [docs.claude.com/en/docs/claude-code/headless](https://docs.claude.com/en/docs/claude-code/headless)
-- Cost guardrail patterns: `@.claude/pitfalls.md` #6
-- Project review conventions: `@.claude/skills/code-review/SKILL.md`
+- Cost guardrail patterns: `.claude/pitfalls.md` #6
+- Project review conventions: `.claude/skills/code-review/SKILL.md`

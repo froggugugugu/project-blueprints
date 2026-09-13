@@ -33,11 +33,12 @@ project-blueprints/
 │   │   ├── guardrails.md        # Safety mechanism overview
 │   │   ├── quality-gates.md     # Quality gate definitions
 │   │   ├── pitfalls.md          # Common failure patterns (anti-patterns)
-│   │   ├── skills/              # 17 skill definitions (SKILL.md files)
+│   │   ├── skills/              # 17 skill definitions (SKILL.md + evals/evals.json)
 │   │   ├── teams/               # 6 team templates (TEAM_*.md files)
+│   │   ├── workflows/           # 1 saved dynamic workflow (review-sweep.js; full profile only)
 │   │   ├── agents/              # 8 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
-│   │   ├── hooks/               # 15 hook scripts (safety + observability + verification gate; .sh count)
+│   │   ├── hooks/               # 16 hook scripts (safety + observability + verification gate + agent scope guard; .sh count)
 │   │   └── tasks/               # Task instruction templates
 │   ├── docs/                    # AI-managed technical docs (stubs)
 │   ├── input/                   # Human requirements input
@@ -59,13 +60,13 @@ project-blueprints/
 
 **Generic vs project-specific**: Everything under `.claude/` is reusable across projects. `docs/`, `input/`, `output/` are project-specific and generated per-use.
 
-**Skill system** (17 skills in `.claude/skills/*/SKILL.md`): Each skill is a standalone prompt with a defined pipeline order: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`. Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine` (meta-skill: self-diagnoses and refines the harness configuration). The `/prd` skill follows the spec-driven framing (specification first, technology later) aligned with GitHub Spec-Kit / BMAD-METHOD.
+**Skill system** (17 skills in `.claude/skills/*/SKILL.md`): Each skill is a standalone prompt with a defined pipeline order: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`. Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine` (meta-skill: self-diagnoses and refines the harness configuration). The `/prd` skill follows the spec-driven framing (specification first, technology later) aligned with GitHub Spec-Kit / BMAD-METHOD. Every skill ships `evals/evals.json` (agentskills.io format: a typical case and a boundary case with verifiable assertions, run via the skill-creator plugin). Descriptions follow the official "what it does + when to use it" pattern because the skill listing is capped at 1% of context, and skills never use a line-start `@path` (Claude Code attaches that file in full at invocation); they list references with a reading condition instead. Writing conventions live in the path-scoped rule `.claude/rules/harness-authoring.md`.
 
-**Team system** (6 teams in `.claude/teams/TEAM_*.md`): Multi-agent orchestration templates. `TEAM_PJM.md` is the recommended full-lifecycle team (6 members, covers the 13 core lifecycle skills, 5 quality gates). The 4 auxiliary skills (`/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`) are invoked on demand outside the standard team flow.
+**Team system** (6 teams in `.claude/teams/TEAM_*.md`): Multi-agent orchestration templates. `TEAM_PJM.md` is the recommended full-lifecycle team (6 members, covers the 13 core lifecycle skills, 5 quality gates). The 4 auxiliary skills (`/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`) are invoked on demand outside the standard team flow. `.claude/workflows/review-sweep.js` is the scripted form of the team layer: a saved dynamic workflow that reviews a diff from 4 angles in parallel and adversarially verifies each MUST finding with 3 votes.
 
 **Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
-**Hook system** (15 hook scripts in `.claude/hooks/*.sh`, 19 registered invocations in `settings.json`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` / `TaskCompleted` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop + TaskCompleted) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials. See `.claude/guardrails.md`.
+**Hook system** (16 hook scripts in `.claude/hooks/*.sh`, 19 registered invocations in `settings.json` plus 3 agent-frontmatter registrations of `scope-guard.sh`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` / `TaskCompleted` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop + TaskCompleted) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials. See `.claude/guardrails.md`.
 
 **Distribution**: `setup.sh` + clone only. Plugin packaging was evaluated twice (adopted 2026-04, withdrawn 2026-06, re-evaluated and withdrawn again 2026-08) and does not fit: a plugin can only declare `skills`/`agents`/`outputStyles`/`hooks`, while **17 of 17 skills reference files a plugin cannot ship** (`docs/` 16, `output/` 15, `quality-gates.md` 15, `project-config.md` 14, `pitfalls.md` 12, `.claude/rules/` 4). Do not re-open this without new evidence that those dependencies have gone away.
 
@@ -87,7 +88,7 @@ bash scripts/validate-harness.sh --hooks  # functional tests of the hook scripts
 It is deterministic (no LLM) and enforces the parts of the official spec that are easy to
 drift from: frontmatter values outside the official enums, permission rules the runtime
 never consults (`Write(path)` and friends), hook registrations pointing at missing scripts,
-unresolved `@import` targets, the constitution hash, and JP/EN parity. Run it before every
+unresolved `@import` targets, the constitution hash, JP/EN parity, line-start `@` attachments in skills, description length and person, `evals/evals.json` schema, reference-file ToCs, workflow `meta` / determinism rules, and agent-frontmatter hooks (including a WARN for write-capable agents without `scope-guard.sh`). Run it before every
 commit that touches `.claude/`. CI runs it on push and pull request
 (`.github/workflows/validate-harness.yml`).
 

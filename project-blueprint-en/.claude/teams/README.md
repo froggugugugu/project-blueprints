@@ -30,6 +30,8 @@ from Claude Code's official Agent Teams feature. The two are meant to be combine
 - For work that fans out to dozens or hundreds of subagents (whole-codebase audits, bulk migrations),
   the official **dynamic workflows** (include `ultracode` in the prompt, or `/batch`) fit better: the plan moves into a
   script, so intermediate results never enter context. Keep `TEAM_*.md` for the human-gated lifecycle
+- The bundled saved workflow `/review-sweep` (`.claude/workflows/review-sweep.js`, full profile only) reviews a diff from 4 angles in parallel,
+  verifies each MUST finding with 3 adversarial votes, and writes a single report. It automates TEAM_QA's review step with agents that lack the implementer's context
 
 ## Quick Start
 
@@ -250,7 +252,7 @@ These skills are designed to be called standalone, outside team contexts:
 
 ## Subagent Dispatch Guide
 
-Team members can delegate to the following subagents on demand (see `@.claude/agents/README.md`).
+Team members can delegate to the following subagents on demand (see `.claude/agents/README.md`).
 
 | Agent | PJM | Feature | QA | Planning | Design | Refactor |
 | ----- | :---: | :---: | :---: | :---: | :---: | :---: |

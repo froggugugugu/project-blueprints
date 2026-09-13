@@ -1,11 +1,8 @@
 ---
 name: architecture
 description: >
-  Designs system architecture from requirement notes and generates architecture.md.
-  Triggers: architecture, system design, structure design, layer design.
-  Source-code read-only — never modifies source code or test files.
-  Outputs structured architecture document to output/design/ (requires Write permission to output/design/).
-  Takes a file path as argument: /architecture <file-path>
+  Designs system architecture (layers, directories, state management, technology choices) from a requirement note or PRD and writes it to output/design/.
+  Use when asked for architecture, system design, or layer design, and in the design phase after a PRD is approved.
 argument-hint: "<file-path>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -316,6 +313,8 @@ Specify multiple files separated by spaces.
 - Including project-specific data (IDs, passwords, etc.) in documentation
 - Unauthorized modification of existing `docs/` files
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table

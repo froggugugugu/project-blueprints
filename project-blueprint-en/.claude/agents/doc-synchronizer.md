@@ -7,6 +7,13 @@ effort: low
 permissionMode: acceptEdits
 maxTurns: 25
 memory: project
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|NotebookEdit"
+      hooks:
+        - type: command
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh docs'
+          timeout: 5
 color: cyan
 ---
 
@@ -50,6 +57,7 @@ Lightweight, fast, deterministic. Runs on Haiku.
 
 ## Constraints
 
+- **Write scope is enforced by a hook** — `scope-guard.sh docs` in the frontmatter stops Edit / Write outside docs/** and project-config.md with exit 2
 - **No source code changes** — no `src/`, `tests/`, or config changes
 - **`project-config.md` changes are limited** — human-managed. AI may only modify §2 (tech stack) / §3 (commands) / §11 (known pitfalls). Never touch §1 / §4–§10 / §12 / §13 (model-selection strategy), which are human-decided and AI-off-limits
 - **Never write `input/`** — human input domain

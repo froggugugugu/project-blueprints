@@ -56,11 +56,13 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
  6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
  8 agents    explorer, planner, researcher, security-reviewer,
              performance-analyst, doc-synchronizer, doc-writer, test-writer
-15 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
+16 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
              PermissionDenied / UserPromptSubmit / SessionStart / SessionEnd / SubagentStart /
              SubagentStop / TaskCompleted / PreCompact / PostCompact / Stop(verification gate) / Notification
+             + scope-guard in agent frontmatter (write-scope enforcement)
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
- 4 rules     document-management, git-conventions, workflow-advanced (+ README)
+ 5 rules     document-management, git-conventions, workflow-advanced, harness-authoring (+ README)
+ 1 workflow  review-sweep — 4-angle parallel review + adversarial MUST verification (saved dynamic workflow)
  1 gate      scripts/validate-harness.sh — CI gate that fails on harness spec drift
  3 CI        claude-review.yml (@claude conversational review) /
              claude-skills-ci.yml (/code-review + /security-scan on every PR) /

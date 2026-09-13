@@ -1,11 +1,8 @@
 ---
 name: architecture
 description: >
-  This skill should be used when the user asks to "design architecture", "create system design",
-  or mentions "アーキテクチャ", "システム設計", "構成設計", "レイヤー設計".
-  Source-code read-only — never modifies source code or test files.
-  Outputs structured architecture document to output/design/ (requires Write permission to output/design/).
-  Takes a file path as argument: /architecture <file-path>
+  要求メモや PRD からシステムアーキテクチャ(レイヤー・ディレクトリ・状態管理・技術選定)を設計し、output/design/ に出力する。
+  「アーキテクチャ設計」「システム設計」「構成設計」「レイヤー設計」の依頼や、PRD 承認後の設計フェーズで使う。
 argument-hint: "<file-path>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -316,6 +313,8 @@ background: false
 - プロジェクト固有のデータ（ID、パスワード等）をドキュメントに含めること
 - 既存の `docs/` 配下ファイルの無断変更
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき

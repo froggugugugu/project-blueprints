@@ -7,6 +7,13 @@ effort: medium
 permissionMode: acceptEdits
 maxTurns: 30
 memory: project
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|NotebookEdit"
+      hooks:
+        - type: command
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh output'
+          timeout: 5
 color: yellow
 ---
 
@@ -85,6 +92,7 @@ color: yellow
 
 ## 制約
 
+- **書込範囲はフックで強制** — frontmatter の `scope-guard.sh output` が output/** 以外への Edit / Write を exit 2 で止める
 - **長すぎる文書を避ける** — 1 ファイル 200 行を目安。超える場合は分割し index ファイルを別途作成
 - **`docs/` への書き込み禁止** — `doc-synchronizer` の責務領域を侵さない
 - **コード変更禁止** — `src/`, `tests/` は不可侵

@@ -1,11 +1,8 @@
 ---
 name: code-review
 description: >
-  This skill should be used when the user asks to "review code", "check code quality", "validate changes",
-  or mentions "コードレビュー", "品質チェック", "レビュー".
-  Source-code read-only — never modifies source code or test files.
-  Outputs review report to output/reports/review/ (requires Write permission to output/reports/review/).
-  Takes optional argument: /code-review <target-file or instruction>
+  コード変更を仕様準拠・規約・セキュリティ・テスト・ドキュメント同期の観点でレビューし、MUST / SHOULD / CONSIDER と総合判定で報告する。
+  「コードレビュー」「レビューして」「品質チェック」の依頼や、実装完了後・PR 作成前に使う。
 argument-hint: "<対象ファイル or 指示>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -145,7 +142,7 @@ background: false
 
 - 計測データが**未提示**で `project-config.md` §6 に基準がある場合は **CONSIDER 指摘**(「ゲート 5 検証データを添付してください」)
 - 計測データの**改善**(カバレッジ上昇等)は「良い点」セクションで明示する
-- 詳細は `@.claude/quality-gates.md` を参照
+- 詳細は `.claude/quality-gates.md` を参照
 
 ## 出力契約
 
@@ -240,8 +237,10 @@ background: false
 - 個人の好みに基づく指摘（プロジェクト規約に根拠がないもの）
 - 重要度なしの曖昧な指摘
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/guardrails.md
-@.claude/rules/workflow-advanced.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/guardrails.md` — フック・deny ルールの挙動を確認するとき
+- `.claude/rules/workflow-advanced.md` — 完了前検証や長期タスク引き継ぎの手順を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

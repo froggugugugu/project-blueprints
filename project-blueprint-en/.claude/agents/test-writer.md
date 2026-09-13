@@ -8,6 +8,13 @@ maxTurns: 40
 memory: project
 skills:
   - e2e-testing
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|NotebookEdit"
+      hooks:
+        - type: command
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh tests'
+          timeout: 5
 color: pink
 ---
 
@@ -82,6 +89,7 @@ Test Files  1 passed (1)
 
 ## Constraints
 
+- **Write scope is enforced by a hook** — `scope-guard.sh tests` in the frontmatter stops Edit / Write outside test files with exit 2
 - **No implementation changes** — non-test files under `src/**/*.ts(x)` are off-limits
 - **No changes to `project-config.md` or `docs/`** — delegate to `doc-synchronizer` if needed
 - **No destructive commands during test runs** — blocked by `safety-check.sh`

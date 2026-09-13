@@ -1,0 +1,27 @@
+{
+  "skill_name": "prd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a PRD from input/requirements/example.md",
+      "expected_output": "Specification before technology: output/prd/PRD_<feature>.md contains an overview (background, in and out of scope), glossary, functional requirements (FR-xxx), non-functional requirements (NFR-xxx), data model, and acceptance criteria.",
+      "assertions": [
+        "A file starting with PRD_ is created under output/prd/",
+        "Both in-scope and out-of-scope items are written",
+        "Functional requirements have FR- IDs and acceptance criteria",
+        "Non-functional requirements have NFR- IDs",
+        "No files under src/ are modified"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Make a PRD. The requirement is just 'a nice admin screen'",
+      "expected_output": "It points out that the requirement is too vague and asks clarifying questions or points to /brainstorm first, without filling in functional requirements by guesswork.",
+      "assertions": [
+        "It states that the requirement is insufficient",
+        "It asks clarifying questions or points to /brainstorm",
+        "It does not create a PRD listing requirements without grounds"
+      ]
+    }
+  ]
+}

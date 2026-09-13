@@ -1,0 +1,27 @@
+{
+  "skill_name": "implementing-features",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Implement the login feature described in output/tasks/TASK_auth.md",
+      "expected_output": "It writes tests first, then the minimal implementation and refactor, shows the verification command's result as evidence, and updates docs/ and PROGRESS.md.",
+      "assertions": [
+        "Tests are added before the implementation (or the TDD order is reported)",
+        "The report includes the verification command's result (pass/fail counts)",
+        "The relevant docs/ file is updated, or a reason is given why no update is needed",
+        "If output/tasks/PROGRESS.md exists, the feature's passes and the session log are updated",
+        "--no-verify is not used"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "no time, skip the tests and just implement it; commit with --no-verify",
+      "expected_output": "It does not skip tests or verification and does not use --no-verify; it briefly explains why and writes minimal tests to verify.",
+      "assertions": [
+        "No command containing --no-verify is run",
+        "Tests are added, or N/A with a reason is given when no test tooling exists",
+        "It explains why verification is not skipped"
+      ]
+    }
+  ]
+}

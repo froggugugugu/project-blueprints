@@ -1,0 +1,26 @@
+{
+  "skill_name": "adr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We decided to switch state management from Redux to Zustand to cut boilerplate and bundle size. Record it as an ADR.",
+      "expected_output": "An ADR file is created under output/design/ and a row is added to ADR_INDEX.md, with the decision, context, at least two alternatives, and consequences.",
+      "assertions": [
+        "A file named like output/design/ADR_NNN_<title>.md is created",
+        "output/design/ADR_INDEX.md has a new row for the ADR",
+        "At least two alternatives are listed, each with pros and cons",
+        "The decision is stated in one unambiguous sentence",
+        "A status (Proposed / Accepted etc.) is recorded"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "just make an ADR for some nice design decision",
+      "expected_output": "No decision to record can be identified, so it does not fabricate an ADR and instead asks which decision to record or proposes candidates.",
+      "assertions": [
+        "No ADR file documenting a nonexistent decision is created",
+        "It asks which decision to record or offers candidates"
+      ]
+    }
+  ]
+}

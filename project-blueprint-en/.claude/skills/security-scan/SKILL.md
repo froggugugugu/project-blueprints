@@ -1,11 +1,8 @@
 ---
 name: security-scan
 description: >
-  Runs security scanning tools and generates structured vulnerability reports.
-  Triggers: security scan, vulnerability, OWASP, ZAP, npm audit, DAST, SAST, secret detection, dependency check, CVE.
-  Source-code read-only — never modifies source code or test files.
-  Outputs scan report to output/reports/security/ and raw data to testreport/security/ (requires Write permission to both).
-  Takes optional argument: /security-scan <target-scope or instruction>
+  Audits dependency CVEs, OWASP Top 10 issues, leaked secrets, and security headers, reporting by severity to output/reports/security/.
+  Use when asked for a security scan, vulnerability check, npm audit, or secret detection, and before releases.
 argument-hint: "<target-scope or instruction>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), Edit(testreport/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -242,9 +239,11 @@ pip install semgrep
 - Transcribing detected sensitive information into the report (mask it)
 - Definitively stating "no issues" (use "no detections within scan scope")
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/guardrails.md
-@.claude/permissions-guide.md
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/guardrails.md` — when checking how hooks and deny rules behave
+- `.claude/permissions-guide.md` — when checking permission modes and allow / ask / deny design
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

@@ -1,10 +1,8 @@
 ---
 name: ui-ux-design
 description: >
-  Reviews and implements UI/UX following project design systems.
-  Triggers: design review, UI improvement, styling, accessibility, dark mode, responsive, layout, component design, design consistency audit, system-wide consistency.
-  Covers: visual consistency, design system compliance, accessibility, responsive design, dark mode, and system-wide design consistency audit.
-  Takes optional argument: /ui-ux-design <target-file or instruction>
+  Reviews, implements, and audits UI/UX against the design system (consistency, accessibility, responsiveness, dark mode).
+  Use when asked for a design review, UI improvement, dark mode, or accessibility work.
 argument-hint: "<target-file or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
@@ -351,7 +349,9 @@ The following information is documented per project:
 - Adding UI elements not in the specification
 - Bypassing hooks with `--no-verify`
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

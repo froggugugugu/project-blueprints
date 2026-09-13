@@ -102,3 +102,76 @@ S に届かない要因は (1) 自律運用の自動化不足 (2) 評価基盤�
 - `bash scripts/validate-harness.sh --hooks`: PASS 54 / FAIL 0(JP 27 + EN 27)
 - `bash scripts/validate-harness.sh --online`: 固定バージョンが npm で解決することを確認
 - `.claude/CLAUDE.md`: JP 199 行 / EN 199 行(上限 200 行以内)
+
+---
+
+## Round 3 — 執筆規約・skill eval・書込範囲の強制(2026-09-12)
+
+ユーザーの再依頼(トレンド・Markdown の書き方・公式ベストプラクティスの包括的な取り込み)を受けた 2 巡目。
+公式 docs を再取得し、前回は取り込めていなかった skill 執筆ガイド
+(platform.claude.com `agents-and-tools/agent-skills/best-practices`)、agentskills.io の仕様と eval 形式、
+dynamic workflows の公式ブログを一次ソースに加えた。
+
+### 公式仕様で判明した欠陥
+
+| # | 欠陥 | 根拠 | 影響 |
+| - | ---- | ---- | ---- |
+| 1 | 15 skill の「関連参照(必要に応じて Claude が load)」が行頭 `@path` で書かれていた | skills docs: ローカル skill では `@` 参照のファイルが起動時に添付され、会話に残る | 起動のたびに最大 50KB(security-scan)を添付。見出しの説明と実挙動が逆 |
+| 2 | description に制約文・引数説明が混在 | skills docs: 一覧予算は context の 1%。溢れると使用頻度の低い skill から説明が落ちる | 200K モデルで予算を超え、自動発動が不安定になる |
+| 3 | acceptEdits の doc 系 agent の書込範囲が散文のみ | sub-agents docs: frontmatter `hooks` で agent 実行中だけのフックを定義できる | 範囲外の書込が無確認で通る |
+| 4 | skill の eval が無い | skill authoring best practices「Build evaluations first」/ agentskills.io `evals/evals.json` | skill 変更の良し悪しを測れない |
+| 5 | team ファイルの `@` 行で README が「自動 load」される前提 | team は Read で読まれ、本文の `@` は展開されない | README が読まれない可能性 |
+| 6 | CLAUDE.md が agents/README.md(約 6KB)を常時 import | memory docs: import 先は毎セッション全文 load | 毎セッション約 1.5K トークンを消費 |
+
+### 適用した補正
+
+| 対象 | 変更 |
+| ---- | ---- |
+| `skills/*/SKILL.md`(17 × 2) | description を「何をするか + いつ使うか」に書き換え。行頭 `@` の参照ブロックを「パス — 読む条件」の箇条書きに変換(常時 load の git-conventions は除外) |
+| `skills/*/evals/evals.json`(17 × 2、新規) | 典型 + 境界の 2 ケースと、出力契約から導いた assertions |
+| `skills/security-scan/references/scan-categories.md` | 100 行超のため冒頭に目次を追加 |
+| `hooks/scope-guard.sh`(新規) | 書込可能 agent の範囲外 Edit / Write を exit 2 で阻止(docs / output / tests)。未知スコープは fail-closed |
+| `agents/{doc-synchronizer,doc-writer,test-writer}.md` | frontmatter `hooks.PreToolUse` に scope-guard を登録し、制約節に明記 |
+| `rules/harness-authoring.md`(新規、path-scoped) | Markdown の書き方、置き場所の判断、description、`@` 禁止、目次、日付禁止、eval、scope-guard、workflow の決定性 |
+| `workflows/review-sweep.js`(新規) | 4 観点並列レビュー → 重複排除 → MUST を 3 票の反証で検証 → 1 本のレポート。検証上限を超えた MUST は未検証として残す |
+| `teams/TEAM_*.md`(6 × 2) | `@` 行を「起動時に Read する」指示に変換 |
+| `.claude/CLAUDE.md` | agents/README.md の常時 import を廃止し、`@import` 前提の記述を「必要時に Read」に訂正(199 行を維持) |
+| `pitfalls.md` | #28 行頭 `@` の添付 / #29 一覧予算 1% / #30 acceptEdits agent の範囲外書込 |
+| `harness-refine/SKILL.md` | rubric 8・11・12・13・15 を今回の基準に更新し、基準ソースに agentskills.io と workflows ブログを追加 |
+| `setup.sh` / `.gitignore` | full 以外で workflows を剪定。`.claude/skills/*-workspace/` を除外 |
+| バッククォート内の `` `@path` `` 表記(59 か所) | `` `path` `` に正規化(constitution.md と過去レポートは除外) |
+| `scripts/validate_harness.py` | skill の行頭 `@`、description 上限と人称、日付記述、参照ファイルの目次と入れ子、evals スキーマ、frontmatter hooks、書込 agent の scope-guard 有無、workflow の meta リテラル・phase 整合・非決定 API・構文(node)を検査 |
+| `scripts/test_validate_harness.py` / `test_hooks.sh` | 負のテスト +10(計 32 件)、scope-guard の機能テスト +13 × 2 ミラー |
+
+### 定量比較(変更前 HEAD → 変更後)
+
+| 指標 | JP | EN |
+| ---- | -- | -- |
+| skill 起動時に添付されるファイル合計(17 skill) | 357KB → 0KB | 322KB → 0KB |
+| description 合計文字数 | 6,577 → 2,037 | 7,080 → 4,192 |
+| 常時 load(CLAUDE.md + import + always-on rule) | 24.0KB → 14.8KB | 21.7KB → 13.4KB |
+| skill eval | 0 → 17 skill / 34 ケース / 128 assertions | 同左 |
+
+### 観点別評価の更新
+
+| 観点 | Round 2 | Round 3 | 根拠 |
+| ---- | ------- | ------- | ---- |
+| 1 指示の階層化 | S- | S | skill 起動時の添付 0、常時 load 約 4 割減、執筆規約を path-scoped rule 化 |
+| 2 決定論的ガードレール | S- | S | 書込可能 agent の範囲を frontmatter フックで強制 |
+| 3 検証ループ | S | S | skill eval を全 skill に配備し、フック機能テストを 80 ケースに拡充 |
+| 5 マルチエージェント構成 | B+ | A | 反証検証つき saved workflow を team 層として同梱 |
+| 9 保守性・自己検証 | S | S | 執筆規約の大半を validator で機械検査 |
+
+### Round 3 検証
+
+- `bash scripts/validate-harness.sh`: ERROR 0 / WARN 0
+- `bash scripts/validate-harness.sh --test`: 32/32 検出
+- `bash scripts/validate-harness.sh --hooks`: PASS 80 / FAIL 0
+- `setup.sh` を minimal / standard / full で実展開: workflows は full のみ、settings.local.json 自動生成、.gitignore 追記を確認。full 展開先(JP / EN)に validator をかけて ERROR 0 / WARN 0
+
+### 見送り(理由)
+
+- skill 名の gerund 化(`processing-*` 形式): 公式は推奨止まりで、名前変更は team・docs・利用者の手順に波及する
+- SKILL.md 本文の簡潔化(Claude が既に知っている一般論の削減): 17 × 2 ファイルの内容改訂になるため、今回整備した evals を回して差分を測ってから行う
+- sandbox の既定 ON: npm install などネットワークを使う作業を壊すため、引き続きプロジェクト側の判断とする
+- saved workflow の実行確認: 実行はトークンを大きく消費するため行っていない。構文と workflow 規約は validator(node --check を含む)で検査済み

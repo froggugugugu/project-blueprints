@@ -1,10 +1,8 @@
 ---
 name: hig-compliance
 description: >
-  This skill should be used when the user asks to "check HIG compliance", "unify button labels", "fix icon consistency",
-  or mentions "HIG準拠", "UI一貫性", "ボタン統一", "アイコン統一", "用語統一", "画面間の整合性", "横断UIチェック".
-  Apple Human Interface Guidelines (HIG) based system-wide UI consistency check and correction.
-  Takes optional argument: /hig-compliance <target-directory or instruction>
+  Apple HIG に基づき、画面をまたいだ UI の一貫性(ボタン文言・アイコン・ナビゲーション・用語)を点検し、統一案を示す。
+  「HIG 準拠」「UI 一貫性」「ボタン統一」「アイコン統一」「用語統一」の依頼で使う。
 argument-hint: "<対象ディレクトリ or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
 ---
@@ -345,7 +343,9 @@ Phase 2 の収集データを基に、**画面間の差異をマトリクスで�
 - `--no-verify` によるフック迂回
 - `--force` によるプッシュ
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

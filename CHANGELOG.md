@@ -8,6 +8,35 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (authoring conventions / skill evals / write-scope enforcement, 2026-09-12)
+
+- **`skills/*/evals/evals.json`(17 skill × JP/EN)**: agentskills.io 形式の eval。各 skill に典型と境界の
+  2 ケースと、出力契約から導いた検証可能な assertions(1 ミラーあたり 34 ケース / 128 assertions)。
+  skill-creator プラグインで skill あり / なしを比較して回す。
+- **`hooks/scope-guard.sh`**: 書込可能な subagent の frontmatter `hooks.PreToolUse` に登録し、
+  範囲外の Edit / Write を exit 2 で止める(doc-synchronizer=docs / doc-writer=output / test-writer=tests)。
+- **`rules/harness-authoring.md`**(path-scoped): CLAUDE.md・skill・agent・workflow の執筆規約。
+  Markdown の書き方、置き場所の判断、description の型、行頭 `@` の禁止、参照ファイルの目次、eval-first。
+- **`workflows/review-sweep.js`**(full プロファイル): 差分を 4 観点で並列レビューし、MUST 指摘を
+  3 票の反証で検証してから 1 本のレポートにまとめる saved dynamic workflow(team 層)。
+- **`pitfalls.md` #28〜#30**: skill の行頭 `@` 添付 / skill 一覧予算 1% / acceptEdits agent の範囲外書込。
+- **`validate_harness.py`**: skill の行頭 `@`、description 上限(1024)と人称、日付記述、参照ファイルの
+  目次と入れ子、evals スキーマ、agent / skill frontmatter hooks、書込 agent の scope-guard 有無、
+  workflow の meta リテラル・phase 整合・非決定 API・構文を検査。負のテスト 32 件、フック機能テスト 80 件。
+
+### Fixed
+
+- **skill の「関連参照」ブロック(15 skill × JP/EN)**: 行頭 `@path` はローカル skill では起動時に
+  ファイル全文が添付される(公式 skills 仕様)。見出しの「必要に応じて load」と実挙動が逆で、
+  17 skill 合計 JP 357KB / EN 322KB を起動のたびに添付しうる状態だった。「パス — 読む条件」の箇条書きに変換。
+- **skill description(17 × JP/EN)**: 制約文と引数説明を除き「何をするか + いつ使うか」に統一
+  (JP 6,577→2,037 字 / EN 7,080→4,192 字)。一覧予算(context の 1%)超過による説明の欠落を防ぐ。
+- **`.claude/CLAUDE.md`**: agents/README.md の常時 import を廃止し、`@import` で自動 load される前提の
+  記述を訂正(常時 load JP 24.0→14.8KB / EN 21.7→13.4KB)。
+- **`teams/TEAM_*.md`**: 本文の `@` 行は Read では展開されないため、「起動時に Read する」指示に変換。
+- **`setup.sh` / `.gitignore`**: full 以外のプロファイルで workflows を剪定し、skill-creator の
+  作業ディレクトリ `.claude/skills/*-workspace/` を除外。
+
 ### Added (official best-practice alignment, 2026-09)
 
 - **`verify-gate.sh`**(PostToolUse + Stop): 公式「Claude に検証手段を与え Stop フックで

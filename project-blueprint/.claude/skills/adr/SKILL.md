@@ -1,11 +1,8 @@
 ---
 name: adr
 description: >
-  「設計判断を記録して」「ADRを作成して」「アーキテクチャ決定を記録して」などの依頼、
-  または「ADR」「設計判断記録」「アーキテクチャ決定記録」「設計の経緯」「なぜこの設計にしたか」
-  というキーワードが含まれる場合にこのスキルを使用する。
-  Architecture Decision Records (ADR) を作成・管理し、設計判断のコンテキスト・根拠・影響を記録する。
-  引数は省略可能: /adr <判断タイトル or 指示>
+  設計判断を ADR(Architecture Decision Record)として記録・更新し、判断の背景・代替案・影響を残す。
+  「ADR を作成して」「設計判断を記録」「なぜこの設計にしたか残して」の依頼や、技術選定・アーキテクチャ変更を決めた直後に使う。
 argument-hint: "<判断タイトル or 指示>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch
 effort: low

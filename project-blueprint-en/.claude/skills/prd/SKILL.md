@@ -1,11 +1,8 @@
 ---
 name: prd
 description: >
-  Generates a PRD (Product Requirements Document) from requirement notes or memos.
-  Triggers: prd, requirements, PRD generation, requirement specification.
-  Source-code read-only — never modifies source code or test files.
-  Outputs structured PRD to output/prd/ (requires Write permission to output/prd/).
-  Takes a file path as argument: /prd <file-path>
+  Generates a specification-first PRD (product requirements document) from a requirement note and writes it to output/prd/.
+  Use when asked to write a PRD or requirements, and after placing a note in input/requirements/.
 argument-hint: "<file-path>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -244,6 +241,8 @@ Reference the following documents during PRD generation to ensure consistency:
 - Including project-specific data (IDs, passwords, etc.) in documentation
 - Modifying existing documentation (under `docs/`)
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table

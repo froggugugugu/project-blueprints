@@ -4,7 +4,7 @@ Cross-project development rules, quality standards, and workflows.
 Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
 
 > **This file is the slim "core"** (Pro-plan friendly).
-> Each skill / team / agent loads its own details via `@import` when invoked.
+> Each skill / team / agent reads its details when needed (never via a line-start `@` in a skill, which attaches the file in full).
 > Project-specific parameters live in `project-config.md`.
 > Keep a line only if removing it would make Claude make mistakes (official guidance).
 
@@ -38,7 +38,7 @@ Referenced by all roles (PM / PdM / Developer / Reviewer / Tester).
 | `/review-fix <PR#>` | Auto-fix CodeRabbit/Copilot review comments (manual invocation only) |
 | `/harness-refine <target or instruction>` | Self-score → improve → review the harness scaffolding (manual invocation only / JP-EN mirror parity required) |
 
-Each skill loads its own details (`pitfalls.md`, `guardrails.md`, etc.) at invocation time. Use the bundled skills alongside them:
+Each skill reads details (`pitfalls.md` etc.) when needed and keeps its expected behavior in `evals/evals.json`. Use the bundled skills alongside them:
 `/verify` (confirm against the running app) / `/btw` (side question kept out of context) / `/goal <condition>` (keep working until it holds) / `/batch` (parallel change across files).
 
 ## Team templates
@@ -49,7 +49,7 @@ Run a `TEAM_*.md` from `.claude/teams/` to launch a multi-agent team:
 - Feature dev: `TEAM_FEATURE.md` / QA: `TEAM_QA.md`
 - Planning: `TEAM_PLANNING.md` / Design: `TEAM_DESIGN.md` / Refactor: `TEAM_REFACTOR.md`
 
-Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
+A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch. For an exhaustive diff review, run the saved workflow `/review-sweep`.
 `.claude/teams/` ships only with the `full` profile (the `setup.sh` default). `minimal` / `standard` profiles get individual skills only.
 
 ## Development principles
@@ -67,12 +67,12 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - **AI-managed**: `docs/*.md` (project-derived info) / `output/` (deliverables) / `testreport/` (raw tool data)
 - **AI-mutable sections**: `project-config.md` §2 (Tech Stack) / §3 (Commands) / §11 (Known Pitfalls) only. §1 / §4-§10 / §12 / §13 are human-decision areas (immutable to AI)
 - **Primary owner**: `docs/*.md` and `project-config.md` §2/§3 are consolidated by `/implementing-features`. Other skills only report findings
-- **Details** (conflict-prevention tables / docs update rules): `/implementing-features` loads `@.claude/rules/document-management.md` at invocation
+- **Details** (conflict-prevention tables / docs update rules): `.claude/rules/document-management.md` (auto-loads when touching docs/ or output/)
 
 ## Rule hierarchy (`.claude/rules/`)
 
 - No `paths:` = loaded in every session (only `git-conventions.md`)
-- With `paths:` = loaded only when Claude touches a matching file (`document-management.md` / `workflow-advanced.md`)
+- With `paths:` = loaded only when Claude touches a matching file (`document-management.md` / `workflow-advanced.md` / `harness-authoring.md`)
 - Enable language- or layer-specific rules by copying a `.example` and editing its `paths:`
 - Task-specific procedures belong in a skill, not in a rule. "Every time, always do X" belongs in a hook, not in an instruction
 
@@ -87,7 +87,7 @@ Team launch auto-loads `.claude/teams/README.md` and `.claude/agents/README.md`.
 - TDD (when enabled in `project-config.md` §6), unit + E2E
 - Coverage targets in `project-config.md` §6
 - **5 quality gates**: PRD / Design / Task breakdown / Implementation / Verification (each is an optional human intervention point)
-- Each phase skill loads `@.claude/quality-gates.md` at invocation to consult gate criteria
+- Each phase skill consults the gate criteria in `.claude/quality-gates.md` when needed
 - **Set up the verification first**: before starting, decide on a check that returns pass/fail (tests / build / lint / screenshot comparison) and paste its result when done
 - `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted) after source edits (standard = warning / strict = refused)
 
@@ -132,7 +132,7 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate** → Im
 - Even in auto mode (the default on Pro/Max/Team), `ask` always prompts and `deny` applies before the classifier. The classifier also reads this file
 - Hooks remain active even with `--dangerously-skip-permissions`
 - SessionStart hook checks `project-config.md` / `docs/` / `settings.local.json` at session start and injects the head of `output/tasks/PROGRESS.md` when present
-- Detailed deny lists, protected files, and permissions guide are loaded by security-related skills (`/security-scan`, etc.)
+- Details (deny lists, protected files, permission design) live in `.claude/guardrails.md` and `.claude/permissions-guide.md`
 - Project-specific policy in `project-config.md` §10
 
 > **Inviolable principles** (full text in `constitution.md` / `scan-harness.sh` blocks violations):
@@ -142,7 +142,7 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate** → Im
 ## Git operations
 
 - `--no-verify` prohibited / `--force` prohibited in principle / on hook failure, fix the cause (don't disable hooks)
-- Conventional Commits required (details loaded by `/review-fix` / `/implementing-features` from `@.claude/rules/git-conventions.md`)
+- Conventional Commits required (details in the always-loaded `.claude/rules/git-conventions.md`)
 
 ## Phase-specific output styles
 
@@ -164,7 +164,7 @@ Check existing code, patterns, and official docs before implementing. Priority: 
 
 ### 3. Subagent strategy
 
-@.claude/agents/README.md  <!-- Project default subagent definitions and selection guide -->
+Definitions and selection guide: `.claude/agents/README.md` (not imported every session). `scope-guard.sh` enforces the write scope of the 3 write-capable agents.
 
 Use subagents aggressively to avoid main-context bloat. 1 subagent = 1 task. Subagents run in the background by default and return only a summary.
 After implementing, have a fresh-context review subagent (`/code-review`) report only gaps that affect correctness or the stated requirements.
@@ -173,7 +173,7 @@ After implementing, have a fresh-context review subagent (`/code-review`) report
 
 `/rewind` restores files and conversation from a checkpoint (`fileCheckpointingEnabled`). Run `/clear` before an unrelated task.
 After correcting the same issue twice, `/clear` and rewrite the prompt. On compaction, PreCompact backs the transcript up and
-the marker dropped by PostCompact is collected on the next prompt to re-inject the core rules (see `@.claude/guardrails.md`).
+the marker dropped by PostCompact is collected on the next prompt to re-inject the core rules (see `.claude/guardrails.md`).
 
 ### 5. Long-running task handoff
 
@@ -182,7 +182,7 @@ One feature per session, smoke-test before starting, and finish with tests green
 
 ### 6. Detailed procedures (loaded only when needed)
 
-Self-improvement loop / pre-completion verification / autonomous bug fixing / task management / long-running task details are loaded by individual skills from `.claude/rules/workflow-advanced.md`.
+Self-improvement loop / pre-completion verification / autonomous bug fixing / task management / long-running task details: `.claude/rules/workflow-advanced.md` (auto-loads when touching source).
 
 ## Compact instructions
 

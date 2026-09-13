@@ -45,6 +45,7 @@ paths:
 | `git-conventions.md` | always-on | 全セッション(コミットは常に発生しうる) |
 | `document-management.md` | path-specific | `docs/**` `output/**` `input/**` `project-config.md` |
 | `workflow-advanced.md` | path-specific | `src/**` `app/**` `lib/**` `packages/**` `tests/**` |
+| `harness-authoring.md` | path-specific | `.claude/**` `CLAUDE.md`(ハーネス自身を編集するとき) |
 | `language-typescript.md.example` | path-specific(サンプル) | `**/*.{ts,tsx}` |
 | `language-python.md.example` | path-specific(サンプル) | `**/*.py` |
 | `path-backend.md.example` | path-specific(サンプル) | `backend/**/*` |
@@ -105,4 +106,4 @@ ln -s ~/shared-claude-rules .claude/rules/shared
 - ルールは 1 ファイル 50〜100 行を目安に(CLAUDE.md と同じ理由で肥大化を避ける)
 - example は初期状態で**無効**(`.example` 拡張子がついている限り読まれない)
 - ルールが増えすぎるとトークンコストが膨らむ。always-on は最小限、詳細は `paths:` で絞る
-- 詳細は `@.claude/pitfalls.md` の #1, #4 参照
+- 詳細は `.claude/pitfalls.md` の #1, #4 参照

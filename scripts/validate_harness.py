@@ -18,9 +18,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 try:
@@ -55,6 +58,9 @@ NEVER_CONSULTED_PATH_TOOLS = {"Write", "NotebookEdit", "Glob", "MultiEdit"}
 CLAUDE_MD_SOFT_LIMIT = 200   # constitution §6 目安
 CLAUDE_MD_HARD_LIMIT = 220   # constitution §6 ハード上限
 SKILL_DESC_LIMIT = 1536      # description + when_to_use はこの文字数で切り詰められる
+SPEC_DESC_LIMIT = 1024       # Agent Skills 標準(agentskills.io)の description 上限
+REFERENCE_TOC_LINES = 100    # これを超える参照ファイルは冒頭に目次を置く(skill authoring best practices)
+SCOPE_GUARD_SCOPES = {"docs", "output", "tests"}
 ALWAYS_ON_RULE_WARN_LINES = 60
 
 
@@ -267,7 +273,7 @@ def check_hook_scripts(root: Path, referenced: set[str], rep: Report) -> None:
         if proc.returncode != 0:
             rep.error(str(p), f"シェル構文エラー: {proc.stderr.strip()[:120]}")
         if p.name not in referenced:
-            rep.warn(str(p), "settings.json のどのイベントにも登録されていません")
+            rep.warn(str(p), "settings.json にも agent / skill の frontmatter にも登録されていません")
 
 
 def check_agents(root: Path, skill_names: set[str], rep: Report) -> None:
@@ -325,6 +331,17 @@ def check_agents(root: Path, skill_names: set[str], rep: Report) -> None:
         if max_turns is not None and not str(max_turns).isdigit():
             rep.error(where, f"`maxTurns: {max_turns}` は整数である必要があります")
 
+        tools_raw = fm.get("tools")
+        tool_list = tools_raw if isinstance(tools_raw, list) else split_top_level(str(tools_raw or ""))
+        tool_names = {re.sub(r"\(.*\)$", "", str(t)).strip() for t in tool_list}
+        writable = tools_raw is None or bool(tool_names & {"Edit", "Write", "NotebookEdit"})
+        if writable and "scope-guard.sh" not in FM_RE.match(p.read_text(encoding="utf-8")).group(1):
+            rep.warn(
+                where,
+                "書込可能な agent に書込範囲のフック(scope-guard.sh)がありません — "
+                "範囲制限を本文の散文だけにせず frontmatter の hooks.PreToolUse で強制してください",
+            )
+
         for skill in fm.get("skills") or []:
             if str(skill).strip() not in skill_names:
                 rep.error(where, f"`skills:` が参照する `{skill}` が .claude/skills/ に存在しません")
@@ -374,6 +391,9 @@ def check_skills(root: Path, rep: Report) -> set[str]:
             if mm and mm.group(1).strip('"\'') not in ("true", "false"):
                 rep.error(where, f"`{key}: {mm.group(1)}` は true / false のみ指定できます")
 
+        check_skill_writing(p, fm, rep)
+        check_skill_evals(p.parent, rep)
+
         ctx = fm.get("context")
         if ctx is not None and ctx != "fork":
             rep.error(where, f"`context: {ctx}` は不正です (`fork` のみ。既定の main 実行は行を書かない)")
@@ -408,6 +428,219 @@ def check_skills(root: Path, rep: Report) -> set[str]:
                 )
 
     return names
+
+
+def strip_fences(text: str) -> str:
+    """Blank out fenced code blocks so examples inside them are not treated as instructions."""
+    out, fence = [], False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            fence = not fence
+            out.append("")
+            continue
+        out.append("" if fence else line)
+    return "\n".join(out)
+
+
+def check_skill_writing(p: Path, fm: dict, rep: Report) -> None:
+    """Authoring rules from the official skill docs that are cheap to check deterministically."""
+    where = str(p)
+    text = p.read_text(encoding="utf-8")
+    m = FM_RE.match(text)
+    body = strip_fences(text[m.end():] if m else text)
+
+    desc = str(fm.get("description", ""))
+    if len(desc) > SPEC_DESC_LIMIT:
+        rep.warn(where, f"`description` が {len(desc)} 文字 — Agent Skills 標準の上限 {SPEC_DESC_LIMIT} 文字を超えています")
+    if re.match(r"^\s*(I |I'm |I can |You |You can |We |私|僕|あなた)", desc):
+        rep.warn(where, "`description` は三人称で書いてください(一人称・二人称は発見性を下げます)")
+
+    for line in body.splitlines():
+        if re.match(r"^@[\w./~-]+", line):
+            rep.warn(
+                where,
+                f"行頭の `{line.strip()[:60]}` は起動時にファイル全文が添付されます — "
+                "「パス — 読む条件」の箇条書きにして必要時に Read させてください",
+            )
+    if re.search(r"\b20\d\d-\d\d(?:-\d\d)?\b", body):
+        rep.warn(where, "日付つきの記述があります — 変わりうる事項は「旧方式」節に分けてください")
+
+    ref_dir = p.parent / "references"
+    if ref_dir.is_dir():
+        for ref in sorted(ref_dir.glob("*.md")):
+            rt = ref.read_text(encoding="utf-8")
+            if len(rt.splitlines()) > REFERENCE_TOC_LINES and not re.search(r"(?im)^#+\s*(目次|contents|table of contents)\s*$", rt):
+                rep.warn(str(ref), f"{REFERENCE_TOC_LINES} 行を超える参照ファイルに目次がありません — 部分読みでも全体が見えるよう冒頭に置いてください")
+            if re.search(r"\]\((?:\./)?(?:references/)?[\w.-]+\.md\)", strip_fences(rt)):
+                rep.warn(str(ref), "参照ファイルから別の参照ファイルへリンクしています — SKILL.md から 1 階層で直接リンクしてください")
+
+
+def check_skill_evals(skill_dir: Path, rep: Report) -> None:
+    """evals/evals.json in the agentskills.io format (used by the skill-creator plugin)."""
+    ev = skill_dir / "evals" / "evals.json"
+    if not ev.exists():
+        rep.warn(str(skill_dir / "SKILL.md"), "`evals/evals.json` がありません — 典型と境界の 2 ケース以上を agentskills.io 形式で置いてください")
+        return
+    where = str(ev)
+    try:
+        data = json.loads(ev.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 - check_json_files reports the parse error
+        return
+    if not isinstance(data, dict):
+        rep.error(where, "トップレベルはオブジェクトである必要があります")
+        return
+    if data.get("skill_name") != skill_dir.name:
+        rep.error(where, f"`skill_name: {data.get('skill_name')}` がディレクトリ名 `{skill_dir.name}` と一致しません")
+    evals = data.get("evals")
+    if not isinstance(evals, list) or not evals:
+        rep.error(where, "`evals` が空、または配列ではありません")
+        return
+    ids: set[int] = set()
+    for i, case in enumerate(evals):
+        loc = f"{where} [evals[{i}]]"
+        if not isinstance(case, dict):
+            rep.error(loc, "テストケースはオブジェクトである必要があります")
+            continue
+        cid = case.get("id")
+        if not isinstance(cid, int) or isinstance(cid, bool):
+            rep.error(loc, "`id` は整数である必要があります")
+        elif cid in ids:
+            rep.error(loc, f"`id: {cid}` が重複しています")
+        else:
+            ids.add(cid)
+        for key in ("prompt", "expected_output"):
+            if not str(case.get(key, "")).strip():
+                rep.error(loc, f"`{key}` が空です")
+        for key in ("files", "assertions"):
+            val = case.get(key)
+            if val is not None and (not isinstance(val, list) or not all(isinstance(x, str) and x.strip() for x in val)):
+                rep.error(loc, f"`{key}` は空でない文字列の配列である必要があります")
+        for f in case.get("files") or []:
+            if isinstance(f, str) and f.strip() and not (skill_dir / f).exists():
+                rep.error(loc, f"`files` の `{f}` が skill ディレクトリ内に存在しません")
+    if len(evals) < 2:
+        rep.warn(where, "テストケースは 2 件以上(典型 + 境界)を推奨します")
+
+
+def check_frontmatter_hooks(root: Path, rep: Report) -> set[str]:
+    """Hooks declared in agent / skill frontmatter. Returns the hook scripts they reference."""
+    referenced: set[str] = set()
+    files = [p for p in sorted((root / ".claude/agents").glob("*.md")) if p.name != "README.md"]
+    files += sorted((root / ".claude/skills").glob("*/SKILL.md"))
+    for p in files:
+        m = FM_RE.match(p.read_text(encoding="utf-8"))
+        if not m:
+            continue
+        block = m.group(1)
+        for sm in re.finditer(r"/\.claude/hooks/([\w.-]+\.sh)(?:[ \t]+([\w-]+))?", block):
+            script, arg = sm.group(1), sm.group(2)
+            referenced.add(script)
+            if not (root / ".claude/hooks" / script).exists():
+                rep.error(str(p), f"frontmatter の hooks が参照する {script} が存在しません")
+            if script == "scope-guard.sh" and arg not in SCOPE_GUARD_SCOPES:
+                rep.error(str(p), f"scope-guard.sh の未知のスコープ `{arg}` です (許容値: {', '.join(sorted(SCOPE_GUARD_SCOPES))})")
+        if yaml is None:
+            continue
+        try:
+            fm = yaml.safe_load(block)
+        except Exception:  # noqa: BLE001 - parse_frontmatter reports YAML errors
+            continue
+        hooks = fm.get("hooks") if isinstance(fm, dict) else None
+        if hooks is None:
+            continue
+        if not isinstance(hooks, dict):
+            rep.error(str(p), "frontmatter の `hooks` はイベント名をキーにしたマップである必要があります")
+            continue
+        for event, groups in hooks.items():
+            if event not in HOOK_EVENTS:
+                rep.error(str(p), f"frontmatter の hooks の `{event}` は公式のフックイベント名ではありません")
+            for group in groups or []:
+                for hook in (group or {}).get("hooks", []) if isinstance(group, dict) else []:
+                    check_hook_handler(f"{p} [hooks.{event}]", hook, rep)
+    return referenced
+
+
+def check_workflows(root: Path, rep: Report) -> None:
+    """Saved dynamic workflows (.claude/workflows/*.js): meta literal, phases, determinism, syntax."""
+    wf_dir = root / ".claude/workflows"
+    if not wf_dir.is_dir():
+        return
+    for p in sorted(wf_dir.glob("*.js")):
+        where = str(p)
+        text = p.read_text(encoding="utf-8")
+        if not re.match(r"\Aexport const meta = \{", text):
+            rep.error(where, "先頭の文が `export const meta = {` ではありません")
+            continue
+        start = text.index("{")
+        depth, end, quote, esc = 0, None, None, False
+        for i in range(start, len(text)):
+            ch = text[i]
+            if quote:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == quote:
+                    quote = None
+                continue
+            if ch in "'\"":
+                quote = ch
+            elif ch == "`":
+                rep.error(where, "`meta` にテンプレート文字列があります — 純粋なリテラルにしてください")
+                break
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+        if end is None:
+            rep.error(where, "`meta` のオブジェクトリテラルが閉じていません")
+            continue
+        meta = text[start:end + 1]
+        bare = re.sub(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", "''", meta)
+        if re.search(r"\.\.\.|[\w)\]]\s*\(", bare):
+            rep.error(where, "`meta` に関数呼び出しまたはスプレッドがあります — 純粋なリテラルにしてください")
+        for vm in re.finditer(r":\s*([A-Za-z_$][\w$]*)", bare):
+            if vm.group(1) not in ("true", "false", "null"):
+                rep.error(where, f"`meta` の値 `{vm.group(1)}` が変数参照です — リテラルにしてください")
+                break
+        nm = re.search(r"\bname:\s*(?:'([^']*)'|\"([^\"]*)\")", meta)
+        name = (nm.group(1) or nm.group(2)) if nm else ""
+        if not name:
+            rep.error(where, "`meta.name` がありません")
+        elif name != p.stem:
+            rep.warn(where, f"`meta.name: {name}` がファイル名 `{p.stem}` と異なります")
+        if not re.search(r"\bdescription:\s*['\"]", meta):
+            rep.error(where, "`meta.description` がありません")
+        titles = set(re.findall(r"\btitle:\s*'([^']*)'", meta)) | set(re.findall(r'\btitle:\s*"([^"]*)"', meta))
+        body = text[end + 1:]
+        used = set(re.findall(r"\bphase\(\s*['\"]([^'\"]*)['\"]\s*\)", body)) | set(re.findall(r"\bphase:\s*['\"]([^'\"]*)['\"]", body))
+        for t in sorted(used - titles):
+            rep.warn(where, f"phase `{t}` が `meta.phases` にありません")
+        code = "\n".join(l for l in body.splitlines() if not l.strip().startswith("//"))
+        for pat, what in (
+            (r"\bDate\.now\s*\(", "Date.now()"),
+            (r"\bMath\.random\s*\(", "Math.random()"),
+            (r"\bnew Date\s*\(\s*\)", "引数なしの new Date()"),
+            (r"\bimport\s*\(|^\s*import\s", "import"),
+            (r"\brequire\s*\(", "require()"),
+        ):
+            if re.search(pat, code, re.M):
+                rep.error(where, f"workflow では {what} を使えません(再開時の決定性 / モジュール読込不可)")
+        node = shutil.which("node")
+        if node:
+            with tempfile.NamedTemporaryFile("w", suffix=".cjs", delete=False, encoding="utf-8") as tf:
+                tf.write("const meta = " + meta + ";\n(async () => {\n" + body + "\n})();\n")
+                tmp = tf.name
+            try:
+                proc = subprocess.run([node, "--check", tmp], capture_output=True, text=True)
+            finally:
+                os.unlink(tmp)
+            if proc.returncode != 0:
+                err = [l for l in proc.stderr.strip().splitlines() if l.strip()]
+                rep.error(where, f"JavaScript 構文エラー: {(err[-1] if err else proc.stderr)[:120]}")
 
 
 def check_output_styles(root: Path, rep: Report) -> None:
@@ -569,9 +802,10 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_json_files(root, rep)
     skill_names = check_skills(root, rep)
     check_agents(root, skill_names, rep)
-    referenced = check_settings(root, rep)
+    referenced = check_settings(root, rep) | check_frontmatter_hooks(root, rep)
     check_hook_scripts(root, referenced, rep)
     check_output_styles(root, rep)
+    check_workflows(root, rep)
     check_rules(root, rep)
     check_imports_and_limits(root, rep)
     check_constitution(root, rep)

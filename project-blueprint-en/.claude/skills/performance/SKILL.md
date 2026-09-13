@@ -1,10 +1,8 @@
 ---
 name: performance
 description: >
-  Measures and optimizes application performance using a measurement-first approach.
-  Triggers: performance, optimize, slow, bundle size, re-render, memory, profiler, lazy load, memoize.
-  Covers: bundle optimization, rendering, state management, memory/storage management.
-  Takes optional argument: /performance <target-component or instruction>
+  Analyzes bundle size, rendering, state management, and memory measurement-first, and shows optimizations as Before / After numbers.
+  Use when something is slow or when asked to optimize performance, reduce bundle size, or fix memory leaks or re-renders.
 argument-hint: "<target-component or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
@@ -194,7 +192,9 @@ After optimization changes, always update affected `docs/` files.
 - Changes that break existing tests
 - Bypassing hooks with `--no-verify`
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

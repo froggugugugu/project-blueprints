@@ -1,10 +1,8 @@
 ---
 name: review-fix
 description: >
-  Automatically retrieves and analyzes CodeRabbit/Copilot review comments on GitHub PRs, then executes fix → test → commit & push in one go.
-  Triggers: review-fix, fix review, fix review comments, CodeRabbit review fix, Copilot review fix, PR review fix, review comments fix.
-  Use this skill whenever asked to "fix the review comments," "address the review," or "review-fix" after reviews have been posted on a PR.
-  Takes optional argument: /review-fix <PR number>
+  Fetches and triages CodeRabbit / Copilot review comments on a GitHub PR, then fixes, tests, commits, and pushes.
+  Use when asked to fix review comments or address PR feedback. Manual invocation only.
 argument-hint: "<PR number>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Bash(gh *), Agent, WebSearch, WebFetch
 disable-model-invocation: true
@@ -257,8 +255,9 @@ The following comments are excluded from auto-fix and prompt manual action:
 - Changes to files not flagged in comments (except for ripple-effect fixes)
 - Implicit deletion/overwriting of user data
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/rules/git-conventions.md
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

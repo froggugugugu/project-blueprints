@@ -1,11 +1,8 @@
 ---
 name: prd
 description: >
-  This skill should be used when the user asks to "generate a PRD", "create requirements", "write a product requirements document",
-  or mentions "要件定義", "PRD作成", "要求仕様".
-  Source-code read-only — never modifies source code or test files.
-  Outputs structured PRD to output/prd/ (requires Write permission to output/prd/).
-  Takes a file path as argument: /prd <file-path>
+  要求メモから仕様優先の PRD(製品要求仕様書)を生成し、output/prd/ に出力する。
+  「PRD 作成」「要件定義」「要求仕様」の依頼や、input/requirements/ に要求メモを置いた後に使う。
 argument-hint: "<file-path>"
 allowed-tools: Read, Glob, Grep, Bash(git *), Edit(output/**), WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 disallowed-tools: Edit, NotebookEdit
@@ -243,6 +240,8 @@ PRD生成時に以下のドキュメントを参照し、整合性を確保す�
 - プロジェクト固有のデータ（ID、パスワード等）をドキュメントに含めること
 - 既存ドキュメント（`docs/` 配下）の変更
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき

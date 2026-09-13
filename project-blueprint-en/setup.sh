@@ -189,6 +189,8 @@ prune_dir "$TARGET_DIR/.claude/hooks"  "${KEEP_HOOKS[@]}"
 
 if [[ "${#KEEP_TEAMS[@]}" -eq 0 ]]; then
     rm -rf "$TARGET_DIR/.claude/teams"
+    # Saved workflows belong to the team (orchestration) layer, so they follow teams
+    rm -rf "$TARGET_DIR/.claude/workflows"
 fi
 
 # -- Swap in the profile-specific settings.json ------------------------
@@ -268,7 +270,8 @@ GITIGNORE="$TARGET_DIR/.gitignore"
 #   .claude/settings.local.json personal allow rules (sharing them leaks permissions)
 #   .claude/worktrees/          worktrees from --worktree / isolation: worktree
 #   .claude/agent-memory-local/ subagent memory for memory: local
-GITIGNORE_ENTRIES=(testreport/ .claude/settings.local.json .claude/worktrees/ .claude/agent-memory-local/)
+#   .claude/skills/*-workspace/ skill-creator eval workspaces
+GITIGNORE_ENTRIES=(testreport/ .claude/settings.local.json .claude/worktrees/ .claude/agent-memory-local/ .claude/skills/*-workspace/)
 if [[ ! -f "$GITIGNORE" ]]; then
     printf '%s\n' "# Claude Code local state (AI-generated data, personal settings)" > "$GITIGNORE"
     info "Created .gitignore"

@@ -8,6 +8,13 @@ maxTurns: 40
 memory: project
 skills:
   - e2e-testing
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|NotebookEdit"
+      hooks:
+        - type: command
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh tests'
+          timeout: 5
 color: pink
 ---
 
@@ -82,6 +89,7 @@ Test Files  1 passed (1)
 
 ## 制約
 
+- **書込範囲はフックで強制** — frontmatter の `scope-guard.sh tests` が テストファイル 以外への Edit / Write を exit 2 で止める
 - **実装コード変更禁止** — `src/**/*.ts(x)` の非 test ファイルは変更しない
 - **`project-config.md` / `docs/` を変更しない** — 必要なら `doc-synchronizer` agent を呼ぶ
 - **テスト実行で破壊的コマンド禁止** — `safety-check.sh` フックが発動する

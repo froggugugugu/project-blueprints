@@ -1,16 +1,8 @@
 ---
 name: harness-refine
 description: >
-  This skill should be used when the user asks to "refine the harness", "self-improve the blueprint",
-  "restructure .claude/ to match best practices", "audit harness configuration",
-  or mentions "ハーネス補正", "ベストプラクティス準拠", "self-refine", "セルフリファイン",
-  "ハーネス自己点検", "skill/agent/team 配置の見直し".
-  Self-scores and refines the `.claude/` harness scaffolding (skills / agents / teams / rules)
-  under `project-blueprint/` and `project-blueprint-en/` against refreshed official best practices,
-  in lockstep across both language mirrors. Source code and `docs/`/`output/` content are out of scope.
-  Runs a non-mutating Round 0 best-practice refresh, then self-score → self-improve → self-review
-  for 2 fixed rounds, escalating to a human if not approved.
-  Takes optional argument: /harness-refine <target-dir or instruction>
+  .claude/ ハーネス(skill・agent・team・rules・フック設定)を最新の公式ベストプラクティスで自己採点・補正し、日英ミラーを同期する。
+  「ハーネス補正」「ベストプラクティス準拠」「ハーネス自己点検」の依頼で使う。手動起動のみ。
 argument-hint: "<対象ディレクトリ or 補正指示(省略可)>"
 allowed-tools: Read, Glob, Grep, Bash(ls *, find *, wc *, diff *, grep *, git *), Edit, Write, WebFetch, WebSearch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 effort: high
@@ -144,7 +136,7 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 | 5 | 3 層防御維持(原則 ⑤) | hook 削除あり | 同数維持 | + 各 hook の責務 header コメントあり |
 | 6 | 日英ミラー同期(原則 ②) | ファイル数 / 構造に差 | ファイル数一致 | + 章立て・行数まで一致(機械 diff で乖離 0) |
 | 7 | rules オプトイン方式 | `.example` なし or 直読み込み | `.example` あり | + 命名規約(`language-*`, `path-*`, `rule-*`)厳守 |
-| 8 | 5 品質ゲート(原則 ③) | 削減あり | 5 ゲート存在 | + 各 skill から `@.claude/quality-gates.md` 参照 |
+| 8 | 5 品質ゲート(原則 ③) | 削減あり | 5 ゲート存在 | + 各 skill がゲート基準(`.claude/quality-gates.md`)を読む条件つきで参照(行頭 `@` で添付しない) |
 
 **B 群 — Anthropic 公式ベストプラクティス + GitHub TOP5 エッセンス**
 
@@ -152,11 +144,11 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 | - | ---- | ---- | ---- | ---- |
 | 9 | pipeline 連携・発見可能性(superpowers 流) | 前後工程記載なし / dead-skill あり | 一部記載 | 全 skill に「前 → 本 → 後」表 + どの導線からも孤立した skill なし |
 | 10 | 公式 best-practice 準拠 | 古い形式 | 一部準拠 | Round 0 取得の最新形式に準拠 |
-| 11 | skill description 品質(三人称 / トリガー明示) | 一人称・二人称 or 曖昧 | 三人称 | + ≤1024 字 / トリガー具体的 / 重複トリガーなし |
-| 12 | progressive disclosure | SKILL.md 肥大(>500 行)/ 冗長な背景説明 | ≤500 行 | + 相互排他な詳細を第 3 階層(参照ファイル)へ分割 |
-| 13 | agent 最小権限・単一責務 | 読取専門 agent に Write/Edit / 多責務 | tools allowlist あり | + read-only 系は Write 無し / 1 agent=1 task / 要約のみ返す契約を明記 |
+| 11 | skill description 品質(三人称 / 何を + いつ) | 一人称・二人称 or 曖昧 | 三人称 | + ≤1024 字(目安 300)/ 主用途が先頭 / 制約・引数説明を含まない / 重複トリガーなし |
+| 12 | progressive disclosure | SKILL.md 肥大(>500 行)/ 冗長な背景説明 | ≤500 行 | + 行頭 `@` 添付なし / 詳細は `references/` に 1 階層 / 100 行超の参照に目次 |
+| 13 | agent 最小権限・単一責務 | 読取専門 agent に Write/Edit / 多責務 | tools allowlist あり | + read-only 系は Write 無し / 書込可能 agent は frontmatter hooks で書込範囲を強制 / 要約のみ返す契約を明記 |
 | 14 | モデル tier 配置(§13 / BMAD 流) | tier 記載なし | tier 記載あり | + 計画系=高 tier / 機械的作業=低 tier の妥当配置 |
-| 15 | eval-first / 受け入れチェックリスト(spec-kit 流) | 検証観点なし | 出力契約あり | + 代表シナリオ + PASS 条件が SKILL.md に明示 |
+| 15 | eval-first / 受け入れチェックリスト | 検証観点なし | 出力契約あり | + 全 skill に `evals/evals.json`(典型 + 境界の 2 ケース以上・検証可能な assertions) |
 
 **目標**(将来の項目追加でも壊れない %): ラウンド 1 で **≥80%(≥24/30)**、ラウンド 2 で **≥95%(≥28/30)**。
 
@@ -168,7 +160,7 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 スコア 0 / 1 点の項目を補正する。優先順(Round 0 で昇格した再発課題を最優先):
 
 1. **constitution 違反**: 即停止 → 人間確認(自動修正禁止。違反内容を箇条書きで提示)
-2. **CLAUDE.md 行数超過**: トピックを `@.claude/rules/<topic>.md` に切り出し → 真に context を削るなら path-scoped 化
+2. **CLAUDE.md 行数超過**: トピックを `.claude/rules/<topic>.md` に切り出し → 真に context を削るなら path-scoped 化
 3. **frontmatter 欠落 / 命名揺れ / description 品質**: 三人称・トリガー明示・最小権限 allowlist に統一
 4. **三層分離違反**: 該当呼び出しを単方向に矯正(skill → agent は可、agent → team は禁止)
 5. **ミラー乖離**: 不足側にコピーし、文言は既存 `README-en.md` のトーンで翻訳
@@ -312,6 +304,8 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 | code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md 行数 / 起動時 load コスト / キャッシュ無効化要因 / compact 指示 | 2, 12 |
 | claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | CLAUDE.md / rules / skills / hooks / subagents / output styles の使い分け | 4, 10 |
 | code.claude.com/docs `whats-new`(直近 8 週) | 新機能・既定値変更の検知(rubric 自己進化の入力) | 全項目 |
+| agentskills.io `specification` / `skill-creation/evaluating-skills` | description 上限 / `evals/evals.json` 形式 / assertion の書き方 | 11, 15 |
+| claude.com/blog `a-harness-for-every-task-dynamic-workflows-in-claude-code` | workflow パターン(fan-out / adversarial verify / loop-until-done) | 4, 9 |
 | anthropic.com/engineering `writing-tools-for-agents` | ツール定義の明確さ・トークン効率 | 10, 11 |
 | anthropic.com/engineering `effective-context-engineering-for-ai-agents` | コンテキスト curation / sub-agent 隔離 | 12, 13 |
 | anthropic.com/engineering `effective-harnesses-for-long-running-agents` | 起動オリエンテーション / 検証ループ | 9, 15 |
@@ -319,9 +313,11 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 
 > 取得に失敗したソースは degraded として明示し、当該 rubric 項目は前回基準で暫定採点する。
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/guardrails.md
-@.claude/quality-gates.md
-@.claude/rules/workflow-advanced.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/guardrails.md` — フック・deny ルールの挙動を確認するとき
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/rules/workflow-advanced.md` — 完了前検証や長期タスク引き継ぎの手順を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

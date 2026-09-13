@@ -1,10 +1,8 @@
 ---
 name: implementing-features
 description: >
-  Implements features, fixes bugs, and refactors code following TDD workflow.
-  Triggers: implement, create, fix, modify, add, refactor, build, develop, change functionality.
-  Covers: components, stores, schemas, utilities, styling, docs/ and project-config.md synchronization.
-  Takes optional argument: /implementing-features <task-file or instruction>
+  Implements features and fixes bugs with TDD, shows verification results as evidence, and syncs docs/, project-config.md, and the progress note.
+  Use when asked to implement, add a feature, fix a bug, or build a component, and when starting a planned task.
 argument-hint: "<task-file or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 ---
@@ -217,10 +215,11 @@ When implementation is complete, run the dependency direction check command
 - Deleting feature rows or rewriting acceptance criteria in `output/tasks/PROGRESS.md` (only `passes` and the session log may change)
 - Setting a feature to `passes` = ✅ without running the verification command
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/rules/document-management.md
-@.claude/rules/git-conventions.md
-@.claude/rules/workflow-advanced.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/rules/document-management.md` — when checking who updates docs/ and project-config.md
+- `.claude/rules/workflow-advanced.md` — when checking pre-completion verification or long-running handoff steps
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

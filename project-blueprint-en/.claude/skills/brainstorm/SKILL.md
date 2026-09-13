@@ -1,9 +1,8 @@
 ---
 name: brainstorm
 description: >
-  Socratic clarification skill that surfaces assumptions before `/prd`.
-  Triggers: brainstorm, surface-assumptions, clarify, ambiguity-check, pre-prd,
-  what-am-i-missing. Read-only; output to `output/brainstorm/` only.
+  Surfaces the assumptions, stakeholders, and scope boundaries of a vague requirement note through Socratic questions and writes them to output/brainstorm/.
+  Use when asked to brainstorm, clarify assumptions, or find what is missing, and before running /prd on an ambiguous request.
 allowed-tools: Read, Grep, Glob, Edit(output/**), AskUserQuestion
 disallowed-tools: Edit, NotebookEdit
 argument-hint: <requirement-note path, or topic to clarify>
@@ -18,7 +17,7 @@ argument-hint: <requirement-note path, or topic to clarify>
 - `/prd` has not yet been started (this skill is **upstream** of `/prd`)
 - Applicability: any of — the note is under half a page / the "what we won't do" is unclear /
   stakeholders or success metrics are undefined
-  (reference: `@.claude/learnings/L0001-brainstorm-before-prd.md`)
+  (reference: `.claude/learnings/L0001-brainstorm-before-prd.md`)
 
 ## Principles
 

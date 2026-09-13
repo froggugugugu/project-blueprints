@@ -312,6 +312,9 @@ project-blueprint-en/
 |   +-- README.md                            Artifact descriptions
 |   +-- prd/                                 PRD
 |   +-- design/                              Architecture design docs
+|   +-- workflows/                         <-- [Generic] Saved workflow (full profile only)
+|   |   +-- review-sweep.js                  4-angle parallel review + adversarial MUST verification
+|   |
 |   +-- tasks/                               Task breakdown
 |   +-- reports/                             Quality reports
 |       +-- review/                            Code review
@@ -341,13 +344,14 @@ project-blueprint-en/
 |   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
 |   |   +-- verify-gate.sh                   Verification gate: detects unverified stops / completion marks after edits (PostToolUse/Stop/TaskCompleted)
 |   |   +-- permission-denied-log.sh         Auto mode denial log (PermissionDenied)
+|   |   +-- scope-guard.sh                   Write-scope enforcement for agents (agent frontmatter)
 |   |   +-- post-failure-log.sh              Tool failure logging (PostToolUseFailure)
 |   |   +-- subagent-audit.sh                Subagent run auditing (SubagentStart/Stop)
 |   |   +-- pre-compact-backup.sh            Transcript backup before compaction (PreCompact)
 |   |   +-- post-compact-restore.sh          Re-injection marker after compaction (PostCompact)
 |   |   +-- notify-claude.sh                 Completion/confirmation push notifications (Stop/Notification)
 |   |
-|   +-- skills/                            <-- [Generic] 17 skill definitions
+|   +-- skills/                            <-- [Generic] 17 skill definitions (each with evals/evals.json)
 |   |   +-- brainstorm/SKILL.md              Premise elicitation (pre-/prd)
 |   |   +-- prd/SKILL.md                     PRD generation
 |   |   +-- architecture/SKILL.md            Architecture design

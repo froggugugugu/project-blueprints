@@ -7,6 +7,13 @@ effort: medium
 permissionMode: acceptEdits
 maxTurns: 30
 memory: project
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|NotebookEdit"
+      hooks:
+        - type: command
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh output'
+          timeout: 5
 color: yellow
 ---
 
@@ -85,6 +92,7 @@ Do not use it to sync into existing `docs/`.
 
 ## Constraints
 
+- **Write scope is enforced by a hook** — `scope-guard.sh output` in the frontmatter stops Edit / Write outside output/** with exit 2
 - **Avoid overly long documents** — target 200 lines per file. If exceeding, split and add a separate index file
 - **No writes to `docs/`** — `doc-synchronizer` owns that area
 - **No code changes** — `src/`, `tests/` are off-limits

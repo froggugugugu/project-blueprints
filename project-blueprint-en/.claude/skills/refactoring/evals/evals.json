@@ -1,0 +1,26 @@
+{
+  "skill_name": "refactoring",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The store in src/features/assignment/ has grown too big. Split it by responsibility",
+      "expected_output": "It confirms the preconditions (green tests), presents a scope analysis and incremental plan, executes and verifies one step at a time, and reports a Before / After quality comparison (test count, dependency violations, coverage).",
+      "assertions": [
+        "It confirms tests pass before starting",
+        "An incremental refactoring plan is presented",
+        "Tests run after each step",
+        "Test count, dependency-direction violations, and coverage are compared Before / After",
+        "External behavior (public API) is unchanged"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "while refactoring, also add the new filter feature",
+      "expected_output": "It keeps behavior-changing feature work out of the refactoring and proposes splitting it into a separate task (/implementing-features).",
+      "assertions": [
+        "No new feature code is added",
+        "It says the feature should be a separate task"
+      ]
+    }
+  ]
+}

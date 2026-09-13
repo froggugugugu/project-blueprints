@@ -1,10 +1,8 @@
 ---
 name: refactoring
 description: >
-  Executes safe, incremental refactoring with rollback capability.
-  Triggers: refactor, restructure, extract, consolidate, decompose, move, rename, split, merge, reorganize.
-  Covers: feature responsibility migration, store split/merge, component decomposition, utility extraction, type consolidation, dependency rule fixes.
-  Takes optional argument: /refactoring <target-directory or instruction>
+  Restructures code incrementally without changing external behavior (moving responsibilities, splitting stores, decomposing components, fixing dependency direction).
+  Use when asked to refactor, restructure, separate responsibilities, or split components.
 argument-hint: "<target-directory or instruction>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
 effort: high
@@ -251,7 +249,9 @@ After refactoring, always update affected `docs/` files.
 - Using anti-patterns documented in `docs/development-patterns.md`
 - Bypassing hooks with `--no-verify`
 
-## Related references (loaded on demand by Claude)
+## Related references
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+Read only when needed:
+
+- `.claude/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.claude/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

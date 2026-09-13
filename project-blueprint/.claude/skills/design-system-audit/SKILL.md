@@ -1,10 +1,8 @@
 ---
 name: design-system-audit
 description: >
-  This skill should be used when the user asks to "audit design tokens", "unify spacing", "standardize typography",
-  or mentions "デザイントークン", "余白統一", "デザインがバラバラ", "比率", "デザイン整合性監査".
-  Validates design tokens (spacing, typography, color) against ratio principles (golden/silver ratio).
-  Tech-stack agnostic (Web/Qt/QML/mobile). Takes optional argument: /design-system-audit <target-directory or instruction>
+  デザイントークン(余白・タイポグラフィ・色・サイズ)を比率原則で監査し、不整合を記録して標準化する。
+  「デザイントークン」「余白統一」「デザインがバラバラ」「デザイン整合性監査」の依頼で使う。Web / Qt / モバイルに対応。
 argument-hint: "<対象ディレクトリ or 指示>"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
 ---
@@ -273,7 +271,9 @@ border-radius-full= 9999px
 詳細な監査チェックリストは → `references/audit-checklist.md`  
 比率の数値計算参考は → `references/ratio-reference.md`
 
-## 関連参照(必要に応じて Claude が load)
+## 関連参照
 
-@.claude/quality-gates.md
-@.claude/pitfalls.md
+必要になったときだけ Read する:
+
+- `.claude/quality-gates.md` — ゲート通過基準と定量計測表を確認するとき
+- `.claude/pitfalls.md` — 既知の失敗パターンに当たりそうなとき(該当する節だけ読む)

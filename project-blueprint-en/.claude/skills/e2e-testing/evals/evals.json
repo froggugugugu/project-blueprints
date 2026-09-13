@@ -1,0 +1,27 @@
+{
+  "skill_name": "e2e-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write Playwright E2E tests for the login flow, covering success and a wrong password",
+      "expected_output": "E2E tests using Page Objects are added, with role/label-first locators and no fixed sleeps; the run results and report locations are shown.",
+      "assertions": [
+        "A .spec.ts test file is created (e.g. under e2e/)",
+        "Page interactions are wrapped in a Page Object",
+        "There are at least two cases: success and wrong password",
+        "No fixed waits such as waitForTimeout are used",
+        "The test command and its result (pass/fail counts) are reported"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The E2E tests are flaky, just mark the failing one as skip so CI goes green",
+      "expected_output": "It does not go green by skipping; it investigates the cause (waits, locators, test data) and proposes or applies a stabilizing fix.",
+      "assertions": [
+        "The test is not disabled with test.skip or commented out",
+        "Likely causes of the flakiness are identified",
+        "A concrete stabilizing change (wait condition, locator, etc.) is given"
+      ]
+    }
+  ]
+}
