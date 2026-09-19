@@ -175,3 +175,55 @@ dynamic workflows の公式ブログを一次ソースに加えた。
 - SKILL.md 本文の簡潔化(Claude が既に知っている一般論の削減): 17 × 2 ファイルの内容改訂になるため、今回整備した evals を回して差分を測ってから行う
 - sandbox の既定 ON: npm install などネットワークを使う作業を壊すため、引き続きプロジェクト側の判断とする
 - saved workflow の実行確認: 実行はトークンを大きく消費するため行っていない。構文と workflow 規約は validator(node --check を含む)で検査済み
+
+---
+
+## Round 4 — 出力テンプレートの分離・eval 実行系・新仕様の取り込み(2026-09-19)
+
+3 巡目。公式ドキュメントの更新(W35〜W37)を取得し、Round 3 で「eval を回してから」と見送った
+SKILL.md 本文の圧縮を、内容を 1 文字も削らずに済む形で実施した。
+
+### 公式更新の取り込み
+
+| 更新 | 反映先 |
+| ---- | ---- |
+| `AGENTS.md` を直接読む挙動(作業ディレクトリとその上位に CLAUDE.md が 1 つも無いときだけ) | `rules/harness-authoring.md` / `pitfalls.md` #31 / `setup.sh`(既存 AGENTS.md を検出して import 手順を警告) |
+| 制限モード `--restricted`(v2.1.248 以降) | `permissions-guide.md` に節と運用パターン行を追加。フックは project settings 由来なので読まれない点を明記 |
+| `claude plugin eval`(プラグイン用で `evals.json` とは別形式) | `rules/harness-authoring.md` の eval 節に併記 |
+
+### 実施した補正
+
+| 対象 | 変更 |
+| ---- | ---- |
+| 13 skill × 2 ミラー | 本文に埋め込まれていた出力テンプレート(最大 122 行)を `references/*.md` へ逐語で移設し、本文はパスと読む条件のリンクだけにした |
+| 100 行超の参照ファイル 4 本 | 冒頭に目次を追加 |
+| SKILL.md の参照表記 16 か所 | コードスパンから markdown リンクへ変換(SKILL.md から 1 階層で辿れる状態にする) |
+| `workflows/skill-eval.js`(新規) | `evals/evals.json` を skill あり / なしで実行し、実行していない agent が assertions を判定して pass rate を比較する。出力は `testreport/evals/<skill>/iteration-N/` |
+| `.claude/CLAUDE.md` | skill 変更後に `/skill-eval` で比較する導線を追加(200 行ちょうど) |
+| `scripts/validate_harness.py` | 参照ファイルの未リンク検出、`references/` へのリンク切れ検出、本文 300 行超の警告を追加 |
+
+### 定量比較(origin/main → 本ブランチ)
+
+| 指標 | JP | EN |
+| ---- | -- | -- |
+| skill 起動時に読まれる本文 | 4,091 行 / 172KB → 3,344 行 / 153KB | 4,107 行 / 154KB → 3,360 行 / 137KB |
+| 最長 skill | ui-ux-design 349 行 → harness-refine 281 行 | ui-ux-design 349 行 → harness-refine 291 行 |
+| 参照ファイル | 7 本 → 20 本 | 7 本 → 20 本 |
+| saved workflow | 1 本 → 2 本 | 1 本 → 2 本 |
+
+移設なので情報量は減っていない。減ったのは「skill を起動した瞬間に context へ入る量」で、テンプレートは
+レポートを書く段になってから読まれる。
+
+### Round 4 検証
+
+- `bash scripts/validate-harness.sh`: ERROR 0 / WARN 0
+- `bash scripts/validate-harness.sh --test`: 35/35 検出(参照未リンク・リンク切れ・本文超過の 3 件を追加)
+- `bash scripts/validate-harness.sh --hooks`: PASS 80 / FAIL 0
+- `setup.sh` full プロファイルの実展開: workflow 2 本・eval 17 本・参照 20 本を確認。既存 `AGENTS.md` がある
+  ターゲットで import 手順の警告が出ることも確認。展開先に validator をかけて ERROR 0 / WARN 0
+
+### 残課題
+
+- `/skill-eval` と `/review-sweep` の実行確認: どちらもトークン消費が大きいため未実行。構文と workflow 規約は
+  validator(node --check を含む)で検査済み。実行すると skill の description と本文の寄与が数値で出る
+- skill 名の gerund 化(`processing-*` 形式): 公式は推奨止まりで、名前変更は team・docs・利用者の手順に波及するため引き続き見送り

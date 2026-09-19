@@ -37,8 +37,8 @@ usage() {
 
 プロファイル(--profile、省略時は full):
   minimal   skills 5 / agents 2 / hooks 2 / teams なし — 最速で試す軽量構成
-  standard  skills 17 / agents 8 / hooks 13 / teams なし — チーム機能以外フル
-  full      skills 17 / agents 8 / hooks 13 / teams 6 — デフォルト・現行互換
+  standard  skills 17 / agents 8 / hooks 16 / teams なし — チーム機能以外フル
+  full      skills 17 / agents 8 / hooks 16 / teams 6 — デフォルト・現行互換
 
   ※ minimal はセーフガード系フック(session-start等)も間引く軽量構成です。
      project-config.md の「ミニマル/推奨/フル」(§記入量の目安)とは別の軸です。
@@ -263,6 +263,13 @@ if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
 fi
 
 # ── .gitignore に testreport/ を追記 ────────────────────────
+# ── 既存 AGENTS.md との共存を案内 ───────────────────────────
+# Claude Code が AGENTS.md を直接読むのは CLAUDE.md が 1 つも無いときだけ。
+if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
+    warn "AGENTS.md を検出しました。CLAUDE.md があると AGENTS.md は読まれません。"
+    warn "  CLAUDE.md に次の 1 行を追加して取り込んでください: @AGENTS.md"
+fi
+
 GITIGNORE="$TARGET_DIR/.gitignore"
 # Claude Code がリポジトリ内に作るローカル状態も一緒に除外する:
 #   testreport/                 ツール直接出力 / 観測フックのログ

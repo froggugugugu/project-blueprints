@@ -37,8 +37,8 @@ Description:
 
 Profiles (--profile, defaults to full):
   minimal   5 skills / 2 agents / 2 hooks / no teams — fastest way to try it out
-  standard  17 skills / 8 agents / 13 hooks / no teams — everything but team mode
-  full      17 skills / 8 agents / 13 hooks / 6 teams — default, matches current behavior
+  standard  17 skills / 8 agents / 16 hooks / no teams — everything but team mode
+  full      17 skills / 8 agents / 16 hooks / 6 teams — default, matches current behavior
 
   Note: minimal also trims safeguard hooks (e.g. session-start) for a lighter footprint.
   This is a separate axis from the "minimal/recommended/full" guidance in project-config.md
@@ -264,6 +264,13 @@ if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
 fi
 
 # -- Add testreport/ to .gitignore ---------------------------------
+# -- Point out coexistence with an existing AGENTS.md ---------------------
+# Claude Code reads AGENTS.md directly only when no CLAUDE.md exists.
+if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
+    warn "Found AGENTS.md. With a CLAUDE.md present, AGENTS.md is not read."
+    warn "  Add this line to CLAUDE.md to include it: @AGENTS.md"
+fi
+
 GITIGNORE="$TARGET_DIR/.gitignore"
 # Also exclude the local state Claude Code writes inside the repository:
 #   testreport/                 raw tool output / observation-hook logs

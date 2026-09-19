@@ -181,44 +181,7 @@ npx license-checker --csv --out licenses.csv
 
 ## Report Format
 
-```markdown
-# IT Legal Check Report: [Target Overview]
-
-## Disclaimer
-This report is AI-generated reference information and does not constitute legal advice.
-Please consult legal professionals for critical decisions.
-
-## Overview
-- Target Scope: Entire codebase / Specific feature / Dependency packages / Documents
-- Findings: CRITICAL X / WARNING Y / INFO Z
-
-## Findings
-
-### CRITICAL (Action Required)
-- [ ] **[Target]** Finding description. **Basis**: Law/clause. **Recommended Action**: Action method.
-
-### WARNING (Action Recommended)
-- [ ] **[Target]** Finding description. **Basis**: Law/clause. **Recommended Action**: Action method.
-
-### INFO (Reference)
-- [ ] **[Target]** Finding description. **Notes**: Explanation.
-
-## License Summary
-
-| Package | License | Risk | Attribution | Notes |
-| ------- | ------- | ---- | ----------- | ----- |
-
-## Data Protection Summary
-- Personal Information Fields: [List of applicable fields]
-- Storage Method: [Storage method]
-- Encryption: Yes / No / N/A
-
-## Recommended Actions
-1. [High-priority action items]
-
-## Items for Specialist Consultation
-- [Debatable items, high-risk items]
-```
+The skeleton is in [references/report-template.md](references/report-template.md). Read it when needed and copy it as is.
 
 ## Prohibited Actions
 

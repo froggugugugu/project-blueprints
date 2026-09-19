@@ -112,6 +112,18 @@ network at the OS level. To make it a shared setting, use the `sandbox` key in `
 - Some performance overhead (a few percent and up)
 - Works independently of auto mode and combines with it (in plan mode, auto-allow doesn't widen approvals)
 
+## 4. Restricted mode (`--restricted`)
+
+Starting with `claude --restricted` gives the session the minimum privileges intended for cases like an evaluation harness driving `claude` on a shared machine.
+
+- Built-in tools that run commands or code, and `WebFetch`, are dropped from the defaults (only those named individually in `--tools` come back)
+- File tools are confined to the working directories
+- Only managed settings and `--settings` are read (personal and project settings are not)
+- `bypassPermissions` is refused, and the auto mode classifier cannot approve protected-path writes
+
+This template's hooks live in the project's `settings.json`, so restricted mode does not read them.
+When running evaluations in restricted mode, scope the guardrails with `--tools` and the working directory instead of relying on hooks.
+
 ## Recommended operating patterns
 
 | Scenario | Recommended setup |
@@ -120,6 +132,7 @@ network at the OS level. To make it a shared setting, use the `sandbox` key in `
 | Stable operation | auto mode + `/goal` for long unattended tasks. `strict` profile turns the verification gate into a send-back |
 | High-risk investigation (vulnerability checks etc.) | Enable the sandbox and run in a separate worktree (`--worktree`) |
 | CI / GitHub Actions | `--permission-mode dontAsk` + a strict `--allowedTools` allowlist + `--max-turns N` |
+| Run an evaluation harness on a shared machine | `claude --restricted` plus an explicit `--tools` list |
 | Fully unattended inside a container | `--dangerously-skip-permissions` (container / VM required; deny rules and hooks still apply in this mode) |
 
 ## Alignment with the 3-layer defense model

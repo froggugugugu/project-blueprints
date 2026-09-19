@@ -112,6 +112,18 @@ auto mode でも毎回人間の確認を通る。
 - パフォーマンスオーバーヘッドあり(数 % 〜)
 - auto mode とは独立に動作し、併用できる(plan mode では auto-allow が承認範囲を広げない)
 
+## 4. 制限モード(`--restricted`)
+
+`claude --restricted` で起動すると、共有マシンで評価ハーネスが `claude` を駆動するような状況を想定した最小権限で始まる。
+
+- コマンドやコードを実行する組み込みツールと `WebFetch` が既定から外れる(`--tools` で個別に挙げたものだけ戻る)
+- ファイル系ツールは working directory に限定される
+- 設定は managed settings と `--settings` だけを読む(個人・プロジェクトの settings は読まない)
+- `bypassPermissions` は拒否され、auto mode の分類器も保護パスへの書込を承認できない
+
+本テンプレートのフックはプロジェクトの `settings.json` に登録されているため、制限モードでは読まれない。
+制限モードで評価を回すときは、ガードレールをフックに頼らず `--tools` と working directory で絞る。
+
 ## 推奨運用パターン
 
 | シーン | 推奨設定 |
@@ -120,6 +132,7 @@ auto mode でも毎回人間の確認を通る。
 | 安定運用フェーズ | auto mode + `/goal` で長時間タスクを自走。`strict` プロファイルで検証ゲートを差し戻し化 |
 | 高リスク調査(脆弱性検証等) | sandbox を有効化し、別ワークツリー(`--worktree`)で実行 |
 | CI / GitHub Actions | `--permission-mode dontAsk` + `--allowedTools` の厳密な allowlist + `--max-turns N` |
+| 共有マシンで評価ハーネスを回す | `claude --restricted` + `--tools` で必要なツールだけを明示 |
 | コンテナ内の完全無人実行 | `--dangerously-skip-permissions`(コンテナ / VM 必須。deny とフックはこのモードでも有効) |
 
 ## 3 層防御モデルとの整合

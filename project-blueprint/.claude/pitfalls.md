@@ -254,6 +254,14 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **原因** | `permissionMode: acceptEdits` はファイル編集を自動承認する。本文の範囲制限は指示でしかなく、長い作業やプロンプトインジェクションで破られる |
 | **対策** | frontmatter の `hooks.PreToolUse` に `scope-guard.sh <docs / output / tests>` を登録し、範囲外の Edit / Write を exit 2 で止める。本テンプレートは 3 agent に適用済み(workspace trust 後に有効) |
 
+### 31. AGENTS.md が読まれない
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 他のコーディングエージェント向けに整備した `AGENTS.md` の指示が効かない |
+| **原因** | Claude Code が `AGENTS.md` を直接読むのは、作業ディレクトリとその上位に `CLAUDE.md` / `.claude/CLAUDE.md` / `CLAUDE.local.md` が 1 つも無いときだけ。本テンプレートは `CLAUDE.md` を置くため、既存の `AGENTS.md` は読まれなくなる |
+| **対策** | `CLAUDE.md` に `@AGENTS.md` を書いて取り込む(内容は複製しない)。`setup.sh` は既存の `AGENTS.md` を検出したらこの手順を警告として表示する |
+
 ## 推奨セッション運用コマンド
 
 | シーン | コマンド | 効果 |

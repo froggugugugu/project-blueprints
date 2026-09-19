@@ -100,55 +100,7 @@ Consider at least 2 alternatives, and for each:
 
 Follow this template:
 
-```markdown
-# ADR-NNN: [Decision Title]
-
-## Status
-
-[Proposed | Accepted | Deprecated | Superseded by ADR-XXX]
-
-## Context
-
-[Background, situation, and problem that necessitated this decision]
-
-## Decision
-
-[Clearly state the chosen approach in one sentence]
-
-[Detailed explanation of the decision]
-
-## Alternatives Considered
-
-### Alternative A: [Name]
-
-- **Pros**: ...
-- **Cons**: ...
-- **Rejection reason**: ...
-
-### Alternative B: [Name]
-
-- **Pros**: ...
-- **Cons**: ...
-- **Rejection reason**: ...
-
-## Consequences
-
-### Positive
-
-- ...
-
-### Negative / Risks
-
-- ...
-
-### Related Decisions
-
-- [ADR-XXX](ADR_XXX_title.md): [Relationship description]
-
-## References
-
-- [Links to reference materials or literature]
-```
+The skeleton is in [references/adr-template.md](references/adr-template.md). Read it when needed and copy it as is.
 
 ### Step 5: Update Index
 

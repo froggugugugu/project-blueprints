@@ -32,6 +32,7 @@ from Claude Code's official Agent Teams feature. The two are meant to be combine
   script, so intermediate results never enter context. Keep `TEAM_*.md` for the human-gated lifecycle
 - The bundled saved workflow `/review-sweep` (`.claude/workflows/review-sweep.js`, full profile only) reviews a diff from 4 angles in parallel,
   verifies each MUST finding with 3 adversarial votes, and writes a single report. It automates TEAM_QA's review step with agents that lack the implementer's context
+- `/skill-eval skill=<name>` (same directory) runs a skill's `evals/evals.json` with and without the skill and compares pass rates
 
 ## Quick Start
 

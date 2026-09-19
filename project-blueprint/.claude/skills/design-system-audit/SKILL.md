@@ -139,7 +139,7 @@ border-radius-full= 9999px
 ## STEP 2: 整合性監査チェックリスト
 
 既存画面を評価する際は以下の観点で確認する。  
-→ 詳細チェックリストは `references/audit-checklist.md` を参照。
+→ 詳細チェックリストは [references/audit-checklist.md](references/audit-checklist.md) を参照。
 
 ### 監査カテゴリ一覧
 
@@ -173,34 +173,7 @@ border-radius-full= 9999px
 
 ### 新規コンポーネント実装時
 
-```
-このコンポーネントを実装する際は、以下のデザイントークンに従ってください。
-
-【スペーシング基準】
-- 要素間余白: 8の倍数グリッド（8, 16, 24, 32, 48, 64px）
-- セクション間: 32px (space-6)
-- ボタン内余白: 上下12px × 左右20px
-
-【タイポグラフィ】
-- 画面タイトル: 28px / weight-700
-- セクション見出し: 20px / weight-600
-- 本文: 14px / weight-400
-- 補足テキスト: 12px / weight-400
-
-【コンポーネントサイズ】
-- ボタン高さ: 40px (md) / 32px (sm) / 48px (lg)
-- 入力欄高さ: 40px (ボタンmdと統一)
-- アイコン: 24px (標準)
-
-【タイトル位置ルール】
-- 画面タイトル上余白: 32px
-- 画面タイトル下余白: 24px
-- 水平位置: 左揃え
-
-【NG パターン】
-- トークン外の任意ピクセル値を使わない（例: 15px, 22px, 37px）
-- 同じ役割のコンポーネントで異なるサイズを使わない
-```
+雛形は [references/templates.md](references/templates.md) の「新規コンポーネント実装時」にある。必要になったときに読み、そのままコピーして埋める。
 
 ### 既存画面の修正指示時
 
@@ -225,33 +198,7 @@ border-radius-full= 9999px
 
 プロジェクトの `design-system.md` または `DESIGN_TOKENS.md` に以下の構造で保管する。
 
-```markdown
-# [プロジェクト名] デザインシステム
-
-## 基本原則
-- ベースサイズ: Npx
-- スケール比率: [比率名] (×N.NNN)
-- グリッド単位: Npx
-
-## デザイントークン
-### スペーシング
-...（STEP 1 の値を転記）
-
-### タイポグラフィ
-...
-
-### コンポーネント
-...
-
-## 画面ごとのルール
-### タイトル・見出し位置
-...
-
-## 監査ログ
-| 日付 | 監査者 | 対象画面 | 問題件数 | 対応状況 |
-|------|--------|----------|----------|----------|
-| yyyy-mm-dd | ___ | ___ | N | 対応済/未対応 |
-```
+雛形は [references/templates.md](references/templates.md) の「STEP 4: デザインシステム保管ドキュメントの生成」にある。必要になったときに読み、そのままコピーして埋める。
 
 ---
 
@@ -268,8 +215,8 @@ border-radius-full= 9999px
 
 ## 参考ファイル
 
-詳細な監査チェックリストは → `references/audit-checklist.md`  
-比率の数値計算参考は → `references/ratio-reference.md`
+詳細な監査チェックリストは → [references/audit-checklist.md](references/audit-checklist.md)  
+比率の数値計算参考は → [references/ratio-reference.md](references/ratio-reference.md)
 
 ## 関連参照
 

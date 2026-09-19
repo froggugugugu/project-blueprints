@@ -1,12 +1,30 @@
 # Project Blueprints
 
-[**English**](README-en.md) · [日本語] · [CHANGELOG](CHANGELOG.md) · [constitution](constitution.md)
+**Claude Code を「開発ハーネス」として立ち上げるためのテンプレート。**
 
-> Claude Code 用の AI 協調開発ハーネス。**日英構造ミラー**と**self-SAST**(ハーネス自身の検査)が特徴。
-> 要求メモから PRD・設計・実装・QA まで AI に委ねる。
-> `project-config.md` の **§2(技術スタック)を 1 行書くだけ**で動く。
+要求メモ 1 枚から、PRD → 設計 → タスク分解 → 実装 → レビューまでを同じ型で回す。
+指示書・スキル・サブエージェント・安全機構・検証ゲートをひとそろいにして、コピーした時点で動く。
+対象は言語もフレームワークも問わない。
 
-**前提**: [Claude Code](https://docs.claude.com/en/docs/claude-code) が `PATH` にインストール済みであること。
+[サイト](https://froggugugugu.github.io/project-blueprints/) ·
+[English](README-en.md) ·
+[不変原則](constitution.md) ·
+[変更履歴](CHANGELOG.md)
+
+![5 行 quickstart デモ](.github/demo/quickstart.gif)
+
+---
+
+## これは何か
+
+- **AI 協調開発の作業環境**を、プロジェクト開始時に 1 コマンドで用意するための scaffold
+- 人間が決めること（技術選定・品質基準・ポリシー）は `project-config.md` の 13 セクションに集約する
+- AI が作って維持するもの（`docs/` `output/` `testreport/`）は生成物として分離する
+- 日本語版 `project-blueprint/` と英語版 `project-blueprint-en/` を**同じ構造で**同梱する
+
+**これでないもの**: アプリケーションのひな形ではない。React も FastAPI も Rails も入っていない。
+入っているのは Claude Code に渡す指示と仕組みだけで、対象プロジェクトの技術は何でもよい。
+既存プロジェクトに後から足すこともできる。
 
 ---
 
@@ -14,99 +32,118 @@
 
 ```bash
 git clone https://github.com/froggugugugu/project-blueprints.git
-bash project-blueprints/project-blueprint/setup.sh ./my-app
-printf '\n## §2 技術スタック\n- TypeScript / Vite / Vitest\n' >> ./my-app/project-config.md
-cd ./my-app && claude
-# → Claude Code が起動したらプロンプトで:  /plan ログイン機能の設計
+cd project-blueprints
+bash project-blueprint/setup.sh /path/to/your-project   # 英語版は project-blueprint-en/setup.sh
+cd /path/to/your-project
+claude
 ```
 
-この時点で `/brainstorm`(要件曖昧時)→ `/prd` → `/plan` までの**設計フェーズ**が動きます。
-`/implementing-features` 等の実装系 skill は §4(アーキテクチャ)を埋めてから — 詳細は下の「[段階的に使う](#段階的に使う)」を参照。
+| プロファイル | 入るもの | 向いている場面 |
+| --- | --- | --- |
+| `--profile minimal` | skills 5 / agents 2 / hooks 2 | まず触る。既存プロジェクトに最小で足す |
+| `--profile standard` | skills・agents・hooks は全部、teams と workflows なし | 1 人で全工程を回す |
+| `--profile full`（既定） | すべて | 複数エージェント編成まで使う |
 
-![5 行 quickstart デモ](.github/demo/quickstart.gif)
+### 最初に書くのは 3 項目だけ
 
-> 5 行を実行すると `git clone` → `setup.sh`(constitution.md・skills・hooks 配置)
-> → `printf` で §2 追記 → `claude` 起動 → `/plan ログイン機能の設計` を Opus 5
-> が受理 — までを **30 秒で確認**できます。
+```markdown
+## §1. プロジェクト基本情報
+プロジェクト名: MyApp
+概要: 社内向けの在庫管理
 
----
+## §2. 技術スタック
+- Python 3.13 / FastAPI
 
-## なぜこれ?— 5 つの差別化要素
+## §3. コマンド
+- test: pytest
+- lint: ruff check .
+```
 
-| | 強み | 概要 |
-|---|---|---|
-| 🌏 | **日英構造ミラー** | `project-blueprint/`(日本語)と `project-blueprint-en/`(英語)が完全同期。多言語対応の Claude Code ハーネスは現状ほぼ存在しない |
-| 🛡️ | **Self-SAST**(`scan-harness.sh`) | ハーネス自身を SAST して secret 漏れ・constitution 改竄・deny 弱体化を検出 |
-| 📜 | **Constitution-driven** | `constitution.md` の不変原則 7 つを sha256 hash で監視。AI が改竄しようとしたらフックがブロック |
-| 🚦 | **5 品質ゲート** | PRD / 設計 / タスク / 実装 / 検証 の各段階で人間介入ポイント(任意) |
-| 🧩 | **三層分離** | skill(作業)/ team(編成)/ agent(専門家)を混ぜない設計。layer 間の循環参照を禁止 |
-| 🪶 | **Pro 契約フレンドリー** | **セッション開始時**のロードを ~7K tokens に圧縮(従来比 70% 減)。詳細(`pitfalls.md` / `guardrails.md` 等)は各 skill が起動時に必要なものを `@import` で取得する遅延読込設計。skill を使わないセッションでは context window を 17K 以上節約 |
-
----
-
-## いま入っているもの
+残り 10 セクションは空欄のままで動く。必要になったときに足せばよい。
 
 ```text
-17 skills    /brainstorm, /prd, /architecture, /plan, /implementing-features,
-             /code-review, /security-scan, /legal-check, /performance,
-             /refactoring, /e2e-testing, /ui-ux-design, /hig-compliance,
-             /design-system-audit, /adr, /review-fix, /harness-refine
- 6 teams     PJM (full lifecycle) / Feature / QA / Planning / Design / Refactor
- 8 agents    explorer, planner, researcher, security-reviewer,
-             performance-analyst, doc-synchronizer, doc-writer, test-writer
-16 hooks     PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) / PostToolUse / PostToolUseFailure /
-             PermissionDenied / UserPromptSubmit / SessionStart / SessionEnd / SubagentStart /
-             SubagentStop / TaskCompleted / PreCompact / PostCompact / Stop(検証ゲート) / Notification
-             + agent frontmatter の scope-guard(書込範囲の強制)
- 4 styles    phase-prd, phase-design, phase-implementation, phase-review
- 5 rules     document-management, git-conventions, workflow-advanced, harness-authoring (+ README)
- 1 workflow  review-sweep — 4 観点並列レビュー + MUST 指摘の反証検証(saved dynamic workflow)
- 1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
- 3 CI        claude-review.yml（@claude 対話レビュー）/
-             claude-skills-ci.yml（毎 PR に /code-review + /security-scan）/
-             claude-scheduled-audit.yml（週次 /security-scan + /legal-check → Issue）
+/plan 在庫の棚卸し機能の設計
 ```
 
-`.claude/` を編集したら、コミット前に検証ゲートを通す:
-
-```bash
-bash scripts/validate-harness.sh
-```
-
-frontmatter の enum 逸脱、参照されない権限ルール(`Write(path)` 等)、参照先の無い hook 登録、
-解決しない `@import`、constitution hash、日英構成の一致を **LLM を使わず決定論的に**チェックする。
-バリデータ自身の負のテストは `--test`、npm パッケージの実在確認は `--online`。
-
-詳細仕様は [`project-blueprint/README.md`](project-blueprint/README.md) と [`CHANGELOG.md`](CHANGELOG.md) を参照。
+これだけで `project-config.md` を読み取り、構造化された設計ドキュメントが `output/` に出る。
 
 ---
 
-## 導入方法は clone + `setup.sh` のみ
+## スキルの流れと品質ゲート
+
+呼び出し順が決まっている。途中の 5 か所で人間が止めて直せる。全部使う必要はなく、1 スキルだけでも成立する。
+
+| 順 | スキル | 役割 | ゲート |
+| --- | --- | --- | --- |
+| 1 | `/brainstorm` | 要求が曖昧なときに Socratic な質問で輪郭を出す（読取専用） | |
+| 2 | `/prd` | 要求メモから PRD を生成。技術選定より先に仕様を固める | 🚏 PRD |
+| 3 | `/architecture` | システム構成と依存方向を設計 | 🚏 設計 |
+| 4 | `/plan` | 設計をタスクに分解し、着手順を決める | 🚏 タスク分解 |
+| 5 | `/implementing-features` | TDD で実装。`docs/` と `project-config.md` の更新も引き受ける | 🚏 実装 |
+| 6 | `/code-review` `/security-scan` `/legal-check` `/e2e-testing` `/performance` `/refactoring` | 別コンテキストで検証する | 🚏 検証 |
+
+補助スキル: `/ui-ux-design` `/hig-compliance` `/design-system-audit` `/adr` `/review-fix` `/harness-refine`。
+`/harness-refine` はハーネス自身を自己診断して補強するメタスキル。
+
+---
+
+## 入っているもの
+
+```text
+17 skills    企画・設計・実装・レビュー・セキュリティ・法務・性能・リファクタ
+             長い詳細は references/(20 ファイル)に分離し、SKILL.md 本文は手順だけに保つ
+ 8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
+             doc-synchronizer / doc-writer / test-writer
+ 6 teams     TEAM_PJM(フルライフサイクル・推奨) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
+16 hooks     PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact / Stop など
+             危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制
+ 4 styles    phase-prd / phase-design / phase-implementation / phase-review
+ 7 rules     常時 4(git 規約・ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
+             + 言語別サンプル 3(.example を外して有効化)
+ 2 workflows review-sweep(4 観点並列レビュー + 反証検証)/ skill-eval(evals を with・without で実行)
+34 evals     全 17 skill に evals.json(典型 + 境界)、assertions 128 件
+ 1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
+ 3 CI        claude-review.yml(@claude 対話レビュー)/
+             claude-skills-ci.yml(毎 PR に /code-review + /security-scan)/
+             claude-scheduled-audit.yml(週次 /security-scan + /legal-check → Issue)
+```
+
+---
+
+## 設計の柱
+
+- **人間と AI の責務を分ける** — 人間の決定は 1 ファイルに集約し、AI 管理領域と混ぜない
+- **指示ではなく強制にする** — 「毎回必ず X」は文章ではなくフックにする。3 層防御（フック → deny/ask → allow）
+- **止めどころを用意する** — 5 つの品質ゲートに加え、ソースを編集したまま検証せず終了するとフックが検知する
+- **文脈を食い潰さない** — CLAUDE.md は 200 行以内。スキルは必要になった詳細だけを読む
+- **期待動作をテストで持つ** — スキルを変えたら `/skill-eval` で with・without の pass rate を比べる
+- **壊れたら CI が落ちる** — ハーネス自身の静的検証があり、日英の構造ずれも検出する
+
+不変原則 7 つは [`constitution.md`](constitution.md) にあり、ハッシュで改変を検知する。
+
+---
+
+## 検証
+
+`.claude/` を編集したら、コミット前に検証ゲートを通す。
 
 ```bash
-bash setup.sh <ターゲットディレクトリ> --profile <minimal|standard|full>
+bash scripts/validate-harness.sh            # 両ミラー + 日英の構造一致
+bash scripts/validate-harness.sh --test     # バリデータ自身の負のテスト
+bash scripts/validate-harness.sh --hooks    # フックの機能テスト
+bash scripts/validate-harness.sh --online   # .mcp.json の npm パッケージ実在確認
 ```
 
-**plugin / marketplace 配布は採用していません。** 2026-04 に一度導入し、2026-06 に撤回、
-2026-08 に再評価して再び撤回しました。理由は好みではなく構造的なものです。
+LLM を使わず決定論的に、次を検査する。
 
-plugin が宣言できるコンポーネントは `skills` / `agents` / `outputStyles` / `hooks` の 4 種だけで、
-`project-config.md` / `docs/` / `input/` / `output/` / `.claude/rules/` / `.claude/teams/` は配布できません。
-一方このハーネスは:
+- frontmatter の enum 逸脱、参照されない権限ルール（`Write(path)` 等）
+- 参照先の無い hook 登録、解決しない `@import`、`references/` の壊れたリンク
+- skill 本文の長さ、description の文字数と人称、行頭の `@`（起動時に全文添付される書き方）
+- `evals/evals.json` のスキーマ、workflow の `meta` 宣言と決定論を壊す関数
+- `constitution.md` のハッシュ、日英ミラーの構成一致
 
-```
-17 / 17 skill が、plugin 配布では提供されないファイルを参照している
-
-  docs/               16 / 17        project-config.md   14 / 17
-  output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .claude/rules/       4 / 17
-```
-
-つまり plugin 単体でインストールしても、**全 skill が前提を欠いた状態で動きます**。
-本リポジトリは汎用ツール集ではなく**プロジェクトの scaffold** であり、
-「skill だけ配って周辺ファイルは配らない」形式とは相性が合いません。
-
-> 再検討するなら、上記の依存が解消されたという新しい根拠が必要です。
+CI（`.github/workflows/validate-harness.yml`）が push と PR で同じものを走らせる。
+`/harness-refine` は LLM 側の対になる仕組みで、このゲートが通ってから使う。
 
 ---
 
@@ -114,42 +151,66 @@ plugin が宣言できるコンポーネントは `skills` / `agents` / `outputS
 
 | ステップ | 記入セクション | 動くようになるもの |
 | --- | --- | --- |
-| **ミニマル** | §1 + §2 + §3 | `/brainstorm`, `/prd`, `/plan` で要件・設計 |
-| **推奨** | + §4(アーキテクチャ) | `/implementing-features` で TDD 実装、全チーム利用 |
-| **フル** | 全 13 セクション | `/security-scan`, `/legal-check`, モデル選定戦略まで |
-
-> 「5 行で動かす」では `§2` だけ仮埋めしている。本格運用では `§1`(プロジェクト名)と `§3`(ビルド/テスト/lint コマンド)も埋めると、より多くの skill が機能する。
-
----
-
-## 主な使い方
+| **ミニマル** | §1 + §2 + §3 | `/brainstorm` `/prd` `/plan` で要件・設計 |
+| **推奨** | + §4（アーキテクチャ） | `/implementing-features` で TDD 実装、全チーム利用 |
+| **フル** | 全 13 セクション | `/security-scan` `/legal-check`、モデル選定戦略まで |
 
 ```bash
 # フルライフサイクル(推奨)
 .claude/teams/TEAM_PJM.md input/requirements/REQ_001.md
 
 # スキル単体
-/brainstorm input/requirements/REQ_001.md   # 要求が曖昧なとき
 /prd        input/requirements/REQ_001.md   # PRD 生成
 /plan       ユーザー認証機能の設計           # タスク分解
 /implementing-features output/tasks/TASK_auth.md
+/code-review src/features/auth/
 ```
+
+MCP サーバーを足すときは `cp .mcp.json.template .mcp.json` に書いてコミットする（プロジェクト共有）。
 
 ---
 
-## 📚 さらに知る
+## 導入は clone + `setup.sh` のみ
+
+**plugin / marketplace 配布は採用していない。** 2026-04 に一度導入し、2026-06 に撤回、
+2026-08 に再評価して再び撤回した。理由は好みではなく構造的なもの。
+
+plugin が宣言できるのは `skills` / `agents` / `outputStyles` / `hooks` の 4 種だけで、
+`project-config.md` / `docs/` / `input/` / `output/` / `.claude/rules/` / `.claude/teams/` は配布できない。
+一方このハーネスは次の状態にある。
+
+```text
+17 / 17 skill が、plugin 配布では提供されないファイルを参照している
+
+  docs/               16 / 17        project-config.md   14 / 17
+  output/             15 / 17        pitfalls.md         12 / 17
+  quality-gates.md    15 / 17        .claude/rules/       4 / 17
+```
+
+plugin 単体でインストールしても、**全 skill が前提を欠いた状態で動く**。
+これは汎用ツール集ではなくプロジェクトの scaffold であり、
+「skill だけ配って周辺ファイルは配らない」形式とは相性が合わない。
+
+> 再検討するなら、上記の依存が解消されたという新しい根拠が必要。
+
+---
+
+## さらに知る
 
 - [`project-blueprint/README.md`](project-blueprint/README.md) — セットアップの詳細手順
-- [`constitution.md`](constitution.md) — 7 不変原則(変更プロトコル付き)
-- [`project-blueprint/.claude/CLAUDE.md`](project-blueprint/.claude/CLAUDE.md) — 開発ガイド(横断ルール、200 行以内)
-- [`project-blueprint/.claude/pitfalls.md`](project-blueprint/.claude/pitfalls.md) — AI 協調開発の落とし穴 20 件
+- [`project-blueprint/.claude/CLAUDE.md`](project-blueprint/.claude/CLAUDE.md) — 開発ガイド（横断ルール、200 行以内）
+- [`project-blueprint/.claude/guardrails.md`](project-blueprint/.claude/guardrails.md) — 安全機構の全体像
+- [`project-blueprint/.claude/pitfalls.md`](project-blueprint/.claude/pitfalls.md) — AI 協調開発の落とし穴
 - [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 17 skill の SKILL.md
-- [`CHANGELOG.md`](CHANGELOG.md) — リリースノート(SemVer + Keep a Changelog)
+- [`constitution.md`](constitution.md) — 7 不変原則（変更プロトコル付き）
+- [`CHANGELOG.md`](CHANGELOG.md) — リリースノート（SemVer + Keep a Changelog）
+
+---
 
 ## Acknowledgments — インスパイア元への謝辞
 
 本ブループリントは、以下の優れた Claude Code ハーネス OSS から**概念**を学び、
-独立に実装したものです。各プロジェクトの作者と community に深く感謝します。
+独立に実装したもの。各プロジェクトの作者と community に深く感謝する。
 
 | プロジェクト | ライセンス | 借りた概念 | 本リポでの実装 |
 |---|---|---|---|
@@ -160,8 +221,7 @@ plugin が宣言できるコンポーネントは `skills` / `agents` / `outputS
 | [claude-flow](https://github.com/ruvnet/claude-flow) | MIT | topology メタデータ(hierarchical / mesh / star) | [`project-blueprint/.claude/teams/README.md`](project-blueprint/.claude/teams/README.md) に分類軸として導入 |
 
 本リポジトリ内のすべての実装は独立に書かれており、各プロジェクトのコードを
-直接流用・複製したものではありません。各プロジェクトのライセンス(全 MIT)と
-本リポ(MIT)は完全互換です。
+直接流用・複製したものではない。各プロジェクトのライセンス（全 MIT）と本リポ（MIT）は完全互換。
 
 ## ライセンス
 
