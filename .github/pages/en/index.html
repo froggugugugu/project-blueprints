@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Blueprints — a Claude Code development harness template</title>
+<meta name="description" content="A Claude Code template that takes a requirement note through PRD, design, implementation and review. Ships instructions, skills, subagents, guardrails and a validation gate in Japanese and English.">
+<meta property="og:title" content="Project Blueprints">
+<meta property="og:description" content="Stand up Claude Code as a development harness: 17 skills, 8 subagents, 6 teams, 16 hooks, and a deterministic validation gate.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://froggugugugu.github.io/project-blueprints/en/">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="./">Project Blueprints</a>
+    <nav aria-label="Site navigation">
+      <a href="#flow">Flow</a>
+      <a href="#inside">Inside</a>
+      <a href="#pillars">Design</a>
+      <a href="#start">Install</a>
+      <a href="#verify">Validation</a>
+      <a href="#docs">Docs</a>
+      <a class="lang" href="../">日本語</a>
+      <a href="https://github.com/froggugugugu/project-blueprints">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">MIT licensed · Japanese and English mirrors</span>
+    <h1>Stand up Claude Code<br>as a development harness.</h1>
+    <p class="lead">
+      One template that carries a requirement note through PRD, design, task breakdown, implementation and review.
+      Instructions, skills, subagents, guardrails and a validation gate arrive together and work as soon as they are copied.
+      Nothing here is tied to a language or a framework.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/froggugugugu/project-blueprints">View the repository</a>
+      <a class="btn btn-ghost" href="#start">Install in five lines</a>
+      <a class="btn btn-ghost" href="../README-en.html">Read the README</a>
+    </div>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="wrap">
+    <h2>It starts with a single requirement note</h2>
+    <p class="section-lead">
+      The skills have a defined order, with five quality gates where a human can stop and correct the work.
+      You do not have to use all of them. One skill on its own is a valid way to start.
+    </p>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><div><code>/brainstorm</code><p>Socratic questions that give a vague request its shape. Read-only.</p></div></div>
+      <div class="step"><span class="n">2</span><div><code>/prd</code><p>Turns the note into a PRD. Specification first, technology later.<span class="gate">Gate 1</span></p></div></div>
+      <div class="step"><span class="n">3</span><div><code>/architecture</code><p>System structure and the allowed direction of dependencies.<span class="gate">Gate 2</span></p></div></div>
+      <div class="step"><span class="n">4</span><div><code>/plan</code><p>Breaks the design into tasks and fixes the order of work.<span class="gate">Gate 3</span></p></div></div>
+      <div class="step"><span class="n">5</span><div><code>/implementing-features</code><p>Test-driven implementation. It also owns the docs and config updates.<span class="gate">Gate 4</span></p></div></div>
+      <div class="step"><span class="n">6</span><div><code>/code-review</code> <code>/security-scan</code><p>Verification in a fresh context. End-to-end tests, performance and legal checks sit at the same level.<span class="gate">Gate 5</span></p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="inside">
+  <div class="wrap">
+    <h2>What is in the box</h2>
+    <p class="section-lead">
+      Every layer lives under <code>.claude/</code> and is reusable as is. Project-specific values are collected in the 13 sections of <code>project-config.md</code>.
+    </p>
+    <div class="grid grid-4">
+      <div class="card"><div class="num">17</div><div class="label">skills</div></div>
+      <div class="card"><div class="num">8</div><div class="label">subagents</div></div>
+      <div class="card"><div class="num">6</div><div class="label">team templates</div></div>
+      <div class="card"><div class="num">16</div><div class="label">hooks</div></div>
+      <div class="card"><div class="num">5</div><div class="label">quality gates</div></div>
+      <div class="card"><div class="num">34</div><div class="label">eval cases</div></div>
+      <div class="card"><div class="num">2</div><div class="label">saved workflows</div></div>
+      <div class="card"><div class="num">2</div><div class="label">language mirrors</div></div>
+    </div>
+    <div style="height:18px"></div>
+    <table>
+      <thead><tr><th>Layer</th><th>Role</th><th>Contents</th></tr></thead>
+      <tbody>
+        <tr><td>Skills</td><td>One job with a procedure</td><td>17 of them, from ideation to implementation, review and legal checks. Long detail moves to <code>references/</code></td></tr>
+        <tr><td>Subagents</td><td>Delegation that keeps the main context clean</td><td>Research, planning, security, performance, documentation and test authoring</td></tr>
+        <tr><td>Teams</td><td>Multi-agent formations</td><td>Six templates, with the full-lifecycle one as the default recommendation</td></tr>
+        <tr><td>Hooks</td><td>Enforcement rather than instruction</td><td>16 scripts covering dangerous commands, protected files and unverified stops</td></tr>
+        <tr><td>Rules</td><td>Conventions scoped to paths</td><td>Four active rules plus three language samples</td></tr>
+        <tr><td>Output styles</td><td>A response shape per phase</td><td>Requirements, design, implementation, review</td></tr>
+        <tr><td>Workflows</td><td>Deterministic control over many agents</td><td>An exhaustive review sweep and a skill eval runner</td></tr>
+        <tr><td>CI templates</td><td>Automation on the repository side</td><td>Pull request review, headless runs, and a weekly audit</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="pillars">
+  <div class="wrap">
+    <h2>Design choices</h2>
+    <p class="section-lead">Each one turns something you want the model to honour into a mechanism rather than a paragraph.</p>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>Separate human and AI ownership</h3>
+        <p>Decisions a person must make live in one file. Documentation and deliverables are generated and maintained by the model. The boundary stays explicit.</p>
+      </div>
+      <div class="card">
+        <h3>Enforce instead of instruct</h3>
+        <p>Anything that must hold every time becomes a hook. Three layers of defence: hooks and sandbox, deny and ask, then allow. Secrets cannot even be read.</p>
+      </div>
+      <div class="card">
+        <h3>Give the work places to stop</h3>
+        <p>Five quality gates, plus a hook that catches a session ending with source edits that were never verified.</p>
+      </div>
+      <div class="card">
+        <h3>Do not burn the context</h3>
+        <p>The instruction file stays under 200 lines. Skills read detail only when they need it, and the listing stays inside its budget.</p>
+      </div>
+      <div class="card">
+        <h3>Keep expected behaviour as tests</h3>
+        <p>Every skill ships evals. The same request runs with and without the skill, and an agent that did not produce the output grades it.</p>
+      </div>
+      <div class="card">
+        <h3>Break it and CI fails</h3>
+        <p>The harness validates itself: settings outside the official spec, references that do not resolve, and drift between the two mirrors.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Install</h2>
+    <p class="section-lead">Clone the repository and run the setup script once. There is no plugin distribution, <a href="../README-en.html">on purpose</a>.</p>
+    <div class="codeblock">
+      <button class="copy" type="button">Copy</button>
+<pre><code>git clone https://github.com/froggugugugu/project-blueprints.git
+cd project-blueprints
+bash project-blueprint-en/setup.sh /path/to/your-project   <span class="c"># Japanese: project-blueprint/setup.sh</span>
+
+cd /path/to/your-project
+claude</code></pre>
+    </div>
+    <div style="height:26px"></div>
+    <table>
+      <thead><tr><th>Profile</th><th>What you get</th><th>Good for</th></tr></thead>
+      <tbody>
+        <tr><td><code>--profile minimal</code></td><td>5 skills, 2 subagents, 2 hooks</td><td>Trying it out, or adding the smallest useful piece to an existing project</td></tr>
+        <tr><td><code>--profile standard</code></td><td>All skills, subagents and hooks, no teams or workflows</td><td>Running the whole lifecycle solo</td></tr>
+        <tr><td><code>--profile full</code> (default)</td><td>Everything</td><td>Using the multi-agent formations as well</td></tr>
+      </tbody>
+    </table>
+    <div style="height:26px"></div>
+    <h3>Three entries are enough to start</h3>
+    <div class="codeblock">
+      <button class="copy" type="button">Copy</button>
+<pre><code><span class="c">## §1. Project Basics</span>
+Name: MyApp
+Summary: Internal inventory management
+
+<span class="c">## §2. Tech Stack</span>
+- Python 3.13 / FastAPI
+
+<span class="c">## §3. Commands</span>
+- test: pytest
+- lint: ruff check .</code></pre>
+    </div>
+    <p class="small muted" style="margin-top:14px">The remaining ten sections can stay empty. Fill them in when a skill needs them.</p>
+  </div>
+</section>
+
+<section id="verify">
+  <div class="wrap">
+    <h2>Validation</h2>
+    <p class="section-lead">
+      A harness configuration fails quietly when it fails at all, so this one is checked deterministically, without an LLM.
+      Run it before committing anything under <code>.claude/</code>. CI runs the same command.
+    </p>
+    <div class="codeblock">
+      <button class="copy" type="button">Copy</button>
+<pre><code>bash scripts/validate-harness.sh            <span class="c"># both mirrors and their structural parity</span>
+bash scripts/validate-harness.sh --test     <span class="c"># negative tests for the validator itself</span>
+bash scripts/validate-harness.sh --hooks    <span class="c"># functional tests for the hooks</span>
+bash scripts/validate-harness.sh --online   <span class="c"># resolve the npm packages in the MCP config</span></code></pre>
+    </div>
+    <div style="height:22px"></div>
+    <ul class="checks">
+      <li><strong>Settings that drift from the official spec.</strong>Frontmatter values and permission rules the runtime never consults</li>
+      <li><strong>References that do not exist.</strong>Hook scripts, import targets, and links into reference files</li>
+      <li><strong>Writing that wastes context.</strong>Skill body length, description budget, and line-start load directives</li>
+      <li><strong>Eval and workflow format.</strong>Schema, declaration shape, and calls that would break determinism</li>
+      <li><strong>Principles and mirror parity.</strong>The hash of the constitution file and the file layout of both mirrors</li>
+    </ul>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="wrap">
+    <h2>Read more</h2>
+    <div class="links">
+      <a href="../README-en.html"><strong>README (English)</strong><span>The whole picture, incremental adoption, and why there is no plugin</span></a>
+      <a href="../README.html"><strong>README（日本語）</strong><span>同じ内容の日本語版</span></a>
+      <a href="../constitution.html"><strong>Constitution</strong><span>Seven principles that must not change, and how to change them anyway</span></a>
+      <a href="../CHANGELOG.html"><strong>Changelog</strong><span>Release notes in Keep a Changelog format</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint-en/.claude/skills"><strong>Skill definitions</strong><span>SKILL.md, references and evals for all 17 skills</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint-en/.claude/pitfalls.md"><strong>Pitfalls</strong><span>Failure patterns that keep recurring in AI-assisted development</span></a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>MIT License · froggugugugu</span>
+    <nav>
+      <a href="https://github.com/froggugugugu/project-blueprints">GitHub</a>
+      <a href="../">日本語</a>
+      <a href="../LICENSE.html">License</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.codeblock .copy').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var code = btn.parentElement.querySelector('code');
+    if (!code || !navigator.clipboard) return;
+    navigator.clipboard.writeText(code.innerText).then(function () {
+      var prev = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(function () { btn.textContent = prev; }, 1600);
+    });
+  });
+});
+</script>
+</body>
+</html>

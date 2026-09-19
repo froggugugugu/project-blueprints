@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **template repository** (not a runnable application) providing Claude Code AI-collaborative development blueprints for web application projects. All documentation and instructions are written in **Japanese**. Always respond in Japanese when working on this project.
+This is a **template repository** (not a runnable application) providing a Claude Code AI-collaborative development harness. It is stack-agnostic: the blueprint ships instructions, skills, subagents, guardrails and a validation gate, never application code. All documentation and instructions are written in **Japanese**. Always respond in Japanese when working on this project.
 
 The blueprint is designed to be copied into target projects via the setup steps in `project-blueprint/README.md`.
 
@@ -16,6 +16,10 @@ project-blueprints/
 ├── README-en.md                 # Root docs (English)
 ├── CLAUDE.md                    # This file (repo-wide guidance)
 ├── constitution.md              # Inviolable principles (7)
+├── .github/
+│   ├── pages/                   # GitHub Pages source (index.html, en/index.html, assets/, _config.yml)
+│   ├── demo/                    # quickstart.gif used by the READMEs and the site
+│   └── workflows/               # validate-harness.yml (CI gate) + pages.yml (site deploy)
 ├── scripts/                     # Harness validator (CI gate) — see Build / Test / Lint
 │   ├── validate-harness.sh      # Entry point
 │   ├── validate_harness.py      # Checks

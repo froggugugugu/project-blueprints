@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Blueprints — Claude Code 開発ハーネスのテンプレート</title>
+<meta name="description" content="要求メモから PRD・設計・実装・レビューまでを 1 つの型で回すための Claude Code テンプレート。指示書・スキル・サブエージェント・安全機構・検証ゲートを日英ミラーで同梱。">
+<meta property="og:title" content="Project Blueprints">
+<meta property="og:description" content="Claude Code を開発ハーネスとして立ち上げるテンプレート。スキル 17・サブエージェント 8・チーム 6・フック 16・検証ゲート付き。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://froggugugugu.github.io/project-blueprints/">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">本文へスキップ</a>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="./">Project Blueprints</a>
+    <nav aria-label="サイト内ナビゲーション">
+      <a href="#flow">流れ</a>
+      <a href="#inside">中身</a>
+      <a href="#pillars">設計</a>
+      <a href="#start">導入</a>
+      <a href="#verify">検証</a>
+      <a href="#docs">資料</a>
+      <a class="lang" href="en/">English</a>
+      <a href="https://github.com/froggugugugu/project-blueprints">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">MIT ライセンス · 日本語版と英語版を同梱</span>
+    <h1>Claude Code を、<br>開発ハーネスとして立ち上げる。</h1>
+    <p class="lead">
+      要求メモから PRD、設計、タスク分解、実装、レビューまでを 1 つの型で回すためのテンプレートです。
+      指示書、スキル、サブエージェント、安全機構、検証ゲートをひとそろいにして、コピーした時点で動きます。
+      対象は言語もフレームワークも問いません。
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/froggugugugu/project-blueprints">リポジトリを見る</a>
+      <a class="btn btn-ghost" href="#start">5 行で導入する</a>
+      <a class="btn btn-ghost" href="README.html">README を読む</a>
+    </div>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="wrap">
+    <h2>要求メモ 1 枚から始まる</h2>
+    <p class="section-lead">
+      スキルは呼び出し順が決まっています。途中の 5 か所に品質ゲートがあり、そこで人間が止めて直せます。
+      全部を使う必要はありません。1 スキルだけでも成立します。
+    </p>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><div><code>/brainstorm</code><p>要求が曖昧なときに Socratic な質問で輪郭を出す。読み取り専用。</p></div></div>
+      <div class="step"><span class="n">2</span><div><code>/prd</code><p>要求メモから PRD を生成。技術選定より先に仕様を固める。<span class="gate">ゲート 1</span></p></div></div>
+      <div class="step"><span class="n">3</span><div><code>/architecture</code><p>システム構成と依存方向を設計。<span class="gate">ゲート 2</span></p></div></div>
+      <div class="step"><span class="n">4</span><div><code>/plan</code><p>設計をタスクに分解し、着手順を決める。<span class="gate">ゲート 3</span></p></div></div>
+      <div class="step"><span class="n">5</span><div><code>/implementing-features</code><p>TDD で実装。docs と設定の更新もここが引き受ける。<span class="gate">ゲート 4</span></p></div></div>
+      <div class="step"><span class="n">6</span><div><code>/code-review</code> <code>/security-scan</code><p>別コンテキストで検証。E2E、性能、法務チェックも同列。<span class="gate">ゲート 5</span></p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="inside">
+  <div class="wrap">
+    <h2>入っているもの</h2>
+    <p class="section-lead">
+      すべて <code>.claude/</code> 配下の再利用可能な層です。プロジェクト固有の値は <code>project-config.md</code> の 13 セクションに集約します。
+    </p>
+    <div class="grid grid-4">
+      <div class="card"><div class="num">17</div><div class="label">スキル</div></div>
+      <div class="card"><div class="num">8</div><div class="label">サブエージェント</div></div>
+      <div class="card"><div class="num">6</div><div class="label">チーム編成</div></div>
+      <div class="card"><div class="num">16</div><div class="label">フック</div></div>
+      <div class="card"><div class="num">5</div><div class="label">品質ゲート</div></div>
+      <div class="card"><div class="num">34</div><div class="label">eval ケース</div></div>
+      <div class="card"><div class="num">2</div><div class="label">保存済みワークフロー</div></div>
+      <div class="card"><div class="num">2</div><div class="label">言語ミラー</div></div>
+    </div>
+    <div style="height:18px"></div>
+    <table>
+      <thead><tr><th>層</th><th>役割</th><th>中身</th></tr></thead>
+      <tbody>
+        <tr><td>スキル</td><td>手順を持つ単体の仕事</td><td>企画から実装、レビュー、法務チェックまで 17 種。長い詳細は <code>references/</code> に分離</td></tr>
+        <tr><td>サブエージェント</td><td>文脈を汚さない委譲</td><td>調査、計画、セキュリティ、性能、ドキュメント、テスト作成の 8 種</td></tr>
+        <tr><td>チーム</td><td>複数エージェントの編成</td><td>フルライフサイクル用の PJM 以下 6 編成</td></tr>
+        <tr><td>フック</td><td>指示ではなく強制</td><td>危険コマンド遮断、保護ファイル、未検証終了の検知など 16 本</td></tr>
+        <tr><td>ルール</td><td>パス別に効く規約</td><td>常時 4 本 + 言語別のサンプル 3 本</td></tr>
+        <tr><td>出力スタイル</td><td>フェーズごとの応答の型</td><td>要件、設計、実装、レビューの 4 種</td></tr>
+        <tr><td>ワークフロー</td><td>数十エージェントの決定論的な制御</td><td>網羅レビューと skill eval の 2 本</td></tr>
+        <tr><td>CI テンプレート</td><td>リポジトリ側の自動化</td><td>PR レビュー、ヘッドレス実行、週次監査の 3 本</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="pillars">
+  <div class="wrap">
+    <h2>設計の柱</h2>
+    <p class="section-lead">どれも「AI に守らせたいこと」を、文章ではなく仕組みに落とすための選択です。</p>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>人間と AI の責務を分ける</h3>
+        <p>技術選定や品質基準など人間が決めることは 1 ファイルに集約し、docs と成果物は AI が生成、維持します。境界を曖昧にしない。</p>
+      </div>
+      <div class="card">
+        <h3>指示ではなく強制にする</h3>
+        <p>「毎回必ず」はフックにします。フックとサンドボックス、拒否と確認、許可の 3 層防御。鍵ファイルは読み取り自体を止めます。</p>
+      </div>
+      <div class="card">
+        <h3>止めどころを用意する</h3>
+        <p>5 つの品質ゲートに加え、ソースを編集したまま検証せず終了しようとすると、フックが終了時に検知します。</p>
+      </div>
+      <div class="card">
+        <h3>文脈を食い潰さない</h3>
+        <p>指示書は 200 行以内。スキルは必要になった詳細だけを読みます。一覧に載る説明文も予算内に収めています。</p>
+      </div>
+      <div class="card">
+        <h3>期待動作をテストで持つ</h3>
+        <p>全スキルに eval を同梱。スキルあり、なしの両方で同じ依頼を回し、実行していない別エージェントが判定します。</p>
+      </div>
+      <div class="card">
+        <h3>壊れたら CI が落ちる</h3>
+        <p>ハーネス自身に静的検証があります。仕様から外れた記述、存在しない参照、日英の構造ずれを機械的に検出します。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>導入</h2>
+    <p class="section-lead">clone してセットアップスクリプトを 1 回実行するだけです。プラグイン配布はしていません（<a href="README.html">理由</a>）。</p>
+    <div class="codeblock">
+      <button class="copy" type="button">コピー</button>
+<pre><code>git clone https://github.com/froggugugugu/project-blueprints.git
+cd project-blueprints
+bash project-blueprint/setup.sh /path/to/your-project   <span class="c"># 英語版は project-blueprint-en/setup.sh</span>
+
+cd /path/to/your-project
+claude</code></pre>
+    </div>
+    <div style="height:26px"></div>
+    <table>
+      <thead><tr><th>プロファイル</th><th>入るもの</th><th>向いている場面</th></tr></thead>
+      <tbody>
+        <tr><td><code>--profile minimal</code></td><td>スキル 5、サブエージェント 2、フック 2</td><td>まず触ってみる。既存プロジェクトに最小で足す</td></tr>
+        <tr><td><code>--profile standard</code></td><td>スキルとエージェントとフックは全部、チームとワークフローなし</td><td>1 人で全工程を回す</td></tr>
+        <tr><td><code>--profile full</code>（既定）</td><td>すべて</td><td>複数エージェント編成まで使う</td></tr>
+      </tbody>
+    </table>
+    <div style="height:26px"></div>
+    <h3>最初の 3 項目だけ書けば動く</h3>
+    <div class="codeblock">
+      <button class="copy" type="button">コピー</button>
+<pre><code><span class="c">## §1. プロジェクト基本情報</span>
+プロジェクト名: MyApp
+概要: 社内向けの在庫管理
+
+<span class="c">## §2. 技術スタック</span>
+- Python 3.13 / FastAPI
+
+<span class="c">## §3. コマンド</span>
+- test: pytest
+- lint: ruff check .</code></pre>
+    </div>
+    <p class="small muted" style="margin-top:14px">残り 10 セクションは空欄のままで動きます。必要になったときに足してください。</p>
+  </div>
+</section>
+
+<section id="verify">
+  <div class="wrap">
+    <h2>検証</h2>
+    <p class="section-lead">
+      ハーネスの設定は壊れても静かに壊れます。そこで、LLM を使わない決定論的な検証を用意しました。
+      <code>.claude/</code> を触ったらコミット前にこれを通します。CI でも同じものが走ります。
+    </p>
+    <div class="codeblock">
+      <button class="copy" type="button">コピー</button>
+<pre><code>bash scripts/validate-harness.sh            <span class="c"># 両ミラー + 日英の構造一致</span>
+bash scripts/validate-harness.sh --test     <span class="c"># 検証器自身の負のテスト</span>
+bash scripts/validate-harness.sh --hooks    <span class="c"># フックの機能テスト</span>
+bash scripts/validate-harness.sh --online   <span class="c"># MCP 設定の npm パッケージ実在確認</span></code></pre>
+    </div>
+    <div style="height:22px"></div>
+    <ul class="checks">
+      <li><strong>設定値が公式の仕様から外れていないか。</strong>frontmatter の値、効かない権限ルールの書き方を検出します</li>
+      <li><strong>参照が実在するか。</strong>登録されたフックのスクリプト、取り込み対象のファイル、参照ファイルへのリンク</li>
+      <li><strong>context を食う書き方をしていないか。</strong>スキル本文の長さ、説明文の文字数、行頭の読み込み指示</li>
+      <li><strong>eval と保存済みワークフローの形式。</strong>スキーマ、宣言の書き方、決定論を壊す関数の使用</li>
+      <li><strong>不変原則と日英ミラーの一致。</strong>原則ファイルのハッシュと、両ミラーのファイル構成</li>
+    </ul>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="wrap">
+    <h2>もっと詳しく</h2>
+    <div class="links">
+      <a href="README.html"><strong>README（日本語）</strong><span>全体像、段階的な使い方、プラグイン配布を採らない理由</span></a>
+      <a href="README-en.html"><strong>README (English)</strong><span>The same content in English</span></a>
+      <a href="constitution.html"><strong>不変原則</strong><span>変更してはいけない 7 原則と、その変更プロトコル</span></a>
+      <a href="CHANGELOG.html"><strong>変更履歴</strong><span>Keep a Changelog 形式のリリースノート</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint/.claude/skills"><strong>スキル定義</strong><span>17 スキルの SKILL.md と references と evals</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint/.claude/pitfalls.md"><strong>落とし穴集</strong><span>AI 協調開発で繰り返し踏む失敗パターン</span></a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>MIT License · froggugugugu</span>
+    <nav>
+      <a href="https://github.com/froggugugugu/project-blueprints">GitHub</a>
+      <a href="en/">English</a>
+      <a href="LICENSE.html">ライセンス</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.codeblock .copy').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var code = btn.parentElement.querySelector('code');
+    if (!code || !navigator.clipboard) return;
+    navigator.clipboard.writeText(code.innerText).then(function () {
+      var prev = btn.textContent;
+      btn.textContent = 'コピーしました';
+      setTimeout(function () { btn.textContent = prev; }, 1600);
+    });
+  });
+});
+</script>
+</body>
+</html>

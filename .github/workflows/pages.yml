@@ -1,0 +1,78 @@
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Publishes the site to GitHub Pages with Jekyll: the landing pages (.github/pages/index.html and
+# .github/pages/en/index.html, static files) at the root, and the repository docs (README.md,
+# README-en.md, constitution.md, CHANGELOG.md, LICENSE) rendered next to them.
+# Pages must be enabled once in the repository settings (Source: GitHub Actions); GITHUB_TOKEN cannot create the site.
+# Actions are pinned to commit SHAs (version in the comment); runner images are pinned too.
+# Only deploy can write to Pages: build runs the repository's content through Jekyll with read access.
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: read   # configure-pages reads the site's settings
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Assemble the site source
+        env:
+          BLOB: https://github.com/froggugugugu/project-blueprints/blob/main
+          TREE: https://github.com/froggugugugu/project-blueprints/tree/main
+        run: |
+          set -euo pipefail
+          mkdir -p _pages/assets
+          cp LICENSE _pages/LICENSE.md
+          cp .github/demo/quickstart.gif _pages/assets/quickstart.gif
+          # jekyll-optional-front-matter leaves a .md unrendered by default; with front matter it becomes .html.
+          add_page() {   # $1 source, $2 destination, $3 title
+            { printf -- '---\ntitle: %s\n---\n\n' "$3"; cat "$1"; } > "$2"
+          }
+          add_page README.md       _pages/README.md       'Project Blueprints — 概要'
+          add_page README-en.md    _pages/README-en.md    'Project Blueprints — Overview'
+          add_page constitution.md _pages/constitution.md '不変原則 / Constitution'
+          add_page CHANGELOG.md    _pages/CHANGELOG.md    '変更履歴 / Changelog'
+          # Links into the repository tree have no published counterpart: point them at GitHub instead.
+          for f in _pages/README.md _pages/README-en.md _pages/constitution.md _pages/CHANGELOG.md; do
+            sed -i \
+              -e "s#](project-blueprint/\([^)]*\)/)#](${TREE}/project-blueprint/\1/)#g" \
+              -e "s#](project-blueprint-en/\([^)]*\)/)#](${TREE}/project-blueprint-en/\1/)#g" \
+              -e "s#](project-blueprint/#](${BLOB}/project-blueprint/#g" \
+              -e "s#](project-blueprint-en/#](${BLOB}/project-blueprint-en/#g" \
+              -e "s#](scripts/#](${BLOB}/scripts/#g" \
+              -e "s#](\.github/workflows/#](${BLOB}/.github/workflows/#g" \
+              -e "s#](\.github/demo/quickstart\.gif)#](assets/quickstart.gif)#g" \
+              "$f"
+          done
+          cp .github/pages/_config.yml .github/pages/index.html _pages/
+          mkdir -p _pages/en && cp .github/pages/en/index.html _pages/en/
+          cp .github/pages/assets/site.css _pages/assets/site.css
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
+        with: { source: ./_pages, destination: ./_site }
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with: { path: ./_site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+      actions: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

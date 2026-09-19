@@ -1,0 +1,12 @@
+title: Project Blueprints
+description: Claude Code を開発ハーネスとして立ち上げるテンプレート。要求メモから PRD・設計・実装・レビューまでを 1 つの型で回す。
+lang: ja
+baseurl: /project-blueprints
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-relative-links
+  - jekyll-titles-from-headings
+defaults:
+  - scope: { path: "" }
+    values: { layout: default }
