@@ -314,6 +314,7 @@ project-blueprint-en/
 |   +-- design/                              Architecture design docs
 |   +-- workflows/                         <-- [Generic] Saved workflow (full profile only)
 |   |   +-- review-sweep.js                  4-angle parallel review + adversarial MUST verification
+|   |   +-- skill-eval.js                    Runs a skill's evals with and without the skill
 |   |
 |   +-- tasks/                               Task breakdown
 |   +-- reports/                             Quality reports
@@ -351,7 +352,7 @@ project-blueprint-en/
 |   |   +-- post-compact-restore.sh          Re-injection marker after compaction (PostCompact)
 |   |   +-- notify-claude.sh                 Completion/confirmation push notifications (Stop/Notification)
 |   |
-|   +-- skills/                            <-- [Generic] 17 skill definitions (each with evals/evals.json)
+|   +-- skills/                            <-- [Generic] 17 skill definitions (SKILL.md + evals/evals.json + references/ where needed)
 |   |   +-- brainstorm/SKILL.md              Premise elicitation (pre-/prd)
 |   |   +-- prd/SKILL.md                     PRD generation
 |   |   +-- architecture/SKILL.md            Architecture design

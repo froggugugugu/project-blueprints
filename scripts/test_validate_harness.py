@@ -219,6 +219,20 @@ def m_scope_guard_unknown(root: Path) -> None:
     p.write_text(p.read_text().replace("scope-guard.sh docs", "scope-guard.sh doc", 1))
 
 
+def m_orphan_reference(root: Path) -> None:
+    (root / ".claude/skills/prd/references/unused.md").write_text("# 使われていない参照\n")
+
+
+def m_broken_reference_link(root: Path) -> None:
+    p = root / ".claude/skills/code-review/SKILL.md"
+    p.write_text(p.read_text().replace("references/report-template.md)", "references/missing.md)", 1))
+
+
+def m_skill_body_too_long(root: Path) -> None:
+    p = root / ".claude/skills/brainstorm/SKILL.md"
+    p.write_text(p.read_text() + "\n".join(["- pad"] * 320) + "\n")
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -252,6 +266,9 @@ CASES = [
     ("workflow meta に変数", m_workflow_meta_variable, "変数参照"),
     ("書込 agent に scope-guard が無い", m_writable_agent_no_guard, "scope-guard.sh)がありません"),
     ("scope-guard の未知スコープ", m_scope_guard_unknown, "未知のスコープ"),
+    ("参照ファイルが未リンク", m_orphan_reference, "SKILL.md からリンクされていません"),
+    ("references へのリンク切れ", m_broken_reference_link, "へのリンクが壊れています"),
+    ("SKILL.md 本文が長すぎる", m_skill_body_too_long, "本文が"),
 ]
 
 

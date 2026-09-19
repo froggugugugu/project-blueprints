@@ -60,7 +60,7 @@ cd ./my-app && claude
              + agent frontmatter の scope-guard(書込範囲の強制)
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  5 rules     document-management, git-conventions, workflow-advanced, harness-authoring (+ README)
- 1 workflow  review-sweep — 4 観点並列レビュー + MUST 指摘の反証検証(saved dynamic workflow)
+ 2 workflows review-sweep(4 観点並列レビュー + 反証検証)/ skill-eval(evals を with / without で実行)
  1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
  3 CI        claude-review.yml（@claude 対話レビュー）/
              claude-skills-ci.yml（毎 PR に /code-review + /security-scan）/

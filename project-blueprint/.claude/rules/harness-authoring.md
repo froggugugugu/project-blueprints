@@ -36,7 +36,7 @@ paths:
 
 - 各行を「消すと Claude が間違えるか?」で判定する。コードから読めること・一般常識は書かない
 - `@import` 先は毎セッション全文 load される。常時必要なファイルだけを import する
-- 他エージェント用の `AGENTS.md` があるなら内容を複製せず、`@AGENTS.md` を import する
+- 他エージェント用の `AGENTS.md` がある場合、CLAUDE.md が 1 つでもあると AGENTS.md は読まれない。内容を複製せず `@AGENTS.md` を import して 1 ファイルに集約する
 
 ## skill(SKILL.md)
 
@@ -57,9 +57,10 @@ paths:
 - 各 skill に `evals/evals.json`(agentskills.io 形式)を置く。2〜3 ケースから始める
   - `prompt` は実際の依頼文(ファイルパスや口語を含む)、`expected_output` は成功の説明、`assertions` は出力から検証できる文
   - 1 件は典型的な依頼、1 件は境界(曖昧な入力や禁止事項を誘う依頼)にする
-- 実行は skill-creator プラグインで、同じ prompt を skill あり / なしで比べる
-  - 導入: `/plugin install skill-creator@claude-plugins-official`
-  - 作業ディレクトリ: `testreport/evals/<skill>/iteration-N/`(gitignore 対象)
+- 実行は saved workflow `/skill-eval skill=<名>`。同じ prompt を skill あり / なしで回し、実行していない別 agent が assertions を判定する
+  - 出力先: `testreport/evals/<skill>/iteration-N/`(gitignore 対象)
+  - dynamic workflows を使わない環境では skill-creator プラグイン(`/plugin install skill-creator@claude-plugins-official`)で同じ `evals.json` を回せる
+  - プラグインとして配布する場合は `claude plugin eval`(evals.json とは別形式)で CI のゲートにできる
 - skill を変えたら同じ eval を再実行し、pass rate が下がっていないことを証拠に残す
 
 ## agent(.claude/agents/*.md)

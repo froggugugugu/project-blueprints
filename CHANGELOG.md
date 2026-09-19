@@ -8,6 +8,28 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (template extraction / eval runner / new official behaviors, 2026-09-19)
+
+- **`workflows/skill-eval.js`**: `evals/evals.json` を skill あり / なしの 2 系統で実行し、実行していない
+  agent が assertions を判定して pass rate を比較する saved workflow。出力は
+  `testreport/evals/<skill>/iteration-N/`。skill の description と本文の寄与を数値で確認できる。
+- **`permissions-guide.md` の制限モード節**: `claude --restricted`(v2.1.248 以降)はコマンド実行系ツールと
+  `WebFetch` を既定から外し、ファイル操作を working directory に限定し、managed settings と `--settings`
+  だけを読む。`bypassPermissions` は拒否され、auto mode の分類器も保護パスへの書込を承認できない。
+- **`pitfalls.md` #31**: `CLAUDE.md` があると `AGENTS.md` は読まれない。`setup.sh` は既存の `AGENTS.md` を
+  検出したら `@AGENTS.md` を import する手順を警告として表示する。
+- **`validate_harness.py`**: 参照ファイルが SKILL.md からリンクされているか、`references/` へのリンクが
+  実在するか、本文が 300 行を超えていないかを検査。負のテストは 35 件。
+
+### Changed
+
+- **13 skill × JP/EN の出力テンプレート**: SKILL.md に埋め込まれていた雛形(最大 122 行)を
+  `references/*.md` へ逐語で移設し、本文からはパスと読む条件のリンクで参照する。
+  skill 起動時に読まれる本文は JP 4,091 → 3,344 行(172→153KB)、EN 4,107 → 3,360 行(154→137KB)。
+  最長 skill は 349 行から 281 行になった。100 行超の参照ファイル 4 本には目次を追加。
+- **SKILL.md の参照表記 16 か所**: コードスパンから markdown リンクに変換し、SKILL.md から 1 階層で
+  辿れる状態にした(公式の progressive disclosure パターン)。
+
 ### Added (authoring conventions / skill evals / write-scope enforcement, 2026-09-12)
 
 - **`skills/*/evals/evals.json`(17 skill × JP/EN)**: agentskills.io 形式の eval。各 skill に典型と境界の

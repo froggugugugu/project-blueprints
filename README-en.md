@@ -62,7 +62,7 @@ see "[Adopt incrementally](#adopt-incrementally)" below.
              + scope-guard in agent frontmatter (write-scope enforcement)
  4 styles    phase-prd, phase-design, phase-implementation, phase-review
  5 rules     document-management, git-conventions, workflow-advanced, harness-authoring (+ README)
- 1 workflow  review-sweep — 4-angle parallel review + adversarial MUST verification (saved dynamic workflow)
+ 2 workflows review-sweep (4-angle parallel review + adversarial verification) / skill-eval (runs evals with and without the skill)
  1 gate      scripts/validate-harness.sh — CI gate that fails on harness spec drift
  3 CI        claude-review.yml (@claude conversational review) /
              claude-skills-ci.yml (/code-review + /security-scan on every PR) /

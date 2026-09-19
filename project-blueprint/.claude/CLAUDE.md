@@ -90,6 +90,7 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 - 各 phase skill は `.claude/quality-gates.md` のゲート基準を必要時に参照する
 - **検証手段を先に用意する**: 着手前に pass/fail を返すチェック(テスト / ビルド / lint / スクリーンショット比較)を決め、完了時にその結果を貼る
 - `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted)を検知する(standard=警告 / strict=差し止め)
+- 各 skill は `evals/evals.json`(典型 + 境界)を持つ。skill を変えたら `/skill-eval skill=<名>` で with / without の pass rate を比べる
 
 ## 並行開発
 

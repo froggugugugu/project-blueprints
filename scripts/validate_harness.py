@@ -60,6 +60,7 @@ CLAUDE_MD_HARD_LIMIT = 220   # constitution §6 ハード上限
 SKILL_DESC_LIMIT = 1536      # description + when_to_use はこの文字数で切り詰められる
 SPEC_DESC_LIMIT = 1024       # Agent Skills 標準(agentskills.io)の description 上限
 REFERENCE_TOC_LINES = 100    # これを超える参照ファイルは冒頭に目次を置く(skill authoring best practices)
+SKILL_BODY_WARN_LINES = 300  # 公式上限は 500 行。詳細は references/ に分けて 300 行以内を目安にする
 SCOPE_GUARD_SCOPES = {"docs", "output", "tests"}
 ALWAYS_ON_RULE_WARN_LINES = 60
 
@@ -465,8 +466,23 @@ def check_skill_writing(p: Path, fm: dict, rep: Report) -> None:
     if re.search(r"\b20\d\d-\d\d(?:-\d\d)?\b", body):
         rep.warn(where, "日付つきの記述があります — 変わりうる事項は「旧方式」節に分けてください")
 
+    if len(body.splitlines()) > SKILL_BODY_WARN_LINES:
+        rep.warn(
+            where,
+            f"本文が {len(body.splitlines())} 行 — 公式上限は 500 行。出力テンプレートなどの詳細を "
+            f"references/ に分け、{SKILL_BODY_WARN_LINES} 行以内を目安にしてください",
+        )
+
+    linked = set(re.findall(r"\]\((?:\./)?references/([\w.-]+\.md)\)", body))
+    for name in sorted(linked):
+        if not (p.parent / "references" / name).exists():
+            rep.error(where, f"`references/{name}` へのリンクが壊れています")
+
     ref_dir = p.parent / "references"
     if ref_dir.is_dir():
+        for ref in sorted(ref_dir.glob("*.md")):
+            if ref.name not in linked:
+                rep.warn(str(ref), "SKILL.md からリンクされていません — 参照は SKILL.md から 1 階層で直接リンクしてください")
         for ref in sorted(ref_dir.glob("*.md")):
             rt = ref.read_text(encoding="utf-8")
             if len(rt.splitlines()) > REFERENCE_TOC_LINES and not re.search(r"(?im)^#+\s*(目次|contents|table of contents)\s*$", rt):

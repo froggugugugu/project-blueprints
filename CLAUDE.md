@@ -35,7 +35,7 @@ project-blueprints/
 │   │   ├── pitfalls.md          # Common failure patterns (anti-patterns)
 │   │   ├── skills/              # 17 skill definitions (SKILL.md + evals/evals.json)
 │   │   ├── teams/               # 6 team templates (TEAM_*.md files)
-│   │   ├── workflows/           # 1 saved dynamic workflow (review-sweep.js; full profile only)
+│   │   ├── workflows/           # 2 saved dynamic workflows (review-sweep.js, skill-eval.js; full profile only)
 │   │   ├── agents/              # 8 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
 │   │   ├── hooks/               # 16 hook scripts (safety + observability + verification gate + agent scope guard; .sh count)
@@ -62,7 +62,7 @@ project-blueprints/
 
 **Skill system** (17 skills in `.claude/skills/*/SKILL.md`): Each skill is a standalone prompt with a defined pipeline order: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`. Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine` (meta-skill: self-diagnoses and refines the harness configuration). The `/prd` skill follows the spec-driven framing (specification first, technology later) aligned with GitHub Spec-Kit / BMAD-METHOD. Every skill ships `evals/evals.json` (agentskills.io format: a typical case and a boundary case with verifiable assertions, run via the skill-creator plugin). Descriptions follow the official "what it does + when to use it" pattern because the skill listing is capped at 1% of context, and skills never use a line-start `@path` (Claude Code attaches that file in full at invocation); they list references with a reading condition instead. Writing conventions live in the path-scoped rule `.claude/rules/harness-authoring.md`.
 
-**Team system** (6 teams in `.claude/teams/TEAM_*.md`): Multi-agent orchestration templates. `TEAM_PJM.md` is the recommended full-lifecycle team (6 members, covers the 13 core lifecycle skills, 5 quality gates). The 4 auxiliary skills (`/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`) are invoked on demand outside the standard team flow. `.claude/workflows/review-sweep.js` is the scripted form of the team layer: a saved dynamic workflow that reviews a diff from 4 angles in parallel and adversarially verifies each MUST finding with 3 votes.
+**Team system** (6 teams in `.claude/teams/TEAM_*.md`): Multi-agent orchestration templates. `TEAM_PJM.md` is the recommended full-lifecycle team (6 members, covers the 13 core lifecycle skills, 5 quality gates). The 4 auxiliary skills (`/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`) are invoked on demand outside the standard team flow. `.claude/workflows/review-sweep.js` is the scripted form of the team layer: a saved dynamic workflow that reviews a diff from 4 angles in parallel and adversarially verifies each MUST finding with 3 votes. `skill-eval.js` runs a skill's `evals/evals.json` with and without the skill and compares pass rates, so skill edits are judged on numbers rather than impressions.
 
 **Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
@@ -88,7 +88,7 @@ bash scripts/validate-harness.sh --hooks  # functional tests of the hook scripts
 It is deterministic (no LLM) and enforces the parts of the official spec that are easy to
 drift from: frontmatter values outside the official enums, permission rules the runtime
 never consults (`Write(path)` and friends), hook registrations pointing at missing scripts,
-unresolved `@import` targets, the constitution hash, JP/EN parity, line-start `@` attachments in skills, description length and person, `evals/evals.json` schema, reference-file ToCs, workflow `meta` / determinism rules, and agent-frontmatter hooks (including a WARN for write-capable agents without `scope-guard.sh`). Run it before every
+unresolved `@import` targets, the constitution hash, JP/EN parity, line-start `@` attachments in skills, description length and person, `evals/evals.json` schema, reference-file ToCs and linkage from SKILL.md, skill body length, workflow `meta` / determinism rules, and agent-frontmatter hooks (including a WARN for write-capable agents without `scope-guard.sh`). Run it before every
 commit that touches `.claude/`. CI runs it on push and pull request
 (`.github/workflows/validate-harness.yml`).
 

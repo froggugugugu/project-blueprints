@@ -263,6 +263,13 @@ if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
 fi
 
 # ── .gitignore に testreport/ を追記 ────────────────────────
+# ── 既存 AGENTS.md との共存を案内 ───────────────────────────
+# Claude Code が AGENTS.md を直接読むのは CLAUDE.md が 1 つも無いときだけ。
+if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
+    warn "AGENTS.md を検出しました。CLAUDE.md があると AGENTS.md は読まれません。"
+    warn "  CLAUDE.md に次の 1 行を追加して取り込んでください: @AGENTS.md"
+fi
+
 GITIGNORE="$TARGET_DIR/.gitignore"
 # Claude Code がリポジトリ内に作るローカル状態も一緒に除外する:
 #   testreport/                 ツール直接出力 / 観測フックのログ

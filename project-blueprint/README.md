@@ -346,7 +346,7 @@ project-blueprint/
 │   │   ├── post-compact-restore.sh          コンパクト後の再注入マーカー設置（PostCompact）
 │   │   └── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
 │   │
-│   ├── skills/                            ← [汎用] 17スキル定義（各 evals/evals.json 付き）
+│   ├── skills/                            ← [汎用] 17スキル定義（各 SKILL.md + evals/evals.json + 必要に応じて references/）
 │   │   ├── brainstorm/SKILL.md              前提整理（/prd前段）
 │   │   ├── prd/SKILL.md                     PRD生成
 │   │   ├── architecture/SKILL.md            アーキテクチャ設計
@@ -379,7 +379,8 @@ project-blueprint/
 │   │   └── TEAM_DESIGN.md                   デザインチーム
 │   │
 │   ├── workflows/                         ← [汎用] saved workflow（full プロファイルのみ）
-│   │   └── review-sweep.js                  4 観点並列レビュー + MUST 指摘の反証検証
+│   │   ├── review-sweep.js                  4 観点並列レビュー + MUST 指摘の反証検証
+│   │   └── skill-eval.js                    skill の evals を with / without で実行
 │   │
 │   └── tasks/                             ← [汎用] タスクテンプレート
 │       ├── TASK_TEMPLATE.md                 機能開発指示書

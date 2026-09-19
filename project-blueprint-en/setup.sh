@@ -264,6 +264,13 @@ if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
 fi
 
 # -- Add testreport/ to .gitignore ---------------------------------
+# -- Point out coexistence with an existing AGENTS.md ---------------------
+# Claude Code reads AGENTS.md directly only when no CLAUDE.md exists.
+if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
+    warn "Found AGENTS.md. With a CLAUDE.md present, AGENTS.md is not read."
+    warn "  Add this line to CLAUDE.md to include it: @AGENTS.md"
+fi
+
 GITIGNORE="$TARGET_DIR/.gitignore"
 # Also exclude the local state Claude Code writes inside the repository:
 #   testreport/                 raw tool output / observation-hook logs

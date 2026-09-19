@@ -90,6 +90,7 @@ A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch.
 - Each phase skill consults the gate criteria in `.claude/quality-gates.md` when needed
 - **Set up the verification first**: before starting, decide on a check that returns pass/fail (tests / build / lint / screenshot comparison) and paste its result when done
 - `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted) after source edits (standard = warning / strict = refused)
+- Every skill ships `evals/evals.json` (typical + boundary). After changing a skill, compare with / without pass rates via `/skill-eval skill=<name>`
 
 ## Concurrent development
 

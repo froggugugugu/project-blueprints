@@ -255,6 +255,14 @@ common in long-running Claude Code sessions.
 | **Cause** | `permissionMode: acceptEdits` auto-approves file edits. A scope limit in the body is only an instruction and breaks under long work or prompt injection |
 | **Mitigation** | Register `scope-guard.sh <docs / output / tests>` under `hooks.PreToolUse` in the frontmatter so out-of-scope Edit / Write exits 2. This template applies it to 3 agents (active after workspace trust) |
 
+### 31. AGENTS.md is not read
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Instructions written in `AGENTS.md` for other coding agents have no effect |
+| **Cause** | Claude Code reads `AGENTS.md` directly only when there is no `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` in the working directory or above it. This template installs a `CLAUDE.md`, so an existing `AGENTS.md` stops being read |
+| **Mitigation** | Import it from `CLAUDE.md` with `@AGENTS.md` instead of duplicating the content. `setup.sh` warns with this step when it finds an existing `AGENTS.md` |
+
 ## Recommended session-management commands
 
 | Scenario | Command | Effect |

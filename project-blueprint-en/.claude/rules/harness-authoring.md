@@ -36,7 +36,7 @@ paths:
 
 - Judge each line by "would removing it make Claude make mistakes?" Omit what code shows and common knowledge
 - `@import` targets load in full every session. Import only files that are needed every time
-- If an `AGENTS.md` exists for other agents, import it with `@AGENTS.md` instead of duplicating its content
+- If an `AGENTS.md` exists for other agents, remember Claude reads it only when no CLAUDE.md is present; import it with `@AGENTS.md` instead of duplicating its content
 
 ## Skills (SKILL.md)
 
@@ -57,9 +57,10 @@ paths:
 - Give every skill an `evals/evals.json` (agentskills.io format). Start with 2-3 cases
   - `prompt` is a realistic request (file paths, casual phrasing), `expected_output` describes success, `assertions` are statements verifiable from the output
   - Make one case typical and one a boundary (ambiguous input, or a request that invites a prohibited action)
-- Run them with the skill-creator plugin, comparing the same prompts with and without the skill
-  - Install: `/plugin install skill-creator@claude-plugins-official`
-  - Workspace: `testreport/evals/<skill>/iteration-N/` (gitignored)
+- Run them with the saved workflow `/skill-eval skill=<name>`: the same prompt runs with and without the skill, and an agent that did not produce the output grades the assertions
+  - Output: `testreport/evals/<skill>/iteration-N/` (gitignored)
+  - Where dynamic workflows are unavailable, the skill-creator plugin (`/plugin install skill-creator@claude-plugins-official`) runs the same `evals.json`
+  - When distributing as a plugin, `claude plugin eval` (a separate format) can gate CI
 - After changing a skill, rerun the same evals and keep evidence that the pass rate did not drop
 
 ## Agents (.claude/agents/*.md)
