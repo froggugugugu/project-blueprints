@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (constitution ⑥, 2026-09-23)
+
+- **`constitution.md` ⑥(root / JP / EN)**: 行数上限の対象を「CLAUDE.md」から「常時 load する指示
+  (CLAUDE.md + AGENTS.md)の合計」に改めた。Claude Code は `@AGENTS.md` で取り込んだ内容も毎セッション全文読むため、
+  片方へ移すだけでは削減にならない。判定の「`@import` で参照に置換」は、import が context を減らさない事実
+  (`harness-authoring.md`)と矛盾していたため「パスと読む条件で参照」に訂正。関連ドキュメントに `AGENTS.md` を追加。
+  変更プロトコルに従い `.claude/.constitution.sha256`(JP/EN)を同じ PR で再計算。
+
 ### Added (AGENTS.md for non-Claude agents, 2026-09-23)
 
 - **`project-config.md` §13.7 マルチ LLM 併用(JP/EN)**: 主系は Claude Code に固定し、Codex / Cursor / Copilot /

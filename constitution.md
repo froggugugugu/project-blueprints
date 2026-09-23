@@ -41,14 +41,17 @@ Layer 1: フック(常時有効) / Layer 2: deny ルール(共有) / Layer 3: al
 `--dangerously-skip-permissions` でも Layer 1 は有効。フック群を停止・無効化する変更は禁止。
 新しい hook を追加する変更は許容。
 
-## 6. CLAUDE.md は 200 行以内を目安、220 行を超えたら切り出し
+## 6. 常時 load する指示(CLAUDE.md + AGENTS.md)は合計 200 行以内を目安、220 行を超えたら切り出し
 
 肥大化するとルールが埋もれて遵守率が落ちる(pitfalls.md #1, #18)。
+Claude Code は `CLAUDE.md` と、その冒頭の `@AGENTS.md` で取り込む `AGENTS.md`(ツール共通ルール)を毎セッション全文読むため、
+2 ファイルの**合計**で数える。片方へ移すだけでは削減にならない。
 
-- **目安**: 200 行以内
-- **ハード上限**: 220 行(超過したら次回の編集で必ず切り出し)
-- **切り出し先**: `.claude/rules/<topic>.md`、`.claude/skills/<name>/SKILL.md`、`docs/<topic>.md`
-- **判定**: 1 つのトピックが 20 行を超えたら切り出し候補。`@import` で参照に置換
+- **目安**: 合計 200 行以内
+- **ハード上限**: 合計 220 行(超過したら次回の編集で必ず切り出し)
+- **切り出し先**: `.claude/rules/<topic>.md`(`paths:` 付き)、`.claude/skills/<name>/SKILL.md`、`docs/<topic>.md`
+- **判定**: 1 つのトピックが 20 行を超えたら切り出し候補。`@import` は毎セッション全文 load され削減にならないため、
+  パスと読む条件の記述で参照する
 
 ## 7. シークレットは絶対にコミットしない
 
@@ -81,6 +84,7 @@ skill 起動をブロックする(standard プロファイルでは警告のみ)
 ## 関連ドキュメント
 
 - `@project-blueprint/project-config.md` — 可変パラメータ(13 セクション)
-- `@project-blueprint/.claude/CLAUDE.md` — 開発ガイド(横断ルール)
+- `@project-blueprint/AGENTS.md` — ツール共通の開発ルール(Claude Code は CLAUDE.md から取り込む)
+- `@project-blueprint/.claude/CLAUDE.md` — Claude Code 固有の開発ガイド
 - `@project-blueprint/.claude/guardrails.md` — 3 層防御の詳細
 - `@project-blueprint/.claude/pitfalls.md` — 失敗パターンと対策

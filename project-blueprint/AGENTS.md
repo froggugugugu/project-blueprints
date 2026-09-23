@@ -70,7 +70,7 @@ Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は 
 - `project-config.md` §10 にプロジェクト固有ポリシーを定義
 
 > **不変原則**(`constitution.md` で全文管理): ①人間↔AI 責務分離 / ②日英 2 言語ミラー / ③5 品質ゲート維持 /
-> ④三層分離(skill/team/agent) / ⑤3 層防御維持 / ⑥CLAUDE.md ≤200 行 / ⑦シークレット禁止
+> ④三層分離(skill/team/agent) / ⑤3 層防御維持 / ⑥CLAUDE.md + AGENTS.md ≤200 行 / ⑦シークレット禁止
 
 ## Git 操作
 

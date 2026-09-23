@@ -70,7 +70,7 @@ Requirements → Impact analysis → Test design → **🚏 Design Gate** → Im
 - Project-specific policy in `project-config.md` §10
 
 > **Inviolable principles** (full text in `constitution.md`): ①Human↔AI separation / ②JP/EN mirror parity / ③5 quality gates preserved /
-> ④3-layer separation (skill/team/agent) / ⑤3-layer defense preserved / ⑥CLAUDE.md ≤200 lines / ⑦No secrets committed
+> ④3-layer separation (skill/team/agent) / ⑤3-layer defense preserved / ⑥CLAUDE.md + AGENTS.md ≤200 lines / ⑦No secrets committed
 
 ## Git operations
 
