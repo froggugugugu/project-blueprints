@@ -27,6 +27,7 @@ project-blueprints/
 ├── project-blueprint/           # The Japanese blueprint template
 │   ├── README.md                # Setup guide & quick start
 │   ├── setup.sh                 # One-command setup script
+│   ├── AGENTS.md                # Tool-agnostic rules (copied to target root; imported by CLAUDE.md via @AGENTS.md)
 │   ├── project-config.md        # Template: human decisions (13 sections)
 │   ├── .mcp.json.template       # Project-shared MCP server config template
 │   ├── .github/workflows/       # Claude Code PR review workflow template
@@ -101,7 +102,8 @@ commit that touches `.claude/`. CI runs it on push and pull request
 ## Editing Guidelines
 
 - Skill files follow a consistent structure: context loading, step-by-step workflow, output format, and gate definitions. Maintain this pattern when adding or modifying skills.
-- `project-config.md` has 13 numbered sections (§1–§13; §13 defines the Opus/Sonnet/Haiku tier strategy). Skills reference these by section number — keep numbering stable.
+- `project-config.md` has 13 numbered sections (§1–§13; §13 defines the Opus/Sonnet/Haiku tier strategy, and §13.7 the roles and write scopes of agents other than Claude Code). Skills reference these by section number — keep numbering stable.
 - The `.claude/CLAUDE.md` is the development guide that gets moved to the target project root during setup. It references `project-config.md` sections and `docs/` files by convention.
+- Tool-agnostic rules (principles, document management, quality standards, Git, security rules) live in the blueprint's `AGENTS.md`, which other coding agents read directly; `.claude/CLAUDE.md` imports it with `@AGENTS.md` and holds only Claude Code-specific mechanisms. Claude Code stays the primary agent; other agents follow `project-config.md` §13.7 and act read-only unless marked `yes` there. Safety prohibitions are kept in `CLAUDE.md` itself as well, because the docs do not say whether the auto mode classifier reads imported files. The validator enforces the import, forbids line-start `@` in `AGENTS.md`, checks that every `project-config.md` § they cite exists, and counts both files against the 200-line budget.
 - Team templates define roles, member counts, skill assignments, and phase workflows. Changes to skill names must be reflected in team templates.
 - `docs/` files are stubs in this repo — they serve as templates showing the expected structure for AI to populate in target projects.

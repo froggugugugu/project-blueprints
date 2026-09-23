@@ -100,6 +100,6 @@ color: yellow
 
 ## コンセプト整合
 
-- `output/` は AI が生成し人間がレビューする領域(`.claude/CLAUDE.md` のドキュメント管理参照)
+- `output/` は AI が生成し人間がレビューする領域(`AGENTS.md` のドキュメント管理参照)
 - output ↔ docs の境界を守る(output に書いた後の docs 反映は `doc-synchronizer` または親 skill が担う)
 - CLAUDE.md 階層と git status は既定で継承する(公式仕様)。skill は明示指定しない限り自動継承されないので、追加のルールは親の `prompt` で渡す

@@ -40,6 +40,7 @@ flowchart LR
         S10["S10 Security Policy"]
         S11["S11 Known Pitfalls"]
         S12["S12 Plugin Config"]
+        S13["S13 Models / Multi-LLM"]
     end
 
     MINIMAL -- "+add S4" --> RECOMMEND
@@ -397,6 +398,7 @@ output/reports/                <- Human-readable summaries (Git-managed)
 
 > Which Claude model — Opus / Sonnet / Haiku — to use for each skill / team / agent.
 > Makes the cost / quality / speed trade-off explicit. If unspecified, falls back to the session default.
+> Using agents other than Claude Code (Codex / Cursor / Copilot / Gemini CLI, etc.) is covered in §13.7.
 
 ### 13.1 Tier definitions
 
@@ -487,3 +489,27 @@ Reviewer is Critical since audit misalignment is costly.
 - A skill / agent with omitted frontmatter `model:` inherits the session default
 - The tables here are **recommendations** and may be overridden by project needs
 - For a personal "always use Opus" preference, set `model` in `~/.claude/settings.json`
+
+### 13.7 Multi-LLM use (agents other than Claude Code)
+
+> **Claude Code is the primary agent**. The quality gates and safety mechanisms built from skills, teams, hooks and permissions run only on Claude Code.
+> Other agents read the root `AGENTS.md` (shared rules) and follow the role and write scope assigned in this section.
+> An agent not marked `yes` here acts **read-only** (stated in `AGENTS.md`).
+
+| Agent | Use | Role | Write scope | How it reads `AGENTS.md` |
+| ----- | --- | ---- | ----------- | ------------------------ |
+| Claude Code | yes (primary, fixed) | Every phase, quality gates, finalizing deliverables | As defined by skills / agents | Imported through `@AGENTS.md` in `CLAUDE.md` |
+| OpenAI Codex CLI | no | e.g. second-opinion review | e.g. none (read-only) | Reads it by default |
+| Cursor | no | e.g. small in-editor fixes | e.g. `src/**` | Reads it by default |
+| GitHub Copilot | no | e.g. completion, PR summaries | e.g. none (read-only) | VS Code needs the setting `chat.useAgentsMdFile: true` |
+| Gemini CLI | no | e.g. cross-cutting research over a large codebase | e.g. none (read-only) | Defaults to `GEMINI.md`. Put `{"context": {"fileName": ["AGENTS.md"]}}` in `.gemini/settings.json` |
+
+> How each tool loads the file changes between versions. Check each tool's official documentation when you adopt it.
+
+**Rules for using several agents** (defaults; adjust them to the project):
+
+- Never let write scopes overlap between agents, and never have several agents edit the same file at once
+- Quality-gate verdicts and finalized deliverables under `output/` come from Claude Code skills. When you take in another agent's result, name its source (the agent)
+- `.claude/` hooks and deny rules do not apply to other agents. If any of them may write, also enforce the prohibitions (secrets, `--no-verify`, pushing with `--force`) through CI or git hooks
+- Manage other agents' API keys and billing in those tools and never commit them (constitution ⑦)
+- If you add an instruction file for another agent (`GEMINI.md`, `.github/copilot-instructions.md`, etc.), make it point to `AGENTS.md` instead of duplicating rules

@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 # UI/UX Design
 
 プロジェクトのデザインシステムに準拠したUI/UX設計・レビュー・実装を行うスキル。
-`CLAUDE.md` の方針を厳守すること。プロジェクト固有のデザイン規約は [docs/development-patterns.md](../../../docs/development-patterns.md) の「デザインシステム」セクションを参照。
+`AGENTS.md`(共通ルール)と `CLAUDE.md` の方針を厳守すること。プロジェクト固有のデザイン規約は [docs/development-patterns.md](../../../docs/development-patterns.md) の「デザインシステム」セクションを参照。
 
 ## 前提条件
 

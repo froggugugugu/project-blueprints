@@ -132,7 +132,7 @@ PL determines the designer's participation method based on the task nature:
 
 ## Tech Stack Reference
 
-All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
+All team members must read `CLAUDE.md` and the `AGENTS.md` it imports and follow the project's tech stack and conventions.
 
 ## Task File Integration Rules
 

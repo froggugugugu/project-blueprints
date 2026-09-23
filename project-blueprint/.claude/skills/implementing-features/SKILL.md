@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 # Implementing Features
 
 プロジェクトの開発標準に従い、TDDで機能実装・バグ修正・リファクタリングを行う。
-`CLAUDE.md` の方針を厳守すること。プロジェクト固有のコードパターンは [docs/development-patterns.md](../../../docs/development-patterns.md) を参照。
+`AGENTS.md`(共通ルール)と `CLAUDE.md` の方針を厳守すること。プロジェクト固有のコードパターンは [docs/development-patterns.md](../../../docs/development-patterns.md) を参照。
 
 ## 前提条件
 
@@ -110,7 +110,7 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 
 #### 🚏 最終ゲート出力
 
-実装チェックリスト（CLAUDE.md定義）の全項目を `[x]` / `[ ]` で提示する。
+実装チェックリスト（AGENTS.md 定義）の全項目を `[x]` / `[ ]` で提示する。
 
 ### 語彙制約
 

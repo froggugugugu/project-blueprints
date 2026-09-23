@@ -36,7 +36,7 @@
     "- settings.json の deny は分類器より前に効き、ask は auto mode でも必ず確認ダイアログを出す",
     "- `permissions.defaultMode: \"auto\"` と `autoMode.*` は project / local settings からは読まれない(公式仕様)。",
     "  個人の ~/.claude/settings.json か managed settings に書く。下書きは /auto-mode-setup が生成する",
-    "- 分類器は CLAUDE.md も読む。プロジェクト固有の禁止事項は CLAUDE.md にも書く",
+    "- 分類器は CLAUDE.md も読む。プロジェクト固有の禁止事項は CLAUDE.md 本体にも書く(import 先の AGENTS.md だけに置かない)",
     "- 分類器の拒否は permission-denied-log.sh が testreport/denials/ に記録する。繰り返し拒否される",
     "  正当な操作はこのファイルの allow に追加する"
   ],

@@ -56,7 +56,7 @@ jobs:
           max_turns: 10
           # 追加プロンプト（プロジェクト固有のレビュー観点）
           direct_prompt: |
-            このリポジトリは `.claude/CLAUDE.md` と `project-config.md` に定義された規約に従う。
+            このリポジトリは `AGENTS.md`・`CLAUDE.md` と `project-config.md` に定義された規約に従う。
             以下の観点で PR をレビューしてほしい:
 
             1. **設計**: アーキテクチャ違反、依存方向違反がないか

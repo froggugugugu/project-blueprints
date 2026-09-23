@@ -37,7 +37,7 @@
     "- deny rules in settings.json apply before the classifier; ask rules always prompt, even in auto mode",
     "- `permissions.defaultMode: \"auto\"` and `autoMode.*` are NOT read from project / local settings (official spec).",
     "  Put them in your personal ~/.claude/settings.json or managed settings; /auto-mode-setup drafts them",
-    "- The classifier also reads CLAUDE.md, so project-specific prohibitions belong in CLAUDE.md too",
+    "- The classifier also reads CLAUDE.md, so project-specific prohibitions belong in CLAUDE.md itself too (not only in the imported AGENTS.md)",
     "- Classifier denials are logged by permission-denied-log.sh under testreport/denials/. Add repeatedly",
     "  denied legitimate actions to the allow list in this file"
   ],

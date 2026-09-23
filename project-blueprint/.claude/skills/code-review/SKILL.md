@@ -14,7 +14,7 @@ background: false
 # Code Review
 
 プロジェクトのコード変更をレビューするスキル。
-`CLAUDE.md`の規約と[docs/development-patterns.md](../../../docs/development-patterns.md)のプロジェクト固有チェックリストに基づき、構造化されたフィードバックを返す。
+`AGENTS.md` / `CLAUDE.md` の規約と[docs/development-patterns.md](../../../docs/development-patterns.md)のプロジェクト固有チェックリストに基づき、構造化されたフィードバックを返す。
 
 ## 前提条件
 
@@ -92,7 +92,7 @@ background: false
 - 状態管理の使い方が正しいか（[docs/development-patterns.md](../../../docs/development-patterns.md)参照）
 - スキーマと型の一貫性
 - パスエイリアスの使用
-- 依存方向ルールに違反していないか（`CLAUDE.md`「アーキテクチャガバナンス」参照）
+- 依存方向ルールに違反していないか（`AGENTS.md`「アーキテクチャガバナンス」参照）
 
 ### 4. パフォーマンス
 
@@ -159,7 +159,7 @@ background: false
 
 | レベル | 判定基準 | 例 |
 | ------ | -------- | -- |
-| **MUST** | CLAUDE.mdルール違反、既存テスト破壊、セキュリティ脆弱性、依存方向違反、docs/未更新 | アンチパターン使用、ハードコード色値、XSS |
+| **MUST** | AGENTS.md / CLAUDE.md のルール違反、既存テスト破壊、セキュリティ脆弱性、依存方向違反、docs/未更新 | アンチパターン使用、ハードコード色値、XSS |
 | **SHOULD** | 可読性低下、パフォーマンス懸念、テスト不足、命名不適切 | メモ化欠如、any型使用、テストカバレッジ不足 |
 | **CONSIDER** | 改善提案、代替アプローチ、コード整理 | 関数抽出の提案、型定義の整理 |
 
@@ -187,7 +187,7 @@ background: false
 | ---- | ---- |
 | 仕様準拠 | タスクファイルの受け入れ基準をすべて満たしていること |
 | ドキュメント同期 | 実装変更に対応する `docs/` の更新が完了していること |
-| 依存方向違反 | CLAUDE.md「アーキテクチャガバナンス」のルールへの抵触 |
+| 依存方向違反 | AGENTS.md「アーキテクチャガバナンス」のルールへの抵触 |
 
 ## レポートフォーマット
 

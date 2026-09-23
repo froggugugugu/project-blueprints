@@ -115,7 +115,8 @@ claude
 - **人間と AI の責務を分ける** — 人間の決定は 1 ファイルに集約し、AI 管理領域と混ぜない
 - **指示ではなく強制にする** — 「毎回必ず X」は文章ではなくフックにする。3 層防御（フック → deny/ask → allow）
 - **止めどころを用意する** — 5 つの品質ゲートに加え、ソースを編集したまま検証せず終了するとフックが検知する
-- **文脈を食い潰さない** — CLAUDE.md は 200 行以内。スキルは必要になった詳細だけを読む
+- **文脈を食い潰さない** — CLAUDE.md は取り込む AGENTS.md と合わせて 200 行以内。スキルは必要になった詳細だけを読む
+- **Claude Code を主系に、他のエージェントとも共有できる** — ツール共通のルールは `AGENTS.md` に置き、Claude Code 固有の仕組みだけを `CLAUDE.md` に残す。Codex / Cursor / Copilot / Gemini CLI を併用するときの役割と書込範囲は `project-config.md` §13.7 で人間が決める
 - **期待動作をテストで持つ** — スキルを変えたら `/skill-eval` で with・without の pass rate を比べる
 - **壊れたら CI が落ちる** — ハーネス自身の静的検証があり、日英の構造ずれも検出する
 
@@ -198,7 +199,8 @@ plugin 単体でインストールしても、**全 skill が前提を欠いた�
 ## さらに知る
 
 - [`project-blueprint/README.md`](project-blueprint/README.md) — セットアップの詳細手順
-- [`project-blueprint/.claude/CLAUDE.md`](project-blueprint/.claude/CLAUDE.md) — 開発ガイド（横断ルール、200 行以内）
+- [`project-blueprint/AGENTS.md`](project-blueprint/AGENTS.md) — ツール共通の開発ルール（どのコーディングエージェントも読む）
+- [`project-blueprint/.claude/CLAUDE.md`](project-blueprint/.claude/CLAUDE.md) — Claude Code 固有の開発ガイド（AGENTS.md を取り込み、合計 200 行以内）
 - [`project-blueprint/.claude/guardrails.md`](project-blueprint/.claude/guardrails.md) — 安全機構の全体像
 - [`project-blueprint/.claude/pitfalls.md`](project-blueprint/.claude/pitfalls.md) — AI 協調開発の落とし穴
 - [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 17 skill の SKILL.md

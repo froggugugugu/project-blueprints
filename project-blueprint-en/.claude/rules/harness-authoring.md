@@ -4,6 +4,7 @@ paths:
   - ".claude/**/*.json"
   - ".claude/workflows/**"
   - "CLAUDE.md"
+  - "AGENTS.md"
 ---
 # Harness Authoring Conventions — how to write CLAUDE.md / skills / agents / rules / workflows
 
@@ -25,7 +26,9 @@ paths:
 
 | What you want to write | Where it goes |
 | ---------------------- | ------------- |
-| Facts needed every session (commands, conventions, layout) | `CLAUDE.md` (under 200 lines) |
+| Rules needed every session that hold for any agent (principles, quality standards, Git, security) | `AGENTS.md` |
+| Which other agents are used, their roles and write scopes (a human decision) | `project-config.md` §13.7 |
+| Claude Code-specific facts needed every session (skills, teams, hooks, permissions) | `CLAUDE.md` (under 200 lines together with `AGENTS.md`) |
 | Conventions that apply only to certain paths | `.claude/rules/*.md` + `paths:` |
 | Procedures, checklists, long references | a skill (procedure in the body, detail in `references/`) |
 | "Always do X", "never do Y" | a hook / `permissions.deny` (enforcement, not instruction) |
@@ -36,7 +39,8 @@ paths:
 
 - Judge each line by "would removing it make Claude make mistakes?" Omit what code shows and common knowledge
 - `@import` targets load in full every session. Import only files that are needed every time
-- If an `AGENTS.md` exists for other agents, remember Claude reads it only when no CLAUDE.md is present; import it with `@AGENTS.md` instead of duplicating its content
+- With any CLAUDE.md present, Claude Code does not read `AGENTS.md` directly. Keep the `@AGENTS.md` line at the top of CLAUDE.md and never duplicate shared rules into CLAUDE.md. The exception is safety prohibitions, which also go in CLAUDE.md itself so they reach the auto mode classifier
+- Do not put a line-start `@` in `AGENTS.md` (agents other than Claude Code do not interpret imports). Name files to read in the body instead
 
 ## Skills (SKILL.md)
 

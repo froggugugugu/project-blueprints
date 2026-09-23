@@ -40,6 +40,7 @@ flowchart LR
         S10["§10 セキュリティ"]
         S11["§11 注意事項"]
         S12["§12 プラグイン"]
+        S13["§13 モデル・マルチ LLM"]
     end
 
     MINIMAL -- "+§4を追記" --> RECOMMEND
@@ -396,6 +397,7 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 > Claude Opus / Sonnet / Haiku のどれを、どのスキル・チーム・エージェントで使うか。
 > コスト・品質・速度のトレードオフを明示する。未記入時はセッション既定モデルにフォールバック。
+> Claude Code 以外のエージェント(Codex / Cursor / Copilot / Gemini CLI 等)との併用は §13.7。
 
 ### 13.1 Tier 定義
 
@@ -485,3 +487,27 @@ PJM（リーダー）は判断精度が重要なので Critical を推奨。
 - フロントマター `model:` を省略した skill / agent はセッション既定モデルを継承
 - 本セクションの表は**推奨値**であり、プロジェクト要件に応じてオーバーライド可能
 - 個人設定で常に Opus を使いたい場合は `~/.claude/settings.json` の `model` で指定
+
+### 13.7 マルチ LLM 併用(Claude Code 以外のエージェント)
+
+> **主系は Claude Code**。skill・team・フック・権限による品質ゲートと安全装置は Claude Code 上でだけ動く。
+> 他のエージェントはルートの `AGENTS.md`(共通ルール)を読み、本節で割り当てた役割と書込範囲に従う。
+> 本節で `yes` になっていないエージェントは**読取専用**として振る舞う(`AGENTS.md` に明記済み)。
+
+| エージェント | 利用 | 役割 | 書込範囲 | `AGENTS.md` を読ませる方法 |
+| ------------ | ---- | ---- | -------- | -------------------------- |
+| Claude Code | yes(主系・固定) | 全フェーズ・品質ゲート・成果物の確定 | skill / agent の定義どおり | `CLAUDE.md` の `@AGENTS.md` で取り込む |
+| OpenAI Codex CLI | no | 例: レビューのセカンドオピニオン | 例: なし(読取専用) | 既定で読む |
+| Cursor | no | 例: エディタ内の小修正 | 例: `src/**` | 既定で読む |
+| GitHub Copilot | no | 例: 補完・PR 要約 | 例: なし(読取専用) | VS Code は設定 `chat.useAgentsMdFile: true` が必要 |
+| Gemini CLI | no | 例: 大規模コードの横断調査 | 例: なし(読取専用) | 既定は `GEMINI.md`。`.gemini/settings.json` に `{"context": {"fileName": ["AGENTS.md"]}}` を置く |
+
+> 読み込み方法はツールの版で変わる。導入時に各ツールの公式ドキュメントで確認する。
+
+**併用ルール**(既定値。プロジェクトに合わせて変更してよい):
+
+- 書込範囲はエージェント間で重複させない。同じファイルを複数エージェントで同時に編集しない
+- 品質ゲートの判定と `output/` の成果物の確定は Claude Code の skill で行う。他エージェントの結果を取り込むときは出典(エージェント名)を明記する
+- Claude Code 以外には `.claude/` のフック・deny ルールが効かない。書込を許すエージェントがあるなら、禁止事項(シークレット・`--no-verify`・`--force` 付きの push)を CI や git フックでも強制する
+- 他エージェントの API キーや課金設定はそのツール側で管理し、リポジトリにコミットしない(constitution ⑦)
+- 他エージェント用の指示ファイル(`GEMINI.md`・`.github/copilot-instructions.md` 等)を作るなら `AGENTS.md` を参照するだけにし、規則を複製しない

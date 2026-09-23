@@ -100,6 +100,6 @@ Do not use it to sync into existing `docs/`.
 
 ## Concept alignment
 
-- `output/` is AI-generated and human-reviewed (see `.claude/CLAUDE.md` Document Management)
+- `output/` is AI-generated and human-reviewed (see `AGENTS.md` Document Management)
 - Respect the output ↔ docs boundary (post-write reflection into `docs/` is `doc-synchronizer`'s or the parent skill's job)
 - Inherits the CLAUDE.md hierarchy and git status by default (official semantics). Skills are not auto-inherited unless explicitly named — pass any additional rules via the parent `prompt`

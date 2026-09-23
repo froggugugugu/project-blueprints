@@ -53,7 +53,7 @@ if [[ -f "$MARKER" ]]; then
     rm -f "$MARKER" 2>/dev/null || true
     NOTES="[post-compact recovery] 直前にコンテキストのコンパクトが行われました。作業を続ける前に次を再確認すること:
   - 不変原則: constitution.md(7 原則)— 特に人間↔AI 責務分離と 5 品質ゲート
-  - 横断ルール: CLAUDE.md / .claude/rules/*.md
+  - 横断ルール: AGENTS.md / CLAUDE.md / .claude/rules/*.md
   - 進行中の成果物: output/ 配下の最新ファイルと未完了タスク
   - 直前の要約は testreport/transcripts/ に保全済み。必要なら参照する
   未完了の作業がある場合は、勝手に再設計せず現状の成果物の続きから再開すること。"

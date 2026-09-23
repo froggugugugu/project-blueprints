@@ -40,7 +40,8 @@ This skill does not freeze its rubric; it gets stronger autonomously on every ru
 | `project-config.md` §1 / §4-§10 / §12 / §13 | Human decision area | ❌ Immutable |
 | `project-config.md` §2 / §3 / §11 | AI-mutable sections | ⚠️ Structure only (do not change values) |
 | `project-config.md` §13 | Opus/Sonnet/Haiku tier strategy (referenced by item 11) | ❌ Immutable (reference only) |
-| `.claude/CLAUDE.md` | Cross-cutting rules (principle ⑥: ≤200 lines target) | ✅ |
+| `AGENTS.md` | Tool-agnostic cross-cutting rules (counted with `CLAUDE.md` for principle ⑥) | ✅ |
+| `.claude/CLAUDE.md` | Claude Code-specific cross-cutting rules (principle ⑥: ≤200 lines target together with `AGENTS.md`) | ✅ |
 | `.claude/skills/*/SKILL.md` | Skill skeletons (frontmatter / pipeline / description) | ✅ |
 | `.claude/agents/*.md` | Single-shot specialist definitions (least privilege / single responsibility) | ✅ |
 | `.claude/teams/TEAM_*.md` | Orchestration | ✅ |
@@ -56,7 +57,7 @@ This skill does not freeze its rubric; it gets stronger autonomously on every ru
 | `constitution.md` | ❌ | Changes require a separate PR + `.constitution.sha256` update |
 | `project-config.md` §1 / §4-§10 / §12 / §13 | ❌ | Human decision area |
 | `project-config.md` §2 / §3 / §11 | ⚠️ | Structural tidying only; values untouched |
-| `.claude/CLAUDE.md` | ✅ | Stay within 200-line target (220-line hard ceiling) |
+| `.claude/CLAUDE.md` + `AGENTS.md` | ✅ | Stay within a combined 200-line target (220-line hard ceiling). Keep the `@AGENTS.md` import. No line-start `@` in AGENTS.md |
 | `.claude/{skills,agents,teams,rules,output-styles}/` | ✅ | No name clashes / cyclic references |
 | `.claude/hooks/*.sh` | ❌ | Body edits forbidden here (principle ⑤) |
 | `docs/`, `output/`, `testreport/` content | ❌ | Out of scope (only `output/reports/harness-refine/` is written) |
@@ -139,7 +140,7 @@ condition holds, with evidence attached.
 | # | Item | 0 pts | 1 pt | 2 pts |
 | - | ---- | ----- | ---- | ----- |
 | 1 | Adherence to constitution 7 principles | Violation present | Formally compliant | + Tested by `scan-harness.sh` |
-| 2 | CLAUDE.md ≤200 lines (principle ⑥) | >220 lines | 200-220 lines | ≤200 lines + true reduction via path-scoped `rules/` (understand `@import` does not cut context) |
+| 2 | CLAUDE.md + AGENTS.md ≤200 lines (principle ⑥) | >220 lines | 200-220 lines | ≤200 lines + true reduction via path-scoped `rules/` (understand `@import` does not cut context) |
 | 3 | Skill frontmatter convention | Missing name / description | All present | + allowed-tools (least privilege) / context / argument-hint complete |
 | 4 | 3-layer separation (skill ⇄ agent ⇄ team, principle ④) | Cycles / mixing | Linear | + Selection guide in `agents/README.md` |
 | 5 | 3-layer defense preserved (principle ⑤) | Hooks removed | Count preserved | + Responsibility header comment on each hook |
@@ -169,7 +170,7 @@ Judge items 10 / 11 / 12 against the latest official guidance fetched in Round 0
 Address every item scoring 0 / 1, in this priority order (recurring findings promoted in Round 0 come first):
 
 1. **Constitution violations**: halt → human confirmation (never auto-fix; report bullet-by-bullet)
-2. **CLAUDE.md overflow**: extract a topic into `.claude/rules/<topic>.md` → path-scope it to truly cut context
+2. **CLAUDE.md + AGENTS.md overflow**: extract a topic into `.claude/rules/<topic>.md` → path-scope it to truly cut context
 3. **Missing frontmatter / naming drift / description quality**: unify to third person, explicit triggers, least-privilege allowlist
 4. **3-layer separation violations**: re-orient calls to one direction (skill → agent OK, agent → team forbidden)
 5. **Mirror divergence**: copy to the missing side, translate prose to match `README-en.md` tone

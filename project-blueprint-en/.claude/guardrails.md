@@ -1,7 +1,7 @@
 # Guardrails — Safety Mechanism Overview
 
 This file is the single reference for every safety mechanism applied to the project.
-Rules that are scattered across `CLAUDE.md` sections are consolidated here.
+Rules that are scattered across `AGENTS.md` / `CLAUDE.md` sections are consolidated here.
 
 ---
 
@@ -296,7 +296,7 @@ Outbound and irreversible operations that **always prompt**, even under
 
 ---
 
-## Prohibited operations (CLAUDE.md + safety-check.sh)
+## Prohibited operations (AGENTS.md / CLAUDE.md + safety-check.sh)
 
 | Operation | Reason |
 | --------- | ------ |

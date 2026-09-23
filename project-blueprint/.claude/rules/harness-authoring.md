@@ -4,6 +4,7 @@ paths:
   - ".claude/**/*.json"
   - ".claude/workflows/**"
   - "CLAUDE.md"
+  - "AGENTS.md"
 ---
 # ハーネス執筆規約 — CLAUDE.md / skill / agent / rules / workflow の書き方
 
@@ -25,7 +26,9 @@ paths:
 
 | 書きたいこと | 置き場所 |
 | ------------ | -------- |
-| 毎セッション必要な事実(コマンド・規約・構成) | `CLAUDE.md`(200 行以内) |
+| 毎セッション必要で、どのエージェントにも通じる規則(原則・品質基準・Git・セキュリティ) | `AGENTS.md` |
+| 他エージェントの利用可否・役割・書込範囲(人間が決める) | `project-config.md` §13.7 |
+| 毎セッション必要な Claude Code 固有の事実(skill・team・フック・権限) | `CLAUDE.md`(`AGENTS.md` と合わせて 200 行以内) |
 | 特定パスでだけ効く規約 | `.claude/rules/*.md` + `paths:` |
 | 手順・チェックリスト・長い参照 | skill(本文は手順、詳細は `references/`) |
 | 「毎回必ず X」「絶対に Y しない」 | フック / `permissions.deny`(指示ではなく強制) |
@@ -36,7 +39,8 @@ paths:
 
 - 各行を「消すと Claude が間違えるか?」で判定する。コードから読めること・一般常識は書かない
 - `@import` 先は毎セッション全文 load される。常時必要なファイルだけを import する
-- 他エージェント用の `AGENTS.md` がある場合、CLAUDE.md が 1 つでもあると AGENTS.md は読まれない。内容を複製せず `@AGENTS.md` を import して 1 ファイルに集約する
+- CLAUDE.md が 1 つでもあると Claude Code は `AGENTS.md` を直接読まない。CLAUDE.md の冒頭の `@AGENTS.md` を消さず、共通ルールを CLAUDE.md に複製しない。例外は安全に関わる禁止事項で、auto mode の分類器に届くよう CLAUDE.md 本体にも置く
+- `AGENTS.md` には行頭 `@` を書かない(Claude Code 以外は import を解釈しない)。常時読ませたいファイルはパスを本文で示す
 
 ## skill(SKILL.md)
 

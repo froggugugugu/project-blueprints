@@ -14,7 +14,7 @@ A skill that automatically retrieves CodeRabbit / GitHub Copilot review comments
 analyzes and classifies the feedback, then executes fix → test → commit & push in one go.
 
 The goal is to eliminate the manual effort of reading review comments one by one and fixing them by hand.
-It accurately understands the reviewer's intent and applies fixes following the project's quality standards (`CLAUDE.md`).
+It accurately understands the reviewer's intent and applies fixes following the project's quality standards (`AGENTS.md` / `CLAUDE.md`).
 
 ## Principles
 

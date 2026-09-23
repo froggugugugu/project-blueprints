@@ -76,7 +76,8 @@ auto mode でも毎回人間の確認を通る。
 - 組織のリポジトリ・バケット・内部ドメインが「外部」扱いされて拒否されるときは、
   `/auto-mode-setup` で `autoMode.environment` の下書きを生成し、個人の settings に保存する
 - 分類器は **CLAUDE.md も読む**。「force push しない」等のプロジェクト固有の禁止事項は
-  CLAUDE.md に書けば Claude と分類器の両方を同時に導ける
+  CLAUDE.md 本体に書けば Claude と分類器の両方を同時に導ける。`@AGENTS.md` など import 先を分類器が読むかは
+  公式に記載が無いため、安全に関わる禁止事項は `AGENTS.md` だけに置かない
 
 ### 拒否履歴の活用
 

@@ -38,7 +38,8 @@ disable-model-invocation: true
 | `project-config.md` §1 / §4-§10 / §12 / §13 | 人間決定領域 | ❌ 改変禁止 |
 | `project-config.md` §2 / §3 / §11 | AI 可変領域 | ⚠️ 構造のみ可(値は触らない) |
 | `project-config.md` §13 | Opus/Sonnet/Haiku tier 戦略(採点 11 で参照) | ❌ 改変禁止(参照のみ) |
-| `.claude/CLAUDE.md` | 横断ルール(原則 ⑥: ≤200 行目安) | ✅ |
+| `AGENTS.md` | ツール共通の横断ルール(`CLAUDE.md` と合わせて原則 ⑥ の行数に数える) | ✅ |
+| `.claude/CLAUDE.md` | Claude Code 固有の横断ルール(原則 ⑥: `AGENTS.md` と合わせて ≤200 行目安) | ✅ |
 | `.claude/skills/*/SKILL.md` | スキル骨格(frontmatter / pipeline / description) | ✅ |
 | `.claude/agents/*.md` | 単発専門家定義(最小権限 / 単一責務) | ✅ |
 | `.claude/teams/TEAM_*.md` | オーケストレーション | ✅ |
@@ -54,7 +55,7 @@ disable-model-invocation: true
 | `constitution.md` | ❌ | 改変は別 PR + `.constitution.sha256` 更新が必須(原則範囲外) |
 | `project-config.md` §1 / §4-§10 / §12 / §13 | ❌ | 人間決定領域 |
 | `project-config.md` §2 / §3 / §11 | ⚠️ | 構造的整形のみ。値の改変は禁止 |
-| `.claude/CLAUDE.md` | ✅ | 200 行を超えない(220 行ハード上限) |
+| `.claude/CLAUDE.md` + `AGENTS.md` | ✅ | 合計 200 行を超えない(220 行ハード上限)。`@AGENTS.md` の取り込みを消さない。AGENTS.md に行頭 `@` を書かない |
 | `.claude/{skills,agents,teams,rules,output-styles}/` | ✅ | name 衝突 / 循環参照を作らない |
 | `.claude/hooks/*.sh` | ❌ | スクリプト本体の編集は禁止(原則 ⑤) |
 | `docs/`, `output/`, `testreport/` 内容 | ❌ | 本スキル対象外(`output/reports/harness-refine/` のみ書く) |
@@ -130,7 +131,7 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 | # | 項目 | 0 点 | 1 点 | 2 点 |
 | - | ---- | ---- | ---- | ---- |
 | 1 | constitution 7 原則の遵守 | 違反あり | 形式上遵守 | + `scan-harness.sh` でテスト化 |
-| 2 | CLAUDE.md ≤200 行(原則 ⑥) | 220 行超 | 200-220 行 | 200 行以下 + 真の削減は path-scoped `rules/` で実現(`@import` は context を減らさない点を理解) |
+| 2 | CLAUDE.md + AGENTS.md ≤200 行(原則 ⑥) | 220 行超 | 200-220 行 | 200 行以下 + 真の削減は path-scoped `rules/` で実現(`@import` は context を減らさない点を理解) |
 | 3 | skill frontmatter 規約 | name / description 欠落 | 全項目あり | + allowed-tools(最小権限)/ context / argument-hint 整備 |
 | 4 | 三層分離(skill ⇄ agent ⇄ team, 原則 ④) | 循環 / 混在あり | 直線的 | + `agents/README.md` に選定ガイド |
 | 5 | 3 層防御維持(原則 ⑤) | hook 削除あり | 同数維持 | + 各 hook の責務 header コメントあり |
@@ -160,7 +161,7 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 スコア 0 / 1 点の項目を補正する。優先順(Round 0 で昇格した再発課題を最優先):
 
 1. **constitution 違反**: 即停止 → 人間確認(自動修正禁止。違反内容を箇条書きで提示)
-2. **CLAUDE.md 行数超過**: トピックを `.claude/rules/<topic>.md` に切り出し → 真に context を削るなら path-scoped 化
+2. **CLAUDE.md + AGENTS.md 行数超過**: トピックを `.claude/rules/<topic>.md` に切り出し → 真に context を削るなら path-scoped 化
 3. **frontmatter 欠落 / 命名揺れ / description 品質**: 三人称・トリガー明示・最小権限 allowlist に統一
 4. **三層分離違反**: 該当呼び出しを単方向に矯正(skill → agent は可、agent → team は禁止)
 5. **ミラー乖離**: 不足側にコピーし、文言は既存 `README-en.md` のトーンで翻訳

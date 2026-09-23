@@ -11,7 +11,7 @@ paths:
 > **path-specific rule**: auto-loads only when Claude touches the implementation source tree
 
 > Split out of CLAUDE.md to keep it small. It loads automatically per the frontmatter above, and skills can still reference it explicitly with `@import`.
-> Plan-first / Research-first / Subagent strategy stay in CLAUDE.md proper;
+> Plan-first / Subagent strategy stay in CLAUDE.md proper and Research-first in the AGENTS.md development principles;
 > this file aggregates the "self-improvement loop and beyond" advanced guidance.
 
 ## 1. Self-improvement loop

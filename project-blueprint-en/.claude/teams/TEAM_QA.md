@@ -134,7 +134,7 @@ Raw tool data goes to `testreport/`, human-readable summaries to `output/reports
 
 ## Tech Stack Reference
 
-All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
+All team members must read `CLAUDE.md` and the `AGENTS.md` it imports and follow the project's tech stack and conventions.
 
 ## Related references
 

@@ -11,7 +11,7 @@ effort: high
 # Safe Refactoring
 
 段階的・巻き戻し可能なリファクタリングを実施する。
-`CLAUDE.md` の方針を厳守すること。プロジェクト固有のコードパターンは [docs/development-patterns.md](../../../docs/development-patterns.md) を参照。
+`AGENTS.md`(共通ルール)と `CLAUDE.md` の方針を厳守すること。プロジェクト固有のコードパターンは [docs/development-patterns.md](../../../docs/development-patterns.md) を参照。
 
 ## 前提条件
 

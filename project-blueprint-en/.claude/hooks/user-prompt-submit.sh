@@ -55,7 +55,7 @@ if [[ -f "$MARKER" ]]; then
     rm -f "$MARKER" 2>/dev/null || true
     NOTES="[post-compact recovery] The context was just compacted. Before continuing, re-confirm:
   - Inviolable principles: constitution.md (7 principles) — especially the human/AI split and the 5 quality gates
-  - Cross-cutting rules: CLAUDE.md and .claude/rules/*.md
+  - Cross-cutting rules: AGENTS.md, CLAUDE.md and .claude/rules/*.md
   - Work in flight: the newest files under output/ and any unfinished tasks
   - The pre-compact summary is preserved under testreport/transcripts/ if you need it
   If work is unfinished, resume from the existing artifacts instead of redesigning them."

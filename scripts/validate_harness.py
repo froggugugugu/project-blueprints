@@ -719,12 +719,38 @@ def check_imports_and_limits(root: Path, rep: Report) -> None:
             if not any(c.exists() for c in candidates):
                 rep.error(str(p), f"`@{target}` の import 先が存在しません")
 
+    # AGENTS.md はツール共通ルール。Claude Code 以外は @import を解釈しないため行頭 `@` を禁じ、
+    # CLAUDE.md が取り込み忘れると Claude Code からは読まれない(CLAUDE.md があると直接は読まない)。
+    agents_md = root / "AGENTS.md"
+    agents_lines = 0
+    if agents_md.exists():
+        agents_text = agents_md.read_text(encoding="utf-8")
+        agents_lines = len(agents_text.splitlines())
+        for m in re.finditer(r"(?m)^@([\w./-]+)", strip_fences(agents_text)):
+            rep.error(str(agents_md), f"行頭の `@{m.group(1)}` — Claude Code 以外は import を解釈しません。パスを本文で示してください")
+        # コードブロック内の `@AGENTS.md` は import として展開されないため数えない
+        if claude_md.exists() and not re.search(r"(?m)^@AGENTS\.md\s*$", strip_fences(claude_md.read_text(encoding="utf-8"))):
+            rep.error(str(claude_md), "`@AGENTS.md` の取り込みがありません — CLAUDE.md があると Claude Code は AGENTS.md を読みません")
+
+    # 常時 load される指示ファイルが指す `project-config.md` の §番号は見出しとして実在しなければならない
+    # (AGENTS.md は他エージェントを §13.7 へ誘導するため、番号ずれは権限の取り違えになる)。
+    config = root / "project-config.md"
+    if config.exists():
+        headings = set(re.findall(r"(?m)^#{2,3} (\d+(?:\.\d+[a-z]?)?)[. ]", config.read_text(encoding="utf-8")))
+        for p in (agents_md, claude_md):
+            if not p.exists():
+                continue
+            for sec in sorted(set(re.findall(r"§(\d+(?:\.\d+)?)", p.read_text(encoding="utf-8")))):
+                if sec not in headings:
+                    rep.error(str(p), f"`project-config.md` §{sec} の見出しが存在しません")
+
     if claude_md.exists():
-        n = len(claude_md.read_text(encoding="utf-8").splitlines())
+        n = len(claude_md.read_text(encoding="utf-8").splitlines()) + agents_lines
+        label = "CLAUDE.md + AGENTS.md の合計" if agents_lines else "CLAUDE.md"
         if n > CLAUDE_MD_HARD_LIMIT:
-            rep.error(str(claude_md), f"{n} 行 — constitution §6 のハード上限 {CLAUDE_MD_HARD_LIMIT} 行を超えています")
+            rep.error(str(claude_md), f"{label} {n} 行 — constitution §6 のハード上限 {CLAUDE_MD_HARD_LIMIT} 行を超えています")
         elif n > CLAUDE_MD_SOFT_LIMIT:
-            rep.warn(str(claude_md), f"{n} 行 — 目安の {CLAUDE_MD_SOFT_LIMIT} 行を超えています")
+            rep.warn(str(claude_md), f"{label} {n} 行 — 目安の {CLAUDE_MD_SOFT_LIMIT} 行を超えています")
 
 
 def check_constitution(root: Path, rep: Report) -> None:
