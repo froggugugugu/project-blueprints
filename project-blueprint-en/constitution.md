@@ -46,14 +46,17 @@ Layer 1: hooks (always-on) / Layer 2: deny rules (shared) / Layer 3: allow rules
 Layer 1 stays active even with `--dangerously-skip-permissions`. Changes that
 disable or stop hooks are prohibited. Adding new hooks is permitted.
 
-## 6. Keep CLAUDE.md within 200 lines (target), 220 lines (hard cap)
+## 6. Keep the always-loaded instructions (CLAUDE.md + AGENTS.md) within 200 lines combined (target), 220 lines (hard cap)
 
 Bloat reduces compliance because important rules get buried (pitfalls.md #1, #18).
+Claude Code reads `CLAUDE.md` and the `AGENTS.md` (tool-agnostic rules) it imports through `@AGENTS.md` in full every session,
+so count the **combined** lines of both files. Moving text from one to the other saves nothing.
 
-- **Target**: under 200 lines
-- **Hard cap**: 220 lines (must extract on the next edit if exceeded)
-- **Extract to**: `.claude/rules/<topic>.md`, `.claude/skills/<name>/SKILL.md`, `docs/<topic>.md`
-- **Heuristic**: a single topic exceeding 20 lines is an extraction candidate. Replace with `@import`
+- **Target**: under 200 lines combined
+- **Hard cap**: 220 lines combined (must extract on the next edit if exceeded)
+- **Extract to**: `.claude/rules/<topic>.md` (with `paths:`), `.claude/skills/<name>/SKILL.md`, `docs/<topic>.md`
+- **Heuristic**: a single topic exceeding 20 lines is an extraction candidate. An `@import` loads in full every session and saves nothing,
+  so refer to it by path plus the condition for reading it
 
 ## 7. Never commit secrets
 
@@ -86,6 +89,7 @@ detects a hash mismatch (warns only under `standard`).
 ## Related documents
 
 - `@project-config.md` — variable parameters (13 sections)
-- `@.claude/CLAUDE.md` — development guide (cross-cutting rules)
+- `@AGENTS.md` — tool-agnostic development rules (Claude Code imports them from CLAUDE.md)
+- `@.claude/CLAUDE.md` — Claude Code-specific development guide
 - `@.claude/guardrails.md` — 3-layer defense details
 - `@.claude/pitfalls.md` — failure patterns and mitigations
