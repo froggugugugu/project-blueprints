@@ -71,7 +71,7 @@
   <div class="wrap">
     <h2>What is in the box</h2>
     <p class="section-lead">
-      Every layer lives under <code>.claude/</code> and is reusable as is. Project-specific values are collected in the 13 sections of <code>project-config.md</code>.
+      Claude Code-specific layers live under <code>.claude/</code> and the tool-agnostic rules in the root <code>AGENTS.md</code>; both are reusable as is. Project-specific values are collected in the 13 sections of <code>project-config.md</code>.
     </p>
     <div class="grid grid-4">
       <div class="card"><div class="num">17</div><div class="label">skills</div></div>
@@ -91,10 +91,11 @@
         <tr><td>Subagents</td><td>Delegation that keeps the main context clean</td><td>Research, planning, security, performance, documentation and test authoring</td></tr>
         <tr><td>Teams</td><td>Multi-agent formations</td><td>Six templates, with the full-lifecycle one as the default recommendation</td></tr>
         <tr><td>Hooks</td><td>Enforcement rather than instruction</td><td>16 scripts covering dangerous commands, protected files and unverified stops</td></tr>
-        <tr><td>Rules</td><td>Conventions scoped to paths</td><td>Four active rules plus three language samples</td></tr>
+        <tr><td>Rules</td><td>Conventions scoped to paths</td><td>One always-on rule, three path-scoped rules, and three language samples</td></tr>
         <tr><td>Output styles</td><td>A response shape per phase</td><td>Requirements, design, implementation, review</td></tr>
         <tr><td>Workflows</td><td>Deterministic control over many agents</td><td>An exhaustive review sweep and a skill eval runner</td></tr>
         <tr><td>CI templates</td><td>Automation on the repository side</td><td>Pull request review, headless runs, and a weekly audit</td></tr>
+        <tr><td>Shared rules</td><td>Shared with other agents</td><td><code>AGENTS.md</code>. Claude Code is primary; Codex / Cursor read it by default and Copilot / Gemini CLI through configuration. A human sets their roles and write scopes in <code>project-config.md</code> §13.7</td></tr>
       </tbody>
     </table>
   </div>
@@ -119,7 +120,7 @@
       </div>
       <div class="card">
         <h3>Do not burn the context</h3>
-        <p>The instruction file stays under 200 lines. Skills read detail only when they need it, and the listing stays inside its budget.</p>
+        <p>The always-loaded instructions (CLAUDE.md plus the AGENTS.md it imports) stay under 200 lines combined. Skills read detail only when they need it, and the listing stays inside its budget.</p>
       </div>
       <div class="card">
         <h3>Keep expected behaviour as tests</h3>

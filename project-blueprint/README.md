@@ -73,7 +73,9 @@ bash setup.sh /path/to/your-project
 これだけで以下がすべて完了する:
 - `.claude/`、`docs/`、`input/`、`output/`、`testreport/`、`project-config.md` のコピー
 - `CLAUDE.md` と `AGENTS.md`(ツール共通ルール)のプロジェクトルートへの配置(既存の `AGENTS.md` は上書きせず `AGENTS.blueprint.md` を横に置く)
-- `.gitignore` への `testreport/` 追記
+- `constitution.md`・`.mcp.json.template`・`.github/`(ワークフローテンプレート)の配置(既存ファイルは上書きしない)
+- `.claude/settings.local.json` を雛形から生成(無い場合のみ)
+- `.gitignore` への `testreport/` などローカル状態の追記
 - 既存 `.claude/` がある場合は `.claude.bak/` に自動バックアップ
 
 #### プロファイル（段階的インストール）
@@ -83,8 +85,8 @@ bash setup.sh /path/to/your-project
 | プロファイル | skills | agents | hooks | teams | 用途 |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | なし | まず最速で試す軽量構成 |
-| `standard` | 17 | 8 | 12 | なし | チーム機能以外フル |
-| `full`（デフォルト） | 17 | 8 | 12 | 6 | 現行と同じフル構成 |
+| `standard` | 17 | 8 | 16 | なし | チーム機能以外フル |
+| `full`（デフォルト） | 17 | 8 | 16 | 6 | 現行と同じフル構成 |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -110,6 +112,9 @@ cp -r project-blueprint/input /path/to/new-project/input
 cp -r project-blueprint/output /path/to/new-project/output
 cp -r project-blueprint/testreport /path/to/new-project/testreport
 cp project-blueprint/project-config.md /path/to/new-project/project-config.md
+cp project-blueprint/constitution.md /path/to/new-project/constitution.md
+cp project-blueprint/.mcp.json.template /path/to/new-project/.mcp.json.template
+cp -r project-blueprint/.github /path/to/new-project/.github
 
 # CLAUDE.md をプロジェクトルートに移動（.claude/ 内の重複を除去）
 mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
@@ -319,6 +324,11 @@ project-blueprint/
 ├── AGENTS.md                              ← [汎用] ツール共通の開発ルール（Codex / Cursor / Copilot 等も読む）
 ├── project-config.md                      ← [人間+AI] 設定ファイル（13セクション）
 ├── project-config.sample.md               ← 記入済みサンプル（タスク管理アプリ）
+├── constitution.md                        ← [人間] 不変原則 7 つ（hash で改変を検知）
+├── .mcp.json.template                     ← [カスタマイズ] プロジェクト共有の MCP サーバー設定（.mcp.json にリネームして有効化）
+├── .github/                               ← [汎用] GitHub Actions テンプレート（.template を外して有効化）
+│   ├── CLAUDE_REVIEW_SETUP.md               導入手順
+│   └── workflows/                           claude-review / claude-skills-ci / claude-scheduled-audit
 │
 ├── input/                                 ← [人間] インプット
 │   ├── README.md                            使い方ガイド
@@ -345,6 +355,27 @@ project-blueprint/
 │   ├── settings.json                      ← [汎用] プラグイン・フック設定
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
 │   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
+│   ├── settings.minimal.json              ← [汎用] minimal プロファイル用設定（setup.sh が差し替え）
+│   ├── statusline.sh                      ← [汎用] 現在の出力スタイルとフェーズを表示
+│   ├── .constitution.sha256               ← [自動] constitution.md の hash
+│   ├── guardrails.md                      ← [汎用] 安全機構の全体像
+│   ├── permissions-guide.md               ← [汎用] 権限設計・auto mode の指針
+│   ├── quality-gates.md                   ← [汎用] 5 つの品質ゲートの基準
+│   ├── pitfalls.md                        ← [汎用] 失敗パターン 31 件と対策
+│   │
+│   ├── agents/                            ← [汎用] サブエージェント 8 種 + README.md（使い分け）
+│   │                                        explorer / researcher / planner / security-reviewer /
+│   │                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
+│   │
+│   ├── rules/                             ← [汎用] ルール（常時 1 本 + パス限定 3 本 + サンプル 3 本）
+│   │   ├── git-conventions.md               常時 load: Git・コミット規約
+│   │   ├── document-management.md           docs/・output/ 編集時: ドキュメント管理
+│   │   ├── workflow-advanced.md             ソース編集時: 高度なワークフロー指針
+│   │   ├── harness-authoring.md             ハーネス編集時: 執筆規約
+│   │   └── *.md.example                     言語別・パス別サンプル（.example を外して有効化）
+│   │
+│   ├── output-styles/                     ← [汎用] フェーズ別出力スタイル 4 種（phase-prd / design / implementation / review）
+│   ├── learnings/                         ← [汎用] 成功パターンの記録（README.md / TEMPLATE.md / 記入例）
 │   │
 │   ├── hooks/                             ← [汎用] 安全フック（多層防御・16本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
@@ -362,7 +393,8 @@ project-blueprint/
 │   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStart/Stop）
 │   │   ├── pre-compact-backup.sh            コンパクト前トランスクリプト退避（PreCompact）
 │   │   ├── post-compact-restore.sh          コンパクト後の再注入マーカー設置（PostCompact）
-│   │   └── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
+│   │   ├── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
+│   │   └── ntfy-topic.txt                   notify-claude.sh の通知先トピック（要書き換え）
 │   │
 │   ├── skills/                            ← [汎用] 17スキル定義（各 SKILL.md + evals/evals.json + 必要に応じて references/）
 │   │   ├── brainstorm/SKILL.md              前提整理（/prd前段）
@@ -537,6 +569,9 @@ cp -r project-blueprint/input /path/to/project/input
 cp -r project-blueprint/output /path/to/project/output
 cp -r project-blueprint/testreport /path/to/project/testreport
 cp project-blueprint/project-config.md /path/to/project/project-config.md
+[ -e /path/to/project/constitution.md ] || cp project-blueprint/constitution.md /path/to/project/constitution.md
+[ -e /path/to/project/.mcp.json.template ] || cp project-blueprint/.mcp.json.template /path/to/project/.mcp.json.template
+mkdir -p /path/to/project/.github/workflows && cp -n project-blueprint/.github/workflows/*.template /path/to/project/.github/workflows/
 
 mv /path/to/project/.claude/CLAUDE.md /path/to/project/CLAUDE.md
 # 既存の AGENTS.md があれば上書きせず、内容を統合する
