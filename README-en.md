@@ -91,6 +91,7 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
 ## What is in the box
 
 ```text
+ 2 guides    AGENTS.md (tool-agnostic rules, also read by Codex / Cursor) + CLAUDE.md (Claude Code-specific, imports AGENTS.md)
 17 skills    ideation, design, implementation, review, security, legal, performance, refactoring
              long detail moves into references/ (20 files) so SKILL.md keeps only the procedure
  8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
@@ -99,7 +100,7 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
 16 hooks     PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact / Stop and more
              dangerous-command blocking, protected files, unverified-stop detection, write-scope enforcement
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
- 7 rules     4 active (git conventions, document management, workflow detail, harness authoring)
+ 7 rules     1 always-on (git conventions) + 3 path-scoped (document management, workflow detail, harness authoring)
              + 3 language samples (drop the .example suffix to enable)
  2 workflows review-sweep (4-angle parallel review + adversarial verification) / skill-eval (with and without)
 34 evals     evals.json for all 17 skills (typical + boundary), 128 assertions
@@ -142,6 +143,8 @@ It checks the following deterministically, with no LLM involved.
 - Hook registrations pointing at missing scripts, unresolved `@import` targets, broken links into `references/`
 - Skill body length, description length and person, and a line-start `@` (the form that attaches a file in full)
 - The schema of `evals/evals.json`, the `meta` declaration of workflows, and calls that break determinism
+- The `@AGENTS.md` import in `CLAUDE.md`, line-start `@` in `AGENTS.md`, that every `project-config.md` § either file cites exists, and the combined line count of both
+- `scope-guard.sh` registration on write-capable agents
 - The hash of `constitution.md` and the file layout parity of both mirrors
 
 CI (`.github/workflows/validate-harness.yml`) runs the same thing on push and pull request.
@@ -186,7 +189,7 @@ This harness, meanwhile, is in the following state.
 
   docs/               16 / 17        project-config.md   14 / 17
   output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .claude/rules/       4 / 17
+  quality-gates.md    15 / 17        .claude/rules/       3 / 17
 ```
 
 Installed as a plugin alone, **every skill would run with its premises missing**.

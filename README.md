@@ -90,6 +90,7 @@ claude
 ## 入っているもの
 
 ```text
+ 2 guides    AGENTS.md(ツール共通ルール。Codex / Cursor なども読む)+ CLAUDE.md(Claude Code 固有。AGENTS.md を取り込む)
 17 skills    企画・設計・実装・レビュー・セキュリティ・法務・性能・リファクタ
              長い詳細は references/(20 ファイル)に分離し、SKILL.md 本文は手順だけに保つ
  8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
@@ -98,7 +99,7 @@ claude
 16 hooks     PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact / Stop など
              危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
- 7 rules     常時 4(git 規約・ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
+ 7 rules     常時 1(git 規約)+ パス限定 3(ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
              + 言語別サンプル 3(.example を外して有効化)
  2 workflows review-sweep(4 観点並列レビュー + 反証検証)/ skill-eval(evals を with・without で実行)
 34 evals     全 17 skill に evals.json(典型 + 境界)、assertions 128 件
@@ -141,6 +142,8 @@ LLM を使わず決定論的に、次を検査する。
 - 参照先の無い hook 登録、解決しない `@import`、`references/` の壊れたリンク
 - skill 本文の長さ、description の文字数と人称、行頭の `@`（起動時に全文添付される書き方）
 - `evals/evals.json` のスキーマ、workflow の `meta` 宣言と決定論を壊す関数
+- `CLAUDE.md` の `@AGENTS.md` 取り込み、`AGENTS.md` の行頭 `@`、両ファイルが引く `project-config.md` の §番号の実在、2 ファイル合計の行数
+- 書込可能な agent の `scope-guard.sh` 登録
 - `constitution.md` のハッシュ、日英ミラーの構成一致
 
 CI（`.github/workflows/validate-harness.yml`）が push と PR で同じものを走らせる。
@@ -185,7 +188,7 @@ plugin が宣言できるのは `skills` / `agents` / `outputStyles` / `hooks` �
 
   docs/               16 / 17        project-config.md   14 / 17
   output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .claude/rules/       4 / 17
+  quality-gates.md    15 / 17        .claude/rules/       3 / 17
 ```
 
 plugin 単体でインストールしても、**全 skill が前提を欠いた状態で動く**。

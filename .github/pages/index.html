@@ -71,7 +71,7 @@
   <div class="wrap">
     <h2>入っているもの</h2>
     <p class="section-lead">
-      すべて <code>.claude/</code> 配下の再利用可能な層です。プロジェクト固有の値は <code>project-config.md</code> の 13 セクションに集約します。
+      Claude Code 固有の層は <code>.claude/</code> 配下に、ツール共通のルールはルートの <code>AGENTS.md</code> に置き、どちらもそのまま再利用できます。プロジェクト固有の値は <code>project-config.md</code> の 13 セクションに集約します。
     </p>
     <div class="grid grid-4">
       <div class="card"><div class="num">17</div><div class="label">スキル</div></div>
@@ -91,10 +91,11 @@
         <tr><td>サブエージェント</td><td>文脈を汚さない委譲</td><td>調査、計画、セキュリティ、性能、ドキュメント、テスト作成の 8 種</td></tr>
         <tr><td>チーム</td><td>複数エージェントの編成</td><td>フルライフサイクル用の PJM 以下 6 編成</td></tr>
         <tr><td>フック</td><td>指示ではなく強制</td><td>危険コマンド遮断、保護ファイル、未検証終了の検知など 16 本</td></tr>
-        <tr><td>ルール</td><td>パス別に効く規約</td><td>常時 4 本 + 言語別のサンプル 3 本</td></tr>
+        <tr><td>ルール</td><td>パス別に効く規約</td><td>常時 1 本 + パス限定 3 本 + 言語別のサンプル 3 本</td></tr>
         <tr><td>出力スタイル</td><td>フェーズごとの応答の型</td><td>要件、設計、実装、レビューの 4 種</td></tr>
         <tr><td>ワークフロー</td><td>数十エージェントの決定論的な制御</td><td>網羅レビューと skill eval の 2 本</td></tr>
         <tr><td>CI テンプレート</td><td>リポジトリ側の自動化</td><td>PR レビュー、ヘッドレス実行、週次監査の 3 本</td></tr>
+        <tr><td>共通ルール</td><td>他のエージェントとも共有</td><td><code>AGENTS.md</code>。主系は Claude Code で、Codex / Cursor は既定で読み、Copilot / Gemini CLI は設定で読む。役割と書込範囲は <code>project-config.md</code> §13.7 で人間が決める</td></tr>
       </tbody>
     </table>
   </div>
@@ -119,7 +120,7 @@
       </div>
       <div class="card">
         <h3>文脈を食い潰さない</h3>
-        <p>指示書は 200 行以内。スキルは必要になった詳細だけを読みます。一覧に載る説明文も予算内に収めています。</p>
+        <p>常時読む指示書(CLAUDE.md と、取り込む AGENTS.md)は合計 200 行以内。スキルは必要になった詳細だけを読みます。一覧に載る説明文も予算内に収めています。</p>
       </div>
       <div class="card">
         <h3>期待動作をテストで持つ</h3>
