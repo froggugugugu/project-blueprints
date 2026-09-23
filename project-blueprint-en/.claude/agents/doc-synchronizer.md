@@ -53,7 +53,7 @@ Lightweight, fast, deterministic. Runs on Haiku.
 - `docs/*.md` and `project-config.md` §2 (tech stack) / §3 (commands) / §11 (known pitfalls) — Edit / Write permitted
 - New doc creation should be rare; prefer integrating into existing 4 files
 - `project-config.md` §11 (known pitfalls) may overlap with other skills;
-  prefer writing to `development-patterns.md` (see CLAUDE.md conflict-prevention table)
+  prefer writing to `development-patterns.md` (see the conflict-prevention table in `.claude/rules/document-management.md`)
 
 ## Constraints
 

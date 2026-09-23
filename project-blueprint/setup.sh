@@ -33,7 +33,7 @@ usage() {
   - output/ (AI成果物置き場)
   - testreport/ (ツール直接出力)
   - project-config.md (設定ファイル)
-  - CLAUDE.md → プロジェクトルートに配置
+  - CLAUDE.md / AGENTS.md → プロジェクトルートに配置
 
 プロファイル(--profile、省略時は full):
   minimal   skills 5 / agents 2 / hooks 2 / teams なし — 最速で試す軽量構成
@@ -262,13 +262,24 @@ if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
     info "CLAUDE.md をプロジェクトルートに配置"
 fi
 
-# ── .gitignore に testreport/ を追記 ────────────────────────
-# ── 既存 AGENTS.md との共存を案内 ───────────────────────────
-# Claude Code が AGENTS.md を直接読むのは CLAUDE.md が 1 つも無いときだけ。
-if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
-    warn "AGENTS.md を検出しました。CLAUDE.md があると AGENTS.md は読まれません。"
-    warn "  CLAUDE.md に次の 1 行を追加して取り込んでください: @AGENTS.md"
+# ── AGENTS.md(ツール共通ルール)を配置 ──────────────────────
+# Codex / Cursor / Copilot 等は直接読み、Claude Code は CLAUDE.md の @AGENTS.md で取り込む。
+# 既存の AGENTS.md は上書きせず、テンプレート版を横に置いて統合を促す。
+if [[ -f "$SCRIPT_DIR/AGENTS.md" ]]; then
+    if [[ -e "$TARGET_DIR/AGENTS.md" ]] && cmp -s "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"; then
+        info "AGENTS.md はテンプレートと同一のため保持"
+    elif [[ -e "$TARGET_DIR/AGENTS.md" ]]; then
+        cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.blueprint.md"
+        warn "既存の AGENTS.md を保持し、テンプレート版を AGENTS.blueprint.md として配置しました。"
+        warn "  内容を AGENTS.md に統合してから AGENTS.blueprint.md を削除してください(CLAUDE.md は AGENTS.md だけを取り込みます)"
+    else
+        cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"
+        info "AGENTS.md(ツール共通ルール)をプロジェクトルートに配置"
+    fi
+    info "  Claude Code 以外のエージェントを併用する場合は project-config.md §13.7 に役割と書込範囲を記入"
 fi
+
+# ── .gitignore に testreport/ を追記 ────────────────────────
 
 GITIGNORE="$TARGET_DIR/.gitignore"
 # Claude Code がリポジトリ内に作るローカル状態も一緒に除外する:

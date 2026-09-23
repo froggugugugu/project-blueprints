@@ -78,7 +78,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | AI rewrites `input/requirements/REQ_*.md`, or a human edits `output/reports/` by hand |
 | **Cause** | A session doesn't know the input/output separation rules |
-| **Mitigation** | Carry CLAUDE.md's "Document Management Policy" in every agent prompt. Scope write permissions via the agent's `tools` field |
+| **Mitigation** | Carry the "Document Management" section of `AGENTS.md` in every agent prompt. Scope write permissions via the agent's `tools` field |
 
 ### 10. Committing `testreport/`
 
@@ -112,7 +112,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | Pitfalls get written to two files; it's unclear which is authoritative |
 | **Cause** | Ambiguous ownership. Multiple skills write the same information in different places |
-| **Mitigation** | Follow CLAUDE.md's "Conflict Prevention" tables. Primary owner is `/implementing-features` |
+| **Mitigation** | Follow the conflict-prevention tables in `.claude/rules/document-management.md`. Primary owner is `/implementing-features` |
 
 ### 14. `@` import path mistakes
 
@@ -128,7 +128,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | Hook fails, developer uses `--no-verify` to push through; bugs surface later |
 | **Cause** | Bypassing feels faster than fixing the hook failure |
-| **Mitigation** | `--no-verify` is blocked by `safety-check.sh`. When tempted, first investigate what the hook is protecting. See also CLAUDE.md §Git Operations Policy |
+| **Mitigation** | `--no-verify` is blocked by `safety-check.sh`. When tempted, first investigate what the hook is protecting. See also `AGENTS.md` §Git operations |
 
 ## Context-management pitfalls
 
@@ -197,7 +197,7 @@ common in long-running Claude Code sessions.
 | ----- | ------- |
 | **Symptom** | Auto mode is the default on Pro / Max / Team, so work proceeds with no permission prompts, and a boundary that relied only on "never do X" in CLAUDE.md is crossed |
 | **Cause** | Auto mode routes each action through a classifier model. Prompted instructions can be lost in long sessions or through prompt injection from a file |
-| **Mitigation** | Use `permissions.deny` for actions that must never run (applies before the classifier) and `permissions.ask` for actions to confirm every time (always prompts, even in auto mode). Hooks (Layer 1) stay active. The classifier also reads CLAUDE.md, so write prohibitions there too. Denials are recorded by `permission-denied-log.sh` under `testreport/denials/` |
+| **Mitigation** | Use `permissions.deny` for actions that must never run (applies before the classifier) and `permissions.ask` for actions to confirm every time (always prompts, even in auto mode). Hooks (Layer 1) stay active. The classifier also reads CLAUDE.md, so write prohibitions in CLAUDE.md itself too (the docs do not say whether the classifier reads imported files such as `AGENTS.md`). Denials are recorded by `permission-denied-log.sh` under `testreport/denials/` |
 
 ### 24. Mid-session edits to CLAUDE.md / output styles don't apply
 
@@ -261,7 +261,7 @@ common in long-running Claude Code sessions.
 | ----- | ------- |
 | **Symptom** | Instructions written in `AGENTS.md` for other coding agents have no effect |
 | **Cause** | Claude Code reads `AGENTS.md` directly only when there is no `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` in the working directory or above it. This template installs a `CLAUDE.md`, so an existing `AGENTS.md` stops being read |
-| **Mitigation** | Import it from `CLAUDE.md` with `@AGENTS.md` instead of duplicating the content. `setup.sh` warns with this step when it finds an existing `AGENTS.md` |
+| **Mitigation** | This template keeps the tool-agnostic rules in `AGENTS.md` and imports them with `@AGENTS.md` at the top of `CLAUDE.md` (never duplicate the content). Do not put a line-start `@` in `AGENTS.md` (other agents do not interpret imports). When an `AGENTS.md` already exists, `setup.sh` leaves it alone, places the template version as `AGENTS.blueprint.md`, and asks you to merge them |
 
 ## Recommended session-management commands
 

@@ -111,6 +111,8 @@ fi
 if [[ "$NEED_FULL_SCAN" -eq 1 && -d "$PROJECT/.claude" ]]; then
     SCAN_TARGETS=(
         "$PROJECT/.claude"
+        "$PROJECT/CLAUDE.md"
+        "$PROJECT/AGENTS.md"
         "$PROJECT/.mcp.json"
         "$PROJECT/.mcp.json.template"
     )

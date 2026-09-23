@@ -76,7 +76,8 @@ through a human confirmation even in auto mode.
 - When your organization's repos, buckets, or internal domains are treated as "external" and denied,
   run `/auto-mode-setup` to draft `autoMode.environment` entries and save them to your personal settings
 - The classifier **also reads CLAUDE.md**. Project-specific prohibitions such as "never force push"
-  written there steer Claude and the classifier at the same time
+  written in CLAUDE.md itself steer Claude and the classifier at the same time. The docs do not say whether the
+  classifier reads imported files such as `@AGENTS.md`, so never keep safety prohibitions only in `AGENTS.md`
 
 ### Using the denial history
 

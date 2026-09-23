@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 # UI/UX Design
 
 A skill for UI/UX design, review, and implementation that adheres to the project's design system.
-Strictly follow `CLAUDE.md` policies. For project-specific design conventions, refer to the "Design System" section in [docs/development-patterns.md](../../../docs/development-patterns.md).
+Strictly follow the `AGENTS.md` (shared rules) and `CLAUDE.md` policies. For project-specific design conventions, refer to the "Design System" section in [docs/development-patterns.md](../../../docs/development-patterns.md).
 
 ## Prerequisites
 

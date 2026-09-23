@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, 
 # Implementing Features
 
 Implements features, fixes bugs, and refactors code following project development standards with TDD.
-Strictly follow `CLAUDE.md` policies. For project-specific code patterns, refer to [docs/development-patterns.md](../../../docs/development-patterns.md).
+Strictly follow the `AGENTS.md` (shared rules) and `CLAUDE.md` policies. For project-specific code patterns, refer to [docs/development-patterns.md](../../../docs/development-patterns.md).
 
 ## Prerequisites
 
@@ -110,7 +110,7 @@ Follow the principles below. For project-specific application, refer to `docs/de
 
 #### 🚏 Final Gate Output
 
-Present all implementation checklist items (defined in CLAUDE.md) as `[x]` / `[ ]`.
+Present all implementation checklist items (defined in AGENTS.md) as `[x]` / `[ ]`.
 
 ### Vocabulary Constraints
 

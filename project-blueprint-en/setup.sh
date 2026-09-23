@@ -33,7 +33,7 @@ Description:
   - output/ (AI artifact directory)
   - testreport/ (raw tool output)
   - project-config.md (configuration file)
-  - CLAUDE.md -> placed at the project root
+  - CLAUDE.md / AGENTS.md -> placed at the project root
 
 Profiles (--profile, defaults to full):
   minimal   5 skills / 2 agents / 2 hooks / no teams — fastest way to try it out
@@ -263,13 +263,24 @@ if [[ -f "$TARGET_DIR/.claude/CLAUDE.md" ]]; then
     info "Placed CLAUDE.md at the project root"
 fi
 
-# -- Add testreport/ to .gitignore ---------------------------------
-# -- Point out coexistence with an existing AGENTS.md ---------------------
-# Claude Code reads AGENTS.md directly only when no CLAUDE.md exists.
-if [[ -f "$TARGET_DIR/AGENTS.md" ]]; then
-    warn "Found AGENTS.md. With a CLAUDE.md present, AGENTS.md is not read."
-    warn "  Add this line to CLAUDE.md to include it: @AGENTS.md"
+# -- Place AGENTS.md (tool-agnostic rules) --------------------------------
+# Codex / Cursor / Copilot etc. read it directly; Claude Code imports it via @AGENTS.md in CLAUDE.md.
+# An existing AGENTS.md is never overwritten; the template version goes next to it for merging.
+if [[ -f "$SCRIPT_DIR/AGENTS.md" ]]; then
+    if [[ -e "$TARGET_DIR/AGENTS.md" ]] && cmp -s "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"; then
+        info "AGENTS.md is identical to the template; kept as is"
+    elif [[ -e "$TARGET_DIR/AGENTS.md" ]]; then
+        cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.blueprint.md"
+        warn "Kept the existing AGENTS.md and placed the template version as AGENTS.blueprint.md."
+        warn "  Merge it into AGENTS.md, then delete AGENTS.blueprint.md (CLAUDE.md imports AGENTS.md only)"
+    else
+        cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"
+        info "Placed AGENTS.md (tool-agnostic rules) at the project root"
+    fi
+    info "  If you use agents other than Claude Code, fill in their roles and write scopes in project-config.md §13.7"
 fi
+
+# -- Add testreport/ to .gitignore ---------------------------------
 
 GITIGNORE="$TARGET_DIR/.gitignore"
 # Also exclude the local state Claude Code writes inside the repository:

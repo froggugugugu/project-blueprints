@@ -314,7 +314,7 @@ After all TEAM_FEATURE instances complete, PJM verifies the following:
 
 ## Tech Stack Reference
 
-All team members must read `.claude/CLAUDE.md` and follow the project's tech stack and conventions.
+All team members must read `CLAUDE.md` and the `AGENTS.md` it imports and follow the project's tech stack and conventions.
 
 ## Related references
 

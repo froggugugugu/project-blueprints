@@ -14,7 +14,7 @@ background: false
 # Code Review
 
 A skill that reviews project code changes.
-Provides structured feedback based on `CLAUDE.md` conventions and the project-specific checklist in [docs/development-patterns.md](../../../docs/development-patterns.md).
+Provides structured feedback based on `AGENTS.md` / `CLAUDE.md` conventions and the project-specific checklist in [docs/development-patterns.md](../../../docs/development-patterns.md).
 
 ## Prerequisites
 
@@ -92,7 +92,7 @@ When a file path is specified, review changes in that file.
 - Is state management used correctly (see [docs/development-patterns.md](../../../docs/development-patterns.md))?
 - Are schemas and types consistent?
 - Are path aliases used?
-- Are there dependency direction rule violations (see `CLAUDE.md` "Architecture Governance")?
+- Are there dependency direction rule violations (see `AGENTS.md` "Architecture Governance")?
 
 ### 4. Performance
 
@@ -159,7 +159,7 @@ When a file path is specified, review changes in that file.
 
 | Level | Criteria | Examples |
 | ----- | -------- | -------- |
-| **MUST** | CLAUDE.md rule violation, existing test breakage, security vulnerability, dependency direction violation, docs/ not updated | Anti-pattern usage, hardcoded color values, XSS |
+| **MUST** | AGENTS.md / CLAUDE.md rule violation, existing test breakage, security vulnerability, dependency direction violation, docs/ not updated | Anti-pattern usage, hardcoded color values, XSS |
 | **SHOULD** | Readability degradation, performance concerns, insufficient tests, inappropriate naming | Missing memoization, any type usage, insufficient test coverage |
 | **CONSIDER** | Improvement suggestions, alternative approaches, code cleanup | Function extraction suggestion, type definition cleanup |
 
@@ -187,7 +187,7 @@ When a file path is specified, review changes in that file.
 | ---- | ---------- |
 | Spec Compliance | All acceptance criteria from the task file are met |
 | Documentation Sync | Updates to `docs/` corresponding to implementation changes are complete |
-| Dependency Direction Violation | Breach of rules in CLAUDE.md "Architecture Governance" |
+| Dependency Direction Violation | Breach of rules in AGENTS.md "Architecture Governance" |
 
 ## Report Format
 

@@ -116,7 +116,8 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
 - **Separate human and AI ownership** — human decisions live in one file, never mixed into AI-managed areas
 - **Enforce instead of instruct** — "always do X" becomes a hook, not a paragraph. Three layers: hooks → deny/ask → allow
 - **Give the work places to stop** — five quality gates, plus a hook that catches a stop with unverified source edits
-- **Do not burn the context** — CLAUDE.md stays under 200 lines; skills read detail only when they need it
+- **Do not burn the context** — CLAUDE.md stays under 200 lines together with the AGENTS.md it imports; skills read detail only when they need it
+- **Claude Code first, rules shared with other agents** — tool-agnostic rules live in `AGENTS.md` and only Claude Code-specific mechanisms stay in `CLAUDE.md`. When Codex / Cursor / Copilot / Gemini CLI join in, a human sets their roles and write scopes in `project-config.md` §13.7
 - **Keep expected behaviour as tests** — after changing a skill, compare pass rates with and without it via `/skill-eval`
 - **Break it and CI fails** — the harness validates itself, including drift between the two mirrors
 
@@ -199,7 +200,8 @@ This is a project scaffold rather than a general-purpose tool collection, and
 ## Read more
 
 - [`project-blueprint-en/README.md`](project-blueprint-en/README.md) — detailed setup guide
-- [`project-blueprint-en/.claude/CLAUDE.md`](project-blueprint-en/.claude/CLAUDE.md) — the development guide (cross-cutting rules, under 200 lines)
+- [`project-blueprint-en/AGENTS.md`](project-blueprint-en/AGENTS.md) — tool-agnostic development rules (read by any coding agent)
+- [`project-blueprint-en/.claude/CLAUDE.md`](project-blueprint-en/.claude/CLAUDE.md) — the Claude Code-specific development guide (imports AGENTS.md; under 200 lines combined)
 - [`project-blueprint-en/.claude/guardrails.md`](project-blueprint-en/.claude/guardrails.md) — the safety mechanisms as a whole
 - [`project-blueprint-en/.claude/pitfalls.md`](project-blueprint-en/.claude/pitfalls.md) — recurring failure patterns in AI-assisted development
 - [`project-blueprint-en/.claude/skills/`](project-blueprint-en/.claude/skills/) — SKILL.md for all 17 skills

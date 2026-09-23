@@ -60,7 +60,8 @@ related: [L0002, P12]    # links to other learnings (L) / pitfalls (P)
 
 | Kind | What goes in it | Update frequency | Location | git |
 | ---- | --------------- | ---------------- | -------- | --- |
-| CLAUDE.md | Cross-cutting rules (must) | Low | `.claude/CLAUDE.md` | ✅ committed |
+| AGENTS.md | Tool-agnostic cross-cutting rules (must) | Low | `AGENTS.md` (root) | ✅ committed |
+| CLAUDE.md | Claude Code-specific cross-cutting rules (must) | Low | `.claude/CLAUDE.md` | ✅ committed |
 | pitfalls.md | Failure patterns (to avoid) | Medium | `.claude/pitfalls.md` | ✅ committed |
 | learnings/ | Success patterns (to reuse) | High | `.claude/learnings/L*.md` | ✅ committed |
 | auto memory | One person's working context | High | `~/.claude/projects/<proj>/memory/` | ❌ **never committed** |
@@ -124,4 +125,5 @@ In CI, set `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` so runs stay reproducible (the bu
 
 - `.claude/pitfalls.md` — failure patterns
 - `~/.claude/projects/<proj>/memory/` — Claude Code Auto Memory
-- `.claude/CLAUDE.md` — cross-cutting rules
+- `AGENTS.md` — tool-agnostic cross-cutting rules
+- `.claude/CLAUDE.md` — Claude Code-specific cross-cutting rules

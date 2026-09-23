@@ -45,7 +45,7 @@ paths:
 | `git-conventions.md` | always-on | 全セッション(コミットは常に発生しうる) |
 | `document-management.md` | path-specific | `docs/**` `output/**` `input/**` `project-config.md` |
 | `workflow-advanced.md` | path-specific | `src/**` `app/**` `lib/**` `packages/**` `tests/**` |
-| `harness-authoring.md` | path-specific | `.claude/**` `CLAUDE.md`(ハーネス自身を編集するとき) |
+| `harness-authoring.md` | path-specific | `.claude/**` `CLAUDE.md` `AGENTS.md`(ハーネス自身を編集するとき) |
 | `language-typescript.md.example` | path-specific(サンプル) | `**/*.{ts,tsx}` |
 | `language-python.md.example` | path-specific(サンプル) | `**/*.py` |
 | `path-backend.md.example` | path-specific(サンプル) | `backend/**/*` |

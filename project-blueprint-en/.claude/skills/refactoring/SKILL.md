@@ -11,7 +11,7 @@ effort: high
 # Safe Refactoring
 
 Performs incremental, rollback-capable refactoring.
-Strictly follow `CLAUDE.md` policies. For project-specific code patterns, refer to [docs/development-patterns.md](../../../docs/development-patterns.md).
+Strictly follow the `AGENTS.md` (shared rules) and `CLAUDE.md` policies. For project-specific code patterns, refer to [docs/development-patterns.md](../../../docs/development-patterns.md).
 
 ## Prerequisites
 

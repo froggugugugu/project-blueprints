@@ -72,7 +72,7 @@ bash setup.sh /path/to/your-project
 
 これだけで以下がすべて完了する:
 - `.claude/`、`docs/`、`input/`、`output/`、`testreport/`、`project-config.md` のコピー
-- `CLAUDE.md` のプロジェクトルートへの配置
+- `CLAUDE.md` と `AGENTS.md`(ツール共通ルール)のプロジェクトルートへの配置(既存の `AGENTS.md` は上書きせず `AGENTS.blueprint.md` を横に置く)
 - `.gitignore` への `testreport/` 追記
 - 既存 `.claude/` がある場合は `.claude.bak/` に自動バックアップ
 
@@ -113,6 +113,8 @@ cp project-blueprint/project-config.md /path/to/new-project/project-config.md
 
 # CLAUDE.md をプロジェクトルートに移動（.claude/ 内の重複を除去）
 mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
+# ツール共通ルール（CLAUDE.md が @AGENTS.md で取り込む）
+cp project-blueprint/AGENTS.md /path/to/new-project/AGENTS.md
 ```
 
 ### 2. project-config.mdを記入
@@ -199,6 +201,20 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 > `project-config.md` を直接参照してフォールバックする。
 > PJMチームを使う場合は Phase 2〜4 で自動的に生成される。
 
+### 7. 他のエージェントとの併用（任意）
+
+主系は Claude Code。ツール共通のルールはルートの `AGENTS.md` にあり、Claude Code は `CLAUDE.md` の `@AGENTS.md` で取り込む。
+Codex / Cursor などを併用する場合は、利用可否・役割・書込範囲を `project-config.md` §13.7 に記入する。
+
+| エージェント | `AGENTS.md` を読ませる方法 |
+| --- | --- |
+| OpenAI Codex CLI / Cursor | 既定で読む |
+| GitHub Copilot（VS Code） | 設定 `chat.useAgentsMdFile: true` |
+| Gemini CLI | `.gemini/settings.json` に `{"context": {"fileName": ["AGENTS.md"]}}`（既定は `GEMINI.md`） |
+
+> §13.7 で `yes` にしていないエージェントは読取専用で振る舞う。`.claude/` のフック・deny ルールは Claude Code 以外には効かないため、
+> 書込を許すなら禁止事項を CI や git フックでも強制する。
+
 ---
 
 ## クイックスタート（セットアップ後）
@@ -279,7 +295,8 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 ┌─────────────────────────────────────────────────────────┐
 │  汎用（そのまま再利用）                                   │
 │                                                         │
-│  .claude/CLAUDE.md ............ 開発ガイド（横断）       │
+│  AGENTS.md .................... 共通ルール（ツール非依存）│
+│  .claude/CLAUDE.md ............ 開発ガイド（Claude Code） │
 │  .claude/hooks/ ............... 安全フック（多層防御）    │
 │  .claude/skills/ .............. 17個のスキル定義         │
 │  .claude/teams/ ............... 6チーム定義              │
@@ -299,6 +316,7 @@ project-blueprint/
 │
 ├── README.md                              ← このファイル
 ├── setup.sh                               ← 1コマンドセットアップスクリプト
+├── AGENTS.md                              ← [汎用] ツール共通の開発ルール（Codex / Cursor / Copilot 等も読む）
 ├── project-config.md                      ← [人間+AI] 設定ファイル（13セクション）
 ├── project-config.sample.md               ← 記入済みサンプル（タスク管理アプリ）
 │
@@ -323,7 +341,7 @@ project-blueprint/
 │   └── security/                            セキュリティスキャン生データ
 │
 ├── .claude/
-│   ├── CLAUDE.md                          ← [汎用] 開発ガイド
+│   ├── CLAUDE.md                          ← [汎用] 開発ガイド（Claude Code 固有。@AGENTS.md を取り込む）
 │   ├── settings.json                      ← [汎用] プラグイン・フック設定
 │   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
 │   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
@@ -521,6 +539,8 @@ cp -r project-blueprint/testreport /path/to/project/testreport
 cp project-blueprint/project-config.md /path/to/project/project-config.md
 
 mv /path/to/project/.claude/CLAUDE.md /path/to/project/CLAUDE.md
+# 既存の AGENTS.md があれば上書きせず、内容を統合する
+[ -e /path/to/project/AGENTS.md ] || cp project-blueprint/AGENTS.md /path/to/project/AGENTS.md
 ```
 
 ### 2. project-config.md を既存プロジェクトから記入

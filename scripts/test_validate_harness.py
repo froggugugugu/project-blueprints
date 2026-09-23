@@ -233,6 +233,26 @@ def m_skill_body_too_long(root: Path) -> None:
     p.write_text(p.read_text() + "\n".join(["- pad"] * 320) + "\n")
 
 
+def m_agents_md_not_imported(root: Path) -> None:
+    p = root / ".claude/CLAUDE.md"
+    p.write_text(p.read_text().replace("@AGENTS.md\n", "", 1))
+
+
+def m_agents_md_at_import(root: Path) -> None:
+    p = root / "AGENTS.md"
+    p.write_text(p.read_text() + "\n@docs/project.md\n")
+
+
+def m_agents_md_too_long(root: Path) -> None:
+    p = root / "AGENTS.md"
+    p.write_text(p.read_text() + "\n".join(["- pad"] * 30) + "\n")
+
+
+def m_config_section_missing(root: Path) -> None:
+    p = root / "project-config.md"
+    p.write_text(p.read_text().replace("### 13.7 ", "### 13.8 ", 1))
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -269,6 +289,10 @@ CASES = [
     ("参照ファイルが未リンク", m_orphan_reference, "SKILL.md からリンクされていません"),
     ("references へのリンク切れ", m_broken_reference_link, "へのリンクが壊れています"),
     ("SKILL.md 本文が長すぎる", m_skill_body_too_long, "本文が"),
+    ("CLAUDE.md が AGENTS.md を取り込まない", m_agents_md_not_imported, "`@AGENTS.md` の取り込みがありません"),
+    ("AGENTS.md に行頭 @", m_agents_md_at_import, "import を解釈しません"),
+    ("CLAUDE.md + AGENTS.md の合計がハード上限超過", m_agents_md_too_long, "CLAUDE.md + AGENTS.md の合計"),
+    ("AGENTS.md が指す project-config の節が無い", m_config_section_missing, "§13.7 の見出しが存在しません"),
 ]
 
 

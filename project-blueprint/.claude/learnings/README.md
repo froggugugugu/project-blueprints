@@ -59,7 +59,8 @@ related: [L0002, P12]    # 他 learning(L)・pitfalls(P)への参照
 
 | 種類 | 何を書く | 更新頻度 | 場所 | git |
 | ---- | -------- | -------- | ---- | --- |
-| CLAUDE.md | 横断ルール(must) | 低 | `.claude/CLAUDE.md` | ✅ コミット |
+| AGENTS.md | ツール共通の横断ルール(must) | 低 | `AGENTS.md`(ルート) | ✅ コミット |
+| CLAUDE.md | Claude Code 固有の横断ルール(must) | 低 | `.claude/CLAUDE.md` | ✅ コミット |
 | pitfalls.md | 失敗パターン(避けるべき) | 中 | `.claude/pitfalls.md` | ✅ コミット |
 | learnings/ | 成功パターン(再利用すべき) | 高 | `.claude/learnings/L*.md` | ✅ コミット |
 | auto memory | ユーザー個人の文脈 | 高 | `~/.claude/projects/<proj>/memory/` | ❌ **コミットされない** |
@@ -123,4 +124,5 @@ CI では実行の再現性のため `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` を設�
 
 - `.claude/pitfalls.md` — 失敗パターン
 - `~/.claude/projects/<proj>/memory/` — Claude Code Auto Memory
-- `.claude/CLAUDE.md` — 横断ルール
+- `AGENTS.md` — ツール共通の横断ルール
+- `.claude/CLAUDE.md` — Claude Code 固有の横断ルール

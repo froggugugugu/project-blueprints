@@ -78,7 +78,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | AI が `input/requirements/REQ_*.md` を勝手に書き換えたり、人間が `output/reports/` に手書き追記したり |
 | **原因** | input/output の責務分離ルールを知らないセッションが介入 |
-| **対策** | CLAUDE.md §「ドキュメント管理方針」を全 agent の prompt に引き継ぐ。agent 側の `tools` でスコープ制限 |
+| **対策** | `AGENTS.md` §「ドキュメント管理」を全 agent の prompt に引き継ぐ。agent 側の `tools` でスコープ制限 |
 
 ### 10. `testreport/` を git にコミット
 
@@ -112,7 +112,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | 落とし穴が 2 ファイルに散らばり、どちらが最新か不明に |
 | **原因** | 更新責務が曖昧。複数 skill が同じ情報を別の場所に書く |
-| **対策** | CLAUDE.md §「docs/ 更新の競合防止」の責務テーブルを守る。一次更新者は `/implementing-features` |
+| **対策** | `.claude/rules/document-management.md` の競合防止テーブルを守る。一次更新者は `/implementing-features` |
 
 ### 14. `@` import のパス誤り
 
@@ -128,7 +128,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | フック失敗時に `--no-verify` で強行通過、後でバグが表面化 |
 | **原因** | フック失敗の原因を修正するより迂回の方が速く見えるため |
-| **対策** | `--no-verify` は既存 `safety-check.sh` フックでブロック済み。迂回したくなったら「フックが何を守っているか」を調べる。本 CLAUDE.md §Git 操作ポリシーも参照 |
+| **対策** | `--no-verify` は既存 `safety-check.sh` フックでブロック済み。迂回したくなったら「フックが何を守っているか」を調べる。`AGENTS.md` §Git 操作も参照 |
 
 ## コンテキスト管理の落とし穴
 
@@ -196,7 +196,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | Pro / Max / Team では auto mode が既定になり、権限プロンプトが出ないまま作業が進む。CLAUDE.md の「〜しない」だけに頼った境界が破られる |
 | **原因** | auto mode は分類器モデルが各操作を審査する方式。プロンプト指示は長時間セッションやファイル経由のプロンプトインジェクションで抜けうる |
-| **対策** | 絶対に通したくない操作は `permissions.deny`(分類器より前に効く)、毎回確認したい操作は `permissions.ask`(auto mode でも必ず確認)。フック(Layer 1)は常時有効。分類器は CLAUDE.md も読むので禁止事項は CLAUDE.md にも書く。拒否履歴は `permission-denied-log.sh` が `testreport/denials/` に残す |
+| **対策** | 絶対に通したくない操作は `permissions.deny`(分類器より前に効く)、毎回確認したい操作は `permissions.ask`(auto mode でも必ず確認)。フック(Layer 1)は常時有効。分類器は CLAUDE.md も読むので禁止事項は CLAUDE.md 本体にも書く(import 先の `AGENTS.md` を分類器が読むかは公式に記載が無い)。拒否履歴は `permission-denied-log.sh` が `testreport/denials/` に残す |
 
 ### 24. CLAUDE.md / output style の途中編集が効かない
 
@@ -260,7 +260,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | 他のコーディングエージェント向けに整備した `AGENTS.md` の指示が効かない |
 | **原因** | Claude Code が `AGENTS.md` を直接読むのは、作業ディレクトリとその上位に `CLAUDE.md` / `.claude/CLAUDE.md` / `CLAUDE.local.md` が 1 つも無いときだけ。本テンプレートは `CLAUDE.md` を置くため、既存の `AGENTS.md` は読まれなくなる |
-| **対策** | `CLAUDE.md` に `@AGENTS.md` を書いて取り込む(内容は複製しない)。`setup.sh` は既存の `AGENTS.md` を検出したらこの手順を警告として表示する |
+| **対策** | 本テンプレートはツール共通のルールを `AGENTS.md` に置き、`CLAUDE.md` の冒頭で `@AGENTS.md` を取り込む(内容は複製しない)。`AGENTS.md` には行頭 `@` を書かない(他のエージェントは import を解釈しない)。既存の `AGENTS.md` がある場合、`setup.sh` は上書きせずテンプレート版を `AGENTS.blueprint.md` として置き、統合を促す |
 
 ## 推奨セッション運用コマンド
 

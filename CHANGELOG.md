@@ -8,6 +8,34 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (AGENTS.md for non-Claude agents, 2026-09-23)
+
+- **`project-config.md` §13.7 マルチ LLM 併用(JP/EN)**: 主系は Claude Code に固定し、Codex / Cursor / Copilot /
+  Gemini CLI の利用可否・役割・書込範囲・`AGENTS.md` の読ませ方を人間が決める表と併用ルールを追加。
+  `AGENTS.md` は他エージェントに §13.7 への従属を求め、`yes` でなければ読取専用で振る舞わせる。
+
+- **`AGENTS.md`(JP/EN)**: ツール非依存の開発ルール(原則・ドキュメント管理・品質基準・実装ワークフロー・
+  Git・セキュリティ規則)を `.claude/CLAUDE.md` から切り出した。Codex / Cursor / Copilot / Gemini CLI などは直接読み、
+  Claude Code は `CLAUDE.md` 冒頭の `@AGENTS.md` で取り込む。`CLAUDE.md` には skill・team・subagent・フック・権限など
+  Claude Code 固有の仕組みだけを残した(2 ファイル合計で従来と同じ 200 行)。
+- **`setup.sh`**: `AGENTS.md` をプロジェクトルートに配置する。既存の `AGENTS.md` は上書きせず、テンプレート版を
+  `AGENTS.blueprint.md` として横に置いて統合を促す。
+- **`validate_harness.py`**: `CLAUDE.md` が `@AGENTS.md` を取り込んでいること、`AGENTS.md` に行頭 `@` が無いこと
+  (他ツールは import を解釈しない)、両ファイルが引く `project-config.md` の §番号が実在することを検査し、
+  行数の上限は 2 ファイルの合計で判定する。負のテストは 39 件。
+- **`scan-harness.sh`**: secret 検査の対象にルートの `CLAUDE.md` / `AGENTS.md` を追加(フックテスト 84 件)。
+
+### Changed (AGENTS.md split follow-ups, 2026-09-23)
+
+- **安全に関わる禁止事項は `CLAUDE.md` 本体にも置く**: auto mode の分類器が `@import` 先を読むかは公式に記載が無いため、
+  `--no-verify` / `--force` 付きの push の禁止を `CLAUDE.md` に残し、`harness-authoring.md` / `permissions-guide.md` /
+  `pitfalls.md` #23 / `settings.local.json.template` にその理由を記載。
+- **移動した節への参照を更新**: `code-review` / `implementing-features` / `review-fix` ほか 4 skill、`doc-writer` /
+  `doc-synchronizer`、6 team、`guardrails.md`、`learnings/README.md`、`pitfalls.md`、`claude-review.yml.template` が
+  `AGENTS.md` の該当節を指すようにした。`/harness-refine` の採点も 2 ファイル合計に揃えた。
+- **`setup.sh` の再実行**: テンプレートと同一の `AGENTS.md` は保持し、`AGENTS.blueprint.md` を作らない。
+- **対応ツールの記述**: 既定で `AGENTS.md` を読むのは Codex / Cursor。Copilot(VS Code)と Gemini CLI は設定が要る。
+
 ### Added (template extraction / eval runner / new official behaviors, 2026-09-19)
 
 - **`workflows/skill-eval.js`**: `evals/evals.json` を skill あり / なしの 2 系統で実行し、実行していない

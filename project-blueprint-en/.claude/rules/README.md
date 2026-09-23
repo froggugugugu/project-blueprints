@@ -46,7 +46,7 @@ paths:
 | `git-conventions.md` | always-on | every session (a commit can happen at any time) |
 | `document-management.md` | path-specific | `docs/**` `output/**` `input/**` `project-config.md` |
 | `workflow-advanced.md` | path-specific | `src/**` `app/**` `lib/**` `packages/**` `tests/**` |
-| `harness-authoring.md` | path-specific | `.claude/**` `CLAUDE.md` (when editing the harness itself) |
+| `harness-authoring.md` | path-specific | `.claude/**` `CLAUDE.md` `AGENTS.md` (when editing the harness itself) |
 | `language-typescript.md.example` | path-specific (sample) | `**/*.{ts,tsx}` |
 | `language-python.md.example` | path-specific (sample) | `**/*.py` |
 | `path-backend.md.example` | path-specific (sample) | `backend/**/*` |

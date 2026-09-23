@@ -143,6 +143,15 @@ for MIRROR in project-blueprint project-blueprint-en; do
     run_hook "$H/scope-guard.sh" docs '{"tool_name":"Bash","tool_input":{"command":"ls"}}' >/dev/null
     expect_rc "scope-guard: file_path の無い入力は通過" 0 "$RC"
 
+    # ── scan-harness.sh(PreToolUse: Skill)— ルートの指示ファイルも secret 検査する ─
+    mkdir -p "$T/.claude"
+    printf '# rules\nkey: %s\n' "$FAKE_KEY" > "$T/AGENTS.md"
+    OUT="$(run_hook "$H/scan-harness.sh" "" '{"tool_name":"Skill","tool_input":{"skill":"security-scan"}}' standard)"
+    expect_contains "scan-harness: AGENTS.md の secret を検出" "AGENTS.md" "$OUT"
+    rm -f "$T/AGENTS.md"
+    OUT="$(run_hook "$H/scan-harness.sh" "" '{"tool_name":"Skill","tool_input":{"skill":"security-scan"}}' standard)"
+    expect_empty "scan-harness: secret が無ければ無出力" "$OUT"
+
     unset CLAUDE_PROJECT_DIR
     rm -rf "$T"
 done
