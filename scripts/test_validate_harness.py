@@ -238,6 +238,11 @@ def m_agents_md_not_imported(root: Path) -> None:
     p.write_text(p.read_text().replace("@AGENTS.md\n", "", 1))
 
 
+def m_agents_md_import_in_fence(root: Path) -> None:
+    p = root / ".claude/CLAUDE.md"
+    p.write_text(p.read_text().replace("@AGENTS.md\n", "```text\n@AGENTS.md\n```\n", 1))
+
+
 def m_agents_md_at_import(root: Path) -> None:
     p = root / "AGENTS.md"
     p.write_text(p.read_text() + "\n@docs/project.md\n")
@@ -290,6 +295,7 @@ CASES = [
     ("references へのリンク切れ", m_broken_reference_link, "へのリンクが壊れています"),
     ("SKILL.md 本文が長すぎる", m_skill_body_too_long, "本文が"),
     ("CLAUDE.md が AGENTS.md を取り込まない", m_agents_md_not_imported, "`@AGENTS.md` の取り込みがありません"),
+    ("@AGENTS.md がコードブロック内にしか無い", m_agents_md_import_in_fence, "`@AGENTS.md` の取り込みがありません"),
     ("AGENTS.md に行頭 @", m_agents_md_at_import, "import を解釈しません"),
     ("CLAUDE.md + AGENTS.md の合計がハード上限超過", m_agents_md_too_long, "CLAUDE.md + AGENTS.md の合計"),
     ("AGENTS.md が指す project-config の節が無い", m_config_section_missing, "§13.7 の見出しが存在しません"),

@@ -268,6 +268,10 @@ fi
 if [[ -f "$SCRIPT_DIR/AGENTS.md" ]]; then
     if [[ -e "$TARGET_DIR/AGENTS.md" ]] && cmp -s "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"; then
         info "AGENTS.md はテンプレートと同一のため保持"
+    elif [[ -e "$TARGET_DIR/AGENTS.blueprint.md" ]] && ! cmp -s "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.blueprint.md"; then
+        # 統合作業中の AGENTS.blueprint.md は上書きしない
+        warn "AGENTS.blueprint.md がテンプレートと異なるため上書きしませんでした(統合作業中の内容を保持)。"
+        warn "  最新のテンプレート版: $SCRIPT_DIR/AGENTS.md"
     elif [[ -e "$TARGET_DIR/AGENTS.md" ]]; then
         cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.blueprint.md"
         warn "既存の AGENTS.md を保持し、テンプレート版を AGENTS.blueprint.md として配置しました。"

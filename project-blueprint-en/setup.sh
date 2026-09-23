@@ -269,6 +269,10 @@ fi
 if [[ -f "$SCRIPT_DIR/AGENTS.md" ]]; then
     if [[ -e "$TARGET_DIR/AGENTS.md" ]] && cmp -s "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"; then
         info "AGENTS.md is identical to the template; kept as is"
+    elif [[ -e "$TARGET_DIR/AGENTS.blueprint.md" ]] && ! cmp -s "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.blueprint.md"; then
+        # Never overwrite an AGENTS.blueprint.md that is being merged
+        warn "AGENTS.blueprint.md differs from the template, so it was left untouched (keeping your in-progress merge)."
+        warn "  Latest template version: $SCRIPT_DIR/AGENTS.md"
     elif [[ -e "$TARGET_DIR/AGENTS.md" ]]; then
         cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.blueprint.md"
         warn "Kept the existing AGENTS.md and placed the template version as AGENTS.blueprint.md."

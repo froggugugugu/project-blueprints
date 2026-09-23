@@ -728,7 +728,8 @@ def check_imports_and_limits(root: Path, rep: Report) -> None:
         agents_lines = len(agents_text.splitlines())
         for m in re.finditer(r"(?m)^@([\w./-]+)", strip_fences(agents_text)):
             rep.error(str(agents_md), f"行頭の `@{m.group(1)}` — Claude Code 以外は import を解釈しません。パスを本文で示してください")
-        if claude_md.exists() and not re.search(r"(?m)^@AGENTS\.md\s*$", claude_md.read_text(encoding="utf-8")):
+        # コードブロック内の `@AGENTS.md` は import として展開されないため数えない
+        if claude_md.exists() and not re.search(r"(?m)^@AGENTS\.md\s*$", strip_fences(claude_md.read_text(encoding="utf-8"))):
             rep.error(str(claude_md), "`@AGENTS.md` の取り込みがありません — CLAUDE.md があると Claude Code は AGENTS.md を読みません")
 
     # 常時 load される指示ファイルが指す `project-config.md` の §番号は見出しとして実在しなければならない
