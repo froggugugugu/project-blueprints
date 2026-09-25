@@ -17,6 +17,8 @@
 # Security:
 #   - Never interpolate untrusted input (PR title/body) into `run:` (command injection)
 #   - `--permission-mode dontAsk` auto-denies anything not in the allow list
+#     (v2.1.259+: `--permission-prompts none` has the same effect while keeping auto mode's classifier in charge)
+#   - `--max-budget-usd` caps the spend per skill run; `--no-session-persistence` leaves no session on the runner
 #   - Forked PRs receive no secrets, so this workflow skips them
 
 name: Claude Skills CI
@@ -80,6 +82,8 @@ jobs:
             --allowedTools "${CLAUDE_ALLOWED_TOOLS}" \
             --model sonnet \
             --max-turns 30 \
+            --max-budget-usd 5 \
+            --no-session-persistence \
             --output-format text \
             | tee output/reports/review/_ci-stdout.md
 
@@ -90,6 +94,8 @@ jobs:
             --allowedTools "${CLAUDE_ALLOWED_TOOLS}" \
             --model sonnet \
             --max-turns 30 \
+            --max-budget-usd 5 \
+            --no-session-persistence \
             --output-format text \
             | tee output/reports/security/_ci-stdout.md
 

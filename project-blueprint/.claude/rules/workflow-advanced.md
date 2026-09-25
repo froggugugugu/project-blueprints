@@ -52,7 +52,7 @@ paths:
 
 | 手段 | 用途 | 永続性 |
 | ---- | ---- | ------ |
-| `TaskCreate` / `TaskUpdate` | セッション内の作業進捗追跡 | セッション限り |
+| `TaskCreate` / `TaskUpdate`(Claude 5 系では既定で無効。`settings.json` の env で有効化済み) | セッション内の作業進捗追跡 | セッション限り |
 | `.claude/tasks/` テンプレート | チーム間で共有するタスク仕様書 | ファイルとして永続 |
 
 ### セッション内の進捗管理
@@ -82,6 +82,9 @@ Anthropic の長時間エージェント運用知見(initializer / coding agent 
 セッション開始の定型: `pwd` → `git log --oneline -10` → PROGRESS.md → スモークテスト → 1 機能着手。
 雛形は `.claude/tasks/PROGRESS_TEMPLATE.md`。SessionStart フックが PROGRESS.md の冒頭を自動注入する。
 会話内で完了条件まで自走させたいときは `/goal <条件>`、セッションをまたぐ定期実行は GitHub Actions に置く。
+
+- 進捗の報告と PROGRESS.md の `passes` は、このセッションのツール結果(テスト出力・コマンドの戻り値)で裏付けられるものだけを書く。未検証なら「未検証」と明記する
+- 長いセッションは自動コンパクトに頼らない。区切りで PROGRESS.md を更新して `/clear` する(引き継ぎ付きのリセットは要約より確実)
 
 ## 基本原則
 

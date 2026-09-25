@@ -27,9 +27,12 @@ Claude Code 公式の Agent Teams 機能とは別レイヤーにある。両者�
 - 公式 Agent Teams 有効時は、Claude が名前を付けた subagent が teammate として起動する。
   意図せずチームが形成されることがある点に注意
 - 品質ゲートを teammate にも効かせたい場合は `TeammateIdle` / `TaskCompleted` フックを使う
+- `TaskCreate` 系の Task ツールは Claude 5 系モデルでは既定で無効。本テンプレートは `settings.json` の env `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` で
+  有効化しているので、`TEAM_*.md` の「TaskCreate でタスクリスト」はそのまま動く
 - 数十〜数百の subagent を並列に回す作業(コードベース全体の監査、大量ファイルの一括移行)には
   公式の **dynamic workflows**(プロンプトに `ultracode` を含める / `/batch`)が向く。計画をスクリプトに
-  移すので中間結果がコンテキストに載らない。`TEAM_*.md` は人間ゲート付きのライフサイクル運用に使い分ける
+  移すので中間結果がコンテキストに載らない。`TEAM_*.md` は人間ゲート付きのライフサイクル運用に使い分ける。
+  規模の目安は `workflowSizeGuideline`(既定 medium = 10 体未満、Pro は small)。保存済み workflow は `Workflow(<名前>)` の allow ルールで実行確認を省ける
 - 同梱の saved workflow `/review-sweep`(`.claude/workflows/review-sweep.js`、full プロファイルのみ)は、差分を 4 観点で並列レビューし、
   MUST 指摘を 3 票の反証で検証してから 1 本のレポートにまとめる。TEAM_QA のレビュー工程を、実装者の文脈を持たない agent で自動化したもの
 - `/skill-eval skill=<名>`(同ディレクトリ)は skill の `evals/evals.json` を skill あり / なしで回し、pass rate を比べる

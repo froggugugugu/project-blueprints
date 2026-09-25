@@ -2,8 +2,11 @@
 # ==============================================================================
 # session-start.sh — SessionStart hook
 #
-# Runs at the beginning of each Claude Code session.
-# Checks project readiness and reports findings to Claude.
+# Runs at the beginning of each Claude Code session (source: startup / resume / clear /
+# compact / fork). Checks project readiness and reports findings to Claude.
+# On source == "compact" it re-injects the core rules instead: the official way to
+# restore context after compaction is a SessionStart hook with the `compact` matcher,
+# whose output is added to the compacted context right away (PostCompact cannot inject).
 #
 # Output: stdout JSON hookSpecificOutput.additionalContext (SessionStart)
 #         NOTE: stderr on exit 0 never reaches Claude (official spec)
@@ -32,18 +35,30 @@ emit_context() {
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 warnings=()
 
-# --- Check project-config.md exists ---
-if [[ ! -f "$PROJECT_DIR/project-config.md" ]]; then
+# --- 起動理由(source)を stdin JSON から読む(jq 不在時は文字列検索で代用)---
+INPUT="$(cat 2>/dev/null || true)"
+SOURCE="startup"
+if command -v jq &>/dev/null; then
+    SOURCE="$(printf '%s' "$INPUT" | jq -r '.source // "startup"' 2>/dev/null || echo startup)"
+elif printf '%s' "$INPUT" | grep -q '"source"[[:space:]]*:[[:space:]]*"compact"'; then
+    SOURCE="compact"
+fi
+IS_COMPACT=0
+[[ "$SOURCE" == "compact" ]] && IS_COMPACT=1
+
+# ── コンパクト直後は起動時チェックを繰り返さない(圧縮前に伝えている)──
+if [[ "$IS_COMPACT" -eq 0 && ! -f "$PROJECT_DIR/project-config.md" ]]; then
     warnings+=("project-config.md が見つかりません。project-config.sample.md をコピーして作成してください。")
 fi
 
 # --- Check docs/ directory exists ---
-if [[ ! -d "$PROJECT_DIR/docs" ]]; then
+if [[ "$IS_COMPACT" -eq 0 && ! -d "$PROJECT_DIR/docs" ]]; then
     warnings+=("docs/ ディレクトリが存在しません。セットアップ手順を確認してください。")
 fi
 
 # --- Check docs/ stubs ---
 for doc in project.md architecture.md data-model.md development-patterns.md; do
+    [[ "$IS_COMPACT" -eq 1 ]] && break
     doc_path="$PROJECT_DIR/docs/$doc"
     if [[ -f "$doc_path" ]]; then
         # Check if still a stub (< 5 non-empty lines = likely stub)
@@ -59,7 +74,7 @@ for doc in project.md architecture.md data-model.md development-patterns.md; do
 done
 
 # --- Check settings.local.json exists ---
-if [[ ! -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
+if [[ "$IS_COMPACT" -eq 0 && ! -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
     warnings+=("settings.local.json が未作成です。settings.local.json.template を参考に作成してください。")
 fi
 
@@ -83,6 +98,13 @@ fi
 
 # --- Claude に状態を通知 ---
 MSG=""
+if [[ "$IS_COMPACT" -eq 1 ]]; then
+    MSG="[post-compact recovery] コンテキストがコンパクトされました。CLAUDE.md・AGENTS.md・paths なしの rules はディスクから再注入済み。要約に残らないものを再確認すること:
+  - paths 付き rule(.claude/rules/)は該当ファイルを再度 Read したときに再 load される
+  - 進行中の成果物: output/ 配下の最新ファイル、未完了タスク、直前に実行した検証コマンドとその結果
+  - ユーザーが述べた制約・採用/却下した案は要約の記述を正とし、勝手に再設計しない
+  - 圧縮前の要約は testreport/transcripts/ に保全済み(必要なら Read する)"
+fi
 if [[ ${#warnings[@]} -gt 0 ]]; then
     MSG="プロジェクト状態チェック(project-blueprint SessionStart):"
     for w in "${warnings[@]}"; do

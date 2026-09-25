@@ -30,7 +30,7 @@ Tool-agnostic development rules live in `AGENTS.md` (imported on the next line).
 | `/harness-refine <target or instruction>` | Self-score → improve → review the harness scaffolding (manual invocation only / JP-EN mirror parity required) |
 
 Each skill reads details (`pitfalls.md` etc.) when needed and keeps its expected behavior in `evals/evals.json`. Use the bundled skills alongside them:
-`/verify` (confirm against the running app) / `/btw` (side question kept out of context) / `/goal <condition>` (keep working until it holds) / `/batch` (parallel change across files).
+`/verify` (confirm against the running app) / `/btw` (side question kept out of context) / `/goal <condition>` (keep working until it holds) / `/batch` (parallel change across files) / `/loop` (default prompt in `.claude/loop.md`).
 
 ## Team templates
 
@@ -58,12 +58,12 @@ A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch.
 ## Quality gate mechanics
 
 - Each phase skill consults the gate criteria in `.claude/quality-gates.md` when needed
-- `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted) after source edits (standard = warning / strict = refused)
+- `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted; the Task tools are enabled through `env` in `settings.json`) after source edits (standard = warning / strict = refused)
 - Every skill ships `evals/evals.json` (typical + boundary). After changing a skill, compare with / without pass rates via `/skill-eval skill=<name>`
 
 ## Tool usage
 
-- Research: Glob/Grep for code; for docs 1) `docs/` → 2) WebFetch official → 3) Context7 MCP → 4) WebSearch. Playwright MCP: E2E debugging / visual verification / draw.io MCP: diagrams
+- Research: Glob/Grep for code; for docs 1) `docs/` → 2) WebFetch official → 3) Context7 MCP → 4) WebSearch. Playwright MCP: E2E debugging / visual verification. Diagrams in mermaid (charts via the bundled `/dataviz`)
 
 ## Security (defense in depth)
 
@@ -89,14 +89,14 @@ Start non-trivial tasks (3+ steps or architectural decisions) in plan mode. Skip
 ### 2. Subagent strategy
 
 Definitions and selection guide: `.claude/agents/README.md` (not imported every session). `scope-guard.sh` enforces the write scope of the 3 write-capable agents.
-Use subagents aggressively to avoid main-context bloat. 1 subagent = 1 task. Subagents run in the background by default and return only a summary.
-After implementing, have a fresh-context review subagent (`/code-review`) report only gaps that affect correctness or the stated requirements.
+Delegate only work that is independent and parallelizable, reads a lot, or needs isolated verification. Do work that takes a handful of tool calls yourself (spawn depth is pinned to 1 in `settings.json`).
+After implementing, have a fresh-context review subagent (`/code-review`) report every finding, and act only on the MUSTs that affect correctness or the stated requirements.
 
 ### 3. Context preservation
 
 `/rewind` restores files and conversation from a checkpoint (`fileCheckpointingEnabled`). Run `/clear` before an unrelated task.
 After correcting the same issue twice, `/clear` and rewrite the prompt. On compaction, PreCompact backs the transcript up and
-the marker dropped by PostCompact is collected on the next prompt to re-inject the core rules (see `.claude/guardrails.md`).
+SessionStart (`compact`) re-injects the core rules right away. Rules with `paths:` and skill bodies fade in the summary (see `.claude/guardrails.md`).
 
 ### 4. Detailed procedures (loaded only when needed)
 
@@ -104,8 +104,8 @@ Self-improvement loop / pre-completion verification / autonomous bug fixing / ta
 
 ## Compact instructions
 
-When compacting, always preserve: the list of modified files / the verification commands run and their results /
-unfinished tasks and the next step / design decisions adopted or rejected / the output-location conventions (`output/`). Raw tool output may be dropped.
+When compacting, always preserve: the list of modified files / the verification commands run and their results / unfinished tasks and the next step /
+design decisions adopted or rejected and constraints the user stated (verbatim) / blockers hit and workarounds tried / the output-location conventions (`output/`). Raw tool output may be dropped.
 
 ## Project-specific info (always loaded)
 

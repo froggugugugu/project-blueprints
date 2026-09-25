@@ -43,6 +43,14 @@ HOOK_EVENTS = {
     "PostModelSwitch", "SessionEnd", "Elicitation", "ElicitationResult",
 }
 HOOK_TYPES = {"command", "http", "mcp_tool", "prompt", "agent"}
+# `if`(権限ルール構文でフックの発火を絞る)が効くのはツール系イベントだけ。他に書くとフックが一切走らない。
+HOOK_IF_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionDenied"}
+# skill / agent / workflow のフォルダ名として予約されている名前空間(v2.1.282)。置いても読み込まれない。
+RESERVED_NAMESPACES = {"anthropic-skills", "claude-ai"}
+# project / local settings の env から読まれない変数(v2.1.251 / v2.1.282)。書いても効かない。
+PROJECT_IGNORED_ENV = {"CLAUDE_CONFIG_DIR", "CLAUDE_CODE_TMPDIR", "TMPDIR", "CLAUDE_CODE_ENABLE_TELEMETRY"}
+CACHE_TTLS = {"5m", "1h"}
+LOOP_MD_MAX_CHARS = 25_000     # .claude/loop.md はこれを超えた分が読まれない
 AGENT_COLORS = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"}
 MODEL_ALIASES = {"opus", "sonnet", "haiku", "fable", "inherit"}
 EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
@@ -164,10 +172,17 @@ def check_json_files(root: Path, rep: Report) -> None:
 
 def check_permission_rules(where: str, rules: list[str], rep: Report) -> None:
     for rule in rules:
+        # 閉じ括弧の後ろに文字が続くルールは無効として弾かれる(v2.1.260)
+        if re.match(r"^[A-Za-z_][\w]*\(.*\)\s*\S", rule.strip()):
+            rep.error(where, f"`{rule}` — 閉じ括弧の後にテキストがあるため無効なルールとして扱われます")
+            continue
         m = re.match(r"^([A-Za-z_][\w]*)\((.+)\)$", rule.strip())
         if not m:
             continue
         tool, spec = m.group(1), m.group(2)
+        # `Bash(git * main)` のようにサブコマンドの前にワイルドカードを置くと意図と違う一致になり、起動時に警告される(v2.1.246)
+        if tool == "Bash" and re.match(r"^\S+\s+\*\s+\S", spec):
+            rep.warn(where, f"`{rule}` — サブコマンドの前の `*` は起動時に警告されます。`Bash({spec.split()[0]} <sub> *)` の形にしてください")
         if tool in NEVER_CONSULTED_PATH_TOOLS and ":" not in spec:
             rep.error(
                 where,
@@ -192,13 +207,14 @@ def check_settings(root: Path, rep: Report) -> set[str]:
         for bucket in ("allow", "deny", "ask"):
             check_permission_rules(f"{where} [permissions.{bucket}]", perms.get(bucket, []), rep)
         check_project_scope_keys(where, cfg, rep)
+        check_enabled_plugins(where, cfg, rep)
 
         for event, groups in cfg.get("hooks", {}).items():
             if event not in HOOK_EVENTS:
                 rep.error(where, f"`{event}` は公式のフックイベント名ではありません")
             for group in groups:
                 for hook in group.get("hooks", []):
-                    check_hook_handler(f"{where} [hooks.{event}]", hook, rep)
+                    check_hook_handler(f"{where} [hooks.{event}]", hook, rep, event)
                     cmd = hook.get("command", "")
                     m = re.search(r"/\.claude/hooks/([\w.-]+\.sh)", cmd)
                     if not m:
@@ -222,17 +238,27 @@ def check_settings(root: Path, rep: Report) -> set[str]:
                 rep.error(str(local), f"`{event}` は公式のフックイベント名ではありません")
             for group in groups:
                 for hook in group.get("hooks", []):
-                    check_hook_handler(f"{local} [hooks.{event}]", hook, rep)
+                    check_hook_handler(f"{local} [hooks.{event}]", hook, rep, event)
 
     return referenced
 
 
-def check_hook_handler(where: str, hook: dict, rep: Report) -> None:
+def check_hook_handler(where: str, hook: dict, rep: Report, event: str = "") -> None:
     """Validate one hook handler object against the official field list."""
     htype = hook.get("type")
     if htype not in HOOK_TYPES:
         rep.error(where, f"`type: {htype}` は公式のフックタイプではありません ({', '.join(sorted(HOOK_TYPES))})")
         return
+    cond = hook.get("if")
+    if cond is not None:
+        if not isinstance(cond, str) or not cond.strip():
+            rep.error(where, "`if` は権限ルール構文の文字列 1 つで指定します(例 `Bash(git *)`)")
+        elif event and event not in HOOK_IF_EVENTS:
+            rep.error(where, f"`if` は {', '.join(sorted(HOOK_IF_EVENTS))} でしか効きません — {event} に書くとフックが一切走りません")
+        elif "&&" in cond or "||" in cond:
+            rep.error(where, "`if` に `&&` / `||` は使えません。条件ごとに handler を分けてください")
+    if htype == "agent" and event == "PermissionRequest":
+        rep.error(where, "PermissionRequest に agent 型フックは登録できません(v2.1.280 以降エラー)。command / http 型にしてください")
     if htype == "command" and not str(hook.get("command", "")).strip():
         rep.error(where, "`type: command` のフックに `command` がありません")
     if htype in ("prompt", "agent") and not str(hook.get("prompt", "")).strip():
@@ -261,6 +287,43 @@ def check_project_scope_keys(where: str, cfg: dict, rep: Report) -> None:
         )
     if "autoMode" in cfg:
         rep.warn(where, "`autoMode` は project settings から読まれません — ~/.claude/settings.json か managed settings に置いてください")
+    if "pluginConfigs" in cfg:
+        rep.warn(where, "`pluginConfigs` は project settings から読まれません(v2.1.207) — ~/.claude/settings.json に置いてください")
+    if cfg.get("remoteControlAtStartup") is True:
+        rep.warn(where, "`remoteControlAtStartup: true` は project / local settings では効きません(v2.1.222)")
+    if isinstance(cfg.get("sandbox"), dict) and "ripgrep" in cfg["sandbox"]:
+        rep.warn(where, "`sandbox.ripgrep` は user / managed / --settings からしか読まれません(v2.1.232)")
+    for key in sorted(cfg.get("env", {}) or {}):
+        if key in PROJECT_IGNORED_ENV or key.startswith("OTEL_"):
+            rep.warn(
+                where,
+                f"`env.{key}` は project / local settings では読まれません(OpenTelemetry と一時ディレクトリは"
+                " ~/.claude/settings.json・managed settings・シェル環境で設定する)",
+            )
+
+
+def check_enabled_plugins(where: str, cfg: dict, rep: Report) -> None:
+    """`enabledPlugins` が指すプラグインがその marketplace に存在するか。
+    ローカルの marketplace キャッシュ(~/.claude/plugins/marketplaces/)があるときだけ検査し、
+    CI のように無い環境では黙って通す(存在しないプラグインは起動時に黙って無視されるため)。"""
+    plugins = cfg.get("enabledPlugins") or {}
+    if not isinstance(plugins, dict):
+        return
+    cache_root = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "plugins" / "marketplaces"
+    for key in sorted(plugins):
+        if "@" not in key:
+            rep.error(where, f"`enabledPlugins.{key}` は `<plugin>@<marketplace>` の形で書きます")
+            continue
+        name, market = key.rsplit("@", 1)
+        manifest = cache_root / market / ".claude-plugin" / "marketplace.json"
+        if not manifest.exists():
+            continue
+        try:
+            known = {p.get("name") for p in json.loads(manifest.read_text(encoding="utf-8")).get("plugins", [])}
+        except Exception:  # noqa: BLE001
+            continue
+        if name not in known:
+            rep.warn(where, f"`enabledPlugins.{key}` — marketplace `{market}` に `{name}` が存在しません(起動時に黙って無視されます)")
 
 
 def check_hook_scripts(root: Path, referenced: set[str], rep: Report) -> None:
@@ -297,6 +360,8 @@ def check_agents(root: Path, skill_names: set[str], rep: Report) -> None:
             rep.error(where, f"`name: {name}` に `:` が含まれます — プラグイン用に予約されており読み込まれません")
         elif not re.fullmatch(r"[a-z0-9-]+", name):
             rep.error(where, f"`name: {name}` は小文字英数字とハイフンのみ使えます")
+        if name in RESERVED_NAMESPACES or p.stem in RESERVED_NAMESPACES:
+            rep.error(where, f"`{name}` は claude.ai 同期用に予約された名前空間です(v2.1.282)。ローカル定義は読み込まれません")
 
         if not str(fm.get("description", "")).strip():
             rep.error(where, "`description` が未設定です")
@@ -332,6 +397,17 @@ def check_agents(root: Path, skill_names: set[str], rep: Report) -> None:
         if max_turns is not None and not str(max_turns).isdigit():
             rep.error(where, f"`maxTurns: {max_turns}` は整数である必要があります")
 
+        # YAML 1.1 パーサは `yes` / `on` も真と解釈するため、生テキストで厳密に検査する。
+        raw_fm = FM_RE.match(p.read_text(encoding="utf-8"))
+        raw_fm_text = raw_fm.group(1) if raw_fm else ""
+        for key in ("omitClaudeMd", "background"):
+            mm = re.search(rf"(?m)^{key}:[ \t]*(.*?)[ \t]*$", raw_fm_text)
+            if mm and mm.group(1).strip('"\'') not in ("true", "false"):
+                rep.error(where, f"`{key}: {mm.group(1)}` は true / false のみ指定できます")
+        exp = fm.get("experimental")
+        if isinstance(exp, dict) and exp.get("cacheTtl") is not None and str(exp["cacheTtl"]) not in CACHE_TTLS:
+            rep.error(where, f"`experimental.cacheTtl: {exp['cacheTtl']}` は 5m / 1h のみ指定できます")
+
         tools_raw = fm.get("tools")
         tool_list = tools_raw if isinstance(tools_raw, list) else split_top_level(str(tools_raw or ""))
         tool_names = {re.sub(r"\(.*\)$", "", str(t)).strip() for t in tool_list}
@@ -364,6 +440,8 @@ def check_skills(root: Path, rep: Report) -> set[str]:
         name = str(fm.get("name", p.parent.name)).strip()
         if name and name != p.parent.name:
             rep.warn(where, f"`name: {name}` がディレクトリ名 `{p.parent.name}` と異なります")
+        if p.parent.name in RESERVED_NAMESPACES:
+            rep.error(where, f"`{p.parent.name}` は claude.ai 同期用に予約された名前空間です(v2.1.282)。この skill は読み込まれません")
 
         desc = str(fm.get("description", "")) + str(fm.get("when_to_use", ""))
         if not desc.strip():
@@ -753,6 +831,13 @@ def check_imports_and_limits(root: Path, rep: Report) -> None:
             rep.warn(str(claude_md), f"{label} {n} 行 — 目安の {CLAUDE_MD_SOFT_LIMIT} 行を超えています")
 
 
+def check_loop_md(root: Path, rep: Report) -> None:
+    """`.claude/loop.md`(bare `/loop` の既定プロンプト)は 25,000 文字を超えた分が読まれない。"""
+    p = root / ".claude/loop.md"
+    if p.exists() and len(p.read_text(encoding="utf-8")) > LOOP_MD_MAX_CHARS:
+        rep.warn(str(p), f"{LOOP_MD_MAX_CHARS:,} 文字を超えています — 超過分は /loop に読まれません")
+
+
 def check_constitution(root: Path, rep: Report) -> None:
     con = root / "constitution.md"
     digest_file = root / ".claude/.constitution.sha256"
@@ -850,6 +935,7 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_workflows(root, rep)
     check_rules(root, rep)
     check_imports_and_limits(root, rep)
+    check_loop_md(root, rep)
     check_constitution(root, rep)
     if online:
         check_npm_packages(root, rep)

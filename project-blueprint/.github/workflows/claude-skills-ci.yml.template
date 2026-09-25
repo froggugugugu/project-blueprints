@@ -17,6 +17,8 @@
 # セキュリティ:
 #   - PR タイトル/本文などの信頼できない入力を run: に展開しない（コマンドインジェクション対策）
 #   - --permission-mode dontAsk は allow ルールに無いものを全て自動拒否する
+#     (v2.1.259 以降は --permission-prompts none でも同じ効果。auto mode の判定を残したまま確認だけを自動拒否する)
+#   - --max-budget-usd はスキル 1 回あたりの上限額、--no-session-persistence は CI にセッションを残さない
 #   - fork からの PR では secrets が渡らないため、このワークフローはスキップされる
 
 name: Claude Skills CI
@@ -81,6 +83,8 @@ jobs:
             --allowedTools "${CLAUDE_ALLOWED_TOOLS}" \
             --model sonnet \
             --max-turns 30 \
+            --max-budget-usd 5 \
+            --no-session-persistence \
             --output-format text \
             | tee output/reports/review/_ci-stdout.md
 
@@ -91,6 +95,8 @@ jobs:
             --allowedTools "${CLAUDE_ALLOWED_TOOLS}" \
             --model sonnet \
             --max-turns 30 \
+            --max-budget-usd 5 \
+            --no-session-persistence \
             --output-format text \
             | tee output/reports/security/_ci-stdout.md
 

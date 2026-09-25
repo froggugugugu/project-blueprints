@@ -73,7 +73,7 @@ bash setup.sh /path/to/your-project
 これだけで以下がすべて完了する:
 - `.claude/`、`docs/`、`input/`、`output/`、`testreport/`、`project-config.md` のコピー
 - `CLAUDE.md` と `AGENTS.md`(ツール共通ルール)のプロジェクトルートへの配置(既存の `AGENTS.md` は上書きせず `AGENTS.blueprint.md` を横に置く)
-- `constitution.md`・`.mcp.json.template`・`.github/`(ワークフローテンプレート)の配置(既存ファイルは上書きしない)
+- `constitution.md`・`REVIEW.md`(Claude の Code Review 用の審査基準)・`.mcp.json.template`・`.github/`(ワークフローテンプレート)の配置(既存ファイルは上書きしない)
 - `.claude/settings.local.json` を雛形から生成(無い場合のみ)
 - `.gitignore` への `testreport/` などローカル状態の追記
 - 既存 `.claude/` がある場合は `.claude.bak/` に自動バックアップ
@@ -85,8 +85,8 @@ bash setup.sh /path/to/your-project
 | プロファイル | skills | agents | hooks | teams | 用途 |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | なし | まず最速で試す軽量構成 |
-| `standard` | 17 | 8 | 16 | なし | チーム機能以外フル |
-| `full`（デフォルト） | 17 | 8 | 16 | 6 | 現行と同じフル構成 |
+| `standard` | 17 | 8 | 17 | なし | チーム機能以外フル |
+| `full`（デフォルト） | 17 | 8 | 17 | 6 | 現行と同じフル構成 |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -377,22 +377,23 @@ project-blueprint/
 │   ├── output-styles/                     ← [汎用] フェーズ別出力スタイル 4 種（phase-prd / design / implementation / review）
 │   ├── learnings/                         ← [汎用] 成功パターンの記録（README.md / TEMPLATE.md / 記入例）
 │   │
-│   ├── hooks/                             ← [汎用] 安全フック（多層防御・16本）
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御・17本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
 │   │   ├── scan-harness.sh                  ハーネス自己SAST・危険skillブロック（PreToolUse）
 │   │   ├── user-prompt-submit.sh            機密パターン検出（UserPromptSubmit）
-│   │   ├── session-start.sh                 セッション開始チェック（SessionStart）
+│   │   ├── session-start.sh                 セッション開始チェック・コンパクト後の再注入（SessionStart）
 │   │   ├── session-end.sh                   セッション終了記録（SessionEnd）
 │   │   ├── commit-quality.sh                コミット品質チェック（PostToolUse）
 │   │   ├── console-warn.sh                  デバッグコード検出（PostToolUse）
 │   │   ├── verify-gate.sh                   検証ゲート: 編集後の未検証終了・完了マークを検知（PostToolUse/Stop/TaskCompleted）
 │   │   ├── permission-denied-log.sh         auto mode の拒否記録（PermissionDenied）
+│   │   ├── config-guard.sh                  防御層を弱める設定変更の阻止・記録（ConfigChange）
 │   │   ├── scope-guard.sh                   書込可能 agent の書込範囲を強制（agent frontmatter）
 │   │   ├── post-failure-log.sh              ツール失敗ログ記録（PostToolUseFailure）
 │   │   ├── subagent-audit.sh                サブエージェント実行監査（SubagentStart/Stop）
 │   │   ├── pre-compact-backup.sh            コンパクト前トランスクリプト退避（PreCompact）
-│   │   ├── post-compact-restore.sh          コンパクト後の再注入マーカー設置（PostCompact）
+│   │   ├── post-compact-restore.sh          コンパクト後の要約保全（PostCompact）
 │   │   ├── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
 │   │   └── ntfy-topic.txt                   notify-claude.sh の通知先トピック（要書き換え）
 │   │

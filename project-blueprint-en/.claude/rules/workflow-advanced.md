@@ -52,7 +52,7 @@ paths:
 
 | Method | Purpose | Persistence |
 | ------ | ------- | ----------- |
-| `TaskCreate` / `TaskUpdate` | In-session work progress tracking | Session only |
+| `TaskCreate` / `TaskUpdate` (off by default on Claude 5-family models; enabled through `env` in `settings.json`) | In-session work progress tracking | Session only |
 | `.claude/tasks/` templates | Task specifications shared between teams | Persisted as files |
 
 ### In-session progress management
@@ -82,6 +82,9 @@ Don't try to build everything in one session; finish in a state **the next sessi
 Session start routine: `pwd` → `git log --oneline -10` → PROGRESS.md → smoke test → start one feature.
 Template: `.claude/tasks/PROGRESS_TEMPLATE.md`. The SessionStart hook injects the head of PROGRESS.md automatically.
 To keep going until a condition holds within one conversation use `/goal <condition>`; for recurring cross-session runs use GitHub Actions.
+
+- Report progress, and mark `passes` in PROGRESS.md, only for work backed by a tool result from this session (test output, a command's return value). Say "unverified" when it is not
+- Do not rely on auto-compaction in a long session. Update PROGRESS.md at a natural break and `/clear` (a reset with a handoff is more reliable than a summary)
 
 ## Core principles
 

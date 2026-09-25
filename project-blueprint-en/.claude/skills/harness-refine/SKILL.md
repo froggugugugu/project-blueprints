@@ -116,6 +116,7 @@ Edits **no files**. Research and delta generation only. Steps:
    below; use Context7 for library-style docs. On fetch failure, continue in **degraded mode** using
    training data + prior reports, and state this explicitly in conversation and the report
    (never silently regress to training data).
+   Also add the output of `/skill-doctor` (unused skills and listing cost) and `/doctor` (CLAUDE.md trimming proposals) to the scoring evidence.
 2. **Learn from past reports**: read `output/reports/harness-refine/REFINE_*.md` (the latest 2-3, if any)
    and extract (a) **unresolved findings** (b) **issues that recurred 2+ times**.
 3. **Generate the live rubric delta**: compare the fetched guidance against the 15-item rubric below, and
@@ -283,6 +284,8 @@ The skeleton is in [references/report-template.md](references/report-template.md
 | code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md line count / startup load cost / cache invalidation / compact instructions | 2, 12 |
 | claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | when to use CLAUDE.md / rules / skills / hooks / subagents / output styles | 4, 10 |
 | code.claude.com/docs `whats-new` (last 8 weeks) | detecting new features and default changes (input to rubric self-evolution) | all |
+| code.claude.com/docs `tools-reference` / `changelog` (last 30 versions) | per-model tool availability (Task tools etc.), removed or changed behaviors | 5, 10 |
+| platform.claude.com/docs `prompt-engineering/prompting-claude-{opus-5,opus-5-5,fable-5,fable-5-1}` + `claude-prompting-best-practices` | removing instructions that backfire on Claude 5-family models (over-verification, over-delegation, conservative review, reasoning disclosure) | 10, 11, 12 |
 | agentskills.io `specification` / `skill-creation/evaluating-skills` | description limit / `evals/evals.json` format / writing assertions | 11, 15 |
 | claude.com/blog `a-harness-for-every-task-dynamic-workflows-in-claude-code` | workflow patterns (fan-out / adversarial verify / loop-until-done) | 4, 9 |
 | anthropic.com/engineering `writing-tools-for-agents` | tool-definition clarity / token efficiency | 10, 11 |

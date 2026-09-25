@@ -388,7 +388,7 @@ output/reports/                <- Human-readable summaries (Git-managed)
 | --- | --- | --- |
 | context7 | yes | Library documentation reference |
 | playwright | yes | E2E test execution and debugging |
-| draw.io | yes | Architecture diagrams and flow charts |
+| mermaid | yes | Architecture diagrams and flow charts (inline in Markdown) |
 | pr-review-toolkit | yes | GitHub PR integration |
 | sentry | no | Production error investigation (enable as needed) |
 
@@ -404,7 +404,8 @@ output/reports/                <- Human-readable summaries (Git-managed)
 
 | Tier | Alias | Pinned ID | Use | Cost level |
 | ---- | ----- | --------- | --- | ---------- |
-| **Critical** | `opus` | `claude-opus-5` | Architecture decisions, security audits, complex refactors | High |
+| **Frontier** | `fable` | `claude-fable-5-1` | Multi-hour to multi-day autonomous runs, root-cause investigations, hard design decisions (never the default; select it explicitly) | Highest |
+| **Critical** | `opus` | `claude-opus-5-5` | Architecture decisions, security audits, complex refactors | High |
 | **Complex** | `sonnet` | `claude-sonnet-5` | Design, implementation, code review, E2E authoring | Medium (recommended) |
 | **Operational** | `haiku` | `claude-haiku-4-5-20251001` | Exploration, doc sync, lightweight repetitive work | Low |
 
@@ -415,6 +416,11 @@ output/reports/                <- Human-readable summaries (Git-managed)
 > [Anthropic Console Models page](https://console.anthropic.com/settings/models).
 
 Older models (`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5`, etc.) are discouraged in this template.
+
+> **The default effort differs per model**: `medium` on Opus 5.5, `high` elsewhere. A skill's or agent's `effort:` overrides the
+> session default, so when review or design work runs on Opus 5.5, check that `high` or above is set explicitly. The `best` alias
+> resolves to Fable where available and to Opus otherwise. Fable suits multi-hour autonomous runs, but its safety classifiers fall
+> back to Opus in the cybersecurity / biology domains.
 
 ### 13.1b The effort (reasoning depth) axis
 

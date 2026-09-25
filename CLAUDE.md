@@ -28,6 +28,7 @@ project-blueprints/
 │   ├── README.md                # Setup guide & quick start
 │   ├── setup.sh                 # One-command setup script
 │   ├── AGENTS.md                # Tool-agnostic rules (copied to target root; imported by CLAUDE.md via @AGENTS.md)
+│   ├── REVIEW.md                # Review-only criteria for Claude's Code Review (GitHub App); the local /code-review does not read it
 │   ├── project-config.md        # Template: human decisions (13 sections)
 │   ├── .mcp.json.template       # Project-shared MCP server config template
 │   ├── .github/workflows/       # Claude Code PR review workflow template
@@ -35,6 +36,7 @@ project-blueprints/
 │   │   ├── CLAUDE.md            # Development guide (copied to target project root)
 │   │   ├── settings.json        # Hooks + plugin config (context7, playwright, etc.)
 │   │   ├── settings.local.json.template
+│   │   ├── loop.md              # Default prompt for a bare /loop (PROGRESS.md next step → PR upkeep → /code-review)
 │   │   ├── guardrails.md        # Safety mechanism overview
 │   │   ├── quality-gates.md     # Quality gate definitions
 │   │   ├── pitfalls.md          # Common failure patterns (anti-patterns)
@@ -43,7 +45,7 @@ project-blueprints/
 │   │   ├── workflows/           # 2 saved dynamic workflows (review-sweep.js, skill-eval.js; full profile only)
 │   │   ├── agents/              # 8 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
-│   │   ├── hooks/               # 16 hook scripts (safety + observability + verification gate + agent scope guard; .sh count)
+│   │   ├── hooks/               # 17 hook scripts (safety + observability + verification gate + agent scope guard + config guard; .sh count)
 │   │   └── tasks/               # Task instruction templates
 │   ├── docs/                    # AI-managed technical docs (stubs)
 │   ├── input/                   # Human requirements input
@@ -71,7 +73,7 @@ project-blueprints/
 
 **Subagent layer** (8 agents in `.claude/agents/*.md`): Single-shot specialist delegation (`explorer`, `researcher`, `planner`, `security-reviewer`, `performance-analyst`, `doc-synchronizer`, `doc-writer`, `test-writer`). `researcher` handles external technical investigation; `doc-writer` authors new documents under `output/` (complementing `doc-synchronizer` which syncs existing `docs/`). Complements teams and skills with isolated-context execution.
 
-**Hook system** (16 hook scripts in `.claude/hooks/*.sh`, 19 registered invocations in `settings.json` plus 3 agent-frontmatter registrations of `scope-guard.sh`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` / `TaskCompleted` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop + TaskCompleted) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials. See `.claude/guardrails.md`.
+**Hook system** (17 hook scripts in `.claude/hooks/*.sh`, 20 registered invocations in `settings.json` plus 3 agent-frontmatter registrations of `scope-guard.sh`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` / `ConfigChange` / `TaskCompleted` / `SessionStart` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `Stop` / `Notification`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop + TaskCompleted) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials; `config-guard.sh` (ConfigChange) refuses settings changes that weaken the guardrails; `session-start.sh` re-injects the core rules on the `compact` source (the official pattern; the older PostCompact-marker approach is gone). `settings.json` `env` enables the Task tools (absent by default on Claude 5-family models, required by the TaskCompleted gate) and pins subagent spawn depth to 1 (constitution ④). See `.claude/guardrails.md`.
 
 **Distribution**: `setup.sh` + clone only. Plugin packaging was evaluated twice (adopted 2026-04, withdrawn 2026-06, re-evaluated and withdrawn again 2026-08) and does not fit: a plugin can only declare `skills`/`agents`/`outputStyles`/`hooks`, while **17 of 17 skills reference files a plugin cannot ship** (`docs/` 16, `output/` 15, `quality-gates.md` 15, `project-config.md` 14, `pitfalls.md` 12, `.claude/rules/` 3). Do not re-open this without new evidence that those dependencies have gone away.
 

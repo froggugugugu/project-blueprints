@@ -214,6 +214,6 @@ output/reports/                ← 人間向けサマリー（Git管理）
 | ----------------- | ---- | ------------------------------------------ |
 | context7          | yes  | ライブラリドキュメント参照                 |
 | playwright        | yes  | E2Eテスト実行・デバッグ                    |
-| draw.io           | yes  | アーキテクチャ図・フロー図作成             |
+| mermaid           | yes  | アーキテクチャ図・フロー図（Markdown 内に記述） |
 | pr-review-toolkit | yes  | GitHub PR連携                              |
 | sentry            | no   | 本番エラー調査（必要に応じて有効化）       |

@@ -34,11 +34,12 @@ usage() {
   - testreport/ (ツール直接出力)
   - project-config.md (設定ファイル)
   - CLAUDE.md / AGENTS.md → プロジェクトルートに配置
+  - REVIEW.md(Code Review 用の審査基準)/ constitution.md → 既存が無ければ配置
 
 プロファイル(--profile、省略時は full):
   minimal   skills 5 / agents 2 / hooks 2 / teams なし — 最速で試す軽量構成
-  standard  skills 17 / agents 8 / hooks 16 / teams なし — チーム機能以外フル
-  full      skills 17 / agents 8 / hooks 16 / teams 6 — デフォルト・現行互換
+  standard  skills 17 / agents 8 / hooks 17 / teams なし — チーム機能以外フル
+  full      skills 17 / agents 8 / hooks 17 / teams 6 — デフォルト・現行互換
 
   ※ minimal はセーフガード系フック(session-start等)も間引く軽量構成です。
      project-config.md の「ミニマル/推奨/フル」(§記入量の目安)とは別の軸です。
@@ -214,6 +215,16 @@ if [[ -f "$SCRIPT_DIR/constitution.md" ]]; then
     else
         cp "$SCRIPT_DIR/constitution.md" "$TARGET_DIR/constitution.md"
         info "constitution.md(不変原則)を配置"
+    fi
+fi
+
+# REVIEW.md(Claude の Code Review 用のレビュー指示)を配置 — 既存ファイルは保持
+if [[ -f "$SCRIPT_DIR/REVIEW.md" ]]; then
+    if [[ -e "$TARGET_DIR/REVIEW.md" ]]; then
+        info "REVIEW.md は既に存在するため保持(上書きしない)"
+    else
+        cp "$SCRIPT_DIR/REVIEW.md" "$TARGET_DIR/REVIEW.md"
+        info "REVIEW.md(Code Review の審査基準)を配置"
     fi
 fi
 

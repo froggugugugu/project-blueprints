@@ -34,6 +34,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      id-token: write   # 既定の GitHub App 認証に必要
+      actions: read     # PR の CI 結果を読めるようにする
 
     timeout-minutes: 15
 
@@ -47,15 +49,15 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # モデル指定（コスト/品質のトレードオフ）
-          # - opus (Opus 5): 高品質レビュー、コスト高
-          # - sonnet (Sonnet 5): 標準レビュー、推奨
-          # - haiku (Haiku 4.5): 軽量レビュー、簡易チェック
-          model: claude-sonnet-5
-          # コスト guardrail: 最大ターン数
-          max_turns: 10
-          # 追加プロンプト（プロジェクト固有のレビュー観点）
-          direct_prompt: |
+          # v1 の入力は prompt / claude_args。beta 時代の model / max_turns / direct_prompt は受け付けない
+          # モデル（コスト/品質のトレードオフ）:
+          # - claude-opus-5-5: 高品質レビュー、コスト高
+          # - claude-sonnet-5: 標準レビュー、推奨
+          # - claude-haiku-4-5-20251001: 軽量レビュー、簡易チェック
+          # --max-turns はコスト guardrail（暴走防止）
+          claude_args: "--model claude-sonnet-5 --max-turns 10"
+          # レビュー指示（プロジェクト固有の観点。prompt があると @claude を待たず自動実行になる）
+          prompt: |
             このリポジトリは `AGENTS.md`・`CLAUDE.md` と `project-config.md` に定義された規約に従う。
             以下の観点で PR をレビューしてほしい:
 

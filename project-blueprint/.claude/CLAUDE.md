@@ -30,7 +30,7 @@
 | `/harness-refine <対象 or 指示>` | ハーネス骨格の自己採点 → 強化 → セルフレビュー(手動起動のみ / 日英ミラー同期必須) |
 
 各 skill は詳細(`pitfalls.md` 等)を必要時に Read し、期待動作の基準を `evals/evals.json` に持つ。同梱 skill も併用する:
-`/verify`(実アプリで動作確認)/ `/btw`(文脈を汚さない脇質問)/ `/goal <完了条件>`(条件を満たすまで継続)/ `/batch`(大量ファイル並列変更)。
+`/verify`(実アプリで動作確認)/ `/btw`(文脈を汚さない脇質問)/ `/goal <完了条件>`(条件を満たすまで継続)/ `/batch`(大量ファイル並列変更)/ `/loop`(既定プロンプトは `.claude/loop.md`)。
 
 ## チームテンプレート
 
@@ -58,12 +58,12 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 ## 品質ゲートの仕組み
 
 - 各 phase skill は `.claude/quality-gates.md` のゲート基準を必要時に参照する
-- `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted)を検知する(standard=警告 / strict=差し止め)
+- `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted。Task ツールは `settings.json` の env で有効化済み)を検知する(standard=警告 / strict=差し止め)
 - 各 skill は `evals/evals.json`(典型 + 境界)を持つ。skill を変えたら `/skill-eval skill=<名>` で with / without の pass rate を比べる
 
 ## ツール利用方針
 
-- 調査: コードは Glob/Grep、ドキュメントは 1) `docs/` → 2) WebFetch 公式 → 3) Context7 MCP → 4) WebSearch。Playwright MCP: E2E デバッグ・ビジュアル確認 / draw.io MCP: 図表
+- 調査: コードは Glob/Grep、ドキュメントは 1) `docs/` → 2) WebFetch 公式 → 3) Context7 MCP → 4) WebSearch。Playwright MCP: E2E デバッグ・ビジュアル確認。図は mermaid(グラフは同梱 `/dataviz`)
 
 ## セキュリティ(多層防御)
 
@@ -89,14 +89,14 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 ### 2. サブエージェント戦略
 
 定義集と使い分けは `.claude/agents/README.md`(常時 import しない)。書込可能な 3 agent は `scope-guard.sh` が書込範囲を強制する。
-メインコンテキストを圧迫しないよう subagent を積極活用。1 subagent = 1 task。subagent は既定でバックグラウンド実行され要約だけが戻る。
-実装後は fresh context のレビュー subagent(`/code-review`)に「正確性・要件に影響する gap のみ」を報告させる。
+委譲するのは、並列化できる独立作業・大量の読込・隔離が要る検証に限る。数回のツール呼び出しで済む作業は自分で行う(spawn 深さは `settings.json` で 1 に固定)。
+実装後は fresh context のレビュー subagent(`/code-review`)に指摘を全件報告させ、対応は正確性・要件に影響する MUST に絞る。
 
 ### 3. コンテキスト保全
 
 `/rewind` でファイル・会話をチェックポイントから復元できる(`fileCheckpointingEnabled`)。無関係なタスクの前に `/clear`。
 同じ修正を 2 回繰り返したら `/clear` して指示を書き直す。コンパクト時は PreCompact でバックアップし、
-PostCompact が置いたマーカーを次プロンプトで回収して中核ルールを再注入する(詳細は `.claude/guardrails.md`)。
+SessionStart(`compact`)が中核ルールを即座に再注入する。`paths:` 付き rule と skill 本文は要約で薄れる(詳細は `.claude/guardrails.md`)。
 
 ### 4. 詳細手順(必要時のみ load)
 
@@ -104,8 +104,8 @@ PostCompact が置いたマーカーを次プロンプトで回収して中核�
 
 ## コンパクト時の指示(Compact instructions)
 
-コンパクト(要約)では次を必ず保持する: 変更したファイル一覧 / 実行した検証コマンドと結果 /
-未完了タスクと次の一手 / 採用・却下した設計判断 / 出力先(`output/`)の規約。ツール出力の生データは捨ててよい。
+コンパクト(要約)では次を必ず保持する: 変更したファイル一覧 / 実行した検証コマンドと結果 / 未完了タスクと次の一手 /
+採用・却下した設計判断とユーザーが述べた制約(原文のまま)/ 行き詰まりと試した回避策 / 出力先(`output/`)の規約。ツール出力の生データは捨ててよい。
 
 ## プロジェクト固有情報(常時 load)
 

@@ -21,7 +21,7 @@ Use this style when running `/architecture`, `/plan`, `/adr`, or any discussion 
 ## Output Format
 
 - Document layout: Background → Constraints → Options → Selected → Impact → Migration.
-- Use mermaid or ASCII for diagrams; prefer the draw.io MCP if available.
+- Use mermaid or ASCII for diagrams, inline in the Markdown (no dedicated MCP needed).
 - Show data-model changes as Before / After / Backward Compatibility (3 columns).
 - Quantify non-functional properties (O(n), MB, ms).
 

@@ -2,8 +2,11 @@
 # ==============================================================================
 # session-start.sh — SessionStart hook
 #
-# Runs at the beginning of each Claude Code session.
-# Checks project readiness and reports findings to Claude.
+# Runs at the beginning of each Claude Code session (source: startup / resume / clear /
+# compact / fork). Checks project readiness and reports findings to Claude.
+# On source == "compact" it re-injects the core rules instead: the official way to
+# restore context after compaction is a SessionStart hook with the `compact` matcher,
+# whose output is added to the compacted context right away (PostCompact cannot inject).
 #
 # Output: stdout JSON hookSpecificOutput.additionalContext (SessionStart)
 #         NOTE: stderr on exit 0 never reaches Claude (official spec)
@@ -32,18 +35,30 @@ emit_context() {
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 warnings=()
 
-# --- Check project-config.md exists ---
-if [[ ! -f "$PROJECT_DIR/project-config.md" ]]; then
+# --- Read the start reason (source) from the stdin JSON (string search when jq is missing) ---
+INPUT="$(cat 2>/dev/null || true)"
+SOURCE="startup"
+if command -v jq &>/dev/null; then
+    SOURCE="$(printf '%s' "$INPUT" | jq -r '.source // "startup"' 2>/dev/null || echo startup)"
+elif printf '%s' "$INPUT" | grep -q '"source"[[:space:]]*:[[:space:]]*"compact"'; then
+    SOURCE="compact"
+fi
+IS_COMPACT=0
+[[ "$SOURCE" == "compact" ]] && IS_COMPACT=1
+
+# ── Right after a compact, skip the readiness checks (they were reported before) ──
+if [[ "$IS_COMPACT" -eq 0 && ! -f "$PROJECT_DIR/project-config.md" ]]; then
     warnings+=("project-config.md not found. Copy project-config.sample.md to create it.")
 fi
 
 # --- Check docs/ directory exists ---
-if [[ ! -d "$PROJECT_DIR/docs" ]]; then
+if [[ "$IS_COMPACT" -eq 0 && ! -d "$PROJECT_DIR/docs" ]]; then
     warnings+=("docs/ directory does not exist. Please check the setup steps.")
 fi
 
 # --- Check docs/ stubs ---
 for doc in project.md architecture.md data-model.md development-patterns.md; do
+    [[ "$IS_COMPACT" -eq 1 ]] && break
     doc_path="$PROJECT_DIR/docs/$doc"
     if [[ -f "$doc_path" ]]; then
         # Check if still a stub (< 5 non-empty lines = likely stub)
@@ -59,7 +74,7 @@ for doc in project.md architecture.md data-model.md development-patterns.md; do
 done
 
 # --- Check settings.local.json exists ---
-if [[ ! -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
+if [[ "$IS_COMPACT" -eq 0 && ! -f "$PROJECT_DIR/.claude/settings.local.json" ]]; then
     warnings+=("settings.local.json not created. Use settings.local.json.template as a reference.")
 fi
 
@@ -83,6 +98,13 @@ fi
 
 # --- Report state to Claude ---
 MSG=""
+if [[ "$IS_COMPACT" -eq 1 ]]; then
+    MSG="[post-compact recovery] The context was just compacted. CLAUDE.md, AGENTS.md and rules without paths were re-injected from disk. Re-check what a summary does not keep:
+  - Rules with paths (.claude/rules/) reload only when you Read a matching file again
+  - Work in flight: the newest files under output/, unfinished tasks, and the last verification command with its result
+  - Constraints the user stated and decisions taken or rejected: trust the summary and do not redesign on your own
+  - The pre-compact summary is preserved under testreport/transcripts/ (Read it if needed)"
+fi
 if [[ ${#warnings[@]} -gt 0 ]]; then
     MSG="Project readiness check (project-blueprint SessionStart):"
     for w in "${warnings[@]}"; do

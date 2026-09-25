@@ -7,16 +7,17 @@
       "command": "npx",
       "args": [
         "-y",
-        "@upstash/context7-mcp@4.0.5"
+        "@upstash/context7-mcp@4.1.1"
       ],
-      "_verify": "バージョンはサプライチェーン対策として固定している(2026-09-06 時点の最新)。更新は `npm view @upstash/context7-mcp version` で確認し、`bash scripts/validate-harness.sh --online` で解決を検証する"
+      "_verify": "バージョンはサプライチェーン対策として固定している(2026-09-26 時点の最新)。更新は `npm view @upstash/context7-mcp version` で確認し、`bash scripts/validate-harness.sh --online` で解決を検証する",
+      "_plugin_overlap": "settings.json の enabledPlugins で context7 プラグインを有効にしている場合、公式のリモート MCP(mcp.context7.com)が接続される。二重接続を避けるため、そのときはこのブロックを削除する"
     },
     "playwright": {
       "_comment": "ブラウザ自動化・E2E テストデバッグ",
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@0.0.80"
+        "@playwright/mcp@0.0.82"
       ]
     },
     "github": {

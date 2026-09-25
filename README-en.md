@@ -97,8 +97,8 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
  8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
              doc-synchronizer / doc-writer / test-writer
  6 teams     TEAM_PJM (full lifecycle, recommended) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
-16 hooks     PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact / Stop and more
-             dangerous-command blocking, protected files, unverified-stop detection, write-scope enforcement
+17 hooks     PreToolUse / PostToolUse / SessionStart (compact re-injection) / ConfigChange / PreCompact / Stop and more
+             dangerous-command blocking, protected files, unverified-stop detection, write-scope enforcement, refusing guardrail-weakening settings changes
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
  7 rules     1 always-on (git conventions) + 3 path-scoped (document management, workflow detail, harness authoring)
              + 3 language samples (drop the .example suffix to enable)
@@ -108,6 +108,7 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
  3 CI        claude-review.yml (conversational @claude review) /
              claude-skills-ci.yml (/code-review + /security-scan on every PR) /
              claude-scheduled-audit.yml (weekly /security-scan + /legal-check into an Issue)
+ 2 extras    REVIEW.md (criteria for Claude's Code Review) / .claude/loop.md (default prompt for /loop)
 ```
 
 ---

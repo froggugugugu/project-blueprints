@@ -180,7 +180,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | 長時間セッションの途中からルールを守らなくなる。出力先や禁止事項を忘れる |
 | **原因** | context のコンパクトで要約が作られ、CLAUDE.md 由来の細則が要約に残らない |
-| **対策** | `PreCompact` で会話履歴を退避し、`PostCompact` でマーカーを置き、`UserPromptSubmit` で回収して中核ルールを再注入する(本テンプレートは実装済み)。`PostCompact` 自体は decision control を持たず文脈注入できない点に注意 |
+| **対策** | ルート CLAUDE.md・AGENTS.md・`paths:` なし rule はディスクから再注入されるが、`paths:` 付き rule と skill 本文(skill ごと 5,000 トークン上限)は要約に溶ける。`PreCompact` で会話履歴を退避し、`SessionStart` の `compact` source で中核ルールと PROGRESS.md を即座に再注入する(本テンプレートは実装済み)。`PostCompact` は decision control を持たず文脈注入できないので再注入には使わない |
 
 ### 22. `Write(path)` 権限ルールが無視される
 
@@ -262,6 +262,46 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **原因** | Claude Code が `AGENTS.md` を直接読むのは、作業ディレクトリとその上位に `CLAUDE.md` / `.claude/CLAUDE.md` / `CLAUDE.local.md` が 1 つも無いときだけ。本テンプレートは `CLAUDE.md` を置くため、既存の `AGENTS.md` は読まれなくなる |
 | **対策** | 本テンプレートはツール共通のルールを `AGENTS.md` に置き、`CLAUDE.md` の冒頭で `@AGENTS.md` を取り込む(内容は複製しない)。`AGENTS.md` には行頭 `@` を書かない(他のエージェントは import を解釈しない)。既存の `AGENTS.md` がある場合、`setup.sh` は上書きせずテンプレート版を `AGENTS.blueprint.md` として置き、統合を促す |
 
+### 32. Task ツールが無く TaskCompleted ゲートが一度も発火しない
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `TaskCompleted` に登録した検証ゲートが動かない。team テンプレートの「TaskCreate でタスクリスト」も無視される |
+| **原因** | `TaskCreate` / `TaskUpdate` / `TodoWrite` は Claude 3.x・Opus 4〜4.7・Sonnet 4〜4.6・Haiku 4.5 でだけ既定で提供される。Sonnet 5 / Opus 5.5 / Fable では無い |
+| **対策** | `settings.json` の `env` に `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` を置く(本テンプレートは設定済み。project settings の env は読まれる)。無効のままなら完了ゲートは Stop フックだけになる |
+
+### 33. OpenTelemetry の環境変数を project settings に書いても効かない
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `.claude/settings.json` の `env` に `CLAUDE_CODE_ENABLE_TELEMETRY` や `OTEL_*` を書いたのに送信されない。起動時に「無視した」通知が出る |
+| **原因** | リポジトリ経由でテレメトリ先を書き換えられないよう、project / local settings の OTel 変数は無視される(v2.1.282)。`CLAUDE_CONFIG_DIR` / `TMPDIR` も同様 |
+| **対策** | `~/.claude/settings.json`・managed settings・シェル環境で設定する。validator が project settings の該当キーを WARN する |
+
+### 34. 存在しないプラグインを enabledPlugins に書いても黙って無視される
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `enabledPlugins` に書いた MCP / skill が一度も使えない。エラーも出ない |
+| **原因** | marketplace に無い名前は起動時に黙って読み飛ばされる(本テンプレートも `draw.io@claude-plugins-official` を長く抱えていた) |
+| **対策** | `claude plugin list` / `/plugin` で実在を確認する。validator はローカルの marketplace キャッシュがあれば未知の名前を WARN する |
+
+### 35. Claude 5 系で逆効果になる指示
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 検証や委譲が過剰になりトークンが増える。レビューの指摘が減る。「推論を示せ」で拒否される |
+| **原因** | Opus 5 以降は自分で検証するため「念のため再確認」「subagent で検証」を足すと過剰検証になる。委譲も多用しがち。「重大なものだけ報告」は文字どおり報告を減らす。思考の開示要求は refusal 対象 |
+| **対策** | 検証はフックと evals で強制し、指示文には書かない。委譲は独立・並列・隔離が要るときに限る。レビューは全件報告→重要度で絞る。skill 本文は「何をするか」だけを命令形で書き、思考の見せ方を指示しない |
+
+### 36. フックの `if` を安全装置として使う
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `"if": "Bash(rm *)"` で危険コマンドを止めるつもりが、`$VAR rm ...` や複合コマンドで発火しない |
+| **原因** | `if` はサブコマンドや `$()` を best-effort で解析する。判定できないと「常に走る」側に倒れるが、絞り込みの目的はコスト削減であって安全ではない |
+| **対策** | 安全用途は `permissions.deny` と matcher 全体のフック(本テンプレートの `safety-check.sh`)に置き、`if` は `commit-quality.sh` のような観測系の絞り込みに使う。ツール系イベント以外に書くとフック自体が走らない |
+
 ## 推奨セッション運用コマンド
 
 | シーン | コマンド | 効果 |
@@ -277,7 +317,6 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 以下は現テンプレートに未実装だが、取り込み検討中:
 
 - **`/bug-fix` 専用 skill**: Pimzino/claude-code-spec-workflow 風の Report→Analyze→Fix→Verify パイプライン
-- **EARS 形式要件記述**: gotalab/cc-sdd 風の Kiro spec-driven を `/prd` に導入
 - **`brief.md` 成果物**: セッション再開用の scope summary を Phase 0 成果物として追加
 - **Scale-Adaptive チーム**: BMAD-METHOD 風に XS/S/M/L 規模で `TEAM_*.md` を分岐(現状固定)
 - **`monitors/` / `bin/`**: 常駐 watcher と PATH 自動展開を plugin に同梱(2026 仕様)

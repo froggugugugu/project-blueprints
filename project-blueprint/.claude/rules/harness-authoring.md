@@ -9,7 +9,7 @@ paths:
 # ハーネス執筆規約 — CLAUDE.md / skill / agent / rules / workflow の書き方
 
 > **path-specific rule**: ハーネス自身のファイルを編集するときだけ load される。
-> 出典: Anthropic 公式(best-practices / memory / skills / sub-agents / hooks / workflows / skill authoring best practices)と agentskills.io。
+> 出典: Anthropic 公式(best-practices / memory / skills / sub-agents / hooks / workflows / skill authoring best practices / Claude 5 系のプロンプティングガイド)と agentskills.io。
 
 ## 共通(Markdown の書き方)
 
@@ -47,6 +47,10 @@ paths:
 - `description` は「何をするか」+「いつ使うか(ユーザーが実際に使う語)」。三人称で主用途を先頭に置き、1024 字以内(目安 300 字)
   - 一覧の予算は context の 1%。溢れると使用頻度の低い skill から説明が落ちる。制約や引数の説明は本文と `argument-hint` に置く
 - 本文は起動後ずっと context に残る。Claude が既に知っている説明は書かず、やることを命令形で書く。500 行以内
+- 最重要の指示は本文の冒頭に置く。コンパクト後の再注入は skill ごとに先頭 5,000 トークンで切り詰められる
+- 手順は順序が重要なときだけ番号付きにする。「慎重に考えろ」「推論を示せ」「念のため再確認せよ」は Claude 5 系では過剰な検証と思考の開示を招くので書かない
+- レビュー系 skill に「重大なものだけ報告」「控えめに」と書かない。全件報告させ、重要度分類と対応方針で絞る
+- 特定パスの作業でだけ候補にしたい skill には `paths:` を付ける(一覧予算の節約)
 - **行頭に `@path` を書かない**。ローカル skill では起動時にそのファイルが丸ごと添付される。
   参照は「`.claude/pitfalls.md` — 失敗パターンに当たりそうなとき」のように、パスと読む条件の組で並べる
 - 詳細は `references/` に分け、SKILL.md から 1 階層で直接リンクする。参照ファイルから別の参照ファイルへ飛ばさない
@@ -66,12 +70,20 @@ paths:
   - dynamic workflows を使わない環境では skill-creator プラグイン(`/plugin install skill-creator@claude-plugins-official`)で同じ `evals.json` を回せる
   - プラグインとして配布する場合は `claude plugin eval`(evals.json とは別形式)で CI のゲートにできる
 - skill を変えたら同じ eval を再実行し、pass rate が下がっていないことを証拠に残す
+- 既存ケースは回帰 eval(pass rate ほぼ 100% を維持)。新しい難しいケースは低い pass rate から始めて改善に使い、安定したら回帰側に昇格させる
 
 ## agent(.claude/agents/*.md)
 
 - `description` は委譲条件を 1〜2 文で書く。`tools` は最小にする
 - 書込可能な agent は、frontmatter の `hooks.PreToolUse` に `scope-guard.sh <docs|output|tests>` を登録して書込範囲を強制する
-- agent の `tools` に `Agent` を含めない(constitution ④)
+- agent の `tools` に `Agent` を含めない(constitution ④)。入れ子は `settings.json` の env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` で機械的に禁じている。並列 fan-out は workflow に置く
+- CLAUDE.md の規則を要さない読取専用 agent には `omitClaudeMd: true` を付けて起動コストを下げる(書込 agent には付けない)
+
+## hooks(settings.json)
+
+- ツール系イベント(PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest / PermissionDenied)では `if` で対象を絞る(例 `"if": "Bash(git commit *)"`)。best-effort なので安全用途は `permissions.deny` と matcher 全体のフックに置く
+- コンパクト後の再注入は SessionStart の `compact` source で行う(PostCompact は文脈注入できない)
+- `paths:` 付き rule はコンパクトで要約に溶ける。常に効かせたい規則は CLAUDE.md か `paths:` なしの rule に置く
 
 ## workflow(.claude/workflows/*.js)
 

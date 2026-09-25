@@ -93,6 +93,9 @@ The `PermissionDenied` hook (`permission-denied-log.sh`) records classifier deni
 - The classifier isn't perfect. Treat it as a "looser" defense than the allowlist and pin the boundary with deny / ask / hooks
 - This template's hook layer (safety-check / protect-files / verify-gate) stays active in auto mode
 - To keep working until a condition holds, combine auto mode with `/goal <condition>`
+- Since v2.1.278 the classifier runs server-side by default (its cost is not billed, including on the API / Enterprise / Bedrock). `CLAUDE_CODE_AUTO_MODE_SERVER=0` restores the local classifier
+- The first read outside the working directories prompts even in auto mode. To refuse such reads always, set `permissions.blockReadsOutsideWorkingDirectories: true` (honored in project settings)
+- For unattended headless runs, `--permission-prompts none` (v2.1.259+) auto-denies anything that would prompt while auto mode keeps deciding, the same effect as `--permission-mode dontAsk` in the CI template
 
 ## 3. sandbox
 

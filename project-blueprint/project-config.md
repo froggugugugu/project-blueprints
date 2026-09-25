@@ -387,7 +387,7 @@ output/reports/                ← 人間向けサマリー（Git管理）
 | ----------------- | ---- | ------------------------------------------ |
 | context7          | yes  | ライブラリドキュメント参照                 |
 | playwright        | yes  | E2Eテスト実行・デバッグ                    |
-| draw.io           | yes  | アーキテクチャ図・フロー図作成             |
+| mermaid           | yes  | アーキテクチャ図・フロー図（Markdown 内に記述） |
 | pr-review-toolkit | yes  | GitHub PR連携                              |
 | sentry            | no   | 本番エラー調査（必要に応じて有効化）       |
 
@@ -403,7 +403,8 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 | Tier | エイリアス | 固定 ID | 用途 | コスト感 |
 | ---- | ---------- | ------- | ---- | -------- |
-| **Critical** | `opus` | `claude-opus-5` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
+| **Frontier** | `fable` | `claude-fable-5-1` | 数時間〜複数日の自律実行・根本原因調査・難度の高い設計判断（既定にはならない。明示して使う） | 最高 |
+| **Critical** | `opus` | `claude-opus-5-5` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
 | **Complex** | `sonnet` | `claude-sonnet-5` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
 | **Operational** | `haiku` | `claude-haiku-4-5-20251001` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
 
@@ -413,6 +414,10 @@ output/reports/                ← 人間向けサマリー（Git管理）
 > [Anthropic Console の Models 一覧](https://console.anthropic.com/settings/models) で確認。
 
 旧モデル（`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5` 等）は本テンプレートでは非推奨。
+
+> **effort の既定はモデルで違う**: Opus 5.5 は `medium`、他は `high`。skill / agent の `effort:` はセッションの既定を上書きするので、
+> レビュー・設計系を Opus 5.5 で走らせるなら `high` 以上が明示されているか確認する。`best` エイリアスは Fable が使えれば Fable、
+> 無ければ Opus に解決する。Fable は数時間規模の自律実行に向く一方、cybersecurity / biology 領域では安全分類器で Opus にフォールバックする。
 
 ### 13.1b effort（推論深度）の軸
 

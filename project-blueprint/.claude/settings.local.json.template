@@ -18,7 +18,7 @@
     "- Layer 1: フック群（settings.json で定義、--dangerously-skip-permissions でも有効）",
     "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
     "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
-    "    + PreCompact/PostCompact + Stop(verify-gate 検証ゲート / notify) / Notification + PermissionDenied(拒否記録) + TaskCompleted(検証ゲート)",
+    "    + PreCompact/PostCompact + Stop(verify-gate 検証ゲート / notify) / Notification + PermissionDenied(拒否記録) + TaskCompleted(検証ゲート) + ConfigChange(config-guard: 防御層を弱める設定変更の阻止)",
     "- Layer 2: deny / ask ルール（settings.json に定義済み。このファイルでは上書きしないこと）",
     "- Layer 3: allow ルール（このファイル、通常モード時に有効）",
     "- meta : scan-harness.sh による self-SAST（constitution hash / secret 混入 / deny 弱体化検出）",
@@ -50,12 +50,22 @@
     "  ※ 8 回連続ブロックで Claude Code が強制終了する。stop_hook_active を見て 1 回で通す設計にする"
   ],
   "_comment_telemetry": [
-    "可観測性 / コスト(組織展開時): OpenTelemetry で利用量を集約する場合は env に次を追加する:",
+    "可観測性 / コスト(組織展開時): OpenTelemetry の変数は project / local settings の env に書いても無視される(v2.1.282 以降。",
+    "リポジトリ経由でテレメトリ先を書き換えられないため)。~/.claude/settings.json の env・managed settings・シェル環境に置く:",
     "  CLAUDE_CODE_ENABLE_TELEMETRY=1 / OTEL_METRICS_EXPORTER=otlp / OTEL_LOGS_EXPORTER=otlp /",
     "  OTEL_EXPORTER_OTLP_PROTOCOL=grpc / OTEL_EXPORTER_OTLP_ENDPOINT=http://<collector>:4317 /",
     "  OTEL_LOG_TOOL_DETAILS=1(skill 名を記録し、未使用 skill を特定できる)",
     "契約価格で /usage の金額を合わせるには managed settings の modelPricing を使う。",
-    "組織全体で固定する例は .claude/managed-settings.example.json を参照(deny / sandbox / OTel / requiredMinimumVersion)。"
+    "組織全体で固定する例は .claude/managed-settings.example.json を参照(deny / sandbox / credentials / OTel / requiredMinimumVersion)。"
+  ],
+  "_comment_plugins": [
+    "任意の公式プラグイン(/plugin install <名>@claude-plugins-official)。必要なものだけ enabledPlugins に足す:",
+    "- security-guidance: 編集ごとのパターン警告 + Stop 時の差分セキュリティレビュー(LLM。verify-gate と補完関係、トークンを使う)",
+    "- typescript-lsp / pyright-lsp / gopls-lsp など: 型付き言語のコードインテリジェンス(grep より少ない読込でシンボル解決)",
+    "- skill-creator: evals/evals.json を回して skill を改善する(dynamic workflows が使えない環境の /skill-eval 代替)",
+    "- session-report: セッションのトークン・キャッシュ効率・高コストなプロンプトを HTML で可視化",
+    "- claude-md-management: CLAUDE.md の監査と、セッションの学びの取り込み",
+    "存在しない名前は起動時に黙って無視される。validator がローカルの marketplace キャッシュと突き合わせて WARN する。"
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -63,7 +73,7 @@
   },
   "_comment_hook_profile": [
     "BLUEPRINT_HOOK_PROFILE: 拡張 hook の挙動切替",
-    "  対応: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit",
+    "  対応: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit / verify-gate / permission-denied-log / config-guard",
     "  - 'minimal':  パススルー(検査スキップ)。CI / 自動化向け",
     "  - 'standard': 検出時は警告のみ(non-blocking、既定)",
     "  - 'strict':   検出時に skill / プロンプトをブロック。高リスク作業向け"
@@ -106,6 +116,8 @@
       "Bash(gh repo view *)",
       "Bash(node *)",
       "Bash(ls *)",
+      "Workflow(review-sweep)",
+      "Workflow(skill-eval)",
       "WebSearch",
       "WebFetch(domain:docs.claude.com)",
       "WebFetch(domain:github.com)",
@@ -122,7 +134,10 @@
     "ここに allow を書いても確認ダイアログが出る。外向き操作は毎回確認する方針。",
     "",
     "WebFetch はドメイン単位で許可する。全許可したい場合は 'WebFetch(domain:*)' に",
-    "置き換えるが、任意 URL への到達を許すことになる点に注意。"
+    "置き換えるが、任意 URL への到達を許すことになる点に注意。",
+    "",
+    "Workflow(<名前>) は保存済み workflow の実行確認を省く。同梱の review-sweep / skill-eval を allow に載せている。",
+    "規模の目安は workflowSizeGuideline(既定 medium = 10 体未満、Pro は small)で調整する。"
   ],
   "_comment_pkg_manager": [
     "パッケージマネージャの切り替え — allow 内の npm/npx ブロックを入れ替える",
@@ -148,7 +163,13 @@
     "    \"network\": { \"allowedDomains\": [\"registry.npmjs.org\", \"github.com\"] }",
     "  }",
     "",
-    "サンドボックス内で失敗するコマンドは sandbox.excludedCommands で個別に除外する。"
+    "サンドボックス内で失敗するコマンドは sandbox.excludedCommands で個別に除外する。",
+    "",
+    "認証情報には組み込みの deny リストが無い(~/.aws/credentials や ~/.ssh は既定で読める)。明示的に塞ぐ:",
+    "  \"sandbox\": { \"credentials\": {",
+    "    \"files\": [ { \"path\": \"~/.aws/credentials\", \"mode\": \"deny\" }, { \"path\": \"~/.ssh\", \"mode\": \"deny\" } ],",
+    "    \"envVars\": [ { \"name\": \"GITHUB_TOKEN\", \"mode\": \"deny\" }, { \"name\": \"NPM_TOKEN\", \"mode\": \"deny\" } ] } }",
+    "auto mode でサンドボックス外の再試行(dangerouslyDisableSandbox)を毎回確認したいなら ask に Bash(dangerouslyDisableSandbox:true) を足す。"
   ],
   "_comment_teammate": [
     "teammateMode: エージェントチームの teammate を「どこに表示するか」を制御する。",

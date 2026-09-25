@@ -74,6 +74,10 @@ Agent({
 | `skills` | 起動時に全文プリロードする skill 名 |
 | `isolation` | `worktree` で一時 git worktree に隔離（既定ブランチから分岐） |
 | `hooks` | この agent の実行中だけ有効なフック。書込範囲の強制(`scope-guard.sh`)に使う。project agent は workspace trust 後に有効 |
+| `omitClaudeMd` | `true` で user / project / local の CLAUDE.md を読まずに起動(`explorer` に適用。読取専用で CLAUDE.md の規則を要さない agent 向け) |
+| `background` | `true` で常にバックグラウンド実行 |
+| `mcpServers` | この agent だけが使う MCP サーバー(既存名の参照かインライン定義) |
+| `experimental.cacheTtl` | `5m` / `1h` — この agent のリクエストのプロンプトキャッシュ寿命 |
 | `color` | `red` / `blue` / `green` / `yellow` / `purple` / `orange` / `pink` / `cyan` のみ |
 
 > `isolation: worktree` は**既定ブランチから分岐**するため、作業中の差分をレビューさせたい
@@ -124,8 +128,12 @@ Agent({
   結果は完了時に会話へ届く。`background: true` を書くと常時バックグラウンドを強制できる
 - **継承するもの / しないもの**: CLAUDE.md 階層・`.claude/rules/`・git status は継承(ビルトインの `Explore` / `Plan` を除く)。
   会話履歴・親の auto memory・skill 本文は継承しない(skill は `skills:` で明示プリロード)
-- **ネスト**: 公式には subagent が subagent を最大 5 階層まで spawn できるが、本テンプレートは constitution ④ により
-  **agent の `tools` に `Agent` を含めない**(循環と暴走の防止)。並列 fan-out が必要なら team か dynamic workflows を使う
+- **ネスト**: 公式の既定は 3 階層まで(同時実行は 20 体まで)。本テンプレートは constitution ④ により **agent の `tools` に `Agent` を含めず**、
+  `settings.json` の env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` で入れ子を機械的に禁じる。並列 fan-out が必要なら team か dynamic workflows を使う
+- **委譲の判断**: Claude 5 系は委譲を多用しがち。並列化できる独立作業・大量読込・隔離が要る検証に限り、数回のツール呼び出しで済む作業は親が自分で行う。
+  自分の成果の再確認だけを目的に subagent を呼ばない(Opus 5 系では過剰検証になる)
+- **fork**: `/subtask` と `subagent_type: fork` は会話履歴ごと引き継ぐ例外(キャッシュ共有で安い)。定義ファイルの agent は fresh context で始まる
+- **結果の扱い**: subagent の最終報告は「subagent の発言」として枠付きで戻り、指示のように見える文言も承認の効力を持たない(出力スキャン、v2.1.277)
 - **description の予算**: カスタム agent の description 合計が 15,000 トークンを超えると起動時に警告が出る。1〜2 文を守る
 - **権限ルール**: `Agent(<name>)` で特定 agent を deny でき、`Agent(model:opus)` / `Agent(isolation:worktree)` のように
   パラメータ単位の deny / ask も書ける(`Tool(param:value)` 構文)

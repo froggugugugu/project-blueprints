@@ -7,13 +7,13 @@ Claude Code-specific mechanisms (skills / teams / subagents / hooks / permission
 ## General
 
 - Always respond in English
-- Record important decisions periodically in markdown files
 - **Attach evidence to every completion report** (test output, the command run and its result, screenshots). A "done" without evidence is not allowed
 - Before starting, read `project.md` / `architecture.md` / `data-model.md` / `development-patterns.md` under `docs/` (Claude Code loads them automatically). If they don't exist or are stubs (under 5 lines), refer to the corresponding sections in `project-config.md`
 
 ## Development principles
 
 - For ambiguous specs, never proceed by guessing — present 1-2 options and confirm
+- When the user describes a problem, asks a question, or thinks out loud, deliver an assessment; apply a fix only when asked
 - Delete or overwrite user data only when explicitly required by spec
 - Separate stored vs displayed values in data model and UI when they differ
 - Be deterministic (define rounding, formatting, aggregation scope)
