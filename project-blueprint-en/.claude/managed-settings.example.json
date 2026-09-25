@@ -5,7 +5,8 @@
     "          Linux /etc/claude-code/managed-settings.json, or MDM / server-managed settings.",
     "Managed settings outrank user / project / local settings and cannot be overridden by individuals.",
     "Claude Code does not read this file itself (reference only). Copy only the keys you need and replace the values.",
-    "Draft auto mode trusted infrastructure (autoMode.environment) with /auto-mode-setup and transcribe it here."
+    "Draft auto mode trusted infrastructure (autoMode.environment) with /auto-mode-setup and transcribe it here.",
+    "sandbox.credentials is required: there is no built-in credential deny list, so ~/.aws and ~/.ssh are readable by default. failIfUnavailable / allowUnsandboxedCommands follow the official org-wide recommendation."
   ],
   "permissions": {
     "deny": [
@@ -14,16 +15,40 @@
       "Read(./.env.*)",
       "Read(./secrets/**)"
     ],
-    "disableBypassPermissionsMode": "disable"
+    "disableBypassPermissionsMode": "disable",
+    "blockReadsOutsideWorkingDirectories": true
   },
   "sandbox": {
     "enabled": true,
-    "failIfUnavailable": false,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
     "network": {
       "allowedDomains": [
         "registry.npmjs.org",
         "github.com",
         "api.anthropic.com"
+      ]
+    },
+    "credentials": {
+      "files": [
+        {
+          "path": "~/.aws/credentials",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.ssh",
+          "mode": "deny"
+        }
+      ],
+      "envVars": [
+        {
+          "name": "GITHUB_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "NPM_TOKEN",
+          "mode": "deny"
+        }
       ]
     }
   },
@@ -36,7 +61,7 @@
     "OTEL_LOG_TOOL_DETAILS": "1"
   },
   "claudeMd": "Every completion report must include the verification command's result (pass/fail counts). Never force-push.",
-  "requiredMinimumVersion": "2.1.228",
+  "requiredMinimumVersion": "2.1.277",
   "cleanupPeriodDays": 30,
   "companyAnnouncements": [
     "This repository runs on the project-blueprint harness. See .claude/guardrails.md for the guardrails."

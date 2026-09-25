@@ -8,6 +8,10 @@
   },
   "plansDirectory": "./output/plans",
   "fileCheckpointingEnabled": true,
+  "env": {
+    "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -71,6 +75,7 @@
         "hooks": [
           {
             "type": "command",
+            "if": "Bash(git commit *)",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/commit-quality.sh",
             "timeout": 10
           }
@@ -104,6 +109,18 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/permission-denied-log.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "ConfigChange": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/config-guard.sh",
             "timeout": 5
           }
         ]
@@ -286,7 +303,6 @@
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
-    "draw.io@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true
   }
 }

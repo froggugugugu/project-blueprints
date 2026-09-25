@@ -17,6 +17,11 @@
 #   2. GitHub リポジトリの Secrets に ANTHROPIC_API_KEY を追加
 #   3. cron 時刻を自分のチームに合わせて調整する
 #
+# 公式仕様の注意:
+#   - schedule は既定ブランチでだけ動く。public リポジトリでは 60 日間活動が無いと自動で無効化される
+#   - cron 実行の actor は workflow ファイルを最後に変更した人。bot が最後に触ると allowed_bots の設定が要る
+#   - /code-review を定期実行に載せるときは ultra を付けない(クラウドレビューは起動しない)
+#
 # コスト目安: 週 1 回 × 2 スキル。PR ごとの CI より遥かに安い。
 
 name: Claude Scheduled Audit

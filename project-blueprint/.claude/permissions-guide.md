@@ -93,6 +93,9 @@ auto mode でも毎回人間の確認を通る。
 - 分類器は完全ではない。allowlist より「緩い」防御として位置付け、deny / ask / フックで境界を固定する
 - 本テンプレートのフック層(safety-check / protect-files / verify-gate)は auto mode でも有効
 - 完了条件まで自走させたいときは auto mode と `/goal <条件>` を組み合わせる
+- 分類器は v2.1.278 以降サーバー側で動くのが既定(API / Enterprise / Bedrock などでも分類器のコストは課金されない)。`CLAUDE_CODE_AUTO_MODE_SERVER=0` でローカル分類器に戻せる
+- 作業ディレクトリ外の初回読み取りは auto mode でも確認が入る。常に拒否するなら `permissions.blockReadsOutsideWorkingDirectories: true`(project settings で有効)
+- 無人の headless 実行では `--permission-prompts none`(v2.1.259 以降)が、確認の要る操作を自動拒否しつつ auto mode の判定を残す。CI テンプレートの `--permission-mode dontAsk` と同じ効果
 
 ## 3. sandbox
 

@@ -18,6 +18,11 @@
 #   2. Add ANTHROPIC_API_KEY to the repository Secrets
 #   3. Adjust the cron time to suit your team
 #
+# Official-spec notes:
+#   - schedule runs only from the default branch, and on public repositories it is disabled after 60 days without activity
+#   - the actor of a cron run is whoever last changed the workflow file; if that was a bot, allowed_bots is required
+#   - when scheduling /code-review, never pass ultra (the cloud review does not launch from a schedule)
+#
 # Cost: two skill runs per week — far cheaper than the per-PR workflow.
 
 name: Claude Scheduled Audit

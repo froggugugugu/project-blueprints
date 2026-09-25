@@ -18,7 +18,7 @@
     "- Layer 1: hooks (defined in settings.json; active even with --dangerously-skip-permissions)",
     "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
     "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
-    "    + PreCompact/PostCompact + Stop(verify-gate verification gate / notify) / Notification + PermissionDenied(denial log) + TaskCompleted(verification gate)",
+    "    + PreCompact/PostCompact + Stop(verify-gate verification gate / notify) / Notification + PermissionDenied(denial log) + TaskCompleted(verification gate) + ConfigChange (config-guard: refuses settings changes that weaken the guardrails)",
     "- Layer 2: deny / ask rules (already in settings.json; do not override them here)",
     "- Layer 3: allow rules (this file, active in normal mode)",
     "- meta : self-SAST via scan-harness.sh (constitution hash / secret leakage / deny weakening)",
@@ -51,12 +51,22 @@
     "  NOTE: Claude Code overrides the hook after 8 consecutive blocks. Check stop_hook_active and block only once"
   ],
   "_comment_telemetry": [
-    "Observability / cost (organization rollout): to aggregate usage with OpenTelemetry, add to env:",
+    "Observability / cost (organization rollout): OpenTelemetry variables in the env of project / local settings are ignored",
+    "(v2.1.282+, so a repository cannot redirect telemetry). Put them in the env of ~/.claude/settings.json, in managed settings, or in the shell:",
     "  CLAUDE_CODE_ENABLE_TELEMETRY=1 / OTEL_METRICS_EXPORTER=otlp / OTEL_LOGS_EXPORTER=otlp /",
     "  OTEL_EXPORTER_OTLP_PROTOCOL=grpc / OTEL_EXPORTER_OTLP_ENDPOINT=http://<collector>:4317 /",
     "  OTEL_LOG_TOOL_DETAILS=1 (records skill names verbatim so unused skills can be identified)",
     "To make /usage match contracted rates, use modelPricing in managed settings.",
-    "See .claude/managed-settings.example.json for an org-wide example (deny / sandbox / OTel / requiredMinimumVersion)."
+    "See .claude/managed-settings.example.json for an org-wide example (deny / sandbox / credentials / OTel / requiredMinimumVersion)."
+  ],
+  "_comment_plugins": [
+    "Optional official plugins (/plugin install <name>@claude-plugins-official). Add only what you need to enabledPlugins:",
+    "- security-guidance: per-edit pattern warnings + an LLM security review of the diff on Stop (complements verify-gate; costs tokens)",
+    "- typescript-lsp / pyright-lsp / gopls-lsp etc.: code intelligence for typed languages (symbol navigation with fewer file reads than grep)",
+    "- skill-creator: runs evals/evals.json to improve a skill (the /skill-eval alternative where dynamic workflows are unavailable)",
+    "- session-report: an HTML report of a session's tokens, cache efficiency and most expensive prompts",
+    "- claude-md-management: audits CLAUDE.md and captures session learnings",
+    "A name that does not exist is silently ignored at startup. The validator warns when a local marketplace cache does not list it."
   ],
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
@@ -64,7 +74,7 @@
   },
   "_comment_hook_profile": [
     "BLUEPRINT_HOOK_PROFILE: behavior switch for the extended hooks",
-    "  Honored by: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit",
+    "  Honored by: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit / verify-gate / permission-denied-log / config-guard",
     "  - 'minimal':  pass-through (skip inspection). For CI / automation",
     "  - 'standard': warn only on detection (non-blocking, default)",
     "  - 'strict':   block the skill / prompt on detection. For high-risk work"
@@ -107,6 +117,8 @@
       "Bash(gh repo view *)",
       "Bash(node *)",
       "Bash(ls *)",
+      "Workflow(review-sweep)",
+      "Workflow(skill-eval)",
       "WebSearch",
       "WebFetch(domain:docs.claude.com)",
       "WebFetch(domain:github.com)",
@@ -123,7 +135,10 @@
     "they still prompt even if allowed here. Outbound operations confirm every time.",
     "",
     "WebFetch is allowed per domain. To allow everything, replace those entries with",
-    "'WebFetch(domain:*)' — but note that this permits reaching any URL."
+    "'WebFetch(domain:*)' — but note that this permits reaching any URL.",
+    "",
+    "Workflow(<name>) skips the run confirmation for a saved workflow; the bundled review-sweep / skill-eval are allowed here.",
+    "Tune the size with workflowSizeGuideline (default medium = fewer than 10 agents; small on Pro)."
   ],
   "_comment_pkg_manager": [
     "Switching package manager — swap the npm/npx block inside allow",
@@ -150,7 +165,13 @@
     "    \"network\": { \"allowedDomains\": [\"registry.npmjs.org\", \"github.com\"] }",
     "  }",
     "",
-    "Exempt individual commands that fail inside the sandbox with sandbox.excludedCommands."
+    "Exempt individual commands that fail inside the sandbox with sandbox.excludedCommands.",
+    "",
+    "There is no built-in credential deny list (~/.aws/credentials and ~/.ssh are readable by default). Block them explicitly:",
+    "  \"sandbox\": { \"credentials\": {",
+    "    \"files\": [ { \"path\": \"~/.aws/credentials\", \"mode\": \"deny\" }, { \"path\": \"~/.ssh\", \"mode\": \"deny\" } ],",
+    "    \"envVars\": [ { \"name\": \"GITHUB_TOKEN\", \"mode\": \"deny\" }, { \"name\": \"NPM_TOKEN\", \"mode\": \"deny\" } ] } }",
+    "To be prompted on every unsandboxed retry (dangerouslyDisableSandbox) in auto mode, add Bash(dangerouslyDisableSandbox:true) to ask."
   ],
   "_comment_teammate": [
     "teammateMode controls WHERE agent-team teammates are displayed.",

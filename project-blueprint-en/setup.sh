@@ -34,11 +34,12 @@ Description:
   - testreport/ (raw tool output)
   - project-config.md (configuration file)
   - CLAUDE.md / AGENTS.md -> placed at the project root
+  - REVIEW.md (review criteria for Code Review) / constitution.md -> placed unless they already exist
 
 Profiles (--profile, defaults to full):
   minimal   5 skills / 2 agents / 2 hooks / no teams — fastest way to try it out
-  standard  17 skills / 8 agents / 16 hooks / no teams — everything but team mode
-  full      17 skills / 8 agents / 16 hooks / 6 teams — default, matches current behavior
+  standard  17 skills / 8 agents / 17 hooks / no teams — everything but team mode
+  full      17 skills / 8 agents / 17 hooks / 6 teams — default, matches current behavior
 
   Note: minimal also trims safeguard hooks (e.g. session-start) for a lighter footprint.
   This is a separate axis from the "minimal/recommended/full" guidance in project-config.md
@@ -215,6 +216,16 @@ if [[ -f "$SCRIPT_DIR/constitution.md" ]]; then
     else
         cp "$SCRIPT_DIR/constitution.md" "$TARGET_DIR/constitution.md"
         info "constitution.md (immutable principles) placed"
+    fi
+fi
+
+# REVIEW.md (review instructions for Claude's Code Review) — existing files are kept
+if [[ -f "$SCRIPT_DIR/REVIEW.md" ]]; then
+    if [[ -e "$TARGET_DIR/REVIEW.md" ]]; then
+        info "REVIEW.md already exists, kept (no overwrite)"
+    else
+        cp "$SCRIPT_DIR/REVIEW.md" "$TARGET_DIR/REVIEW.md"
+        info "REVIEW.md (Code Review criteria) placed"
     fi
 fi
 

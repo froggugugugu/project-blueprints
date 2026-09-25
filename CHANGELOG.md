@@ -8,6 +8,70 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (Claude 5 系対応 + 公式仕様の総点検, 2026-09-26)
+
+- **`.claude/hooks/config-guard.sh`(JP/EN)**: `ConfigChange` フック。セッション中の設定変更を
+  `testreport/config-changes/` に記録し、`disableAllHooks: true`・`settings.local.json` の `permissions.deny`・
+  `.claude/settings.json` からの Layer 1 ブロック系フック(`safety-check.sh` / `protect-files.sh`)の削除は
+  exit 2 でセッションへの適用を止める(constitution ⑤ の機械強制。公式 security docs の推奨)。フック 17 本 / 登録 20。
+- **`REVIEW.md`(JP/EN、`setup.sh` が配置)**: Claude の Code Review(GitHub App)が読むレビュー専用の基準。
+  Important の定義・Nit 上限・報告しない領域(`output/` `testreport/` 生成物)・常に確認する項目・根拠の基準・再レビューの収束・要約の形。
+  ローカルの `/code-review` はこのファイルを読まないことも明記。
+- **`.claude/loop.md`(JP/EN)**: 引数なし `/loop` の既定プロンプト。未完了作業 → PROGRESS.md の次の一手 → PR の CI /
+  レビュー対応 → `/code-review` の順で 1 反復だけ進め、不可逆操作と未検証の完了報告を禁じる。validator が 25,000 文字上限を検査。
+- **`settings.json` の `env`(JP/EN)**: `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`(Task ツールは Sonnet 5 / Opus 5.5 / Fable では
+  既定で無く、`TaskCompleted` ゲートと team のタスク追跡が一度も動いていなかった)と
+  `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`(agent の入れ子禁止 = constitution ④ を設定で強制)。
+- **`validate_harness.py`**: hook の `if`(ツール系 5 イベント限定・`&&`/`||` 不可)、`PermissionRequest` の agent 型禁止、
+  権限ルールの閉じ括弧後テキスト(v2.1.260)、`Bash(cmd * sub)` のワイルドカード位置(v2.1.246)、project / local settings で
+  無視されるキー(`pluginConfigs` / `remoteControlAtStartup` / `sandbox.ripgrep` / OTel と一時ディレクトリの `env`)、
+  `enabledPlugins` の marketplace 実在(ローカルキャッシュがあるとき)、予約名前空間 `anthropic-skills` / `claude-ai`、
+  agent の `omitClaudeMd` / `background` / `experimental.cacheTtl`、`.claude/loop.md` の上限を検査。負のテストは 47 件、
+  フック機能テストは 106 件(config-guard 8 + SessionStart compact 3)。
+- **`pitfalls.md` #32〜#36(JP/EN)**: Task ツール不在で TaskCompleted が発火しない / project settings の OTel 変数は無視 /
+  存在しないプラグインは黙って無視 / Claude 5 系で逆効果になる指示(過剰検証・過剰委譲・保守的レビュー・思考の開示)/
+  フックの `if` は安全装置にならない。
+
+### Changed (Claude 5 系対応 + 公式仕様の総点検, 2026-09-26)
+
+- **コンパクト後の再注入を公式パターンへ**: `session-start.sh` が `source == "compact"` で中核ルールと PROGRESS.md を
+  圧縮直後に注入する(SessionStart の `compact` matcher)。`post-compact-restore.sh` は要約保全だけ、`user-prompt-submit.sh` は
+  プロンプト検査だけになり、マーカー(`testreport/.post-compact-pending`)経由の 2 段構えを廃止した。旧方式は次のユーザー
+  プロンプトまで再注入が遅れ、自動コンパクト後に Claude が続行する間は無防備だった。
+- **`commit-quality.sh` の登録に `"if": "Bash(git commit *)"`**: git commit のときだけプロセスを起動する。
+- **`enabledPlugins` から `draw.io@claude-plugins-official` を削除(JP/EN)**: 公式 marketplace(311 プラグイン)に存在せず、
+  起動時に黙って無視されていた。`CLAUDE.md` / `phase-design` / `project-config.md` §12 の draw.io 参照は mermaid に置換。
+- **`claude-review.yml.template`(JP/EN)**: beta 時代の `model` / `max_turns` / `direct_prompt` 入力を v1 の
+  `prompt` + `claude_args`(`--model claude-sonnet-5 --max-turns 10`)に修正し、`id-token: write` / `actions: read` を追加。
+  `CLAUDE_REVIEW_SETUP.md` も追随。`claude-skills-ci.yml.template` に `--max-budget-usd` / `--no-session-persistence`、
+  `claude-scheduled-audit.yml.template` に既定ブランチ限定・60 日無活動での無効化・`allowed_bots` の注記。
+- **Claude 5 系のプロンプティングガイドを反映**: `CLAUDE.md` の subagent 戦略を「独立・並列・隔離が要るときだけ委譲、
+  数回のツール呼び出しで済む作業は自分で」に改め、レビュー subagent には全件報告→MUST だけ対応。`code-review` skill から
+  「gap に限定」を外して全件列挙→重要度で絞る方針にし、「大したことはない」と自己却下しない規則を追加。`AGENTS.md` に
+  「問題の説明・質問には評価だけを返し、修正は依頼されてから」を追加。`harness-authoring.md` に「最重要指示を冒頭に(コンパクト後
+  5,000 トークンで切り詰め)」「慎重に考えろ・推論を示せ・念のため再確認を書かない」「回帰 eval と能力 eval の区別」
+  「`paths:` 付き rule はコンパクトで消える」「hooks の `if`」を追加。`CLAUDE.md` の Compact instructions にユーザーの制約(原文)と
+  行き詰まり・回避策を追加。
+- **`project-config.md` §13.1(JP/EN)**: Frontier tier `fable`(`claude-fable-5-1`)を追加、`opus` の固定 ID を
+  `claude-opus-5-5` に更新、Opus 5.5 の既定 effort が `medium` である注記を追加。§12 のツール表は draw.io → mermaid。
+- **`explorer` agent に `omitClaudeMd: true`**: 読取専用で CLAUDE.md の規則を要さないため、起動ごとの
+  CLAUDE.md + AGENTS.md(200 行)の読込を省く。`agents/README.md` に `omitClaudeMd` / `background` / `mcpServers` /
+  `experimental.cacheTtl`、入れ子の既定(3 階層・同時 20)、委譲の判断、fork、出力スキャンの節を追加。
+- **`managed-settings.example.json`(JP/EN)**: `sandbox.credentials`(`~/.aws/credentials` / `~/.ssh` / `GITHUB_TOKEN` /
+  `NPM_TOKEN` を deny。認証情報に組み込みの deny リストは無い)、`failIfUnavailable: true` / `allowUnsandboxedCommands: false`
+  (公式の組織向け推奨)、`permissions.blockReadsOutsideWorkingDirectories: true`、`requiredMinimumVersion: 2.1.277`。
+- **`settings.local.json.template`(JP/EN)**: OTel 変数は project / local settings では無視される(v2.1.282)ため
+  `_comment_telemetry` を訂正、任意の公式プラグイン一覧(`_comment_plugins`)、`sandbox.credentials` の例、
+  `Workflow(review-sweep)` / `Workflow(skill-eval)` の allow、フック profile 一覧に `config-guard`。
+- **`.mcp.json.template`(JP/EN)**: `@upstash/context7-mcp@4.1.1` / `@playwright/mcp@0.0.82` に更新し、context7 プラグイン
+  (リモート MCP)有効時は stdio 版を削除する注記を追加。
+- **`guardrails.md` / `permissions-guide.md` / `teams/README.md` / `workflow-advanced.md` / `quality-gates.md` /
+  `harness-refine`(JP/EN)**: フック表 17 本、ConfigChange の decision 可否、`if` の限定、Routines の最小間隔 1 時間と権限
+  プロンプト無し、サーバー側分類器の既定化(v2.1.278)、`--permission-prompts none`、Task ツールの有効化、workflow の
+  規模目安と `Workflow(<名前>)`、進捗報告はツール結果に根拠のあるものだけ、判定の種類(コード / モデル / 人間)、
+  基準ソースに Claude 5 系プロンプティングガイドと `tools-reference` / `changelog` を追加。`prd` テンプレートの受け入れ基準に
+  EARS 形式を推奨。
+
 ### Changed (constitution ⑥, 2026-09-23)
 
 - **`constitution.md` ⑥(root / JP / EN)**: 行数上限の対象を「CLAUDE.md」から「常時 load する指示

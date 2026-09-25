@@ -181,7 +181,7 @@ common in long-running Claude Code sessions.
 | ----- | ------- |
 | **Symptom** | Partway through a long session, rules stop being followed — output locations and prohibitions are forgotten |
 | **Cause** | Context compaction produces a summary, and the fine-grained rules from CLAUDE.md do not survive into it |
-| **Mitigation** | Save the transcript on `PreCompact`, drop a marker on `PostCompact`, and collect it on `UserPromptSubmit` to re-inject the core rules (implemented in this template). Note that `PostCompact` itself has no decision control and cannot inject context |
+| **Mitigation** | The root CLAUDE.md, AGENTS.md and rules without `paths:` are re-injected from disk, but rules with `paths:` and skill bodies (capped at 5,000 tokens per skill) dissolve into the summary. Save the transcript on `PreCompact` and re-inject the core rules and PROGRESS.md right away from the `SessionStart` hook with the `compact` source (implemented in this template). `PostCompact` has no decision control and cannot inject context, so it is not used for re-injection |
 
 ### 22. `Write(path)` permission rules are ignored
 
@@ -263,6 +263,46 @@ common in long-running Claude Code sessions.
 | **Cause** | Claude Code reads `AGENTS.md` directly only when there is no `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` in the working directory or above it. This template installs a `CLAUDE.md`, so an existing `AGENTS.md` stops being read |
 | **Mitigation** | This template keeps the tool-agnostic rules in `AGENTS.md` and imports them with `@AGENTS.md` at the top of `CLAUDE.md` (never duplicate the content). Do not put a line-start `@` in `AGENTS.md` (other agents do not interpret imports). When an `AGENTS.md` already exists, `setup.sh` leaves it alone, places the template version as `AGENTS.blueprint.md`, and asks you to merge them |
 
+### 32. The Task tools are missing, so the TaskCompleted gate never fires
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | The verification gate registered on `TaskCompleted` never runs, and the "TaskCreate a task list" steps in the team templates are ignored |
+| **Cause** | `TaskCreate` / `TaskUpdate` / `TodoWrite` are provided by default only on Claude 3.x, Opus 4 through 4.7, Sonnet 4 through 4.6, and Haiku 4.5. Sonnet 5 / Opus 5.5 / Fable do not have them |
+| **Mitigation** | Put `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in the `env` of `settings.json` (this template does; project settings env is honored). Without it, the completion gate is the Stop hook alone |
+
+### 33. OpenTelemetry variables in project settings have no effect
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | `CLAUDE_CODE_ENABLE_TELEMETRY` or `OTEL_*` written under `env` in `.claude/settings.json` sends nothing, and startup reports that they were ignored |
+| **Cause** | So that a repository cannot redirect telemetry, OTel variables in project / local settings are ignored (v2.1.282). The same applies to `CLAUDE_CONFIG_DIR` / `TMPDIR` |
+| **Mitigation** | Set them in `~/.claude/settings.json`, in managed settings, or in the shell. The validator warns about those keys in project settings |
+
+### 34. A non-existent plugin in enabledPlugins is silently ignored
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | An MCP server or skill listed in `enabledPlugins` is never available, and no error appears |
+| **Cause** | A name the marketplace does not carry is skipped silently at startup (this template carried `draw.io@claude-plugins-official` for a long time) |
+| **Mitigation** | Confirm the plugin exists with `claude plugin list` / `/plugin`. The validator warns about unknown names when a local marketplace cache is present |
+
+### 35. Instructions that backfire on Claude 5-family models
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | Verification and delegation balloon and tokens rise. Reviews report fewer findings. "Show your reasoning" gets refused |
+| **Cause** | From Opus 5 on, the model verifies its own work, so "double-check to be safe" or "verify with a subagent" causes over-verification. It also delegates readily. "Only report the serious ones" literally reduces reports. Asking to disclose reasoning is a refusal category |
+| **Mitigation** | Enforce verification with hooks and evals, not with prompt text. Delegate only when work is independent, parallel, or needs isolation. Reviews report everything, then narrow by severity. Skill bodies state what to do in the imperative and never direct how to show thinking |
+
+### 36. Using a hook's `if` as a safety device
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | `"if": "Bash(rm *)"` meant to stop dangerous commands does not fire on `$VAR rm ...` or compound commands |
+| **Cause** | `if` parses subcommands and `$()` on a best-effort basis. When it cannot decide it errs toward running the hook, but the purpose of narrowing is cost, not safety |
+| **Mitigation** | Keep safety checks in `permissions.deny` and in hooks on the whole matcher (this template's `safety-check.sh`); use `if` to narrow observation hooks such as `commit-quality.sh`. On a non-tool event `if` stops the hook from running at all |
+
 ## Recommended session-management commands
 
 | Scenario | Command | Effect |
@@ -278,7 +318,6 @@ common in long-running Claude Code sessions.
 The following are not in the current template but under consideration:
 
 - **Dedicated `/bug-fix` skill**: Pimzino-style Report → Analyze → Fix → Verify pipeline
-- **EARS-format requirements**: Introduce gotalab/cc-sdd style Kiro spec-driven approach in `/prd`
 - **`brief.md` artifact**: Add a Phase 0 scope summary for session resumption
 - **Scale-adaptive teams**: BMAD-METHOD-style XS/S/M/L variants of `TEAM_*.md` (currently fixed)
 - **`monitors/` / `bin/`**: Bundle background watchers and PATH-auto-extended scripts in the plugin (2026 spec)

@@ -124,6 +124,11 @@ for MIRROR in project-blueprint project-blueprint-en; do
     expect_contains "session-start: docs 肥大化を警告(目安 300 行)" '300' "$OUT"
     CTX="$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null)"
     [[ ${#CTX} -le 10000 ]] && ok "session-start: additionalContext は 10,000 文字以内" || ng "session-start: additionalContext は 10,000 文字以内" "<= 10000" "${#CTX}"
+    # source == "compact" は起動時チェックを繰り返さず、中核ルールを即座に再注入する(公式の SessionStart compact パターン)
+    OUT="$(run_hook "$H/session-start.sh" "" '{"session_id":"s","source":"compact"}')"
+    expect_contains "session-start(compact): 中核ルールを再注入" 'post-compact recovery' "$OUT"
+    expect_contains "session-start(compact): PROGRESS.md も併せて注入" 'progress handoff' "$OUT"
+    [[ "$OUT" != *"300"* ]] && ok "session-start(compact): 起動時チェックは繰り返さない" || ng "session-start(compact): 起動時チェックは繰り返さない" "no readiness warnings" "$OUT"
 
     # ── post-failure-log.sh(PostToolUseFailure)───────────────────
     run_hook "$H/post-failure-log.sh" "" '{"session_id":"fail0001","tool_name":"Bash","tool_input":{"command":"npm test"},"error":"exit 1","duration_ms":12}' >/dev/null
@@ -151,6 +156,29 @@ for MIRROR in project-blueprint project-blueprint-en; do
     rm -f "$T/AGENTS.md"
     OUT="$(run_hook "$H/scan-harness.sh" "" '{"tool_name":"Skill","tool_input":{"skill":"security-scan"}}' standard)"
     expect_empty "scan-harness: secret が無ければ無出力" "$OUT"
+
+    # ── config-guard.sh(ConfigChange)— 防御層を弱める設定変更だけをブロックする ──
+    printf '{"disableAllHooks": true}' > "$T/.claude/settings.local.json"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"local_settings\",\"file_path\":\"$T/.claude/settings.local.json\"}" standard >/dev/null
+    expect_rc "config-guard: disableAllHooks はブロック(standard でも)" 2 "$RC"
+    printf '{"permissions":{"deny":[]}}' > "$T/.claude/settings.local.json"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"local_settings\",\"file_path\":\"$T/.claude/settings.local.json\"}" strict >/dev/null
+    expect_rc "config-guard: local の permissions.deny(空配列)はブロック" 2 "$RC"
+    printf '{"permissions":{"allow":["Bash(ls *)"]}}' > "$T/.claude/settings.local.json"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"local_settings\",\"file_path\":\"$T/.claude/settings.local.json\"}" standard >/dev/null
+    expect_rc "config-guard: allow の追加は通過" 0 "$RC"
+    cp "$REPO/$MIRROR/.claude/settings.json" "$T/.claude/settings.json"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"project_settings\",\"file_path\":\"$T/.claude/settings.json\"}" standard >/dev/null
+    expect_rc "config-guard: テンプレートの settings.json は通過" 0 "$RC"
+    jq 'del(.hooks.PreToolUse[] | select(.hooks[].command | contains("protect-files")))' "$REPO/$MIRROR/.claude/settings.json" > "$T/.claude/settings.json"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"project_settings\",\"file_path\":\"$T/.claude/settings.json\"}" standard >/dev/null
+    expect_rc "config-guard: protect-files.sh の削除はブロック" 2 "$RC"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"project_settings\",\"file_path\":\"$T/.claude/settings.json\"}" minimal >/dev/null
+    expect_rc "config-guard: minimal は素通り" 0 "$RC"
+    run_hook "$H/config-guard.sh" "" '{"session_id":"cg1","source":"policy_settings","file_path":"/nonexistent/managed-settings.json"}' strict >/dev/null
+    expect_rc "config-guard: 読めないファイル / policy_settings は通過(fail-open)" 0 "$RC"
+    LOG="$(cat "$T/testreport/config-changes/cg1.jsonl" 2>/dev/null)"
+    expect_contains "config-guard: JSONL に判定を記録" '"decision":"block"' "$LOG"
 
     unset CLAUDE_PROJECT_DIR
     rm -rf "$T"

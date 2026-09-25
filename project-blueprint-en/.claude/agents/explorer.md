@@ -6,6 +6,7 @@ model: haiku
 effort: low
 maxTurns: 30
 memory: project
+omitClaudeMd: true
 color: blue
 ---
 

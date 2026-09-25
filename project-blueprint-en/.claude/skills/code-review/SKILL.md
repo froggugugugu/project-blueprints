@@ -30,8 +30,9 @@ Provides structured feedback based on `AGENTS.md` / `CLAUDE.md` conventions and 
 - State severity clearly (MUST / SHOULD / CONSIDER)
 - Mention good points as well (don't make it findings-only)
 - Verify compliance with specification requirements (task file) as the top priority
-- **Limit findings to gaps that affect correctness, requirements, or project conventions**. Producing findings is not the goal
-  (a reviewer told to find gaps reports some even for sound code; acting on all of them causes over-engineering — official guidance)
+- **List every finding, then narrow by severity**. Never instruct "only report the serious ones" or "be conservative" (Claude 5-family models take that literally and report less).
+  Only MUSTs that affect correctness, requirements, or project conventions must be acted on; acting on every SHOULD / CONSIDER causes over-engineering (official guidance)
+- Never talk yourself out of a finding as "not a big deal". Grade by the severity definitions and keep doubtful ones as SHOULD (self-assessment runs lenient — official finding)
 
 > **Relation to the bundled `/code-review`**: this skill overrides Claude Code's bundled `/code-review` by name.
 > To use the bundled version (a lightweight bug hunt on the diff in a fresh subagent), type the alias `/review`.

@@ -5,45 +5,48 @@ Rules that are scattered across `AGENTS.md` / `CLAUDE.md` sections are consolida
 
 ---
 
-## Hook inventory (16 scripts / 19 settings registrations + 3 agent-frontmatter registrations)
+## Hook inventory (17 scripts / 20 settings registrations + 3 agent-frontmatter registrations)
 
 | Hook | Event | Target | Behavior | Description |
 | ---- | ----- | ------ | -------- | ----------- |
 | `safety-check.sh` | PreToolUse | Bash | block | Detects and blocks dangerous shell commands |
 | `protect-files.sh` | PreToolUse | Edit\|Write\|NotebookEdit | block | Blocks writes to secret and toolchain config files |
 | `scan-harness.sh` | PreToolUse | Skill | warn/block | Self-SAST of the harness (secret leakage, constitution tampering, deny-rule weakening) |
-| `user-prompt-submit.sh` | UserPromptSubmit | — | warn/block + context | Detects secret patterns; re-injects core rules right after a compact |
-| `session-start.sh` | SessionStart | — | warn | Checks that project-config.md / docs/ / settings.local.json exist |
+| `user-prompt-submit.sh` | UserPromptSubmit | — | warn/block | Detects secret patterns |
+| `session-start.sh` | SessionStart | `startup` etc. / **`compact`** | warn + context | At startup checks project-config.md / docs/ / settings.local.json and injects PROGRESS.md; right after a compact re-injects the core rules immediately |
 | `session-end.sh` | SessionEnd | — | observe | Appends a session summary to `output/reports/sessions/<date>.md` |
-| `commit-quality.sh` | PostToolUse | Bash (git commit) | warn | Conventional Commits format check and secret detection |
+| `commit-quality.sh` | PostToolUse | Bash (`if: Bash(git commit *)`) | warn | Conventional Commits format check and secret detection. `if` spawns it only on git commit |
 | `console-warn.sh` | PostToolUse | Edit\|Write | warn | Detects leftover debug statements (console.log etc.) |
 | `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | observe | Records timestamps of source edits / verification commands (`testreport/.verify/`) |
 | `verify-gate.sh gate` | **Stop** | — | warn/send back | If no verification command ran after the last edit: standard = warning / strict = sent back once (verification gate) |
 | `verify-gate.sh task` | **TaskCompleted** | — | warn/refuse | Same condition on the completion mark: standard = warning / strict = exit 2 refuses it (mechanical enforcement of quality gate ③) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | observe | Records auto mode classifier denials (`testreport/denials/`) |
+| `config-guard.sh` | **ConfigChange** | `*` | log + block | Logs settings changes and stops `disableAllHooks`, a deny list in local settings, or the removal of a Layer 1 blocking hook from applying to the session (`testreport/config-changes/`) |
 | `scope-guard.sh <scope>` | PreToolUse (**agent frontmatter**) | Edit\|Write\|NotebookEdit | block | Stops out-of-scope writes by write-capable subagents (doc-synchronizer=docs / doc-writer=output / test-writer=tests) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | observe | Structured error log on tool failure (`testreport/failures/`) |
 | `subagent-audit.sh` | **SubagentStart** | — | observe + context | Logs the launch and injects guardrails into the subagent |
 | `subagent-audit.sh` | SubagentStop | — | observe | Logs completion (`testreport/agents/`) |
 | `pre-compact-backup.sh` | PreCompact | — | observe | Backs up the transcript before compaction (`testreport/transcripts/`) |
-| `post-compact-restore.sh` | **PostCompact** | — | observe + marker | Preserves the summary and drops a re-injection marker |
+| `post-compact-restore.sh` | **PostCompact** | — | observe | Preserves the post-compact summary under `testreport/transcripts/` |
 | `notify-claude.sh` | Stop / Notification | — | notify (async) | External notification on task completion (ntfy) |
 
-### Two-stage compaction recovery
+### Compaction recovery (the SessionStart `compact` source)
 
 Countermeasure for instructions fading after a context compact (pitfalls #21):
 
 ```text
-PreCompact  → pre-compact-backup.sh   saves the transcript to testreport/transcripts/
-PostCompact → post-compact-restore.sh preserves the summary, drops .post-compact-pending
-                    ↓ (for exactly one prompt)
-UserPromptSubmit → user-prompt-submit.sh collects the marker and re-injects
-                    the core rules through additionalContext
+PreCompact   → pre-compact-backup.sh   saves the transcript to testreport/transcripts/
+PostCompact  → post-compact-restore.sh preserves the post-compact summary under testreport/transcripts/ (side effect only)
+SessionStart → session-start.sh        on source == "compact", re-injects the core rules and the head of
+  (compact)                            PROGRESS.md into the compacted context right away via additionalContext
 ```
 
-> **Why two stages**: per the official spec, `PostCompact` has **no decision control
-> at all** (it cannot even return `additionalContext`) — it is a side-effect-only
-> event. Only `UserPromptSubmit` can inject context, so the marker bridges the two.
+> **Why SessionStart**: per the official spec, `PostCompact` has **no decision control at all**
+> (it cannot even return `additionalContext`) and is a side-effect-only event. The official
+> re-injection pattern is a `SessionStart` hook with the `compact` matcher, whose output is added
+> to the compacted context without waiting for the next prompt. The root CLAUDE.md, AGENTS.md and
+> rules without `paths:` are re-injected from disk automatically; rules with `paths:` and skill
+> bodies (capped at 5,000 tokens per skill) fade.
 
 ### Verification gate (Stop hook)
 
@@ -107,6 +110,8 @@ their **durability differs sharply**.
   weekly and collects the results in an issue
 - Keep `/loop` for short-lived in-session polling (waiting on a build, say)
 - Avoid `:00` in an Actions cron — that slot is congested and prone to delay
+- Routines (`/schedule`) run at a minimum interval of one hour and without permission prompts (write tools of included connectors run unconfirmed).
+  Include the fewest repositories, connectors and environment; a green status is not task success, so read the transcript
 
 ### Organization rollout (managed settings / OpenTelemetry)
 
@@ -120,7 +125,7 @@ This template's `testreport/` logs are machine-local, so aggregate team-wide usa
 
 `BLUEPRINT_HOOK_PROFILE` switches behavior
 (honored by `user-prompt-submit.sh`, `session-end.sh`, `scan-harness.sh`, `post-compact-restore.sh`, `subagent-audit.sh`,
-`verify-gate.sh`, `permission-denied-log.sh`):
+`verify-gate.sh`, `permission-denied-log.sh`, `config-guard.sh`; only `minimal` turns `config-guard.sh` off, standard and strict behave the same):
 
 | Profile | Use for | Behavior |
 | ------- | ------- | -------- |
@@ -145,8 +150,8 @@ Switching through `.envrc` or `direnv` is recommended.
   - In this template only `notify-claude.sh` (ntfy delivery) is async
 - Hooks stay active under `--dangerously-skip-permissions` (defense in depth)
 - **Claude Code overrides a Stop hook after 8 consecutive blocks**. Check `stop_hook_active` and block only once
-- Extra handler fields: `if` (narrow the trigger with permission-rule syntax, e.g. `"if": "Bash(git *)"`) / `once` (removed after the first success) /
-  `asyncRewake` (runs in the background and wakes Claude on exit 2) / `args` (exec form) / `statusMessage`
+- Extra handler fields: `if` (narrow the trigger with permission-rule syntax, e.g. `"if": "Bash(git *)"`; tool events only and best-effort, so never for safety) /
+  `once` (removed after the first success; skill-frontmatter hooks only) / `asyncRewake` (runs in the background and wakes Claude on exit 2) / `args` (exec form) / `statusMessage`
 
 ### Decision control by event (excerpt)
 
@@ -155,6 +160,7 @@ Switching through `.envrc` or `direnv` is recommended.
 | `PreToolUse` | `hookSpecificOutput.permissionDecision` (allow / deny / ask / defer) |
 | `UserPromptSubmit` / `PostToolUse` / `PostToolUseFailure` / `Stop` / `SubagentStop` / `PreCompact` | Top-level `decision: "block"` + `reason` |
 | `SessionStart` / `Setup` / `SubagentStart` | **Context only** (`additionalContext`). Cannot block |
+| `ConfigChange` | Top-level `decision: "block"` or exit 2 stops the change from applying (not for `policy_settings`; the block message is shown to nobody) |
 | `PostCompact` / `SessionEnd` / `Notification` / `FileChanged` etc. | **No control**. Side effects such as logging and cleanup only |
 
 ### Choosing a hook type
@@ -182,12 +188,12 @@ Events this template does not use but a project can add:
 | `PermissionRequest` | A permission dialog appears | Automatic allow/deny by org policy |
 | `PreModelSwitch` / `PostModelSwitch` | Before / after a model switch via `/model` etc. | Confirming or auditing switches to expensive models (a switch invalidates the cache) |
 | `PostToolBatch` | A parallel tool batch completes | Per-batch verification |
-| `TaskCreated` / `TaskCompleted` | Task created / completed | Enforcing task naming, quality gates |
+| `TaskCreated` | Task created (on Claude 5-family models the Task tools need `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`, which this template sets) | Enforcing task naming |
 | `TeammateIdle` | A teammate goes idle | Quality gates for agent teams |
 | `StopFailure` | A turn ends in an error | Measuring failure rate |
 | `FileChanged` | A file change is detected | Syncing with external tooling |
 | `WorktreeCreate` / `WorktreeRemove` | Worktree created / removed | Setting up isolated environments |
-| `CwdChanged` / `DirectoryAdded` / `ConfigChange` | Working directory or settings change | Auditing environment drift |
+| `CwdChanged` / `DirectoryAdded` | Working directory changed or added | Auditing environment drift (reloading direnv etc.) |
 | `MessageDisplay` | Assistant output is rendered | Masking displayed content |
 | `Elicitation` / `ElicitationResult` | MCP form input | Automatic responses |
 
@@ -320,6 +326,7 @@ Layer 1: Hooks (active even under --dangerously-skip-permissions)
    ├─ PreToolUse: safety-check / protect-files / scan-harness (Skill)
    ├─ PostToolUse: commit-quality / console-warn
    ├─ PostToolUseFailure: post-failure-log
+   ├─ ConfigChange: config-guard (refuses to apply settings changes that weaken the guardrails)
    ├─ UserPromptSubmit: user-prompt-submit
    ├─ SessionStart / SessionEnd: session-start / session-end
    ├─ SubagentStart / SubagentStop: subagent-audit
@@ -333,9 +340,11 @@ Layer 2: Deny / Ask rules (settings.json — shared by the team)
 Layer 3: Allow rules (settings.local.json — personal)
   ↓ active only in normal mode
 meta : self-SAST (scan-harness.sh detects constitution hash drift, secret leakage, deny weakening)
+env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 (no agent nesting = constitution ④) /
+       CLAUDE_CODE_ENABLE_TODO_TOOLS=1 (prerequisite of the TaskCompleted gate; absent by default on Claude 5-family models)
 ```
 
-> Layer 1 contains blocking hooks (`safety-check.sh`, `protect-files.sh`, `scan-harness.sh`),
+> Layer 1 contains blocking hooks (`safety-check.sh`, `protect-files.sh`, `scan-harness.sh`, `config-guard.sh`),
 > observation hooks (`subagent-audit.sh`, `pre-compact-backup.sh`, `post-compact-restore.sh`,
 > `post-failure-log.sh`, `session-end.sh`), warning hooks (`commit-quality.sh`,
 > `console-warn.sh`, `user-prompt-submit.sh`) and notification hooks (`notify-claude.sh`).
@@ -362,3 +371,19 @@ meta : self-SAST (scan-harness.sh detects constitution hash drift, secret leakag
 ```
 
 If a command fails inside the sandbox, exempt it individually with `sandbox.excludedCommands`.
+
+There is **no built-in credential deny list** (`~/.aws/credentials` and `~/.ssh` are readable by default). Block them explicitly with `sandbox.credentials`:
+
+```json
+{
+  "sandbox": {
+    "credentials": {
+      "files": [{ "path": "~/.aws/credentials", "mode": "deny" }, { "path": "~/.ssh", "mode": "deny" }],
+      "envVars": [{ "name": "GITHUB_TOKEN", "mode": "deny" }, { "name": "NPM_TOKEN", "mode": "deny" }]
+    }
+  }
+}
+```
+
+To refuse reads outside the working directories in every permission mode, set `permissions.blockReadsOutsideWorkingDirectories: true` (honored in project settings).
+See `.claude/managed-settings.example.json` for an org-wide example.

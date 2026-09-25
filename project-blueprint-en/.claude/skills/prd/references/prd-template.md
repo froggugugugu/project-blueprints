@@ -29,7 +29,7 @@
 ### FR-001: [Feature Name]
 - **Summary**: [Feature description]
 - **User Story**: As a [who], I want to [what] so that [why]
-- **Acceptance Criteria**:
+- **Acceptance Criteria** (EARS form recommended: "WHEN [condition/event] THE SYSTEM SHALL [behavior]"; one criterion maps to one test):
   - [ ] [Specific condition]
 - **Screen/Interaction Flow**: [UI behavior description]
 - **Data Model Changes**: [Required schema changes]

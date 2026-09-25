@@ -2,21 +2,20 @@
 # ==============================================================================
 # post-compact-restore.sh — PostCompact hook
 #
-# Role: after a compact completes, (1) preserve the generated summary and
-#       (2) drop a marker so the core rules get re-injected on the next prompt.
+# Role: after a compact completes, preserve the generated summary under testreport/
+#       (audit and recovery).
 #
 # Official-spec constraint:
 #   PostCompact has no decision control at all (not even additionalContext).
 #   It is a side-effect-only event, for logging and external state updates.
-#   So the "rules fade after compaction" problem is solved by dropping a marker
-#   here and collecting it in the UserPromptSubmit hook, which CAN emit
-#   additionalContext.
+#   The "rules fade after compaction" problem is solved by the SessionStart hook
+#   (source == "compact"): session-start.sh re-injects the core rules right away
+#   (the official pattern).
 #
 # Input:  JSON via stdin
 #         {"hook_event_name":"PostCompact","trigger":"manual|auto","compact_summary":"..."}
 # Output: none (stdout only reaches the debug log). Side effects only:
 #         - testreport/transcripts/<session>-compact-<ts>.md  … summary snapshot
-#         - testreport/.post-compact-pending                   … re-injection marker
 #
 # Policy: fail-open (exit 0 whatever fails; never stall the session)
 # ==============================================================================
@@ -28,7 +27,6 @@ PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 OUT_DIR="$PROJECT_DIR/testreport/transcripts"
-MARKER="$PROJECT_DIR/testreport/.post-compact-pending"
 
 # Sanitize the session ID (prevents path traversal)
 SESSION_ID_RAW="${CLAUDE_SESSION_ID:-$(date +%Y%m%d)}"
@@ -60,10 +58,5 @@ TS="$(date -u +%Y%m%dT%H%M%SZ)"
         echo "_(compact_summary unavailable — jq may not be installed)_"
     fi
 } > "$OUT_DIR/$SESSION_ID-compact-$TS.md" 2>/dev/null || true
-
-# Re-injection marker. user-prompt-submit.sh collects it for exactly one prompt,
-# then deletes it.
-mkdir -p "$(dirname "$MARKER")" 2>/dev/null || true
-printf '%s\n' "$TRIGGER" > "$MARKER" 2>/dev/null || true
 
 exit 0

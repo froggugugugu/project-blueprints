@@ -9,7 +9,7 @@ paths:
 # Harness Authoring Conventions — how to write CLAUDE.md / skills / agents / rules / workflows
 
 > **path-specific rule**: loads only when editing the harness's own files.
-> Sources: Anthropic official docs (best-practices / memory / skills / sub-agents / hooks / workflows / skill authoring best practices) and agentskills.io.
+> Sources: Anthropic official docs (best-practices / memory / skills / sub-agents / hooks / workflows / skill authoring best practices / the Claude 5-family prompting guides) and agentskills.io.
 
 ## Common (writing Markdown)
 
@@ -47,6 +47,10 @@ paths:
 - `description` = what it does + when to use it (the words users actually say). Third person, key use case first, at most 1024 characters (aim for 300)
   - The listing budget is 1% of context; on overflow, the least-used skills lose their descriptions. Keep constraints and argument help in the body and `argument-hint`
 - The body stays in context after invocation. Skip explanations Claude already knows and state what to do in the imperative. Under 500 lines
+- Put the most important instructions at the top of the body. After compaction each skill is re-injected truncated to its first 5,000 tokens
+- Number steps only when the order matters. Never write "think carefully", "show your reasoning" or "double-check to be safe": on Claude 5-family models these cause over-verification and reasoning disclosure
+- Never tell a review skill "only report the serious ones" or "be conservative". Have it report everything, then narrow by severity and by what must be acted on
+- Give a skill `paths:` when it should be a candidate only while working under certain paths (saves listing budget)
 - **Never put `@path` at the start of a line**. In a local skill, that file is attached in full at invocation.
   List references as pairs of path and reading condition, e.g. "`.claude/pitfalls.md` — when a known failure pattern may apply"
 - Split detail into `references/` and link each one directly from SKILL.md (one level deep). Never chain from one reference file to another
@@ -66,12 +70,20 @@ paths:
   - Where dynamic workflows are unavailable, the skill-creator plugin (`/plugin install skill-creator@claude-plugins-official`) runs the same `evals.json`
   - When distributing as a plugin, `claude plugin eval` (a separate format) can gate CI
 - After changing a skill, rerun the same evals and keep evidence that the pass rate did not drop
+- Existing cases are regression evals (keep the pass rate near 100%). Start new hard cases at a low pass rate to drive improvement, and promote them to the regression set once stable
 
 ## Agents (.claude/agents/*.md)
 
 - `description` states the delegation condition in 1-2 sentences. Keep `tools` minimal
 - For a write-capable agent, register `scope-guard.sh <docs|output|tests>` under `hooks.PreToolUse` in the frontmatter to enforce the write scope
-- Never list `Agent` in an agent's `tools` (constitution ④)
+- Never list `Agent` in an agent's `tools` (constitution ④). Nesting is refused mechanically by the env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` in `settings.json`; put parallel fan-out in a workflow
+- Give a read-only agent that needs none of the CLAUDE.md rules `omitClaudeMd: true` to cut its startup cost (never on a write-capable agent)
+
+## Hooks (settings.json)
+
+- On tool events (PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest / PermissionDenied), narrow a hook with `if` (e.g. `"if": "Bash(git commit *)"`). It is best-effort, so safety checks stay in `permissions.deny` and in hooks on the whole matcher
+- Re-inject context after compaction from the SessionStart hook with the `compact` source (PostCompact cannot inject context)
+- Rules with `paths:` dissolve into the compaction summary. A rule that must always hold goes in CLAUDE.md or in a rule without `paths:`
 
 ## Workflows (.claude/workflows/*.js)
 

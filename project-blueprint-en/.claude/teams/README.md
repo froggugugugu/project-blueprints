@@ -27,9 +27,12 @@ from Claude Code's official Agent Teams feature. The two are meant to be combine
 - With official Agent Teams enabled, a subagent Claude names launches as a teammate, so a
   team can form even when you did not ask for one
 - To apply quality gates to teammates as well, use the `TeammateIdle` / `TaskCompleted` hooks
+- The `TaskCreate` family of Task tools is off by default on Claude 5-family models. This template enables them through the env
+  `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` in `settings.json`, so the "TaskCreate a task list" steps in `TEAM_*.md` keep working
 - For work that fans out to dozens or hundreds of subagents (whole-codebase audits, bulk migrations),
   the official **dynamic workflows** (include `ultracode` in the prompt, or `/batch`) fit better: the plan moves into a
-  script, so intermediate results never enter context. Keep `TEAM_*.md` for the human-gated lifecycle
+  script, so intermediate results never enter context. Keep `TEAM_*.md` for the human-gated lifecycle.
+  Size them with `workflowSizeGuideline` (default medium = fewer than 10 agents; small on Pro). A `Workflow(<name>)` allow rule skips the run confirmation for a saved workflow
 - The bundled saved workflow `/review-sweep` (`.claude/workflows/review-sweep.js`, full profile only) reviews a diff from 4 angles in parallel,
   verifies each MUST finding with 3 adversarial votes, and writes a single report. It automates TEAM_QA's review step with agents that lack the implementer's context
 - `/skill-eval skill=<name>` (same directory) runs a skill's `evals/evals.json` with and without the skill and compares pass rates

@@ -96,8 +96,8 @@ claude
  8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
              doc-synchronizer / doc-writer / test-writer
  6 teams     TEAM_PJM(フルライフサイクル・推奨) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
-16 hooks     PreToolUse / PostToolUse / SessionStart / SubagentStop / PreCompact / Stop など
-             危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制
+17 hooks     PreToolUse / PostToolUse / SessionStart(compact 再注入)/ ConfigChange / PreCompact / Stop など
+             危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制・防御層を弱める設定変更の阻止
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
  7 rules     常時 1(git 規約)+ パス限定 3(ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
              + 言語別サンプル 3(.example を外して有効化)
@@ -107,6 +107,7 @@ claude
  3 CI        claude-review.yml(@claude 対話レビュー)/
              claude-skills-ci.yml(毎 PR に /code-review + /security-scan)/
              claude-scheduled-audit.yml(週次 /security-scan + /legal-check → Issue)
+ 2 extras    REVIEW.md(Claude の Code Review 用の審査基準)/ .claude/loop.md(/loop の既定プロンプト)
 ```
 
 ---

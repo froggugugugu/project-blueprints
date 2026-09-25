@@ -2,13 +2,10 @@
 # ==============================================================================
 # user-prompt-submit.sh — UserPromptSubmit hook
 #
-# Role:
-#   1. Inspect the user prompt before Claude processes it and detect secrets
-#      that were pasted by mistake.
-#   2. For exactly one prompt right after a compact, re-inject the core rules
-#      through additionalContext (PostCompact itself has no decision control
-#      and cannot inject context, so post-compact-restore.sh drops a marker
-#      that this hook collects).
+# Role: inspect the user prompt before Claude processes it and detect secrets
+#       that were pasted by mistake.
+#       (Re-injecting the core rules after a compact is done by the SessionStart hook
+#        with source == "compact" in session-start.sh; this hook only inspects prompts.)
 #
 # Profile switch: $BLUEPRINT_HOOK_PROFILE
 #   - minimal:  pass-through (skip inspection)
@@ -46,36 +43,15 @@ emit_context() {
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-MARKER="$PROJECT_DIR/testreport/.post-compact-pending"
-
-# ── (1) Re-inject core rules right after a compact ────────────────────
-NOTES=""
-if [[ -f "$MARKER" ]]; then
-    rm -f "$MARKER" 2>/dev/null || true
-    NOTES="[post-compact recovery] The context was just compacted. Before continuing, re-confirm:
-  - Inviolable principles: constitution.md (7 principles) — especially the human/AI split and the 5 quality gates
-  - Cross-cutting rules: AGENTS.md, CLAUDE.md and .claude/rules/*.md
-  - Work in flight: the newest files under output/ and any unfinished tasks
-  - The pre-compact summary is preserved under testreport/transcripts/ if you need it
-  If work is unfinished, resume from the existing artifacts instead of redesigning them."
-fi
-
-# Without jq we give up on secret detection (fail-open), but still deliver the
-# recovery note. A sed fallback would be too lossy to trust here.
-if ! command -v jq &>/dev/null; then
-    [[ -n "$NOTES" ]] && emit_context UserPromptSubmit "$NOTES"
-    exit 0
-fi
+# Without jq we give up on secret detection (fail-open). A sed fallback would be
+# too lossy to trust here.
+command -v jq &>/dev/null || exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
 PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
-if [[ -z "$PROMPT" ]]; then
-    [[ -n "$NOTES" ]] && emit_context UserPromptSubmit "$NOTES"
-    exit 0
-fi
+[[ -z "$PROMPT" ]] && exit 0
 
-# ── (2) Secret patterns (high paste-by-mistake risk) ──────────────────
+# ── Secret pattern detection (high risk of accidental paste) ──────────────
 SECRET_PATTERNS=(
     'AKIA[0-9A-Z]{16}'                                     # AWS Access Key ID
     'sk-[a-zA-Z0-9]{32,}'                                  # OpenAI / Anthropic style
@@ -105,12 +81,10 @@ if [[ -n "$DETECTED" ]]; then
             # Non-blocking warnings reach Claude through additionalContext on stdout.
             # On exit 0, stderr only reaches the debug log (official spec).
             WARN="user-prompt-submit hook: detected a secret-like pattern ($DETECTED). Ask the user to redact the secret in their prompt, and never echo the value back."
-            [[ -n "$NOTES" ]] && WARN="$NOTES"$'\n\n'"$WARN"
             emit_context UserPromptSubmit "$WARN"
             exit 0
             ;;
     esac
 fi
 
-[[ -n "$NOTES" ]] && emit_context UserPromptSubmit "$NOTES"
 exit 0

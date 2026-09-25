@@ -109,6 +109,7 @@ Round 0(非破壊・自己強化)        ラウンド 1                         
 1. **最新公式ガイダンスの取得**: 末尾「ベストプラクティス基準ソース」の URL を WebFetch、
    ライブラリ系は Context7 で取得する。取得失敗時は **degraded モード**として訓練データ + 過去レポートで継続し、
    その旨を会話とレポートに明示する(無言で訓練データに退行しない)。
+   併せて `/skill-doctor`(未使用 skill と一覧コスト)と `/doctor`(CLAUDE.md の削減提案)の出力を採点根拠に加える。
 2. **過去レポート学習**: `output/reports/harness-refine/REFINE_*.md`(あれば最新 2〜3 件)を読み、
    (a) **未解決課題** (b) **2 回以上再発した指摘** を抽出する。
 3. **ライブ・ルーブリック差分の生成**: 取得した最新ガイダンスを下記 15 項目 rubric と突き合わせ、
@@ -273,6 +274,8 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 | code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md 行数 / 起動時 load コスト / キャッシュ無効化要因 / compact 指示 | 2, 12 |
 | claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | CLAUDE.md / rules / skills / hooks / subagents / output styles の使い分け | 4, 10 |
 | code.claude.com/docs `whats-new`(直近 8 週) | 新機能・既定値変更の検知(rubric 自己進化の入力) | 全項目 |
+| code.claude.com/docs `tools-reference` / `changelog`(直近 30 版) | ツールのモデル別可用性(Task ツール等)・削除や変更された挙動 | 5, 10 |
+| platform.claude.com/docs `prompt-engineering/prompting-claude-{opus-5,opus-5-5,fable-5,fable-5-1}` + `claude-prompting-best-practices` | Claude 5 系で逆効果になる指示(過剰検証・過剰委譲・保守的レビュー・思考の開示)の除去 | 10, 11, 12 |
 | agentskills.io `specification` / `skill-creation/evaluating-skills` | description 上限 / `evals/evals.json` 形式 / assertion の書き方 | 11, 15 |
 | claude.com/blog `a-harness-for-every-task-dynamic-workflows-in-claude-code` | workflow パターン(fan-out / adversarial verify / loop-until-done) | 4, 9 |
 | anthropic.com/engineering `writing-tools-for-agents` | ツール定義の明確さ・トークン効率 | 10, 11 |

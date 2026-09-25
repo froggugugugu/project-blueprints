@@ -74,6 +74,10 @@ On top of that, the `SubagentStart` hook (`subagent-audit.sh`) injects the harne
 | `skills` | Skills to preload in full at startup |
 | `isolation` | `worktree` runs the agent in a temporary git worktree (branched from the default branch) |
 | `hooks` | Hooks active only while this agent runs. Used here to enforce write scope (`scope-guard.sh`). Project agents need workspace trust first |
+| `omitClaudeMd` | `true` launches without the user / project / local CLAUDE.md files (set on `explorer`: for read-only agents that need none of the CLAUDE.md rules) |
+| `background` | `true` always runs the agent in the background |
+| `mcpServers` | MCP servers only this agent uses (a reference to a configured name, or an inline definition) |
+| `experimental.cacheTtl` | `5m` / `1h` — prompt cache lifetime for this agent's requests |
 | `color` | Only `red` / `blue` / `green` / `yellow` / `purple` / `orange` / `pink` / `cyan` |
 
 > `isolation: worktree` **branches from the default branch**, so never set it on a read-only agent
@@ -122,8 +126,12 @@ If unspecified, the session default is inherited.
   The result arrives in the conversation on completion. `background: true` forces background execution always
 - **What is inherited / not inherited**: the CLAUDE.md hierarchy, `.claude/rules/`, and git status are inherited (except by the built-in `Explore` / `Plan`).
   Conversation history, the parent's auto memory, and skill bodies are not (preload skills explicitly with `skills:`)
-- **Nesting**: officially a subagent may spawn subagents up to five levels deep, but this template follows constitution ④ and
-  **never lists `Agent` in an agent's `tools`** (prevents cycles and runaway trees). For parallel fan-out use a team or dynamic workflows
+- **Nesting**: the official default allows 3 levels (and 20 concurrent subagents). This template follows constitution ④: **never list `Agent` in an agent's `tools`**,
+  and the env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` in `settings.json` refuses nesting mechanically. For parallel fan-out use a team or dynamic workflows
+- **When to delegate**: Claude 5-family models delegate readily. Delegate only independent parallelizable work, heavy reading, or verification that needs isolation; the parent does work that takes a handful of tool calls itself.
+  Never spawn a subagent just to re-check your own output (over-verification on the Opus 5 line)
+- **Forks**: `/subtask` and `subagent_type: fork` are the exception that inherits the conversation (cheap through the shared cache). Agents from definition files start with a fresh context
+- **Results**: a subagent's final report comes back framed as the subagent's words; instruction-shaped text in it carries no approval authority (output scanning, v2.1.277)
 - **Description budget**: when the combined descriptions of custom agents exceed 15,000 tokens, Claude Code warns at startup. Keep to 1-2 sentences
 - **Permission rules**: `Agent(<name>)` denies a specific agent, and parameter-level deny / ask rules such as
   `Agent(model:opus)` / `Agent(isolation:worktree)` are supported (`Tool(param:value)` syntax)

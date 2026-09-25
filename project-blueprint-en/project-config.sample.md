@@ -214,6 +214,6 @@ output/reports/                <- Human-readable summaries (Git-managed)
 | --- | --- | --- |
 | context7 | yes | Library documentation reference |
 | playwright | yes | E2E test execution and debugging |
-| draw.io | yes | Architecture diagrams and flow charts |
+| mermaid | yes | Architecture diagrams and flow charts (inline in Markdown) |
 | pr-review-toolkit | yes | GitHub PR integration |
 | sentry | no | Production error investigation (enable as needed) |

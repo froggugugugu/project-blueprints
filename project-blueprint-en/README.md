@@ -73,7 +73,7 @@ bash setup.sh /path/to/your-project
 This single command handles everything:
 - Copies `.claude/`, `docs/`, `input/`, `output/`, `testreport/`, and `project-config.md`
 - Places `CLAUDE.md` and `AGENTS.md` (tool-agnostic rules) at the project root (an existing `AGENTS.md` is kept; `AGENTS.blueprint.md` is placed next to it)
-- Places `constitution.md`, `.mcp.json.template`, and `.github/` (workflow templates), never overwriting existing files
+- Places `constitution.md`, `REVIEW.md` (criteria for Claude's Code Review), `.mcp.json.template`, and `.github/` (workflow templates), never overwriting existing files
 - Generates `.claude/settings.local.json` from its template (only when absent)
 - Adds `testreport/` and other local state to `.gitignore`
 - Automatically backs up any existing `.claude/` to `.claude.bak/`
@@ -85,8 +85,8 @@ The `--profile` option controls how much of `.claude/` gets installed (defaults 
 | Profile | skills | agents | hooks | teams | Use case |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | none | Fastest way to try it out, lightweight |
-| `standard` | 17 | 8 | 16 | none | Everything but team mode |
-| `full` (default) | 17 | 8 | 16 | 6 | Same as the current full setup |
+| `standard` | 17 | 8 | 17 | none | Everything but team mode |
+| `full` (default) | 17 | 8 | 17 | 6 | Same as the current full setup |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -379,22 +379,23 @@ project-blueprint-en/
 |   +-- output-styles/                     <-- [Generic] 4 phase output styles (phase-prd / design / implementation / review)
 |   +-- learnings/                         <-- [Generic] Success-pattern records (README.md / TEMPLATE.md / example)
 |   |
-|   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth, 16 scripts)
+|   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth, 17 scripts)
 |   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
 |   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
 |   |   +-- scan-harness.sh                  Harness self-SAST & risky-skill blocking (PreToolUse)
 |   |   +-- user-prompt-submit.sh            Secret pattern detection (UserPromptSubmit)
-|   |   +-- session-start.sh                 Session readiness check (SessionStart)
+|   |   +-- session-start.sh                 Session readiness check and post-compact re-injection (SessionStart)
 |   |   +-- session-end.sh                   Session-end logging (SessionEnd)
 |   |   +-- commit-quality.sh                Commit quality check (PostToolUse)
 |   |   +-- console-warn.sh                  Debug statement detection (PostToolUse)
 |   |   +-- verify-gate.sh                   Verification gate: detects unverified stops / completion marks after edits (PostToolUse/Stop/TaskCompleted)
 |   |   +-- permission-denied-log.sh         Auto mode denial log (PermissionDenied)
+|   |   +-- config-guard.sh                  Refuses and logs settings changes that weaken the guardrails (ConfigChange)
 |   |   +-- scope-guard.sh                   Write-scope enforcement for agents (agent frontmatter)
 |   |   +-- post-failure-log.sh              Tool failure logging (PostToolUseFailure)
 |   |   +-- subagent-audit.sh                Subagent run auditing (SubagentStart/Stop)
 |   |   +-- pre-compact-backup.sh            Transcript backup before compaction (PreCompact)
-|   |   +-- post-compact-restore.sh          Re-injection marker after compaction (PostCompact)
+|   |   +-- post-compact-restore.sh          Summary preservation after compaction (PostCompact)
 |   |   +-- notify-claude.sh                 Completion/confirmation push notifications (Stop/Notification)
 |   |   +-- ntfy-topic.txt                   Notification topic for notify-claude.sh (replace it)
 |   |

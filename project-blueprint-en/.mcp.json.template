@@ -7,16 +7,17 @@
       "command": "npx",
       "args": [
         "-y",
-        "@upstash/context7-mcp@4.0.5"
+        "@upstash/context7-mcp@4.1.1"
       ],
-      "_verify": "Versions are pinned as a supply-chain measure (latest as of 2026-09-06). To update, check `npm view @upstash/context7-mcp version` and verify resolution with `bash scripts/validate-harness.sh --online`"
+      "_verify": "Versions are pinned as a supply-chain measure (latest as of 2026-09-26). To update, check `npm view @upstash/context7-mcp version` and verify resolution with `bash scripts/validate-harness.sh --online`",
+      "_plugin_overlap": "When the context7 plugin is enabled in settings.json enabledPlugins, the official remote MCP (mcp.context7.com) is connected. Remove this block in that case to avoid a duplicate server"
     },
     "playwright": {
       "_comment": "Browser automation / E2E test debugging",
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@0.0.80"
+        "@playwright/mcp@0.0.82"
       ]
     },
     "github": {

@@ -258,6 +258,52 @@ def m_config_section_missing(root: Path) -> None:
     p.write_text(p.read_text().replace("### 13.7 ", "### 13.8 ", 1))
 
 
+def m_if_on_stop(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"]["Stop"][0]["hooks"][0]["if"] = "Bash(git *)"
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_agent_hook_on_permission_request(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"]["PermissionRequest"] = [{"matcher": "Bash", "hooks": [{"type": "agent", "prompt": "Decide"}]}]
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_rule_trailing_text(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["deny"].append("Bash(sudo *) # never")
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_rule_wildcard_before_sub(root: Path) -> None:
+    p = root / ".claude/settings.local.json.template"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["allow"].append("Bash(git * main)")
+    p.write_text(json.dumps(cfg, indent=2, ensure_ascii=False))
+
+
+def m_otel_env_in_project(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg.setdefault("env", {})["CLAUDE_CODE_ENABLE_TELEMETRY"] = "1"
+    p.write_text(json.dumps(cfg, indent=2))
+
+
+def m_reserved_skill_name(root: Path) -> None:
+    d = root / ".claude/skills/claude-ai"
+    d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: claude-ai\ndescription: Reserved-name skill that must not load.\n---\n# x\n")
+
+
+def m_bad_omit_claude_md(root: Path) -> None:
+    p = root / ".claude/agents/explorer.md"
+    p.write_text(p.read_text().replace("omitClaudeMd: true", "omitClaudeMd: yes", 1))
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -299,6 +345,13 @@ CASES = [
     ("AGENTS.md に行頭 @", m_agents_md_at_import, "import を解釈しません"),
     ("CLAUDE.md + AGENTS.md の合計がハード上限超過", m_agents_md_too_long, "CLAUDE.md + AGENTS.md の合計"),
     ("AGENTS.md が指す project-config の節が無い", m_config_section_missing, "§13.7 の見出しが存在しません"),
+    ("hook の if をツールイベント以外に書く", m_if_on_stop, "フックが一切走りません"),
+    ("PermissionRequest に agent 型フック", m_agent_hook_on_permission_request, "agent 型フックは登録できません"),
+    ("権限ルールの閉じ括弧の後にテキスト", m_rule_trailing_text, "閉じ括弧の後にテキスト"),
+    ("Bash ルールでサブコマンドの前に *", m_rule_wildcard_before_sub, "サブコマンドの前の"),
+    ("project settings の env に OTel 変数", m_otel_env_in_project, "project / local settings では読まれません"),
+    ("予約名前空間の skill", m_reserved_skill_name, "予約された名前空間"),
+    ("omitClaudeMd の非 boolean 値", m_bad_omit_claude_md, "true / false のみ"),
 ]
 
 

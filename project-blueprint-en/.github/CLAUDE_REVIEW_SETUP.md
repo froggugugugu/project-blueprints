@@ -62,25 +62,25 @@ Cost vs quality trade-off:
 
 | Model | Use | Cost estimate |
 | ----- | --- | ------------- |
-| `claude-opus-5` | High-quality review, architecture audits | High ($0.30+/PR) |
+| `claude-opus-5-5` | High-quality review, architecture audits | High ($0.30+/PR) |
 | `claude-sonnet-5` | Standard review (recommended) | Medium ($0.10/PR) |
 | `claude-haiku-4-5-20251001` | Lightweight review, quick checks | Low ($0.02/PR) |
 
 ### Customize review axes
 
-Edit `direct_prompt` in `claude-review.yml`. Add project-specific perspectives:
+Edit `prompt` in `claude-review.yml` (the v1 input name; the old `direct_prompt` is not accepted). Add project-specific perspectives:
 
 ```yaml
-direct_prompt: |
+prompt: |
   ...
   Additional axes:
   6. **Performance**: bundle size increase over 50 KB
   7. **A11y**: keyboard operation, screen reader support
 ```
 
-### max_turns as runaway protection
+### --max-turns as runaway protection
 
-Keep `max_turns` low to prevent infinite loops and excessive API consumption:
+Keep `--max-turns` (in `claude_args`) low to prevent infinite loops and excessive API consumption:
 
 - 10 (default, sufficient for most PRs)
 - 5 (quick checks only)
@@ -98,7 +98,7 @@ Keep `max_turns` low to prevent infinite loops and excessive API consumption:
 
 - **Review usage monthly**: Anthropic Console → Usage
 - **Alert thresholds**: set an alert at 80% of spend limit
-- **Large PRs**: rather than increasing `max_turns`, **split the PR upstream** into smaller, topic-scoped PRs (improves review quality and cost efficiency)
+- **Large PRs**: rather than increasing `--max-turns`, **split the PR upstream** into smaller, topic-scoped PRs (improves review quality and cost efficiency)
 - **Avoid wasted runs**: keep the Draft-PR filter in `if:`
 
 ## Troubleshooting
@@ -107,7 +107,7 @@ Keep `max_turns` low to prevent infinite loops and excessive API consumption:
 | ------- | ----- | --- |
 | Workflow doesn't run | `@claude` misspelled | Ensure lowercase `@claude` |
 | API error | Spend limit reached | Raise limit in Anthropic Console or wait |
-| Review is off-base | `direct_prompt` too vague | Make the prompt concrete; reference `project-config.md` |
+| Review is off-base | `prompt` too vague | Make the prompt concrete; reference `project-config.md` |
 | Doesn't run on forks | Secrets unavailable | GitHub policy; handle manually or via admin-triggered runs |
 
 ## Disabling

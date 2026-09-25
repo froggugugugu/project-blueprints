@@ -2,11 +2,9 @@
 # ==============================================================================
 # user-prompt-submit.sh — UserPromptSubmit hook
 #
-# 役割:
-#   1. ユーザー入力を Claude が処理する前に検査し、機密語・誤投稿を検出する
-#   2. PostCompact 直後の 1 プロンプトだけ、中核ルールを additionalContext で再注入する
-#      (PostCompact 自体は decision control を持たず context 注入できないため、
-#       post-compact-restore.sh が置いたマーカーをここで回収する)
+# 役割: ユーザー入力を Claude が処理する前に検査し、機密語・誤投稿を検出する。
+#       (コンパクト後の中核ルール再注入は SessionStart フックの source == "compact" で
+#        session-start.sh が行う。本フックはプロンプト検査に専念する)
 #
 # Profile 切替: $BLUEPRINT_HOOK_PROFILE で挙動切替
 #   - minimal:  パススルー(検査スキップ)
@@ -44,36 +42,15 @@ emit_context() {
 PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-MARKER="$PROJECT_DIR/testreport/.post-compact-pending"
-
-# ── (1) コンパクト直後の中核ルール再注入 ──────────────────────────────
-NOTES=""
-if [[ -f "$MARKER" ]]; then
-    rm -f "$MARKER" 2>/dev/null || true
-    NOTES="[post-compact recovery] 直前にコンテキストのコンパクトが行われました。作業を続ける前に次を再確認すること:
-  - 不変原則: constitution.md(7 原則)— 特に人間↔AI 責務分離と 5 品質ゲート
-  - 横断ルール: AGENTS.md / CLAUDE.md / .claude/rules/*.md
-  - 進行中の成果物: output/ 配下の最新ファイルと未完了タスク
-  - 直前の要約は testreport/transcripts/ に保全済み。必要なら参照する
-  未完了の作業がある場合は、勝手に再設計せず現状の成果物の続きから再開すること。"
-fi
-
-# jq が無ければ機密検出は諦める(fail-open)が、再注入メモがあれば先に届ける。
+# jq が無ければ機密検出は諦める(fail-open)。
 # 脆弱な sed フォールバックは誤検出/見逃しのリスクが高いため使わない。
-if ! command -v jq &>/dev/null; then
-    [[ -n "$NOTES" ]] && emit_context UserPromptSubmit "$NOTES"
-    exit 0
-fi
+command -v jq &>/dev/null || exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
 PROMPT="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
-if [[ -z "$PROMPT" ]]; then
-    [[ -n "$NOTES" ]] && emit_context UserPromptSubmit "$NOTES"
-    exit 0
-fi
+[[ -z "$PROMPT" ]] && exit 0
 
-# ── (2) 機密パターン検出(誤投稿リスク高い) ───────────────────────────
+# ── 機密パターン検出(誤投稿リスク高い) ──────────────────────────────
 SECRET_PATTERNS=(
     'AKIA[0-9A-Z]{16}'                                     # AWS Access Key ID
     'sk-[a-zA-Z0-9]{32,}'                                  # OpenAI / Anthropic 形式
@@ -103,12 +80,10 @@ if [[ -n "$DETECTED" ]]; then
             # non-blocking 警告は stdout の additionalContext で Claude に渡す。
             # exit 0 の stderr は debug log 止まりで誰にも届かない(公式仕様)。
             WARN="user-prompt-submit hook: 機密パターン ($DETECTED) を検出しました。プロンプト内のシークレットを伏字化するようユーザーに促してください。値そのものは復唱しないこと。"
-            [[ -n "$NOTES" ]] && WARN="$NOTES"$'\n\n'"$WARN"
             emit_context UserPromptSubmit "$WARN"
             exit 0
             ;;
     esac
 fi
 
-[[ -n "$NOTES" ]] && emit_context UserPromptSubmit "$NOTES"
 exit 0

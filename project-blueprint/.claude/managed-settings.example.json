@@ -5,7 +5,8 @@
     "        Linux /etc/claude-code/managed-settings.json、または MDM / server-managed settings。",
     "managed settings は user / project / local より優先され、個人が上書きできない。",
     "このファイル自体は Claude Code に読まれない(参照用)。必要なキーだけ写して値を差し替えること。",
-    "auto mode の trusted infrastructure(autoMode.environment)は /auto-mode-setup で下書きを作り、ここに転記する。"
+    "auto mode の trusted infrastructure(autoMode.environment)は /auto-mode-setup で下書きを作り、ここに転記する。",
+    "sandbox.credentials は必須: 認証情報に組み込みの deny リストは無く、既定では ~/.aws や ~/.ssh も読める。failIfUnavailable / allowUnsandboxedCommands は公式の組織向け推奨値。"
   ],
   "permissions": {
     "deny": [
@@ -14,16 +15,40 @@
       "Read(./.env.*)",
       "Read(./secrets/**)"
     ],
-    "disableBypassPermissionsMode": "disable"
+    "disableBypassPermissionsMode": "disable",
+    "blockReadsOutsideWorkingDirectories": true
   },
   "sandbox": {
     "enabled": true,
-    "failIfUnavailable": false,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
     "network": {
       "allowedDomains": [
         "registry.npmjs.org",
         "github.com",
         "api.anthropic.com"
+      ]
+    },
+    "credentials": {
+      "files": [
+        {
+          "path": "~/.aws/credentials",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.ssh",
+          "mode": "deny"
+        }
+      ],
+      "envVars": [
+        {
+          "name": "GITHUB_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "NPM_TOKEN",
+          "mode": "deny"
+        }
       ]
     }
   },
@@ -36,7 +61,7 @@
     "OTEL_LOG_TOOL_DETAILS": "1"
   },
   "claudeMd": "完了報告には必ず検証コマンドの結果(pass/fail 件数)を添えること。force push は禁止。",
-  "requiredMinimumVersion": "2.1.228",
+  "requiredMinimumVersion": "2.1.277",
   "cleanupPeriodDays": 30,
   "companyAnnouncements": [
     "このリポジトリは project-blueprint ハーネスで運用しています。ガードレールは .claude/guardrails.md を参照。"
