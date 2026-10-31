@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# scan-harness.sh — PreToolUse hook (Skill matcher) — Self-SAST + 高リスク skill 抑止
+# scan-harness.sh — PreToolUse(Skill) / UserPromptExpansion / FileChanged hook — Self-SAST + 高リスク skill 抑止 + constitution 監視
 #
 # 役割:
 #   1. ハーネス自身(.claude/, .mcp.json*, settings.json) の secret/逸脱検出
@@ -14,7 +14,8 @@
 #   - standard: 警告のみ(non-blocking、既定)
 #   - strict:   検出時/高リスク skill 起動時にブロック
 #
-# Input:  JSON via stdin {"tool_name":"Skill","tool_input":{"skill":"..."}}
+# Input:  JSON via stdin — PreToolUse {"tool_input":{"skill":...}} / UserPromptExpansion {"command_name":...} /
+#         FileChanged {"file_path":...}(引数 filechanged でも同じ経路)
 # Output: exit 0 = allow / exit 2 = block (strict or 高リスク skill)
 # Policy: fail-open(パース失敗時は通過)
 # ==============================================================================
@@ -42,10 +43,71 @@ PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
+MODE="${1:-}"
 
-# ── 1. tool_input.skill 抽出 ──────────────────────────────────────────
-SKILL=""
+# ── 0. イベント判定(PreToolUse: Skill / UserPromptExpansion / FileChanged)──
+# `/skill` を直接入力すると PreToolUse(Skill) は通らない(公式仕様)。
+# UserPromptExpansion で同じ判定をかけ、FileChanged では constitution.md のハッシュだけを再検証する。
+EVENT=""
 if command -v jq &>/dev/null; then
+    EVENT=$(printf '%s' "$INPUT" | jq -r '.hook_event_name // empty' 2>/dev/null)
+else
+    EVENT=$(printf '%s' "$INPUT" | sed -n 's/.*"hook_event_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+fi
+[[ "$MODE" == "filechanged" ]] && EVENT="FileChanged"
+
+PROJECT="${CLAUDE_PROJECT_DIR:-.}"
+
+# クロスプラットフォーム sha256: GNU coreutils → shasum (macOS) の順でフォールバック
+sha256_of() {
+    if command -v sha256sum &>/dev/null; then
+        sha256sum "$1" | cut -d' ' -f1
+    elif command -v shasum &>/dev/null; then
+        shasum -a 256 "$1" | cut -d' ' -f1
+    else
+        echo ""  # どちらも無い → 後段で fail-open
+    fi
+}
+
+# constitution.md のハッシュ照合。戻り値 0 = 不一致(改変あり)/ 1 = 一致 or 検査不能
+constitution_drift() {
+    local const="$PROJECT/constitution.md" hash_file="$PROJECT/.claude/.constitution.sha256" current expected
+    [[ -f "$const" && -f "$hash_file" ]] || return 1
+    current=$(sha256_of "$const")
+    expected=$(cat "$hash_file")
+    [[ -n "$current" && "$current" != "$expected" ]]
+}
+
+# ── 0a. FileChanged(constitution.md の監視)— ブロック不可。stderr(ユーザー向け)+ 記録のみ ──
+# protect-files.sh は Edit / Write を止めるが、Bash の sed -i や外部エディタの変更は通る。
+# ファイル監視で検知し、testreport/config-changes/ に残す(config-guard.sh と同じ記録先)。
+if [[ "$EVENT" == "FileChanged" ]]; then
+    if constitution_drift; then
+        echo "🛡️  scan-harness: constitution.md がディスク上で変更されました(ハッシュ不一致)。Edit ツール以外(sed -i・外部エディタ等)による変更です。意図的なら .claude/.constitution.sha256 を更新し、意図しないなら git diff constitution.md で確認してください" >&2
+        LOG_DIR="$PROJECT/testreport/config-changes"
+        if command -v jq &>/dev/null && mkdir -p "$LOG_DIR" 2>/dev/null; then
+            SID="$(printf '%s' "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null)"
+            SID="$(printf '%s' "$SID" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-8)"
+            jq -nc --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg file "$PROJECT/constitution.md" \
+                '{ts: $ts, source: "file_watch", file: $file, decision: "warn", violations: ["constitution.md hash mismatch"]}' \
+                >> "$LOG_DIR/${SID:-unknown}.jsonl" 2>/dev/null || true
+        fi
+    fi
+    exit 0
+fi
+
+# ── 1. skill 名の抽出(PreToolUse: tool_input.skill / UserPromptExpansion: command_name)──
+SKILL=""
+if [[ "$EVENT" == "UserPromptExpansion" ]]; then
+    if command -v jq &>/dev/null; then
+        EXP_TYPE=$(printf '%s' "$INPUT" | jq -r '.expansion_type // "slash_command"' 2>/dev/null)
+        [[ "$EXP_TYPE" == "slash_command" ]] || exit 0   # MCP prompt の展開は対象外
+        SKILL=$(printf '%s' "$INPUT" | jq -r '.command_name // empty' 2>/dev/null)
+    else
+        SKILL=$(printf '%s' "$INPUT" | sed -n 's/.*"command_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+    fi
+    SKILL="${SKILL##*:}"   # plugin:name → name
+elif command -v jq &>/dev/null; then
     SKILL=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // .tool_input.name // empty' 2>/dev/null)
 else
     # jq 未導入時: deploy ブロックが無効化されないよう sed でフォールバック抽出
@@ -74,29 +136,11 @@ case "$SKILL" in
         ;;
 esac
 
-PROJECT="${CLAUDE_PROJECT_DIR:-.}"
 ISSUES=()
 
-# クロスプラットフォーム sha256: GNU coreutils → shasum (macOS) の順でフォールバック
-sha256_of() {
-    if command -v sha256sum &>/dev/null; then
-        sha256sum "$1" | cut -d' ' -f1
-    elif command -v shasum &>/dev/null; then
-        shasum -a 256 "$1" | cut -d' ' -f1
-    else
-        echo ""  # どちらも無い → 後段で fail-open
-    fi
-}
-
 # 3a. constitution.md hash 監視(常に実施 — 軽量、決定論的)
-CONST="$PROJECT/constitution.md"
-HASH_FILE="$PROJECT/.claude/.constitution.sha256"
-if [[ -f "$CONST" && -f "$HASH_FILE" ]]; then
-    CURRENT=$(sha256_of "$CONST")
-    EXPECTED=$(cat "$HASH_FILE")
-    if [[ -n "$CURRENT" && "$CURRENT" != "$EXPECTED" ]]; then
-        ISSUES+=("constitution.md が変更されています(ハッシュ不一致)。意図的な変更なら .claude/.constitution.sha256 を更新してください")
-    fi
+if constitution_drift; then
+    ISSUES+=("constitution.md が変更されています(ハッシュ不一致)。意図的な変更なら .claude/.constitution.sha256 を更新してください")
 fi
 
 # 3b. settings.local.json が deny を上書きしていないか(常に実施 — 軽量)
@@ -155,7 +199,12 @@ case "$PROFILE" in
         ;;
     standard|*)
         # non-blocking: stdout の additionalContext で Claude に伝える
-        emit_context PreToolUse "$SUMMARY"
+        # (UserPromptExpansion はプレーンテキストの stdout がそのまま文脈として渡る — 公式仕様)
+        if [[ "$EVENT" == "UserPromptExpansion" ]]; then
+            printf '%s\n' "$SUMMARY"
+        else
+            emit_context PreToolUse "$SUMMARY"
+        fi
         exit 0
         ;;
 esac

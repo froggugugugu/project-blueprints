@@ -116,14 +116,18 @@ Edits **no files**. Research and delta generation only. Steps:
    below; use Context7 for library-style docs. On fetch failure, continue in **degraded mode** using
    training data + prior reports, and state this explicitly in conversation and the report
    (never silently regress to training data).
-   Also add the output of `/skill-doctor` (unused skills and listing cost) and `/doctor` (CLAUDE.md trimming proposals) to the scoring evidence.
+   Also add the output of `/skill-doctor` (unused skills and listing cost), `/doctor` (CLAUDE.md trimming proposals), and `/doctor prompt-audit` (older-model phrasing, dangling references, contradictions) to the scoring evidence.
 2. **Learn from past reports**: read `output/reports/harness-refine/REFINE_*.md` (the latest 2-3, if any)
    and extract (a) **unresolved findings** (b) **issues that recurred 2+ times**.
-3. **Generate the live rubric delta**: compare the fetched guidance against the 15-item rubric below, and
+3. **Control inventory**: aggregate `testreport/instructions/` (rule loads), `testreport/denials/`, `testreport/failures/` and
+   `testreport/config-changes/`, then, by the criteria in the "Control inventory" section of `.claude/guardrails.md`, list the instructions
+   that are pruning candidates and the enforcements with no recorded origin (pitfall number). Back this with `/usage` (usage per skill /
+   subagent / plugin / MCP server, plus cache-miss warnings). If the model has been updated, nominate removable instructions one at a time.
+4. **Generate the live rubric delta**: compare the fetched guidance against the 15-item rubric below, and
    - if an item's criteria are stale, update them as the **provisional criteria for this run**
    - if there is a strong new official recommendation, record it as a **candidate new scoring item**
    - promote recurring findings to **top-priority fixes**
-4. **Human approval gate**: proposing a new scoring item, or any change that ripples into
+5. **Human approval gate**: proposing a new scoring item, or any change that ripples into
    `constitution.md`, must be **presented to the human for approval before adoption** (no auto-edits).
 
 Round 0 output (recorded in conversation + final report): "fetched sources and success/degraded status",
@@ -283,17 +287,17 @@ The skeleton is in [references/report-template.md](references/report-template.md
 | code.claude.com/docs `sub-agents` / `skills` / `hooks` / `permissions` / `settings-reference` | official enums and defaults (fork mode / bundled skill override / `Tool(param:value)` rules etc.) | 3, 5, 10, 13 |
 | code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md line count / startup load cost / cache invalidation / compact instructions | 2, 12 |
 | claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | when to use CLAUDE.md / rules / skills / hooks / subagents / output styles | 4, 10 |
-| code.claude.com/docs `whats-new` (last 8 weeks) | detecting new features and default changes (input to rubric self-evolution) | all |
-| code.claude.com/docs `tools-reference` / `changelog` (last 30 versions) | per-model tool availability (Task tools etc.), removed or changed behaviors | 5, 10 |
+| code.claude.com/docs `changelog` (last 30 versions; `whats-new` sometimes stops updating, so treat it as secondary) | detecting new features, default changes and removed behaviors (input to rubric self-evolution) | all |
+| code.claude.com/docs `tools-reference` | per-model tool availability (Task tools etc.) | 5, 10 |
 | platform.claude.com/docs `prompt-engineering/prompting-claude-{opus-5,opus-5-5,fable-5,fable-5-1}` + `claude-prompting-best-practices` | removing instructions that backfire on Claude 5-family models (over-verification, over-delegation, conservative review, reasoning disclosure) | 10, 11, 12 |
 | agentskills.io `specification` / `skill-creation/evaluating-skills` | description limit / `evals/evals.json` format / writing assertions | 11, 15 |
 | claude.com/blog `a-harness-for-every-task-dynamic-workflows-in-claude-code` | workflow patterns (fan-out / adversarial verify / loop-until-done) | 4, 9 |
-| anthropic.com/engineering `writing-tools-for-agents` | tool-definition clarity / token efficiency | 10, 11 |
-| anthropic.com/engineering `effective-context-engineering-for-ai-agents` | context curation / sub-agent isolation | 12, 13 |
-| anthropic.com/engineering `effective-harnesses-for-long-running-agents` | startup orientation / verification loop | 9, 15 |
+| anthropic.com/research (formerly engineering) `writing-tools-for-agents` | tool-definition clarity / token efficiency | 10, 11 |
+| anthropic.com/research `effective-context-engineering-for-ai-agents` | context curation / sub-agent isolation | 12, 13 |
+| anthropic.com/research `effective-harnesses-for-long-running-agents` | startup orientation / verification loop | 9, 15 |
 | GitHub: spec-kit / BMAD-METHOD / SuperClaude / agent-os / superpowers | acceptance checklist / model tier / standards consolidation / discoverability | 9, 14, 15 |
 
-> Flag any source that fails to fetch as degraded; score the corresponding rubric items provisionally against the prior criteria.
+> Flag any source that fails to fetch as degraded and score its rubric items provisionally against the prior criteria. A code.claude.com/docs page returns raw Markdown with `.md` appended to its URL (index at `/docs/llms.txt`); WebFetch over HTML often loses the body, so try `.md` first.
 
 ## Related references
 

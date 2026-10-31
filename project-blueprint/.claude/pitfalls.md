@@ -194,7 +194,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 
 | 項目 | 内容 |
 | ---- | ---- |
-| **現象** | Pro / Max / Team では auto mode が既定になり、権限プロンプトが出ないまま作業が進む。CLAUDE.md の「〜しない」だけに頼った境界が破られる |
+| **現象** | v2.1.283 以降は全プラン・全プロバイダで auto mode が既定になり、権限プロンプトが出ないまま作業が進む。CLAUDE.md の「〜しない」だけに頼った境界が破られる |
 | **原因** | auto mode は分類器モデルが各操作を審査する方式。プロンプト指示は長時間セッションやファイル経由のプロンプトインジェクションで抜けうる |
 | **対策** | 絶対に通したくない操作は `permissions.deny`(分類器より前に効く)、毎回確認したい操作は `permissions.ask`(auto mode でも必ず確認)。フック(Layer 1)は常時有効。分類器は CLAUDE.md も読むので禁止事項は CLAUDE.md 本体にも書く(import 先の `AGENTS.md` を分類器が読むかは公式に記載が無い)。拒否履歴は `permission-denied-log.sh` が `testreport/denials/` に残す |
 
@@ -301,6 +301,30 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **現象** | `"if": "Bash(rm *)"` で危険コマンドを止めるつもりが、`$VAR rm ...` や複合コマンドで発火しない |
 | **原因** | `if` はサブコマンドや `$()` を best-effort で解析する。判定できないと「常に走る」側に倒れるが、絞り込みの目的はコスト削減であって安全ではない |
 | **対策** | 安全用途は `permissions.deny` と matcher 全体のフック(本テンプレートの `safety-check.sh`)に置き、`if` は `commit-quality.sh` のような観測系の絞り込みに使う。ツール系イベント以外に書くとフック自体が走らない |
+
+### 37. `/skill` の直接入力が PreToolUse(Skill) フックを通らない
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | `Skill` matcher の PreToolUse フック(本テンプレートの `scan-harness.sh`)で deploy 系 skill を止めているのに、ユーザーが `/deploy` と直接打つと走る |
+| **原因** | PreToolUse(Skill) は Claude が `Skill` ツールを呼んだときだけ発火する。人間が `/名前` を打つ経路は `UserPromptExpansion` イベントで、別の登録が要る |
+| **対策** | 高リスク skill の抑止は `permissions.deny` の `Skill(skill:deploy*)` を主にし、フックは `PreToolUse(Skill)` と `UserPromptExpansion` の両方に同じスクリプトを登録する(本テンプレートは `scan-harness.sh` を両方に登録し、`command_name` で判定する) |
+
+### 38. プロンプトキャッシュを無効化する操作を知らずに繰り返す
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 1 ターンだけ応答が遅く高くなる。`/usage` のキャッシュ読込率が落ちる |
+| **原因** | モデル切替・effort 変更・fast mode・MCP サーバーの接続 / 切断・プラグインの有効化・ツール全体の deny・コンパクト・画像の蓄積・Claude Code の更新はキャッシュを無効化する。CLAUDE.md の途中編集(#24)・ファイル編集・権限モード変更・skill 起動は無効化しない |
+| **対策** | モデルはセッション途中で切り替えず、agent / skill の `model:` と `effort:` で役割ごとに分ける(`project-config.md` §13)。MCP・プラグインは起動前に揃える。subagent は親と別のキャッシュなので、model が違っても親には影響しない |
+
+### 39. 壊れた安全フックが「無い」のと同じになる(fail-open)
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | フックのパスを打ち間違えた・実行権限が落ちた・タイムアウトしたのに、危険コマンドがそのまま通った。transcript に `hook error` が 1 行出るだけ |
+| **原因** | フックは既定で fail-open: 起動失敗・タイムアウト・想定外の exit code のとき操作は続行する。ポリシー用のフックほど、壊れたことに気づきにくい |
+| **対策** | ブロック系フックには `"onFailure": "block"`(v2.1.295)を付けて故障時は操作を止める(本テンプレートは `safety-check.sh` / `protect-files.sh` / `config-guard.sh` / `scope-guard.sh`)。`validate-harness.sh` が欠落を WARN し、`--hooks` が must-block / must-allow の両方向を回帰テストする |
 
 ## 推奨セッション運用コマンド
 

@@ -10,6 +10,8 @@
 #   PostToolUse (Bash|Edit|Write|NotebookEdit) → verify-gate.sh track
 #   Stop                                       → verify-gate.sh gate
 #   TaskCompleted                              → verify-gate.sh task
+#   TeammateIdle                               → verify-gate.sh teammate
+#     (same check as task right before an agent-team teammate goes idle; strict exits 2 so it keeps working)
 #
 # track: record timestamps of source edits / verification commands in testreport/.verify/
 # gate : if no verification command ran after the last source edit
@@ -23,7 +25,7 @@
 # Infinite-loop protection (per official spec):
 #   - stop_hook_active == true (a stop after our own block) always passes
 #   - non-empty background_tasks (paused, not finished) passes
-#   - Claude Code itself overrides the hook after 8 consecutive blocks
+#   - Claude Code itself overrides the hook after 8 consecutive blocks (CLAUDE_CODE_STOP_HOOK_BLOCK_CAP changes the cap)
 #
 # Input:  JSON via stdin (track: tool_name/tool_input, gate: stop_hook_active etc.)
 # Output: JSON on stdout for gate only. Exit is always 0
@@ -92,7 +94,7 @@ case "$MODE" in
         exit 0
         ;;
 
-    gate|task)
+    gate|task|teammate)
         [[ -f "$EDIT_MARK" ]] || exit 0
 
         if [[ "$MODE" == "gate" ]]; then
@@ -110,13 +112,21 @@ case "$MODE" in
         [[ "$VERIFY_TS" =~ ^[0-9]+$ ]] || VERIFY_TS=0
         (( VERIFY_TS >= EDIT_TS )) && exit 0
 
-        if [[ "$MODE" == "task" ]]; then
-            # TaskCompleted: exit 2 (stderr goes back to Claude) refuses the completion mark
+        if [[ "$MODE" == "task" || "$MODE" == "teammate" ]]; then
+            # TaskCompleted / TeammateIdle: exit 2 (stderr goes back to Claude / the teammate) refuses the transition
             if [[ "$PROFILE" == "strict" ]]; then
-                echo "verify-gate (strict): this task cannot be marked complete because no verification command ran after the last source edit. Run tests / lint / type checks and show the result before completing it." >&2
+                if [[ "$MODE" == "teammate" ]]; then
+                    echo "verify-gate (strict): you cannot go idle because no verification command ran after the last source edit. Run tests / lint / type checks and show the result before finishing." >&2
+                else
+                    echo "verify-gate (strict): this task cannot be marked complete because no verification command ran after the last source edit. Run tests / lint / type checks and show the result before completing it." >&2
+                fi
                 exit 2
             fi
-            jq -nc --arg m "verify-gate: a task was marked complete without a verification command having run. Check that the completion report includes verification results (evidence)." '{systemMessage:$m}'
+            if [[ "$MODE" == "teammate" ]]; then
+                jq -nc --arg m "verify-gate: a teammate went idle without a verification command having run. Check that its report includes verification results (evidence)." '{systemMessage:$m}'
+            else
+                jq -nc --arg m "verify-gate: a task was marked complete without a verification command having run. Check that the completion report includes verification results (evidence)." '{systemMessage:$m}'
+            fi
             exit 0
         fi
 

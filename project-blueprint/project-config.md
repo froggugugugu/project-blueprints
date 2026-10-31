@@ -405,8 +405,8 @@ output/reports/                ← 人間向けサマリー（Git管理）
 | ---- | ---------- | ------- | ---- | -------- |
 | **Frontier** | `fable` | `claude-fable-5-1` | 数時間〜複数日の自律実行・根本原因調査・難度の高い設計判断（既定にはならない。明示して使う） | 最高 |
 | **Critical** | `opus` | `claude-opus-5-5` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
-| **Complex** | `sonnet` | `claude-sonnet-5` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
-| **Operational** | `haiku` | `claude-haiku-4-5-20251001` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
+| **Complex** | `sonnet` | `claude-sonnet-5-5` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
+| **Operational** | `haiku` | `claude-haiku-5-5` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
 
 > **エイリアスを既定にする**: `.claude/agents/*.md` の `model:` にはエイリアス（`opus` / `sonnet` / `haiku`）を書く。
 > モデル世代が上がっても追随でき、ID の陳腐化でエージェントが起動しなくなる事故を防げる。
@@ -415,7 +415,7 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 旧モデル（`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5` 等）は本テンプレートでは非推奨。
 
-> **effort の既定はモデルで違う**: Opus 5.5 は `medium`、他は `high`。skill / agent の `effort:` はセッションの既定を上書きするので、
+> **effort の既定はモデルで違う**: Opus 5.5 / Sonnet 5.5 / Haiku 5.5 は `medium`、それ以外の effort 対応モデルは `high`(Opus 4.7 は `xhigh`)。skill / agent の `effort:` はセッションの既定を上書きするので、
 > レビュー・設計系を Opus 5.5 で走らせるなら `high` 以上が明示されているか確認する。`best` エイリアスは Fable が使えれば Fable、
 > 無ければ Opus に解決する。Fable は数時間規模の自律実行に向く一方、cybersecurity / biology 領域では安全分類器で Opus にフォールバックする。
 
@@ -433,6 +433,25 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 > 本テンプレートの skill / agent は **`model:` を固定せず `effort:` のみ指定**している。
 > どのモデルで走らせるかはセッション側（`/model`）の判断に委ね、本節はその指針として使う。
+
+> Sonnet 5.5 の `low` は、検証を実行せずに完了を報告しがち(公式プロンプティングガイド)。実装系は `medium` 以上にし、
+> 検証ゲート(`verify-gate.sh`)を standard 以上で有効にしておく。
+
+effort の動かし方(公式 best-practices。`medium` が日常の機能実装の基準):
+
+| 場面 | 設定 |
+| ---- | ---- |
+| 見落としやすいケースに正しさが依存する(他人のコードのバグ・flaky テスト・スキーマ変更の影響範囲) | `high` / `xhigh` |
+| 対話的に往復し、結果を毎回人が見る(ブレスト・たたき台・数ファイルのリネーム) | `low` |
+| 人が付かない難問(脆弱性探索など)。通常タスクでは考え過ぎて `high` と変わらない | `max` |
+| その 1 ターンだけ深く考えさせたい | プロンプトに `ultrathink`(v2.1.311 以降はそのターンを `xhigh` で実行。設定は変えない) |
+| `effort:` の無い subagent の既定 | セッションの effort を継承。固定するなら env `CLAUDE_CODE_SUBAGENT_EFFORT`(v2.1.316) |
+
+### 13.1c advisor(上位モデルへの相談、任意)
+
+主モデルを下げたまま、設計判断・再発するエラー・完了判定の節目だけ上位モデルに相談させる(`/advisor` または settings の `advisorModel`。Anthropic API 限定)。
+Sonnet 主 + Opus advisor、Sonnet 主 + Fable advisor が代表的な組み合わせ。毎ターン上位モデルを走らせるより安く、長い多段タスクで効く。
+短いタスクや毎ターン最強モデルが要る作業には向かない(主モデルを上げる)。advisor の切替もキャッシュを無効化するので、セッション開始時に決める。
 
 ### 13.2 スキル × モデル推奨マッピング
 
@@ -478,6 +497,7 @@ PJM（リーダー）は判断精度が重要なので Critical を推奨。
 | `performance-analyst` | Complex | 計測データ解釈 |
 | `doc-synchronizer` | Operational | 決定論的な差分更新 |
 | `test-writer` | Complex | エッジケース網羅 |
+| `verifier` | Complex | 差分と受け入れ条件・検証結果の照合 |
 
 ### 13.5 コスト最適化の原則
 
@@ -486,6 +506,7 @@ PJM（リーダー）は判断精度が重要なので Critical を推奨。
 3. **Subagent は Haiku 優先**: 単発の委譲は軽量運用。必要に応じて Critical に昇格
 4. **コスト上限を API キーに設定**: `.claude/pitfalls.md` #6 参照
 5. **月次使用量レビュー**: Anthropic Console で確認。想定と乖離したら Tier を見直す
+6. **セッション途中でモデルを切り替えない**: 切替はプロンプトキャッシュを無効化する。役割ごとの違いは skill / agent の `model:` に持たせる(subagent は別キャッシュ)
 
 ### 13.6 未記入時の挙動
 

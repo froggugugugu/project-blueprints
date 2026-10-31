@@ -110,14 +110,13 @@
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-brave-search"
+          "@brave/brave-search-mcp-server"
         ],
         "env": {
           "BRAVE_API_KEY": "${BRAVE_API_KEY}"
         }
       },
-      "_deprecated": true,
-      "_deprecation_note": "⚠️ このパッケージは npm 上で deprecated (2026-08 確認)。利用前に後継を探すこと"
+      "_note": "Brave 公式の MCP サーバーに移行済み。旧 @modelcontextprotocol/server-brave-search は npm 上で deprecated"
     },
     "slack": {
       "_warning": "チャット通知・共有。$SLACK_BOT_TOKEN が必要。scope は chat:write のみに絞る",

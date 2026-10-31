@@ -173,12 +173,74 @@ for MIRROR in project-blueprint project-blueprint-en; do
     jq 'del(.hooks.PreToolUse[] | select(.hooks[].command | contains("protect-files")))' "$REPO/$MIRROR/.claude/settings.json" > "$T/.claude/settings.json"
     run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"project_settings\",\"file_path\":\"$T/.claude/settings.json\"}" standard >/dev/null
     expect_rc "config-guard: protect-files.sh の削除はブロック" 2 "$RC"
+    jq '(.hooks.PreToolUse[].hooks[] | select(.command | contains("safety-check"))) |= del(.onFailure)' "$REPO/$MIRROR/.claude/settings.json" > "$T/.claude/settings.json"
+    run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"project_settings\",\"file_path\":\"$T/.claude/settings.json\"}" standard >/dev/null
+    expect_rc "config-guard: safety-check.sh の onFailure: block 削除はブロック" 2 "$RC"
     run_hook "$H/config-guard.sh" "" "{\"session_id\":\"cg1\",\"source\":\"project_settings\",\"file_path\":\"$T/.claude/settings.json\"}" minimal >/dev/null
     expect_rc "config-guard: minimal は素通り" 0 "$RC"
     run_hook "$H/config-guard.sh" "" '{"session_id":"cg1","source":"policy_settings","file_path":"/nonexistent/managed-settings.json"}' strict >/dev/null
     expect_rc "config-guard: 読めないファイル / policy_settings は通過(fail-open)" 0 "$RC"
     LOG="$(cat "$T/testreport/config-changes/cg1.jsonl" 2>/dev/null)"
     expect_contains "config-guard: JSONL に判定を記録" '"decision":"block"' "$LOG"
+
+    # ── scan-harness.sh(UserPromptExpansion)— `/skill` の直接入力でも高リスク skill を止める ──
+    run_hook "$H/scan-harness.sh" "" '{"hook_event_name":"UserPromptExpansion","expansion_type":"slash_command","command_name":"deploy","command_args":"","prompt":"/deploy"}' standard >/dev/null
+    expect_rc "scan-harness(UserPromptExpansion): /deploy の直接入力はブロック" 2 "$RC"
+    run_hook "$H/scan-harness.sh" "" '{"hook_event_name":"UserPromptExpansion","expansion_type":"slash_command","command_name":"my-plugin:deploy-prod","prompt":"/my-plugin:deploy-prod"}' standard >/dev/null
+    expect_rc "scan-harness(UserPromptExpansion): plugin 名前空間付きの deploy もブロック" 2 "$RC"
+    run_hook "$H/scan-harness.sh" "" '{"hook_event_name":"UserPromptExpansion","expansion_type":"slash_command","command_name":"prd","command_args":"x.md","prompt":"/prd x.md"}' standard >/dev/null
+    expect_rc "scan-harness(UserPromptExpansion): 通常 skill は通過" 0 "$RC"
+    run_hook "$H/scan-harness.sh" "" '{"hook_event_name":"UserPromptExpansion","expansion_type":"mcp_prompt","command_name":"deploy","prompt":"/mcp__x__deploy"}' standard >/dev/null
+    expect_rc "scan-harness(UserPromptExpansion): MCP prompt の展開は対象外" 0 "$RC"
+
+    # ── scan-harness.sh(FileChanged)— constitution.md のディスク上の改変を検知(ブロック不可。stderr + 記録)──
+    printf '# constitution\n' > "$T/constitution.md"
+    if command -v sha256sum &>/dev/null; then sha256sum "$T/constitution.md" | cut -d' ' -f1 > "$T/.claude/.constitution.sha256"; else shasum -a 256 "$T/constitution.md" | cut -d' ' -f1 > "$T/.claude/.constitution.sha256"; fi
+    run_hook "$H/scan-harness.sh" filechanged "{\"hook_event_name\":\"FileChanged\",\"session_id\":\"fc1\",\"file_path\":\"$T/constitution.md\"}" standard >/dev/null
+    expect_rc "scan-harness(FileChanged): ハッシュ一致は exit 0" 0 "$RC"
+    [[ ! -f "$T/testreport/config-changes/fc1.jsonl" ]] && ok "scan-harness(FileChanged): 一致なら記録しない" || ng "scan-harness(FileChanged): 一致なら記録しない" "no fc1.jsonl" "exists"
+    printf '# tampered\n' >> "$T/constitution.md"
+    ERR="$(printf '%s' "{\"hook_event_name\":\"FileChanged\",\"session_id\":\"fc1\",\"file_path\":\"$T/constitution.md\"}" | BLUEPRINT_HOOK_PROFILE=standard bash "$H/scan-harness.sh" filechanged 2>&1 >/dev/null)"
+    expect_contains "scan-harness(FileChanged): 不一致は stderr(ユーザー向け)で警告" "constitution.md" "$ERR"
+    LOG="$(cat "$T/testreport/config-changes/fc1.jsonl" 2>/dev/null)"
+    expect_contains "scan-harness(FileChanged): 不一致を JSONL に記録" '"source":"file_watch"' "$LOG"
+    rm -f "$T/constitution.md" "$T/.claude/.constitution.sha256"
+
+    # ── verify-gate.sh teammate(TeammateIdle)— teammate の手待ちにも検証ゲートを掛ける ──
+    run_hook "$H/verify-gate.sh" track "{\"session_id\":\"tm1\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$T/src/b.ts\"}}" >/dev/null
+    run_hook "$H/verify-gate.sh" teammate '{"session_id":"tm1","teammate_name":"dev"}' strict >/dev/null
+    expect_rc "verify-gate teammate: strict は exit 2(teammate は作業を続ける)" 2 "$RC"
+    OUT="$(run_hook "$H/verify-gate.sh" teammate '{"session_id":"tm1","teammate_name":"dev"}' standard)"
+    expect_contains "verify-gate teammate: standard は systemMessage" '"systemMessage"' "$OUT"
+    run_hook "$H/verify-gate.sh" track '{"session_id":"tm1","tool_name":"Bash","tool_input":{"command":"npm test"}}' >/dev/null
+    run_hook "$H/verify-gate.sh" teammate '{"session_id":"tm1","teammate_name":"dev"}' strict >/dev/null
+    expect_rc "verify-gate teammate: 検証後は通過" 0 "$RC"
+
+    # ── post-failure-log.sh(StopFailure)— API エラーによるターン終了も記録する ──
+    CLAUDE_SESSION_ID=sf0001 run_hook "$H/post-failure-log.sh" "" '{"session_id":"sf0001","hook_event_name":"StopFailure","error":"rate_limit","error_details":"429 Too Many Requests","last_assistant_message":"API Error: Rate limit reached"}' >/dev/null
+    expect_rc "post-failure-log(StopFailure): exit 0" 0 "$RC"
+    LOG="$(cat "$T/testreport/failures/sf0001.jsonl" 2>/dev/null)"
+    expect_contains "post-failure-log(StopFailure): tool=api:<error> で記録" '"tool":"api:rate_limit"' "$LOG"
+    expect_contains "post-failure-log(StopFailure): error_details を記録" '429 Too Many Requests' "$LOG"
+
+    # ── permission-denied-log.sh request(PermissionRequest)— 無人実行で止まった呼び出しも同じログに残す ──
+    run_hook "$H/permission-denied-log.sh" request '{"session_id":"pr000001","hook_event_name":"PermissionRequest","tool_name":"Bash","tool_input":{"command":"npm publish"},"permission_mode":"dontAsk","permission_suggestions":[{"type":"addRules"}]}' >/dev/null
+    LOG="$(cat "$T/testreport/denials/pr000001.jsonl" 2>/dev/null)"
+    expect_contains "permission-denied-log(request): kind=request で記録" '"kind":"request"' "$LOG"
+    expect_contains "permission-denied-log(request): suggestions 件数を記録" '"suggestions":1' "$LOG"
+    LOG="$(cat "$T/testreport/denials/abcdef12.jsonl" 2>/dev/null)"
+    expect_contains "permission-denied-log(denied): 既定は kind=denied" '"kind":"denied"' "$LOG"
+
+    # ── instructions-log.sh(InstructionsLoaded)— rule の load 実績を記録。プロジェクト外のパスはファイル名だけ残す ──
+    run_hook "$H/instructions-log.sh" "" "{\"session_id\":\"il000001\",\"hook_event_name\":\"InstructionsLoaded\",\"file_path\":\"$T/.claude/rules/x.md\",\"memory_type\":\"Project\",\"load_reason\":\"path_glob_match\",\"globs\":[\"src/**\"],\"trigger_file_path\":\"$T/src/a.ts\"}" >/dev/null
+    run_hook "$H/instructions-log.sh" "" '{"session_id":"il000001","hook_event_name":"InstructionsLoaded","file_path":"/home/someone/.claude/CLAUDE.md","memory_type":"User","load_reason":"session_start"}' >/dev/null
+    expect_rc "instructions-log: exit 0" 0 "$RC"
+    LOG="$(cat "$T/testreport/instructions/il000001.jsonl" 2>/dev/null)"
+    expect_contains "instructions-log: プロジェクト相対パスと load_reason を記録" '"file":".claude/rules/x.md","memory_type":"Project","load_reason":"path_glob_match"' "$LOG"
+    expect_contains "instructions-log: プロジェクト外はファイル名だけ" '"file":"…/CLAUDE.md"' "$LOG"
+    [[ "$LOG" != *"/home/someone"* ]] && ok "instructions-log: ホームディレクトリのパスを残さない" || ng "instructions-log: ホームディレクトリのパスを残さない" "no /home/someone" "$LOG"
+    run_hook "$H/instructions-log.sh" "" '{"session_id":"il000002","hook_event_name":"InstructionsLoaded","file_path":"/x/CLAUDE.md"}' minimal >/dev/null
+    [[ ! -f "$T/testreport/instructions/il000002.jsonl" ]] && ok "instructions-log: minimal は記録しない" || ng "instructions-log: minimal は記録しない" "no file" "exists"
 
     unset CLAUDE_PROJECT_DIR
     rm -rf "$T"

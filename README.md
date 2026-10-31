@@ -93,11 +93,11 @@ claude
  2 guides    AGENTS.md(ツール共通ルール。Codex / Cursor なども読む)+ CLAUDE.md(Claude Code 固有。AGENTS.md を取り込む)
 17 skills    企画・設計・実装・レビュー・セキュリティ・法務・性能・リファクタ
              長い詳細は references/(20 ファイル)に分離し、SKILL.md 本文は手順だけに保つ
- 8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
-             doc-synchronizer / doc-writer / test-writer
+ 9 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
+             doc-synchronizer / doc-writer / test-writer / verifier(完了直前の仕様照合)
  6 teams     TEAM_PJM(フルライフサイクル・推奨) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
-17 hooks     PreToolUse / PostToolUse / SessionStart(compact 再注入)/ ConfigChange / PreCompact / Stop など
-             危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制・防御層を弱める設定変更の阻止
+18 hooks     PreToolUse / UserPromptExpansion / PostToolUse / SessionStart(compact 再注入)/ ConfigChange / FileChanged / StopFailure など
+             危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制・防御層を弱める設定変更の阻止。ブロック系は onFailure: block で fail-closed
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
  7 rules     常時 1(git 規約)+ パス限定 3(ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
              + 言語別サンプル 3(.example を外して有効化)

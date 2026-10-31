@@ -59,7 +59,7 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 
 - 各 phase skill は `.claude/quality-gates.md` のゲート基準を必要時に参照する
 - `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted。Task ツールは `settings.json` の env で有効化済み)を検知する(standard=警告 / strict=差し止め)
-- 各 skill は `evals/evals.json`(典型 + 境界)を持つ。skill を変えたら `/skill-eval skill=<名>` で with / without の pass rate を比べる
+- 各 skill は `evals/evals.json`(典型 + 境界)を持つ。skill を変えたら `/skill-eval skill=<名>` で with / without の pass rate を比べ、指示文の棚卸しは `/doctor prompt-audit` と `/skill-doctor` で行う
 
 ## ツール利用方針
 
@@ -70,7 +70,7 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 - **多層防御**: sandbox(Layer 0・任意) → フック(Layer 1) → deny/ask(Layer 2) → allow(Layer 3)
 - **`--no-verify` 禁止 / `--force` 付きの push は原則禁止**。安全に関わる禁止事項は `AGENTS.md` と重複しても本ファイルに置く(分類器が import 先を読むかは公式に記載が無い)
 - `.env` / 秘密鍵 / `*.pem` は `Read()` deny で読み取り自体を遮断し、外向き・不可逆操作(push / merge / publish / apply)は `ask` で毎回確認
-- auto mode(Pro/Max/Team の既定モード)でも `ask` は必ず確認され、`deny` は分類器より前に効く。分類器は本ファイルも読む
+- auto mode(v2.1.283 以降は全プランで既定)でも `ask` は必ず確認され、`deny` は分類器より前に効く。分類器は本ファイルも読む
 - フックは `--dangerously-skip-permissions` でも有効。`scan-harness.sh` が `constitution.md` の改変を検知する
 - SessionStart フックが起動時に `project-config.md` / `docs/` / `settings.local.json` をチェックし、`output/tasks/PROGRESS.md` があれば冒頭を注入する
 - 詳細(deny ルール一覧、保護ファイル、権限設計)は `.claude/guardrails.md` と `.claude/permissions-guide.md`
@@ -90,7 +90,7 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 
 定義集と使い分けは `.claude/agents/README.md`(常時 import しない)。書込可能な 3 agent は `scope-guard.sh` が書込範囲を強制する。
 委譲するのは、並列化できる独立作業・大量の読込・隔離が要る検証に限る。数回のツール呼び出しで済む作業は自分で行う(spawn 深さは `settings.json` で 1 に固定)。
-実装後は fresh context のレビュー subagent(`/code-review`)に指摘を全件報告させ、対応は正確性・要件に影響する MUST に絞る。
+完了直前に fresh context の `/code-review`(バグ)と `verifier` agent(仕様照合)を 1 回ずつ回し、全件報告させて正確性・要件に影響する MUST だけ対応する。
 
 ### 3. コンテキスト保全
 

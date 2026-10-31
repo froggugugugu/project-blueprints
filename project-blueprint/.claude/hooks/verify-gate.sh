@@ -10,6 +10,8 @@
 #   PostToolUse (Bash|Edit|Write|NotebookEdit) → verify-gate.sh track
 #   Stop                                       → verify-gate.sh gate
 #   TaskCompleted                              → verify-gate.sh task
+#   TeammateIdle                               → verify-gate.sh teammate
+#     (agent teams の teammate が手待ちに入る直前に task と同じ判定。strict は exit 2 で作業継続を求める)
 #
 # track: ソースファイル編集 / 検証コマンド実行の時刻を testreport/.verify/ に記録
 # gate : 最後の編集より後に検証コマンドが無ければ
@@ -23,7 +25,7 @@
 # 無限ループ防止(公式仕様準拠):
 #   - stop_hook_active == true(自分の差し戻し後の再停止)は必ず通す
 #   - background_tasks が空でない(完了ではなく待機中)ときは通す
-#   - Claude Code 自身も 8 回連続ブロックで強制終了する
+#   - Claude Code 自身も 8 回連続ブロックで強制終了する(CLAUDE_CODE_STOP_HOOK_BLOCK_CAP で変更可)
 #
 # Input:  JSON via stdin(track: tool_name/tool_input, gate: stop_hook_active 等)
 # Output: gate のみ stdout JSON。exit は常に 0
@@ -92,7 +94,7 @@ case "$MODE" in
         exit 0
         ;;
 
-    gate|task)
+    gate|task|teammate)
         [[ -f "$EDIT_MARK" ]] || exit 0
 
         if [[ "$MODE" == "gate" ]]; then
@@ -110,13 +112,21 @@ case "$MODE" in
         [[ "$VERIFY_TS" =~ ^[0-9]+$ ]] || VERIFY_TS=0
         (( VERIFY_TS >= EDIT_TS )) && exit 0
 
-        if [[ "$MODE" == "task" ]]; then
-            # TaskCompleted は exit 2(stderr が Claude へ返る)で完了マークを差し止める
+        if [[ "$MODE" == "task" || "$MODE" == "teammate" ]]; then
+            # TaskCompleted / TeammateIdle は exit 2(stderr が Claude / teammate へ返る)で差し止める
             if [[ "$PROFILE" == "strict" ]]; then
-                echo "verify-gate(strict): ソース編集後に検証コマンドが実行されていないため、このタスクを完了にできません。テスト / lint / 型チェックを実行し、結果を示してから完了にしてください。" >&2
+                if [[ "$MODE" == "teammate" ]]; then
+                    echo "verify-gate(strict): ソース編集後に検証コマンドが実行されていないため、手待ちに入れません。テスト / lint / 型チェックを実行し、結果を示してから作業を終えてください。" >&2
+                else
+                    echo "verify-gate(strict): ソース編集後に検証コマンドが実行されていないため、このタスクを完了にできません。テスト / lint / 型チェックを実行し、結果を示してから完了にしてください。" >&2
+                fi
                 exit 2
             fi
-            jq -nc --arg m "verify-gate: 検証コマンド未実行のままタスクが完了にマークされました。完了報告に検証結果(証拠)があるか確認してください。" '{systemMessage:$m}'
+            if [[ "$MODE" == "teammate" ]]; then
+                jq -nc --arg m "verify-gate: teammate が検証コマンド未実行のまま手待ちに入りました。成果の報告に検証結果(証拠)があるか確認してください。" '{systemMessage:$m}'
+            else
+                jq -nc --arg m "verify-gate: 検証コマンド未実行のままタスクが完了にマークされました。完了報告に検証結果(証拠)があるか確認してください。" '{systemMessage:$m}'
+            fi
             exit 0
         fi
 

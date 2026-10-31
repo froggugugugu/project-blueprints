@@ -226,6 +226,10 @@ Codex / Cursor などを併用する場合は、利用可否・役割・書込�
 
 セットアップ完了後、以下の手順で開発を開始する。
 
+> 初回のセッションで `/auto-mode-setup` を実行する(v2.1.283 以降、auto mode は全プランで既定の権限モード)。
+> プロジェクトと直近のセッションを読んで分類器向けの環境定義を下書きし、`~/.claude/settings.json` に保存する(project 設定からは読まれない)。
+> 指示ファイルの棚卸しは `/doctor prompt-audit`、skill のコストは `/skill-doctor` で確認できる。
+
 ### PJMチーム（フルライフサイクル）
 
 ```text
@@ -363,7 +367,7 @@ project-blueprint/
 │   ├── quality-gates.md                   ← [汎用] 5 つの品質ゲートの基準
 │   ├── pitfalls.md                        ← [汎用] 失敗パターン 31 件と対策
 │   │
-│   ├── agents/                            ← [汎用] サブエージェント 8 種 + README.md（使い分け）
+│   ├── agents/                            ← [汎用] サブエージェント 9 種 + README.md（使い分け）
 │   │                                        explorer / researcher / planner / security-reviewer /
 │   │                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
 │   │
@@ -377,7 +381,7 @@ project-blueprint/
 │   ├── output-styles/                     ← [汎用] フェーズ別出力スタイル 4 種（phase-prd / design / implementation / review）
 │   ├── learnings/                         ← [汎用] 成功パターンの記録（README.md / TEMPLATE.md / 記入例）
 │   │
-│   ├── hooks/                             ← [汎用] 安全フック（多層防御・17本）
+│   ├── hooks/                             ← [汎用] 安全フック（多層防御・18本）
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
 │   │   ├── scan-harness.sh                  ハーネス自己SAST・危険skillブロック（PreToolUse）
