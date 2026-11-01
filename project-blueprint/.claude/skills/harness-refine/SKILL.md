@@ -113,7 +113,7 @@ Round 0(非破壊・自己強化)        ラウンド 1                         
 2. **過去レポート学習**: `output/reports/harness-refine/REFINE_*.md`(あれば最新 2〜3 件)を読み、
    (a) **未解決課題** (b) **2 回以上再発した指摘** を抽出する。
 3. **コントロールの棚卸し**: `testreport/instructions/`(rule の load 実績)、`testreport/denials/`(拒否・ダイアログ)、
-   `testreport/failures/`(ツール失敗・API エラー)、`testreport/config-changes/` を集計し、`.claude/guardrails.md` の「コントロールの棚卸し」の基準で
+   `testreport/failures/`(ツール失敗・API エラー)、`testreport/config-changes/` を `bash .claude/scripts/harness-stats.sh --since 30` で集計し、`.claude/guardrails.md` の「コントロールの棚卸し」の基準で
    剪定候補の指示と、由来(pitfall 番号)の無い強制を列挙する。`/usage`(skill / subagent / plugin / MCP 別の使用量と、長い context・
    キャッシュミスの警告)で、コストに見合わない subagent と未使用 skill を実測で裏付ける。モデルが更新されていれば、外せる可能性のある指示を 1 つずつ候補にする。
 4. **ライブ・ルーブリック差分の生成**: 取得した最新ガイダンスを下記 15 項目 rubric と突き合わせ、

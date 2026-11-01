@@ -242,6 +242,24 @@ for MIRROR in project-blueprint project-blueprint-en; do
     run_hook "$H/instructions-log.sh" "" '{"session_id":"il000002","hook_event_name":"InstructionsLoaded","file_path":"/x/CLAUDE.md"}' minimal >/dev/null
     [[ ! -f "$T/testreport/instructions/il000002.jsonl" ]] && ok "instructions-log: minimal は記録しない" || ng "instructions-log: minimal は記録しない" "no file" "exists"
 
+    # ── .claude/scripts/harness-stats.sh — 上のフックが書いた testreport/ を集計できる ──
+    STATS="$(bash "$REPO/$MIRROR/.claude/scripts/harness-stats.sh" --project "$T" 2>/dev/null)"
+    expect_rc "harness-stats: exit 0" 0 "$?"
+    expect_contains "harness-stats: Markdown に拒否の集計が出る" "permission-denied" "$(printf '%s' "$STATS" | grep -c 'denials' | sed 's/^[1-9][0-9]*$/permission-denied/')"
+    STATS_JSON="$(bash "$REPO/$MIRROR/.claude/scripts/harness-stats.sh" --project "$T" --json 2>/dev/null)"
+    [[ "$(printf '%s' "$STATS_JSON" | jq '.denials.total' 2>/dev/null)" -ge 1 ]] && ok "harness-stats --json: denials.total >= 1" || ng "harness-stats --json: denials.total >= 1" ">= 1" "$STATS_JSON"
+    [[ "$(printf '%s' "$STATS_JSON" | jq '.instructions.total' 2>/dev/null)" -ge 1 ]] && ok "harness-stats --json: instructions.total >= 1" || ng "harness-stats --json: instructions.total >= 1" ">= 1" "$STATS_JSON"
+    [[ "$(printf '%s' "$STATS_JSON" | jq '.config_changes.blocked' 2>/dev/null)" -ge 1 ]] && ok "harness-stats --json: config_changes.blocked >= 1" || ng "harness-stats --json: config_changes.blocked >= 1" ">= 1" "$STATS_JSON"
+    ALL_N="$(printf '%s' "$STATS_JSON" | jq '.denials.total' 2>/dev/null)"
+    printf '{"ts":"2000-01-01T00:00:00Z","kind":"denied","tool":"Bash","reason":"old","permission_mode":"auto","suggestions":0,"input":"{}"}\n' >> "$T/testreport/denials/old00000.jsonl"
+    STATS_JSON="$(bash "$REPO/$MIRROR/.claude/scripts/harness-stats.sh" --project "$T" --json 2>/dev/null)"
+    expect_eq_stats() { [[ "$3" == "$2" ]] && ok "$1" || ng "$1" "$2" "$3"; }
+    expect_eq_stats "harness-stats: 期間指定なしは古い記録も数える" "$((ALL_N + 1))" "$(printf '%s' "$STATS_JSON" | jq '.denials.total' 2>/dev/null)"
+    STATS_JSON="$(bash "$REPO/$MIRROR/.claude/scripts/harness-stats.sh" --project "$T" --since 30 --json 2>/dev/null)"
+    expect_eq_stats "harness-stats --since 30: 古い記録を除外する" "$ALL_N" "$(printf '%s' "$STATS_JSON" | jq '.denials.total' 2>/dev/null)"
+    STATS_JSON="$(bash "$REPO/$MIRROR/.claude/scripts/harness-stats.sh" --project "$T/nonexistent" --json 2>/dev/null)"
+    [[ "$(printf '%s' "$STATS_JSON" | jq '.denials.total' 2>/dev/null)" == "0" ]] && ok "harness-stats: ログ無しでも 0 件で成功" || ng "harness-stats: ログ無しでも 0 件で成功" "0" "$STATS_JSON"
+
     unset CLAUDE_PROJECT_DIR
     rm -rf "$T"
 done

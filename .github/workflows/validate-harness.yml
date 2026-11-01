@@ -40,6 +40,9 @@ jobs:
       - name: フックスクリプトの機能テスト（stdin に hook JSON を流して exit code / 出力を検証）
         run: bash scripts/validate-harness.sh --hooks
 
+      - name: setup.sh の機能テスト（導入 / プロファイル / --upgrade の差分適用と競合）
+        run: bash scripts/validate-harness.sh --setup
+
   validate-online:
     # npm レジストリに触るため PR ごとには回さない。
     # main への push と手動実行のときだけ、テンプレートが参照するパッケージの実在を確認する。

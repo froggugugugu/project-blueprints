@@ -156,6 +156,9 @@ assumptions go stale, and leftover instructions not only cost context but contra
 Rules: every enforcement has an "incident → control" record (its `pitfalls.md` number). Every instruction is re-judged by
 "would removing it make Claude make mistakes?". After a model update, remove one component at a time and confirm with evals
 (removing several at once hides the cause).
+Aggregate with `bash .claude/scripts/harness-stats.sh --since 30` (one Markdown page from the `testreport/` JSONL: denials, failures,
+settings changes, rule loads, subagent launches; `--json` for machines). Measure a skill's contribution with `/skill-eval`, or with
+`scripts/run_skill_evals.py` in the template repository.
 
 Official rule of thumb: use enforcement (hooks / deny) only for a rule with zero exceptions, and delete hooks that encode a
 preference so Claude decides again. This template has 5 blocking hooks plus the deny / ask rules; everything else observes or

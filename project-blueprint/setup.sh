@@ -23,6 +23,7 @@ usage() {
     cat <<'EOF'
 使い方:
   bash setup.sh <ターゲットディレクトリ> [--profile minimal|standard|full]
+  bash setup.sh <ターゲットディレクトリ> --upgrade [--dry-run]
 
 説明:
   Project Blueprint のファイルをターゲットプロジェクトにコピーします。
@@ -44,6 +45,12 @@ usage() {
   ※ minimal はセーフガード系フック(session-start等)も間引く軽量構成です。
      project-config.md の「ミニマル/推奨/フル」(§記入量の目安)とは別の軸です。
 
+更新(--upgrade):
+  導入済みプロジェクトをこのテンプレートの版に追従させる。導入時に記録した
+  .claude/blueprint-manifest.txt(ファイルごとのハッシュ)と比べ、手を入れていないファイルだけ上書きし、
+  変更済みのファイルは <path>.blueprint-new を横に置いて報告する。project-config.md / docs/ / input/ /
+  output/ / settings.local.json は触らない。--dry-run は計画だけ表示する。
+
 例:
   bash setup.sh /path/to/my-project
   bash setup.sh /path/to/my-project --profile minimal
@@ -58,6 +65,8 @@ EOF
 
 # ── 引数解析 ────────────────────────────────────────────────
 PROFILE="full"   # デフォルトは後方互換のため full(剪定なし)
+MODE="install"
+DRY_RUN=0
 TARGET_DIR=""
 
 while [[ $# -gt 0 ]]; do
@@ -68,6 +77,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --profile=*)
             PROFILE="${1#*=}"
+            shift
+            ;;
+        --upgrade)
+            MODE="upgrade"
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=1
             shift
             ;;
         -h|--help)
@@ -118,8 +135,26 @@ TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
 
 info "ターゲット: $TARGET_DIR"
 
+MANIFEST_REL=".claude/blueprint-manifest.txt"
+BLUEPRINT_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/../VERSION" 2>/dev/null || true)"
+[[ -z "${BLUEPRINT_VERSION}" ]] && BLUEPRINT_VERSION="unknown"
+BLUEPRINT_COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+MIRROR_LANG="ja"; [[ "$(basename "$SCRIPT_DIR")" == *-en ]] && MIRROR_LANG="en"
+INSTALLED_VERSION=""
+
+if [[ "$MODE" == "upgrade" ]]; then
+    if [[ ! -f "$TARGET_DIR/$MANIFEST_REL" ]]; then
+        error ".claude/blueprint-manifest.txt がありません(0.5.0 より前の setup.sh で導入したか、手動コピー)。一度 setup.sh <dir> で再導入(既存の .claude/ は .claude.bak/ に退避される)してから --upgrade を使ってください"
+        exit 1
+    fi
+    INSTALLED_VERSION="$(sed -n 's/^# version: //p' "$TARGET_DIR/$MANIFEST_REL" | head -1)"
+    PROFILE="$(sed -n 's/^# profile: //p' "$TARGET_DIR/$MANIFEST_REL" | head -1)"
+    case "$PROFILE" in minimal|standard|full) ;; *) PROFILE="full" ;; esac
+fi
+
 # ── 既存 .claude/ のバックアップ ────────────────────────────
-if [[ -d "$TARGET_DIR/.claude" ]]; then
+# --upgrade では既存 .claude/ をそのまま使う(退避しない)
+if [[ "$MODE" == "install" && -d "$TARGET_DIR/.claude" ]]; then
     BACKUP_DIR="$TARGET_DIR/.claude.bak"
     if [[ -d "$BACKUP_DIR" ]]; then
         warn "既存のバックアップ $BACKUP_DIR を上書きします"
@@ -172,8 +207,156 @@ prune_dir() {
     done
 }
 
+
+# ── --upgrade: 導入済みプロジェクトをテンプレートの版に追従させる ──
+sha256_of() {
+    if command -v shasum &>/dev/null; then shasum -a 256 "$1" | cut -d' ' -f1
+    elif command -v sha256sum &>/dev/null; then sha256sum "$1" | cut -d' ' -f1
+    else cksum "$1" | cut -d' ' -f1; fi
+}
+
+# keep リストに照らして、テンプレート側の相対パスを採用するか判定する
+keep_path() {
+    local rel="$1" second k
+    case "$rel" in
+        .claude/skills/*)
+            second="${rel#.claude/skills/}"; second="${second%%/*}"
+            [[ "${KEEP_SKILLS[0]:-}" == "*" ]] && return 0
+            for k in "${KEEP_SKILLS[@]}"; do [[ "$second" == "$k" ]] && return 0; done
+            return 1 ;;
+        .claude/agents/*)
+            second="${rel#.claude/agents/}"
+            [[ "${KEEP_AGENTS[0]:-}" == "*" || "$second" == "README.md" ]] && return 0
+            for k in "${KEEP_AGENTS[@]}"; do [[ "$second" == "$k" ]] && return 0; done
+            return 1 ;;
+        .claude/hooks/*)
+            second="${rel#.claude/hooks/}"
+            [[ "${KEEP_HOOKS[0]:-}" == "*" ]] && return 0
+            for k in "${KEEP_HOOKS[@]}"; do [[ "$second" == "$k" ]] && return 0; done
+            return 1 ;;
+        .claude/teams/*|.claude/workflows/*)
+            [[ "${#KEEP_TEAMS[@]}" -gt 0 ]] ;;
+        .claude/settings.minimal.json) [[ "$PROFILE" == "minimal" ]] ;;
+        .claude/settings.json) [[ "$PROFILE" != "minimal" ]] ;;
+        .claude/blueprint-manifest.txt) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+# テンプレート相対パス → ターゲット相対パス
+target_path() {
+    case "$1" in
+        .claude/CLAUDE.md) echo "CLAUDE.md" ;;
+        .claude/settings.minimal.json) echo ".claude/settings.json" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+# upgrade / manifest の対象になるテンプレート側の相対パス一覧(剪定適用後)
+template_files() {
+    local rel
+    {
+        (cd "$SCRIPT_DIR" && find .claude -type f | sed 's#^\./##')
+        for rel in AGENTS.md REVIEW.md constitution.md .mcp.json.template project-config.md; do
+            if [[ -f "$SCRIPT_DIR/$rel" ]]; then echo "$rel"; fi
+        done
+        (cd "$SCRIPT_DIR" && find .github -type f \( -name '*.template' -o -name '*.md' \) 2>/dev/null | sed 's#^\./##')
+    } | while IFS= read -r rel; do
+        if keep_path "$rel"; then echo "$rel"; fi
+    done | LC_ALL=C sort
+}
+
+# 導入時のファイルハッシュを記録する。--upgrade はこれと比べて「手を入れていない」ファイルだけ上書きする
+write_manifest() {   # <target-dir> <profile>
+    local rel tp
+    {
+        echo "# blueprint-manifest v1 — generated by setup.sh; used by --upgrade. Do not edit by hand"
+        echo "# version: ${BLUEPRINT_VERSION}"
+        echo "# commit: ${BLUEPRINT_COMMIT}"
+        echo "# profile: $2"
+        echo "# mirror: $MIRROR_LANG"
+        echo "# installed: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        template_files | while IFS= read -r rel; do
+            tp="$(target_path "$rel")"
+            echo "$(sha256_of "$SCRIPT_DIR/$rel")  $tp"
+        done
+    } > "$1/$MANIFEST_REL"
+}
+
+manifest_hash() {   # <manifest> <target-relative-path>
+    awk -v p="$2" '$1 !~ /^#/ && $2 == p {print $1; exit}' "$1"
+}
+
+run_upgrade() {
+    local mf="$TARGET_DIR/$MANIFEST_REL" rel tp th ch mh dst s found
+    local added=0 updated=0 unchanged=0 conflicts=0 skipped=0 removed=0
+    local -a seen=() conflict_lines=()
+    info "更新: ${INSTALLED_VERSION} → ${BLUEPRINT_VERSION}(${BLUEPRINT_COMMIT}、プロファイル: ${PROFILE})"
+    if [[ $DRY_RUN -eq 1 ]]; then warn "--dry-run: ファイルは変更しません"; fi
+    while IFS= read -r rel; do
+        tp="$(target_path "$rel")"
+        mh="$(manifest_hash "$mf" "$tp")"
+        if [[ "$tp" == "AGENTS.md" && -e "$TARGET_DIR/AGENTS.blueprint.md" ]]; then tp="AGENTS.blueprint.md"; fi
+        seen+=("$tp")
+        dst="$TARGET_DIR/$tp"
+        th="$(sha256_of "$SCRIPT_DIR/$rel")"
+        if [[ "$tp" == "project-config.md" ]]; then
+            if [[ -n "$mh" && "$mh" != "$th" ]]; then warn "project-config.md のテンプレートが変わっています(人間が記入するファイルなので上書きしません)。差分: diff ${SCRIPT_DIR}/project-config.md ${TARGET_DIR}/project-config.md"; fi
+            continue
+        fi
+        if [[ ! -e "$dst" ]]; then
+            if [[ -n "$mh" ]]; then
+                echo "  skip     $tp  (ローカルで削除済み。復活させるなら手でコピー)"; skipped=$((skipped + 1))
+            else
+                echo "  add      $tp"; added=$((added + 1))
+                if [[ $DRY_RUN -eq 0 ]]; then mkdir -p "$(dirname "$dst")"; cp "$SCRIPT_DIR/$rel" "$dst"; fi
+            fi
+            continue
+        fi
+        ch="$(sha256_of "$dst")"
+        if [[ "$ch" == "$th" ]]; then
+            unchanged=$((unchanged + 1))
+        elif [[ -n "$mh" && "$ch" == "$mh" ]]; then
+            echo "  update   $tp"; updated=$((updated + 1))
+            if [[ $DRY_RUN -eq 0 ]]; then cp "$SCRIPT_DIR/$rel" "$dst"; fi
+        else
+            echo "  conflict $tp  (手で変更あり。新版を横に置いた: $tp.blueprint-new)"; conflicts=$((conflicts + 1))
+            if [[ $DRY_RUN -eq 0 ]]; then cp "$SCRIPT_DIR/$rel" "$dst.blueprint-new"; fi
+            if [[ -n "$mh" ]]; then conflict_lines+=("$mh  $tp"); fi
+        fi
+    done < <(template_files)
+    while IFS= read -r tp; do
+        [[ -z "$tp" ]] && continue
+        found=0
+        for s in "${seen[@]}"; do [[ "$s" == "$tp" ]] && { found=1; break; }; done
+        if [[ $found -eq 0 && -e "$TARGET_DIR/$tp" ]]; then
+            echo "  removed  $tp  (テンプレートから削除された。不要なら手で消す)"; removed=$((removed + 1))
+        fi
+    done < <(awk '$1 !~ /^#/ {print $2}' "$mf")
+    if [[ $DRY_RUN -eq 0 ]]; then
+        write_manifest "$TARGET_DIR" "$PROFILE"
+        if [[ ${#conflict_lines[@]} -gt 0 ]]; then
+            awk -v list="$(printf '%s\n' "${conflict_lines[@]}")" '
+                BEGIN { n = split(list, a, "\n"); for (i = 1; i <= n; i++) { split(a[i], b, "  "); keep[b[2]] = b[1] } }
+                $1 !~ /^#/ && ($2 in keep) { print keep[$2] "  " $2; next }
+                { print }' "$mf" > "$mf.tmp" && mv "$mf.tmp" "$mf"
+        fi
+        chmod +x "$TARGET_DIR/.claude/hooks/"*.sh "$TARGET_DIR/.claude/scripts/"*.sh 2>/dev/null || true
+    fi
+    echo ""
+    info "更新完了: 追加 ${added} / 更新 ${updated} / 変更なし ${unchanged} / 競合 ${conflicts} / スキップ ${skipped} / テンプレートから削除 ${removed}"
+    if [[ ${conflicts} -gt 0 ]]; then warn "次: 競合は diff <path> <path>.blueprint-new で統合して .blueprint-new を消す。その後 Claude Code で /harness-refine を回す"; fi
+    return 0
+}
+
+# --upgrade はここで分岐する(以降の install 処理は走らない)
+if [[ "$MODE" == "upgrade" ]]; then
+    run_upgrade
+    exit 0
+fi
+
 # ── ファイルコピー ──────────────────────────────────────────
-info "ブループリントをコピー中... (プロファイル: $PROFILE)"
+info "ブループリントをコピー中... (プロファイル: ${PROFILE})"
 
 cp -r "$SCRIPT_DIR/.claude"          "$TARGET_DIR/.claude"
 cp -r "$SCRIPT_DIR/docs"             "$TARGET_DIR/docs"
@@ -264,6 +447,7 @@ fi
 # ── フックスクリプトを実行可能に設定 ─────────────────────────
 if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
     chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
+    chmod +x "$TARGET_DIR/.claude/scripts/"*.sh 2>/dev/null || true
     info "フックスクリプトを実行可能に設定"
 fi
 
@@ -321,9 +505,13 @@ for entry in "${GITIGNORE_ENTRIES[@]}"; do
     fi
 done
 
+# ── 導入版の記録(--upgrade の基準) ───────────────────────
+write_manifest "$TARGET_DIR" "$PROFILE"
+info "導入版を記録: .claude/blueprint-manifest.txt(更新は bash setup.sh <dir> --upgrade)"
+
 # ── 完了メッセージ ──────────────────────────────────────────
 echo ""
-info "セットアップ完了! (プロファイル: $PROFILE)"
+info "セットアップ完了! (プロファイル: ${PROFILE})"
 echo ""
 echo "次のステップ:"
 echo "  1. project-config.md を記入（最低 §1〜§3, §6）"

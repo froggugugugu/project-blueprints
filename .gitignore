@@ -13,3 +13,6 @@
 # Claude Code internal scheduling lock (per-machine)
 # Anchored to repo root only.
 /.claude/scheduled_tasks.lock
+
+# Skill eval runs (raw results, workspaces); committed baselines live in evals/baseline/
+/evals/results/

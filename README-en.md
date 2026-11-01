@@ -135,6 +135,7 @@ After editing anything under `.claude/`, run the gate before committing.
 bash scripts/validate-harness.sh            # both mirrors and their structural parity
 bash scripts/validate-harness.sh --test     # negative tests for the validator itself
 bash scripts/validate-harness.sh --hooks    # functional tests for the hooks
+bash scripts/validate-harness.sh --setup    # functional tests for setup.sh install / --upgrade
 bash scripts/validate-harness.sh --online   # resolve the npm packages in .mcp.json
 ```
 
@@ -147,9 +148,14 @@ It checks the following deterministically, with no LLM involved.
 - The `@AGENTS.md` import in `CLAUDE.md`, line-start `@` in `AGENTS.md`, that every `project-config.md` § either file cites exists, and the combined line count of both
 - `scope-guard.sh` registration on write-capable agents
 - The hash of `constitution.md` and the file layout parity of both mirrors
+- Version pins of the npm packages in `.mcp.json.template`, and `VERSION` matching the newest release heading in the CHANGELOG
 
-CI (`.github/workflows/validate-harness.yml`) runs the same thing on push and pull request.
+CI (`.github/workflows/validate-harness.yml`) runs the same thing on push and pull request, and branch protection on `main` requires that check.
 `/harness-refine` is the LLM-side counterpart and runs after this gate passes.
+
+Whether a skill actually changes behaviour is measured by the LLM-side gate `scripts/run_skill_evals.py`. It runs each skill's `evals/evals.json`
+in a throwaway project built by `setup.sh`, once with the skill and once without, and a separate tool-less `claude -p` grades every assertion.
+Results live in [`evals/`](evals/) (method and baseline), and `.github/workflows/skill-evals.yml` checks weekly for regressions against that baseline.
 
 ---
 
@@ -173,6 +179,40 @@ CI (`.github/workflows/validate-harness.yml`) runs the same thing on push and pu
 ```
 
 To add MCP servers, `cp .mcp.json.template .mcp.json`, fill it in and commit it (shared across the project).
+
+---
+
+## Measurement (evidence)
+
+Whether a skill changes behaviour is held as numbers: the same request run with and without the skill, graded per assertion (`scripts/run_skill_evals.py`).
+2026-11-01, `sonnet` (grader `sonnet`), Claude Code 2.1.314, JP mirror, 2 cases × 2 arms per skill = 28 runs, $5.45 total. **with skill 39/55 (70.9%), without 30/55 (54.5%)**.
+
+| skill | with skill | cases all-pass | skill invoked | without skill | Δ pts |
+| --- | --- | --- | --- | --- | --- |
+| `adr` | 6/7 (85.7%) | 1/2 | 2/2 | 4/7 (57.1%) | +28.6 |
+| `architecture` | 5/8 (62.5%) | 1/2 | 2/2 | 7/8 (87.5%) | -25.0 |
+| `brainstorm` | 8/8 (100.0%) | 2/2 | 1/2 | 4/8 (50.0%) | +50.0 |
+| `code-review` | 3/8 (37.5%) | 0/2 | 2/2 | 1/8 (12.5%) | +25.0 |
+| `implementing-features` | 3/8 (37.5%) | 0/2 | 1/2 | 1/8 (12.5%) | +25.0 |
+| `plan` | 6/8 (75.0%) | 1/2 | 1/2 | 5/8 (62.5%) | +12.5 |
+| `prd` | 8/8 (100.0%) | 2/2 | 2/2 | 8/8 (100.0%) | +0.0 |
+
+Failed assertions and candidate fixes: [`evals/README.md`](evals/README.md). Land one number-moving change at a time and confirm it with the same eval.
+
+---
+
+## Versions and upgrades
+
+Releases follow SemVer (`VERSION` + `CHANGELOG.md` + git tag + GitHub Release). `bash scripts/release.sh prepare <x.y.z>` aligns VERSION and
+the CHANGELOG on a branch; after the PR merges, `bash scripts/release.sh publish <x.y.z>` creates the tag and the Release. The validator
+fails when VERSION and the CHANGELOG disagree.
+
+An installed project follows along with `bash setup.sh <dir> --upgrade` (`--dry-run` prints the plan). It compares against the
+`.claude/blueprint-manifest.txt` written at install time (version plus a hash per file), overwrites only untouched files and places
+`<path>.blueprint-new` next to modified ones. `project-config.md`, `docs/`, `input/` and `output/` are never touched. See "Upgrading" in
+[`project-blueprint-en/README.md`](project-blueprint-en/README.md).
+
+Vulnerability scope and reporting: [`SECURITY.md`](SECURITY.md).
 
 ---
 
@@ -211,6 +251,8 @@ This is a project scaffold rather than a general-purpose tool collection, and
 - [`project-blueprint-en/.claude/skills/`](project-blueprint-en/.claude/skills/) — SKILL.md for all 17 skills
 - [`constitution.md`](constitution.md) — the seven principles, with the protocol for changing them
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes (SemVer + Keep a Changelog)
+- [`evals/README.md`](evals/README.md) — how the skill evals run, and the baseline (with / without pass rates)
+- [`SECURITY.md`](SECURITY.md) — security policy (scope, reporting, supported versions)
 
 ---
 
