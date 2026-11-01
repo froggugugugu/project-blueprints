@@ -68,6 +68,7 @@ Arguments are optional. When omitted, the PL checks `output/tasks/` and identifi
 ### Reviewer
 
 - Conduct code review after developer implementation completes
+- First run the `verifier` agent to check the diff against the TASK's acceptance criteria; return any gap to the developer (once per task)
 - Skills used: `/code-review`
 - Follow review perspectives, checklists, and report formats from the skill definition
 - Send specific feedback to the developer

@@ -268,6 +268,7 @@ project-root/
 | `doc-synchronizer` | Developer | Developer | — | — | — | Refactorer |
 | `doc-writer` | Analyst/Reviewer | — | Reviewer | Analyst | — | — |
 | `test-writer` | Developer/Tester | Developer | Tester | — | — | Tester |
+| `verifier` | Reviewer | Reviewer | Reviewer | — | — | Reviewer |
 
 ### 典型 dispatch 例
 
@@ -276,6 +277,7 @@ project-root/
 - **TEAM_FEATURE 実装中**: Developer が未知の依存を触る前に `researcher` で公式仕様を確認(車輪の再発明防止)
 - **TEAM_QA**: Security 役が `security-reviewer` agent + `researcher`(CVE 最新情報)を組み合わせて監査
 - **TEAM_PLANNING**: Architect が `researcher` で複数候補フレームワークの比較情報を収集 → 設計判断の根拠に
+- **実装ゲート(全チーム)**: Reviewer が `/code-review` の前に `verifier` を 1 回呼び、差分を TASK の受け入れ条件と照合する(gap が無いことを確かめてからバグ探索に入る)
 
 agent と team は層が異なる(三層分離原則)。team 内のメンバーが必要時に単発で呼び出す形を取り、agent から team を起動するような循環は禁止。
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# scan-harness.sh — PreToolUse hook (Skill matcher) — Self-SAST + high-risk skill block
+# scan-harness.sh — PreToolUse(Skill) / UserPromptExpansion / FileChanged hook — self-SAST + high-risk skill suppression + constitution watch
 #
 # Role:
 #   1. Detect secrets / drift in the harness itself (.claude/, .mcp.json*, settings.json)
@@ -14,7 +14,8 @@
 #   - standard: warn-only on detection (non-blocking, default)
 #   - strict:   block on detection / on high-risk skill launch
 #
-# Input:  JSON via stdin {"tool_name":"Skill","tool_input":{"skill":"..."}}
+# Input:  JSON via stdin — PreToolUse {"tool_input":{"skill":...}} / UserPromptExpansion {"command_name":...} /
+#         FileChanged {"file_path":...} (the `filechanged` argument selects the same path)
 # Output: exit 0 = allow / exit 2 = block (strict, or high-risk skill)
 # Policy: fail-open (pass through if parsing fails)
 # ==============================================================================
@@ -42,10 +43,71 @@ PROFILE="${BLUEPRINT_HOOK_PROFILE:-standard}"
 [[ "$PROFILE" == "minimal" ]] && exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
+MODE="${1:-}"
 
-# ── 1. Extract tool_input.skill ───────────────────────────────────────
-SKILL=""
+# ── 0. Event detection (PreToolUse: Skill / UserPromptExpansion / FileChanged) ──
+# Typing `/skill` directly bypasses PreToolUse(Skill) (official spec). UserPromptExpansion
+# gets the same check; FileChanged only re-verifies the constitution.md hash.
+EVENT=""
 if command -v jq &>/dev/null; then
+    EVENT=$(printf '%s' "$INPUT" | jq -r '.hook_event_name // empty' 2>/dev/null)
+else
+    EVENT=$(printf '%s' "$INPUT" | sed -n 's/.*"hook_event_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+fi
+[[ "$MODE" == "filechanged" ]] && EVENT="FileChanged"
+
+PROJECT="${CLAUDE_PROJECT_DIR:-.}"
+
+# Cross-platform sha256: prefer sha256sum (GNU), fall back to shasum -a 256 (macOS)
+sha256_of() {
+    if command -v sha256sum &>/dev/null; then
+        sha256sum "$1" | cut -d' ' -f1
+    elif command -v shasum &>/dev/null; then
+        shasum -a 256 "$1" | cut -d' ' -f1
+    else
+        echo ""  # neither available; fail-open below
+    fi
+}
+
+# Compare constitution.md against its recorded hash. Returns 0 = drift (tampered) / 1 = match or not checkable
+constitution_drift() {
+    local const="$PROJECT/constitution.md" hash_file="$PROJECT/.claude/.constitution.sha256" current expected
+    [[ -f "$const" && -f "$hash_file" ]] || return 1
+    current=$(sha256_of "$const")
+    expected=$(cat "$hash_file")
+    [[ -n "$current" && "$current" != "$expected" ]]
+}
+
+# ── 0a. FileChanged (watching constitution.md) — cannot block; stderr (for the user) + log only ──
+# protect-files.sh stops Edit / Write, but a Bash `sed -i` or an external editor gets through.
+# The file watcher catches those and records them under testreport/config-changes/ (same place as config-guard.sh).
+if [[ "$EVENT" == "FileChanged" ]]; then
+    if constitution_drift; then
+        echo "🛡️  scan-harness: constitution.md changed on disk (hash mismatch) through something other than the Edit tool (sed -i, an external editor, ...). If intended, update .claude/.constitution.sha256; if not, inspect with git diff constitution.md" >&2
+        LOG_DIR="$PROJECT/testreport/config-changes"
+        if command -v jq &>/dev/null && mkdir -p "$LOG_DIR" 2>/dev/null; then
+            SID="$(printf '%s' "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null)"
+            SID="$(printf '%s' "$SID" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-8)"
+            jq -nc --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg file "$PROJECT/constitution.md" \
+                '{ts: $ts, source: "file_watch", file: $file, decision: "warn", violations: ["constitution.md hash mismatch"]}' \
+                >> "$LOG_DIR/${SID:-unknown}.jsonl" 2>/dev/null || true
+        fi
+    fi
+    exit 0
+fi
+
+# ── 1. Extract the skill name (PreToolUse: tool_input.skill / UserPromptExpansion: command_name) ──
+SKILL=""
+if [[ "$EVENT" == "UserPromptExpansion" ]]; then
+    if command -v jq &>/dev/null; then
+        EXP_TYPE=$(printf '%s' "$INPUT" | jq -r '.expansion_type // "slash_command"' 2>/dev/null)
+        [[ "$EXP_TYPE" == "slash_command" ]] || exit 0   # MCP prompt expansions are out of scope
+        SKILL=$(printf '%s' "$INPUT" | jq -r '.command_name // empty' 2>/dev/null)
+    else
+        SKILL=$(printf '%s' "$INPUT" | sed -n 's/.*"command_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+    fi
+    SKILL="${SKILL##*:}"   # plugin:name → name
+elif command -v jq &>/dev/null; then
     SKILL=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // .tool_input.name // empty' 2>/dev/null)
 else
     # sed fallback when jq is absent: prevents deploy-block bypass
@@ -73,29 +135,11 @@ case "$SKILL" in
         ;;
 esac
 
-PROJECT="${CLAUDE_PROJECT_DIR:-.}"
 ISSUES=()
 
-# Cross-platform sha256: prefer sha256sum (GNU), fall back to shasum -a 256 (macOS)
-sha256_of() {
-    if command -v sha256sum &>/dev/null; then
-        sha256sum "$1" | cut -d' ' -f1
-    elif command -v shasum &>/dev/null; then
-        shasum -a 256 "$1" | cut -d' ' -f1
-    else
-        echo ""  # neither available; fail-open below
-    fi
-}
-
 # 3a. Constitution hash monitoring (always, lightweight, deterministic)
-CONST="$PROJECT/constitution.md"
-HASH_FILE="$PROJECT/.claude/.constitution.sha256"
-if [[ -f "$CONST" && -f "$HASH_FILE" ]]; then
-    CURRENT=$(sha256_of "$CONST")
-    EXPECTED=$(cat "$HASH_FILE")
-    if [[ -n "$CURRENT" && "$CURRENT" != "$EXPECTED" ]]; then
-        ISSUES+=("constitution.md has been modified (hash mismatch). If this change is intentional, update .claude/.constitution.sha256")
-    fi
+if constitution_drift; then
+    ISSUES+=("constitution.md has been modified (hash mismatch). If this change is intentional, update .claude/.constitution.sha256")
 fi
 
 # 3b. Detect deny-rule weakening in settings.local.json (always, lightweight)
@@ -152,8 +196,13 @@ case "$PROFILE" in
         exit 2
         ;;
     standard|*)
-        # non-blocking: tell Claude via stdout additionalContext
-        emit_context PreToolUse "$SUMMARY"
+        # non-blocking: tell Claude through additionalContext on stdout
+        # (on UserPromptExpansion plain-text stdout is passed as context as is — official spec)
+        if [[ "$EVENT" == "UserPromptExpansion" ]]; then
+            printf '%s\n' "$SUMMARY"
+        else
+            emit_context PreToolUse "$SUMMARY"
+        fi
         exit 0
         ;;
 esac

@@ -5,13 +5,15 @@ Rules that are scattered across `AGENTS.md` / `CLAUDE.md` sections are consolida
 
 ---
 
-## Hook inventory (17 scripts / 20 settings registrations + 3 agent-frontmatter registrations)
+## Hook inventory (18 scripts / 27 settings registrations + 3 agent-frontmatter registrations)
 
 | Hook | Event | Target | Behavior | Description |
 | ---- | ----- | ------ | -------- | ----------- |
 | `safety-check.sh` | PreToolUse | Bash | block | Detects and blocks dangerous shell commands |
 | `protect-files.sh` | PreToolUse | Edit\|Write\|NotebookEdit | block | Blocks writes to secret and toolchain config files |
 | `scan-harness.sh` | PreToolUse | Skill | warn/block | Self-SAST of the harness (secret leakage, constitution tampering, deny-rule weakening) |
+| `scan-harness.sh` | **UserPromptExpansion** | `*` (slash commands) | warn/block | Typing `/skill` directly bypasses PreToolUse(Skill), so the same check (high-risk skill suppression, self-SAST) runs before the expansion |
+| `scan-harness.sh filechanged` | **FileChanged** | `constitution.md` | warn + log | Detects changes to `constitution.md` made outside the Edit tool (`sed -i`, an external editor) through the file watcher (cannot block; `testreport/config-changes/`) |
 | `user-prompt-submit.sh` | UserPromptSubmit | — | warn/block | Detects secret patterns |
 | `session-start.sh` | SessionStart | `startup` etc. / **`compact`** | warn + context | At startup checks project-config.md / docs/ / settings.local.json and injects PROGRESS.md; right after a compact re-injects the core rules immediately |
 | `session-end.sh` | SessionEnd | — | observe | Appends a session summary to `output/reports/sessions/<date>.md` |
@@ -20,15 +22,35 @@ Rules that are scattered across `AGENTS.md` / `CLAUDE.md` sections are consolida
 | `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | observe | Records timestamps of source edits / verification commands (`testreport/.verify/`) |
 | `verify-gate.sh gate` | **Stop** | — | warn/send back | If no verification command ran after the last edit: standard = warning / strict = sent back once (verification gate) |
 | `verify-gate.sh task` | **TaskCompleted** | — | warn/refuse | Same condition on the completion mark: standard = warning / strict = exit 2 refuses it (mechanical enforcement of quality gate ③) |
+| `verify-gate.sh teammate` | **TeammateIdle** | — | warn/refuse | Same condition right before an agent-team teammate goes idle (strict = exit 2 keeps it working) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | observe | Records auto mode classifier denials (`testreport/denials/`) |
+| `permission-denied-log.sh request` | **PermissionRequest** | `*` | observe | Records calls that raised a permission dialog, or were auto-denied in an unattended run (dontAsk, background subagents), as `kind=request`. Input for new allow rules |
 | `config-guard.sh` | **ConfigChange** | `*` | log + block | Logs settings changes and stops `disableAllHooks`, a deny list in local settings, or the removal of a Layer 1 blocking hook from applying to the session (`testreport/config-changes/`) |
 | `scope-guard.sh <scope>` | PreToolUse (**agent frontmatter**) | Edit\|Write\|NotebookEdit | block | Stops out-of-scope writes by write-capable subagents (doc-synchronizer=docs / doc-writer=output / test-writer=tests) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | observe | Structured error log on tool failure (`testreport/failures/`) |
+| `post-failure-log.sh` | **StopFailure** | `*` | observe | Records a turn ended by an API error (rate_limit / overloaded / billing_error ...) as `tool=api:<error>` |
+| `instructions-log.sh` | **InstructionsLoaded** | `*` | observe | Records each CLAUDE.md / rule entering the context with its `load_reason` (`testreport/instructions/`). The measured input for the rule inventory |
 | `subagent-audit.sh` | **SubagentStart** | — | observe + context | Logs the launch and injects guardrails into the subagent |
 | `subagent-audit.sh` | SubagentStop | — | observe | Logs completion (`testreport/agents/`) |
 | `pre-compact-backup.sh` | PreCompact | — | observe | Backs up the transcript before compaction (`testreport/transcripts/`) |
 | `post-compact-restore.sh` | **PostCompact** | — | observe | Preserves the post-compact summary under `testreport/transcripts/` |
-| `notify-claude.sh` | Stop / Notification | — | notify (async) | External notification on task completion (ntfy) |
+| `notify-claude.sh` | Stop / Notification / **StopFailure** | — | notify (async) | External notification on completion, input needed, and API-error stops (ntfy) |
+
+### Fail-closed hooks (`onFailure: block`)
+
+Hooks are **fail-open** by default: when the script cannot start (wrong path, missing execute bit), times out, or exits with an
+unexpected code, the action goes ahead. A broken safety hook is the same as no hook. The four blocking hooks carry
+`onFailure: "block"` (v2.1.295), so a failure of the hook itself stops the action (fail-closed):
+
+| Hook | Registered in | On hook failure |
+| ---- | ------------- | --------------- |
+| `safety-check.sh` / `protect-files.sh` | `settings.json` PreToolUse | the tool call is blocked |
+| `config-guard.sh` | `settings.json` ConfigChange | the settings change is not applied to the session |
+| `scope-guard.sh` | agent frontmatter (3 agents) | the subagent's write is blocked |
+
+The scripts' internal fail-open (exit 0 when jq is missing or parsing fails) stays. `onFailure` covers "the hook could not run";
+"the hook ran but could not decide" still lets the work continue. Observation and warning hooks do not get it (a failed log is
+no reason to stop work). `validate-harness.sh` warns when any of the four lacks `onFailure: block`.
 
 ### Compaction recovery (the SessionStart `compact` source)
 
@@ -48,6 +70,10 @@ SessionStart → session-start.sh        on source == "compact", re-injects the 
 > rules without `paths:` are re-injected from disk automatically; rules with `paths:` and skill
 > bodies (capped at 5,000 tokens per skill) fade.
 
+> **Idle compaction** (v2.1.299+): a conversation over 200K tokens left idle for about 54 minutes is compacted before its
+> prompt cache expires. Update PROGRESS.md before stepping away and the re-injection above works the same way when you return.
+> Turn it off with `"idleCompaction": false`.
+
 ### Verification gate (Stop hook)
 
 Implements the official best practice "give Claude a way to verify its work and gate the
@@ -65,6 +91,8 @@ Stop        → verify-gate.sh gate    if no verification command ran after the 
   `eslint` / `biome` / `playwright test` / `make test` and so on (`VERIFY_PATTERNS` in the script; extend per project)
 - Not counted as source: edits under `docs/` `output/` `input/` `.claude/` `.github/` and `.md` / `.json` / `.yaml` / `.toml` files
 - `stop_hook_active: true` (after our own block) and a non-empty `background_tasks` (paused) always pass (pitfalls #27)
+- strict sends Claude back only once. Claude Code itself overrides a Stop / SubagentStop hook after 8 consecutive blocks
+  (`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`; `0` removes the cap)
 - For a flexible, model-judged completion condition inside one conversation, combine with `/goal <condition>`
 - Regression test: `bash scripts/validate-harness.sh --hooks` feeds hook JSON to every hook and checks exit codes / output (also runs in CI)
 
@@ -113,6 +141,26 @@ their **durability differs sharply**.
 - Routines (`/schedule`) run at a minimum interval of one hour and without permission prompts (write tools of included connectors run unconfirmed).
   Include the fewest repositories, connectors and environment; a green status is not task success, so read the transcript
 
+### Control inventory (against harness rot)
+
+Every harness component encodes one assumption about what the model cannot yet do on its own. As model generations advance the
+assumptions go stale, and leftover instructions not only cost context but contradict each other and stop being followed.
+`/harness-refine` Round 0 takes this inventory:
+
+| Kind | Evidence | Pruning rule |
+| ---- | -------- | ------------ |
+| Instructions (CLAUDE.md / rules / skill bodies) | `testreport/instructions/` (load record), `/doctor prompt-audit` (older-model phrasing, dangling references, contradictions), `/skill-doctor` (unused skills and listing cost) | Delete a `paths:` rule that neither loaded nor fired in the last N sessions, and any line whose removal changes nothing |
+| Enforcement (hooks / deny / ask) | `testreport/denials/` (denials and dialogs), `testreport/config-changes/`, `testreport/failures/` | **Keep even when it never fires** (safety and irreversible-operation rules only; delete hooks that encode preferences). Record the originating pitfall number or incident here; remove only what a spec change made meaningless |
+| Verification (verify-gate / evals) | pass rates under `testreport/evals/`, `validate-harness.sh --hooks` | Re-run the same evals on a new model; if they hold, cut the redundant verification prose in the instructions |
+
+Rules: every enforcement has an "incident → control" record (its `pitfalls.md` number). Every instruction is re-judged by
+"would removing it make Claude make mistakes?". After a model update, remove one component at a time and confirm with evals
+(removing several at once hides the cause).
+
+Official rule of thumb: use enforcement (hooks / deny) only for a rule with zero exceptions, and delete hooks that encode a
+preference so Claude decides again. This template has 5 blocking hooks plus the deny / ask rules; everything else observes or
+notifies. Near forty enforced items, most are probably preferences.
+
 ### Organization rollout (managed settings / OpenTelemetry)
 
 Use managed settings to pin policy that individuals cannot override. The bundled
@@ -121,11 +169,22 @@ OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY` + an OTLP exporter) / `requiredMin
 This template's `testreport/` logs are machine-local, so aggregate team-wide usage and skill adoption through OTel
 (`OTEL_LOG_TOOL_DETAILS=1` records skill names so unused skills can be identified).
 
+- **Cross-session messaging**: another session on the same machine can deliver text that reads like an instruction. `settings.json`
+  sets `isolatePeerMachines: true` (confirm before any message leaves the machine; honored from project settings). In CI and
+  unattended runs stop both directions with `crossSessionInbound: "refuse"` plus `permissions.deny` on `SendMessage` / `ListAgents`
+  (example in `managed-settings.example.json`)
+- **Guardrail counts over OpenTelemetry**: `claude_code.safety_event` (v2.1.307) is no longer sent since v2.1.312 (the docs still
+  describe it). Take fleet-wide hit rates from `claude_code.tool_decision` (`decision: reject`, `source: config | hook | user`,
+  auto mode verdicts in `classifier_verdict`) and find which rule fired in this template's `testreport/denials/` /
+  `config-changes/` / `failures/` JSONL
+- **Agent memory is code under review**: `memory: project` learnings are committed under `.claude/agent-memory/<name>/` and later
+  subagents read them as instructions. Treat a PR that touches that directory as an instruction change (prompt injection via memory)
+
 ### Hook profile switch
 
 `BLUEPRINT_HOOK_PROFILE` switches behavior
 (honored by `user-prompt-submit.sh`, `session-end.sh`, `scan-harness.sh`, `post-compact-restore.sh`, `subagent-audit.sh`,
-`verify-gate.sh`, `permission-denied-log.sh`, `config-guard.sh`; only `minimal` turns `config-guard.sh` off, standard and strict behave the same):
+`verify-gate.sh`, `permission-denied-log.sh`, `config-guard.sh`, `instructions-log.sh`; only `minimal` turns `config-guard.sh` off, standard and strict behave the same):
 
 | Profile | Use for | Behavior |
 | ------- | ------- | -------- |
@@ -151,7 +210,8 @@ Switching through `.envrc` or `direnv` is recommended.
 - Hooks stay active under `--dangerously-skip-permissions` (defense in depth)
 - **Claude Code overrides a Stop hook after 8 consecutive blocks**. Check `stop_hook_active` and block only once
 - Extra handler fields: `if` (narrow the trigger with permission-rule syntax, e.g. `"if": "Bash(git *)"`; tool events only and best-effort, so never for safety) /
-  `once` (removed after the first success; skill-frontmatter hooks only) / `asyncRewake` (runs in the background and wakes Claude on exit 2) / `args` (exec form) / `statusMessage`
+  `once` (removed after the first success; skill-frontmatter hooks only) / `asyncRewake` (runs in the background and wakes Claude on exit 2) / `args` (exec form) / `statusMessage` /
+  `onFailure` (`block` stops the action when the hook itself fails; see "Fail-closed hooks" above)
 
 ### Decision control by event (excerpt)
 
@@ -161,6 +221,7 @@ Switching through `.envrc` or `direnv` is recommended.
 | `UserPromptSubmit` / `PostToolUse` / `PostToolUseFailure` / `Stop` / `SubagentStop` / `PreCompact` | Top-level `decision: "block"` + `reason` |
 | `SessionStart` / `Setup` / `SubagentStart` | **Context only** (`additionalContext`). Cannot block |
 | `ConfigChange` | Top-level `decision: "block"` or exit 2 stops the change from applying (not for `policy_settings`; the block message is shown to nobody) |
+| `UserPromptExpansion` / `TeammateIdle` / `TaskCompleted` | exit 2 blocks (cancels the expansion / refuses going idle / refuses the completion mark). `UserPromptExpansion` also passes plain-text stdout as context |
 | `PostCompact` / `SessionEnd` / `Notification` / `FileChanged` etc. | **No control**. Side effects such as logging and cleanup only |
 
 ### Choosing a hook type
@@ -184,14 +245,9 @@ Events this template does not use but a project can add:
 | Event | When it fires | Example use |
 | ----- | ------------- | ----------- |
 | `Setup` | `--init-only` / `-p --init` | Dependency install in CI, scheduled cleanup |
-| `InstructionsLoaded` | CLAUDE.md / rules loaded | Observability of rule application |
-| `PermissionRequest` | A permission dialog appears | Automatic allow/deny by org policy |
 | `PreModelSwitch` / `PostModelSwitch` | Before / after a model switch via `/model` etc. | Confirming or auditing switches to expensive models (a switch invalidates the cache) |
 | `PostToolBatch` | A parallel tool batch completes | Per-batch verification |
 | `TaskCreated` | Task created (on Claude 5-family models the Task tools need `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`, which this template sets) | Enforcing task naming |
-| `TeammateIdle` | A teammate goes idle | Quality gates for agent teams |
-| `StopFailure` | A turn ends in an error | Measuring failure rate |
-| `FileChanged` | A file change is detected | Syncing with external tooling |
 | `WorktreeCreate` / `WorktreeRemove` | Worktree created / removed | Setting up isolated environments |
 | `CwdChanged` / `DirectoryAdded` | Working directory changed or added | Auditing environment drift (reloading direnv etc.) |
 | `MessageDisplay` | Assistant output is rendered | Masking displayed content |
@@ -324,14 +380,18 @@ Layer 0: OS sandbox (optional / opt-in via settings.local.json)
   ↓
 Layer 1: Hooks (active even under --dangerously-skip-permissions)
    ├─ PreToolUse: safety-check / protect-files / scan-harness (Skill)
-   ├─ PostToolUse: commit-quality / console-warn
-   ├─ PostToolUseFailure: post-failure-log
+   ├─ UserPromptExpansion: scan-harness (direct /skill input)
+   ├─ PostToolUse: commit-quality / console-warn / verify-gate (track)
+   ├─ PostToolUseFailure / StopFailure: post-failure-log
+   ├─ PermissionRequest / PermissionDenied: permission-denied-log
    ├─ ConfigChange: config-guard (refuses to apply settings changes that weaken the guardrails)
+   ├─ FileChanged (constitution.md): scan-harness (detects on-disk tampering)
    ├─ UserPromptSubmit: user-prompt-submit
-   ├─ SessionStart / SessionEnd: session-start / session-end
+   ├─ SessionStart / SessionEnd / InstructionsLoaded: session-start / session-end / instructions-log
    ├─ SubagentStart / SubagentStop: subagent-audit
    ├─ PreCompact / PostCompact: pre-compact-backup / post-compact-restore
-   └─ Stop / Notification: notify-claude (async)
+   ├─ Stop / TaskCompleted / TeammateIdle: verify-gate (verification gate)
+   └─ Stop / StopFailure / Notification: notify-claude (async)
   ↓
 Layer 2: Deny / Ask rules (settings.json — shared by the team)
    ├─ deny: unconditionally blocks destructive operations and secret reads
@@ -344,9 +404,9 @@ env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 (no agent nesting = constitution �
        CLAUDE_CODE_ENABLE_TODO_TOOLS=1 (prerequisite of the TaskCompleted gate; absent by default on Claude 5-family models)
 ```
 
-> Layer 1 contains blocking hooks (`safety-check.sh`, `protect-files.sh`, `scan-harness.sh`, `config-guard.sh`),
-> observation hooks (`subagent-audit.sh`, `pre-compact-backup.sh`, `post-compact-restore.sh`,
-> `post-failure-log.sh`, `session-end.sh`), warning hooks (`commit-quality.sh`,
+> Layer 1 contains blocking hooks (`safety-check.sh`, `protect-files.sh`, `scan-harness.sh`, `config-guard.sh`, `scope-guard.sh`;
+> fail-closed through `onFailure: block`), observation hooks (`subagent-audit.sh`, `pre-compact-backup.sh`, `post-compact-restore.sh`,
+> `post-failure-log.sh`, `permission-denied-log.sh`, `instructions-log.sh`, `session-end.sh`), warning hooks (`commit-quality.sh`,
 > `console-warn.sh`, `user-prompt-submit.sh`) and notification hooks (`notify-claude.sh`).
 > The observation and notification hooks never block, but they keep recording and
 > notifying under `--dangerously-skip-permissions`, which makes them part of the defense.
@@ -354,6 +414,10 @@ env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 (no agent nesting = constitution �
 - Layer 0 is off by default. Enable it for air-gapped work or projects that execute external code
 - Layer 1 is always active and is the most reliable layer
 - Layer 2 applies automatically in normal mode; `ask` also applies under `acceptEdits` / `bypassPermissions`
+- Optional Layer 2 reinforcement: `permissions.blockReadsOutsideWorkingDirectories` and `blockWritesOutsideWorkingDirectories`
+  (v2.1.314) refuse reads and writes outside the working directories in every permission mode (a `true` cannot be lifted by
+  another settings file). Example in `managed-settings.example.json`; to try it personally, see `_comment_working_dir_fence` in
+  `settings.local.json.template`
 - Layer 3 holds project-specific allow rules (configured from the template)
 
 ### Enabling Layer 0 (optional)

@@ -10,7 +10,8 @@
 #        - disableAllHooks: true(フック群の一括停止)
 #        - settings.local.json に permissions.deny を定義(共有 deny の上書き。空配列も含む)
 #        - .claude/settings.json から Layer 1 のブロック系フック
-#          (safety-check.sh / protect-files.sh)が消える
+#          (safety-check.sh / protect-files.sh)が消える、またはその登録から
+#          onFailure: block が消える(フェイルオープン化)
 #
 # 公式仕様:
 #   - ConfigChange は exit 2 か {"decision":"block"} で変更の適用を止められる
@@ -56,6 +57,8 @@ if [[ ( "$SOURCE" == "project_settings" || "$SOURCE" == "local_settings" ) && -n
             for guard in safety-check.sh protect-files.sh; do
                 if ! jq -e --arg g "$guard" '[.hooks.PreToolUse[]?.hooks[]?.command // "" | select(contains($g))] | length > 0' "$FILE" >/dev/null 2>&1; then
                     VIOLATIONS+=("PreToolUse から $guard が消えています(Layer 1 のブロック系フック)")
+                elif ! jq -e --arg g "$guard" '[.hooks.PreToolUse[]?.hooks[]? | select((.command // "") | contains($g)) | select(.onFailure == "block")] | length > 0' "$FILE" >/dev/null 2>&1; then
+                    VIOLATIONS+=("$guard の登録から onFailure: block が消えています(フックが起動できないとき操作が素通りする)")
                 fi
             done
         fi

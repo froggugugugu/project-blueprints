@@ -16,8 +16,9 @@ Claude Code は各 agent の `description` フィールドを解析して自動�
 | `doc-synchronizer` | `docs/` 配下の**既存**ファイル同期 | `haiku` | low | Read / Edit / Write / Grep / Glob | `docs/` のみ |
 | `doc-writer` | `output/` 配下に**新規**ドキュメント執筆 | `sonnet` | medium | Read / Edit / Write / Grep / Glob | `output/` のみ |
 | `test-writer` | ユニット・E2E テスト作成 | `sonnet` | medium | Read / Edit / Write / Grep / Glob / Bash | テストファイルのみ |
+| `verifier` | 完了直前の仕様照合(差分 × 受け入れ条件 × 検証結果) | `sonnet` | high | Read / Grep / Glob / Bash | なし |
 
-全 agent に `memory: project` と `maxTurns` を設定済み(暴走防止 + セッションをまたいだ学習)。
+全 agent に `maxTurns` を設定済み(暴走防止)。`verifier` 以外は `memory: project`(セッションをまたいだ学習。verifier は判定の持ち越しを避けるため持たない)。
 
 ## agent vs team vs skill の使い分け
 
@@ -49,7 +50,7 @@ Agent({
 各 agent の `tools` フィールドは**役割に必要な最小セット**に絞る。
 
 - 探索系（`explorer`, `planner`）は書き込みを一切持たない
-- 監査系は読取中心。Bash を持つのは計測コマンド実行が必要な `performance-analyst` のみ（`security-reviewer` は完全読み取り専用）
+- 監査系は読取中心。Bash を持つのは計測コマンドを実行する `performance-analyst` と、検証コマンドを自分で走らせる `verifier` のみ（`security-reviewer` は完全読み取り専用）
 - 書き込み系（`doc-synchronizer`, `doc-writer`, `test-writer`）は対象パスを役割でスコープする
 - `doc-synchronizer` / `doc-writer` は `permissionMode: acceptEdits` で権限確認を省く。代わりに frontmatter の
   `hooks.PreToolUse` に `scope-guard.sh docs` / `scope-guard.sh output` を登録し、範囲外への書込を exit 2 で止める。
@@ -139,6 +140,9 @@ Agent({
   パラメータ単位の deny / ask も書ける(`Tool(param:value)` 構文)
 - **メモリ**: `memory: project` の学習は `.claude/agent-memory/<name>/` に保存され、**git にコミットされる**(チーム共有が目的)。
   個人限定にしたいときは `local`(`.claude/agent-memory-local/`、gitignore 済み)
+
+- **完了直前の仕様照合**: 公式 best-practices の adversarial review step は、実装者とは別の fresh context が差分を仕様と照合すること。
+  本テンプレートでは `verifier` がそれを担う(1 タスク 1 回、差分と仕様だけを渡し、親の推論は渡さない)。実装途中の再確認には使わない
 
 ## 落とし穴
 

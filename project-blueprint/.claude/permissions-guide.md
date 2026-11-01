@@ -43,6 +43,7 @@ Claude Code は許可承認の煩わしさを下げる仕組みを 3 つ用意�
   (例: `Agent(isolation:worktree)`、`Skill(skill:deploy-*)`)
 - 1 行追加のたびに「これを通すと何が起きるか」を確認
 - project settings の allow ルールは、そのフォルダを **trust した後**にだけ効く(deny / ask は常に効く)
+- Manual モードで確認が多いときは `/fewer-permission-prompts`。直近の transcript から読取専用の Bash / MCP 呼び出しを拾って allow 化する(書き先は `.claude/settings.json` なので、個人用なら `settings.local.json` へ移す)
 
 ## 2. auto mode
 
@@ -94,7 +95,8 @@ auto mode でも毎回人間の確認を通る。
 - 本テンプレートのフック層(safety-check / protect-files / verify-gate)は auto mode でも有効
 - 完了条件まで自走させたいときは auto mode と `/goal <条件>` を組み合わせる
 - 分類器は v2.1.278 以降サーバー側で動くのが既定(API / Enterprise / Bedrock などでも分類器のコストは課金されない)。`CLAUDE_CODE_AUTO_MODE_SERVER=0` でローカル分類器に戻せる
-- 作業ディレクトリ外の初回読み取りは auto mode でも確認が入る。常に拒否するなら `permissions.blockReadsOutsideWorkingDirectories: true`(project settings で有効)
+- 作業ディレクトリ外の初回読み取りは auto mode でも確認が入る。常に拒否するなら `permissions.blockReadsOutsideWorkingDirectories: true`(project settings で有効)。
+  書込側は `blockWritesOutsideWorkingDirectories: true`(v2.1.314。Write / Edit / NotebookEdit を全モードで拒否)。例は `managed-settings.example.json`
 - 無人の headless 実行では `--permission-prompts none`(v2.1.259 以降)が、確認の要る操作を自動拒否しつつ auto mode の判定を残す。CI テンプレートの `--permission-mode dontAsk` と同じ効果
 
 ## 3. sandbox

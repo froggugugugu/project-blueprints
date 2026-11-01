@@ -80,8 +80,9 @@ Follow the principles below. For project-specific application, refer to `docs/de
 3. **Minimum Implementation** — Write code that passes the tests
 4. **Refactoring** — Clean up while keeping tests green
 5. **Verification** — Run the project's verification commands (see `docs/project.md`) and paste the result (pass/fail counts, error counts) into the report as evidence
-6. **Documentation Update** — Update `docs/` and `project-config.md` per "Documentation Sync" below
-7. **Progress Update** — If `output/tasks/PROGRESS.md` exists, set `passes` to ✅ only for verified features and
+6. **Spec conformance (gate ④)** — Once you judge the work complete, hand the `verifier` agent the diff range, the task file, and the verification commands; fix any gap and re-check (once per task; never mid-implementation)
+7. **Documentation Update** — Update `docs/` and `project-config.md` per "Documentation Sync" below
+8. **Progress Update** — If `output/tasks/PROGRESS.md` exists, set `passes` to ✅ only for verified features and
    append a session log entry (done / verification result / commit / handoff notes / rejected options).
    One unfinished feature per session is the rule (multi-session handoff)
 

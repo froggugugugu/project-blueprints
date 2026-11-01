@@ -55,7 +55,7 @@ jobs:
           # - claude-sonnet-5: standard review (recommended)
           # - claude-haiku-4-5-20251001: lightweight review, quick checks
           # --max-turns is the cost guardrail (runaway protection)
-          claude_args: "--model claude-sonnet-5 --max-turns 10"
+          claude_args: "--model claude-sonnet-5-5 --max-turns 10"
           # Review instructions (project-specific axes). With a prompt set, the action runs without waiting for @claude
           prompt: |
             This repo follows the conventions in `AGENTS.md`, `CLAUDE.md`, and `project-config.md`.

@@ -55,7 +55,7 @@ jobs:
           # - claude-sonnet-5: 標準レビュー、推奨
           # - claude-haiku-4-5-20251001: 軽量レビュー、簡易チェック
           # --max-turns はコスト guardrail（暴走防止）
-          claude_args: "--model claude-sonnet-5 --max-turns 10"
+          claude_args: "--model claude-sonnet-5-5 --max-turns 10"
           # レビュー指示（プロジェクト固有の観点。prompt があると @claude を待たず自動実行になる）
           prompt: |
             このリポジトリは `AGENTS.md`・`CLAUDE.md` と `project-config.md` に定義された規約に従う。

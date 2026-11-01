@@ -94,11 +94,11 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
  2 guides    AGENTS.md (tool-agnostic rules, also read by Codex / Cursor) + CLAUDE.md (Claude Code-specific, imports AGENTS.md)
 17 skills    ideation, design, implementation, review, security, legal, performance, refactoring
              long detail moves into references/ (20 files) so SKILL.md keeps only the procedure
- 8 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
-             doc-synchronizer / doc-writer / test-writer
+ 9 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
+             doc-synchronizer / doc-writer / test-writer / verifier (spec conformance before completion)
  6 teams     TEAM_PJM (full lifecycle, recommended) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
-17 hooks     PreToolUse / PostToolUse / SessionStart (compact re-injection) / ConfigChange / PreCompact / Stop and more
-             dangerous-command blocking, protected files, unverified-stop detection, write-scope enforcement, refusing guardrail-weakening settings changes
+18 hooks     PreToolUse / UserPromptExpansion / PostToolUse / SessionStart (compact re-injection) / ConfigChange / FileChanged / StopFailure and more
+             dangerous-command blocking, protected files, unverified-stop detection, write-scope enforcement, refusing guardrail-weakening settings changes; blocking hooks fail closed via onFailure: block
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
  7 rules     1 always-on (git conventions) + 3 path-scoped (document management, workflow detail, harness authoring)
              + 3 language samples (drop the .example suffix to enable)

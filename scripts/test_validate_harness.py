@@ -304,6 +304,47 @@ def m_bad_omit_claude_md(root: Path) -> None:
     p.write_text(p.read_text().replace("omitClaudeMd: true", "omitClaudeMd: yes", 1))
 
 
+def m_bad_on_failure(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    p.write_text(p.read_text().replace('"onFailure": "block"', '"onFailure": "ignore"', 1))
+
+
+def m_on_failure_on_prompt_hook(root: Path) -> None:
+    p = root / ".claude/settings.local.json.template"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"] = {"Stop": [{"hooks": [{"type": "prompt", "prompt": "Evaluate: $ARGUMENTS", "onFailure": "block"}]}]}
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_unknown_permissions_key(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["blockReadOutsideWorkingDirectory"] = True
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_safety_check_fail_open(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    for group in cfg["hooks"]["PreToolUse"]:
+        for h in group["hooks"]:
+            if "safety-check.sh" in h["command"]:
+                h.pop("onFailure", None)
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_filechanged_regex_matcher(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"]["FileChanged"][0]["matcher"] = "^constitution\\.md$"
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_scope_guard_fail_open(root: Path) -> None:
+    p = root / ".claude/agents/doc-writer.md"
+    p.write_text(p.read_text().replace("          onFailure: block\n", "", 1))
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -352,6 +393,12 @@ CASES = [
     ("project settings の env に OTel 変数", m_otel_env_in_project, "project / local settings では読まれません"),
     ("予約名前空間の skill", m_reserved_skill_name, "予約された名前空間"),
     ("omitClaudeMd の非 boolean 値", m_bad_omit_claude_md, "true / false のみ"),
+    ("onFailure に不正な値", m_bad_on_failure, "continue / block のみ"),
+    ("prompt 型フックに onFailure", m_on_failure_on_prompt_hook, "command / http 型のフックでしか効きません"),
+    ("safety-check.sh に onFailure: block が無い", m_safety_check_fail_open, "`onFailure: block` がありません"),
+    ("FileChanged の matcher が正規表現", m_filechanged_regex_matcher, "リテラルなファイル名"),
+    ("scope-guard.sh に onFailure: block が無い", m_scope_guard_fail_open, "scope-guard.sh に `onFailure: block` がありません"),
+    ("permissions に未知キー", m_unknown_permissions_key, "公式の permissions キーではありません"),
 ]
 
 

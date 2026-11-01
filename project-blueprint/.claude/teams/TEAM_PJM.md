@@ -159,6 +159,7 @@ output/
 ### レビュアー
 
 - 実装完了後にコードレビュー・セキュリティスキャン・法務チェックを実施
+- 最初に `verifier` agent で差分を TASK の受け入れ条件と照合し、gap があれば開発者へ戻す(1 タスク 1 回)
 - 使用スキル: `/code-review`, `/security-scan`, `/legal-check`, `/hig-compliance`
 - レポートを`output/reports/`の各サブディレクトリに出力する
 - 具体的なフィードバックを開発者に送る

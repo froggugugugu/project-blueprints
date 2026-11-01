@@ -5,6 +5,7 @@
 #   notify-claude.sh stop                 — Send completion notification
 #   notify-claude.sh notify               — Send message from stdin JSON (fire-and-forget)
 #   notify-claude.sh notify --wait [sec]  — Send notification + wait for response (default 120 sec)
+#   notify-claude.sh failure              — notify on StopFailure (API error ended the turn)
 #
 # --wait mode response flow:
 #   1. Generate a request ID (4-char hex) and prepend [ID] to the message
@@ -132,6 +133,13 @@ case "$event_type" in
         exit 2
       fi
     fi
+    ;;
+
+  failure)
+    # StopFailure: the turn ended on an API error (rate_limit / overloaded / billing_error ...). Flags a stalled unattended run
+    input=$(cat)
+    err=$(echo "$input" | jq -r '.error // "unknown"' 2>/dev/null)
+    curl -s -d "Claude Code: stopped on an API error (${err:-unknown})" "$NTFY_URL" >/dev/null 2>&1 || true
     ;;
 
   *)

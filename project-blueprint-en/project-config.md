@@ -406,8 +406,8 @@ output/reports/                <- Human-readable summaries (Git-managed)
 | ---- | ----- | --------- | --- | ---------- |
 | **Frontier** | `fable` | `claude-fable-5-1` | Multi-hour to multi-day autonomous runs, root-cause investigations, hard design decisions (never the default; select it explicitly) | Highest |
 | **Critical** | `opus` | `claude-opus-5-5` | Architecture decisions, security audits, complex refactors | High |
-| **Complex** | `sonnet` | `claude-sonnet-5` | Design, implementation, code review, E2E authoring | Medium (recommended) |
-| **Operational** | `haiku` | `claude-haiku-4-5-20251001` | Exploration, doc sync, lightweight repetitive work | Low |
+| **Complex** | `sonnet` | `claude-sonnet-5-5` | Design, implementation, code review, E2E authoring | Medium (recommended) |
+| **Operational** | `haiku` | `claude-haiku-5-5` | Exploration, doc sync, lightweight repetitive work | Low |
 
 > **Prefer aliases**: write an alias (`opus` / `sonnet` / `haiku`) in the `model:` field of
 > `.claude/agents/*.md`. Aliases follow model generations, which avoids the failure mode where a
@@ -417,7 +417,7 @@ output/reports/                <- Human-readable summaries (Git-managed)
 
 Older models (`claude-opus-4`, `claude-sonnet-3-5`, `claude-haiku-3-5`, etc.) are discouraged in this template.
 
-> **The default effort differs per model**: `medium` on Opus 5.5, `high` elsewhere. A skill's or agent's `effort:` overrides the
+> **The default effort differs per model**: `medium` on Opus 5.5 / Sonnet 5.5 / Haiku 5.5, `high` on every other model that supports effort (`xhigh` on Opus 4.7). A skill's or agent's `effort:` overrides the
 > session default, so when review or design work runs on Opus 5.5, check that `high` or above is set explicitly. The `best` alias
 > resolves to Fable where available and to Opus otherwise. Fable suits multi-hour autonomous runs, but its safety classifiers fall
 > back to Opus in the cybersecurity / biology domains.
@@ -436,6 +436,27 @@ is limited (for example on a Pro plan), raising effort is more cost-effective th
 
 > The skills and agents in this template **pin `effort:` but deliberately leave `model:` unpinned**.
 > Which model to run is left to the session (`/model`); this section is the guidance for that choice.
+
+> Sonnet 5.5 at `low` tends to report completion without running a real check (official prompting guide). Keep implementation
+> work at `medium` or above and leave the verification gate (`verify-gate.sh`) on the standard profile or stricter.
+
+When to move effort (official best practices; `medium` is the baseline for everyday feature work):
+
+| Situation | Setting |
+| --------- | ------- |
+| Correctness depends on cases that are easy to overlook (a bug in someone else's code, a flaky test, every reader of a changed schema) | `high` / `xhigh` |
+| Quick back-and-forth where a person reviews every result (brainstorming, a first sketch, a rename across a few files) | `low` |
+| A hard problem Claude works through alone (hunting a vulnerability). On ordinary tasks it overthinks and rarely beats `high` | `max` |
+| Deeper reasoning on one turn only | put `ultrathink` in that prompt (since v2.1.311 the turn runs at `xhigh`; the setting is untouched) |
+| Default for a subagent without `effort:` | inherits the session's effort; pin it with the env `CLAUDE_CODE_SUBAGENT_EFFORT` (v2.1.316) |
+
+### 13.1c Advisor (consulting a stronger model, optional)
+
+Keep a cheaper main model and have it consult a stronger one only at decision points: plans, recurring errors, completion checks
+(`/advisor` or the `advisorModel` setting; Anthropic API only). Sonnet main + Opus advisor and Sonnet main + Fable advisor are the
+usual pairings. It costs less than running the stronger model every turn and pays off on long multi-step tasks. It adds little on
+short tasks or work that needs the strongest model every turn (raise the main model instead). Switching the advisor also invalidates
+the cache, so pick it at session start.
 
 ### 13.2 Skill × model recommendations
 
@@ -481,6 +502,7 @@ Reviewer is Critical since audit misalignment is costly.
 | `performance-analyst` | Complex | Measurement data interpretation |
 | `doc-synchronizer` | Operational | Deterministic diff updates |
 | `test-writer` | Complex | Edge-case coverage |
+| `verifier` | Complex | Checks the diff against acceptance criteria and verification results |
 
 ### 13.5 Cost optimization principles
 
@@ -489,6 +511,7 @@ Reviewer is Critical since audit misalignment is costly.
 3. **Subagents prefer Haiku**: Single-shot delegation stays lightweight; upgrade to Critical only when needed
 4. **Set cost limits on the API key**: See `.claude/pitfalls.md` #6
 5. **Monthly usage review**: Check the Anthropic Console; revise tiers if usage drifts from expectations
+6. **Never switch models mid-session**: a switch invalidates the prompt cache. Put per-role differences in the `model:` of skills / agents (a subagent has its own cache)
 
 ### 13.6 Behavior when unspecified
 

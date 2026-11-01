@@ -59,7 +59,7 @@ A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch.
 
 - Each phase skill consults the gate criteria in `.claude/quality-gates.md` when needed
 - `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted; the Task tools are enabled through `env` in `settings.json`) after source edits (standard = warning / strict = refused)
-- Every skill ships `evals/evals.json` (typical + boundary). After changing a skill, compare with / without pass rates via `/skill-eval skill=<name>`
+- Every skill ships `evals/evals.json` (typical + boundary). After changing a skill, compare with / without pass rates via `/skill-eval skill=<name>`; inventory the instruction files with `/doctor prompt-audit` and `/skill-doctor`
 
 ## Tool usage
 
@@ -70,7 +70,7 @@ A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch.
 - **Defense in depth**: sandbox (Layer 0, optional) → hooks (Layer 1) → deny/ask (Layer 2) → allow (Layer 3)
 - **`--no-verify` prohibited / pushing with `--force` prohibited in principle**. Keep safety prohibitions here even if `AGENTS.md` repeats them (the docs do not say whether the classifier reads imported files)
 - `.env`, private keys and `*.pem` are blocked from being read at all by `Read()` deny rules, and outbound, irreversible operations (push / merge / publish / apply) confirm every time via `ask`
-- Even in auto mode (the default on Pro/Max/Team), `ask` always prompts and `deny` applies before the classifier. The classifier also reads this file
+- Even in auto mode (the default on every plan since v2.1.283), `ask` always prompts and `deny` applies before the classifier. The classifier also reads this file
 - Hooks remain active even with `--dangerously-skip-permissions`. `scan-harness.sh` detects changes to `constitution.md`
 - SessionStart hook checks `project-config.md` / `docs/` / `settings.local.json` at session start and injects the head of `output/tasks/PROGRESS.md` when present
 - Details (deny lists, protected files, permission design) live in `.claude/guardrails.md` and `.claude/permissions-guide.md`
@@ -90,7 +90,7 @@ Start non-trivial tasks (3+ steps or architectural decisions) in plan mode. Skip
 
 Definitions and selection guide: `.claude/agents/README.md` (not imported every session). `scope-guard.sh` enforces the write scope of the 3 write-capable agents.
 Delegate only work that is independent and parallelizable, reads a lot, or needs isolated verification. Do work that takes a handful of tool calls yourself (spawn depth is pinned to 1 in `settings.json`).
-After implementing, have a fresh-context review subagent (`/code-review`) report every finding, and act only on the MUSTs that affect correctness or the stated requirements.
+Right before declaring completion, run fresh-context `/code-review` (bugs) and the `verifier` agent (spec conformance) once each, have them report every finding, and act only on the MUSTs that affect correctness or the stated requirements.
 
 ### 3. Context preservation
 

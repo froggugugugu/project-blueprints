@@ -14,6 +14,7 @@ hooks:
         - type: command
           command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh output'
           timeout: 5
+          onFailure: block
 color: yellow
 ---
 

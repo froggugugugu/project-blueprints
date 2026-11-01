@@ -110,14 +110,13 @@
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-brave-search"
+          "@brave/brave-search-mcp-server"
         ],
         "env": {
           "BRAVE_API_KEY": "${BRAVE_API_KEY}"
         }
       },
-      "_deprecated": true,
-      "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
+      "_note": "Moved to Brave's official MCP server. The old @modelcontextprotocol/server-brave-search is deprecated on npm"
     },
     "slack": {
       "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN. Restrict scope to chat:write only",

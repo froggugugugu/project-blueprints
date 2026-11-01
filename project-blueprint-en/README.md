@@ -227,6 +227,10 @@ If you also use Codex, Cursor, or others, record which ones, their roles, and th
 
 Once setup is complete, start developing with these steps.
 
+> Run `/auto-mode-setup` in the first session (since v2.1.283 auto mode is the default permission mode on every plan).
+> It reads the project and recent sessions, drafts the environment definition for the classifier, and saves it to `~/.claude/settings.json` (project settings are not read for this).
+> Inventory the instruction files with `/doctor prompt-audit` and skill costs with `/skill-doctor`.
+
 ### PJM Team (full lifecycle)
 
 ```text
@@ -365,7 +369,7 @@ project-blueprint-en/
 |   +-- quality-gates.md                   <-- [Generic] Criteria for the 5 quality gates
 |   +-- pitfalls.md                        <-- [Generic] 31 failure patterns and mitigations
 |   |
-|   +-- agents/                            <-- [Generic] 8 subagents + README.md (selection guide)
+|   +-- agents/                            <-- [Generic] 9 subagents + README.md (selection guide)
 |   |                                        explorer / researcher / planner / security-reviewer /
 |   |                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
 |   |
@@ -379,7 +383,7 @@ project-blueprint-en/
 |   +-- output-styles/                     <-- [Generic] 4 phase output styles (phase-prd / design / implementation / review)
 |   +-- learnings/                         <-- [Generic] Success-pattern records (README.md / TEMPLATE.md / example)
 |   |
-|   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth, 17 scripts)
+|   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth, 18 scripts)
 |   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
 |   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
 |   |   +-- scan-harness.sh                  Harness self-SAST & risky-skill blocking (PreToolUse)

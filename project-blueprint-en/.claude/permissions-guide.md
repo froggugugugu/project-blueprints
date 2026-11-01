@@ -43,6 +43,7 @@ starter file as `settings.local.json.template`. To add project-specific commands
   (e.g. `Agent(isolation:worktree)`, `Skill(skill:deploy-*)`)
 - For every line you add, ask "what happens if this goes through?"
 - Allow rules in project settings take effect only **after you trust the folder** (deny / ask always apply)
+- When Manual mode prompts too often, `/fewer-permission-prompts` scans recent transcripts for read-only Bash / MCP calls and turns them into allow rules (it writes to `.claude/settings.json`; move personal ones to `settings.local.json`)
 
 ## 2. auto mode
 
@@ -94,7 +95,8 @@ The `PermissionDenied` hook (`permission-denied-log.sh`) records classifier deni
 - This template's hook layer (safety-check / protect-files / verify-gate) stays active in auto mode
 - To keep working until a condition holds, combine auto mode with `/goal <condition>`
 - Since v2.1.278 the classifier runs server-side by default (its cost is not billed, including on the API / Enterprise / Bedrock). `CLAUDE_CODE_AUTO_MODE_SERVER=0` restores the local classifier
-- The first read outside the working directories prompts even in auto mode. To refuse such reads always, set `permissions.blockReadsOutsideWorkingDirectories: true` (honored in project settings)
+- The first read outside the working directories prompts even in auto mode. To refuse such reads always, set `permissions.blockReadsOutsideWorkingDirectories: true` (honored in project settings).
+  For writes, `blockWritesOutsideWorkingDirectories: true` (v2.1.314; refuses Write / Edit / NotebookEdit in every mode). Example in `managed-settings.example.json`
 - For unattended headless runs, `--permission-prompts none` (v2.1.259+) auto-denies anything that would prompt while auto mode keeps deciding, the same effect as `--permission-mode dontAsk` in the CI template
 
 ## 3. sandbox

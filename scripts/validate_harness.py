@@ -45,6 +45,10 @@ HOOK_EVENTS = {
 HOOK_TYPES = {"command", "http", "mcp_tool", "prompt", "agent"}
 # `if`(権限ルール構文でフックの発火を絞る)が効くのはツール系イベントだけ。他に書くとフックが一切走らない。
 HOOK_IF_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionDenied"}
+# Layer 1 のブロック系フック。起動失敗・タイムアウトで操作が素通りしないよう `onFailure: block`(v2.1.295)を要求する
+FAIL_CLOSED_SCRIPTS = {"safety-check.sh", "protect-files.sh", "config-guard.sh", "scope-guard.sh"}
+FAIL_CLOSED_EVENTS = {"PreToolUse", "ConfigChange"}
+ON_FAILURE_VALUES = {"continue", "block"}
 # skill / agent / workflow のフォルダ名として予約されている名前空間(v2.1.282)。置いても読み込まれない。
 RESERVED_NAMESPACES = {"anthropic-skills", "claude-ai"}
 # project / local settings の env から読まれない変数(v2.1.251 / v2.1.282)。書いても効かない。
@@ -58,6 +62,12 @@ PERMISSION_MODES = {"default", "acceptEdits", "auto", "dontAsk", "bypassPermissi
 MEMORY_SCOPES = {"user", "project", "local"}
 # project / local settings からは読まれない(公式仕様)。書いても無視される。
 PROJECT_IGNORED_DEFAULT_MODES = {"auto", "bypassPermissions"}
+# settings-reference `permissions` の閉じた集合(未知キーは黙って無視される)。blockWrites は v2.1.314
+PERMISSION_KEYS = {
+    "allow", "ask", "deny", "additionalDirectories", "defaultMode",
+    "disableBypassPermissionsMode", "disableAutoMode",
+    "blockReadsOutsideWorkingDirectories", "blockWritesOutsideWorkingDirectories",
+}
 
 # ファイルパス権限は Edit(path) / Read(path) だけが参照される。
 # 下記ツールにパス指定を書いても一切参照されず、起動時に警告が出る。
@@ -206,6 +216,7 @@ def check_settings(root: Path, rep: Report) -> set[str]:
         perms = cfg.get("permissions", {})
         for bucket in ("allow", "deny", "ask"):
             check_permission_rules(f"{where} [permissions.{bucket}]", perms.get(bucket, []), rep)
+        check_permission_keys(where, cfg, rep)
         check_project_scope_keys(where, cfg, rep)
         check_enabled_plugins(where, cfg, rep)
 
@@ -213,9 +224,13 @@ def check_settings(root: Path, rep: Report) -> set[str]:
             if event not in HOOK_EVENTS:
                 rep.error(where, f"`{event}` は公式のフックイベント名ではありません")
             for group in groups:
+                if event == "FileChanged" and re.search(r"[\\^$*?\[\]()+]", str(group.get("matcher", ""))):
+                    rep.warn(where, "FileChanged の matcher はリテラルなファイル名を `|` で並べます — 正規表現として解釈されず、その名前のファイルを監視してしまいます")
                 for hook in group.get("hooks", []):
                     check_hook_handler(f"{where} [hooks.{event}]", hook, rep, event)
                     cmd = hook.get("command", "")
+                    if event in FAIL_CLOSED_EVENTS and any(s in cmd for s in FAIL_CLOSED_SCRIPTS) and hook.get("onFailure") != "block":
+                        rep.warn(where, f"{event} のブロック系フック({cmd.split('/')[-1].split()[0]})に `onFailure: block` がありません — フックが起動できない・タイムアウトしたとき操作が素通りします(v2.1.295)")
                     m = re.search(r"/\.claude/hooks/([\w.-]+\.sh)", cmd)
                     if not m:
                         continue
@@ -232,6 +247,7 @@ def check_settings(root: Path, rep: Report) -> set[str]:
             check_permission_rules(f"{local} [permissions.{bucket}]", perms.get(bucket, []), rep)
         if "deny" in perms:
             rep.error(str(local), "permissions.deny を定義しています — 共有 settings.json の deny を弱体化させます")
+        check_permission_keys(str(local), cfg, rep)
         check_project_scope_keys(str(local), cfg, rep)
         for event, groups in cfg.get("hooks", {}).items():
             if event not in HOOK_EVENTS:
@@ -257,6 +273,12 @@ def check_hook_handler(where: str, hook: dict, rep: Report, event: str = "") -> 
             rep.error(where, f"`if` は {', '.join(sorted(HOOK_IF_EVENTS))} でしか効きません — {event} に書くとフックが一切走りません")
         elif "&&" in cond or "||" in cond:
             rep.error(where, "`if` に `&&` / `||` は使えません。条件ごとに handler を分けてください")
+    on_failure = hook.get("onFailure")
+    if on_failure is not None:
+        if on_failure not in ON_FAILURE_VALUES:
+            rep.error(where, f"`onFailure: {on_failure}` は continue / block のみ指定できます(v2.1.295)")
+        elif htype not in ("command", "http"):
+            rep.error(where, f"`onFailure` は command / http 型のフックでしか効きません({htype} 型に書いても無視されます)")
     if htype == "agent" and event == "PermissionRequest":
         rep.error(where, "PermissionRequest に agent 型フックは登録できません(v2.1.280 以降エラー)。command / http 型にしてください")
     if htype == "command" and not str(hook.get("command", "")).strip():
@@ -274,6 +296,13 @@ def check_hook_handler(where: str, hook: dict, rep: Report, event: str = "") -> 
         rep.error(where, f"`timeout: {timeout}` は正の秒数である必要があります")
     if hook.get("async") and htype in ("prompt", "agent"):
         rep.warn(where, f"`async: true` の {htype} フックは decision を返せません")
+
+
+def check_permission_keys(where: str, cfg: dict, rep: Report) -> None:
+    """`permissions` の未知キーは黙って無視される(settings-reference の閉じた集合と突合)."""
+    for key in cfg.get("permissions", {}):
+        if key not in PERMISSION_KEYS:
+            rep.error(where, f"`permissions.{key}` は公式の permissions キーではありません — 黙って無視されます")
 
 
 def check_project_scope_keys(where: str, cfg: dict, rep: Report) -> None:
@@ -651,6 +680,8 @@ def check_frontmatter_hooks(root: Path, rep: Report) -> set[str]:
             for group in groups or []:
                 for hook in (group or {}).get("hooks", []) if isinstance(group, dict) else []:
                     check_hook_handler(f"{p} [hooks.{event}]", hook, rep)
+                    if "scope-guard.sh" in str(hook.get("command", "")) and hook.get("onFailure") != "block":
+                        rep.warn(str(p), "scope-guard.sh に `onFailure: block` がありません — フックが起動できないとき範囲外の書込が素通りします(v2.1.295)")
     return referenced
 
 

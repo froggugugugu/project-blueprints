@@ -38,8 +38,8 @@ usage() {
 
 プロファイル(--profile、省略時は full):
   minimal   skills 5 / agents 2 / hooks 2 / teams なし — 最速で試す軽量構成
-  standard  skills 17 / agents 8 / hooks 17 / teams なし — チーム機能以外フル
-  full      skills 17 / agents 8 / hooks 17 / teams 6 — デフォルト・現行互換
+  standard  skills 17 / agents 9 / hooks 18 / teams なし — チーム機能以外フル
+  full      skills 17 / agents 9 / hooks 18 / teams 6 — デフォルト・現行互換
 
   ※ minimal はセーフガード系フック(session-start等)も間引く軽量構成です。
      project-config.md の「ミニマル/推奨/フル」(§記入量の目安)とは別の軸です。

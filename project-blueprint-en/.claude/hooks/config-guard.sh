@@ -11,7 +11,8 @@
 #        - permissions.deny defined in settings.local.json (overrides the shared deny
 #          list; an empty array counts too)
 #        - a Layer 1 blocking hook (safety-check.sh / protect-files.sh) disappears
-#          from .claude/settings.json
+#          from .claude/settings.json, or its registration loses onFailure: block
+#          (turning it fail-open)
 #
 # Official spec:
 #   - ConfigChange can stop a change from applying with exit 2 or {"decision":"block"}
@@ -59,6 +60,8 @@ if [[ ( "$SOURCE" == "project_settings" || "$SOURCE" == "local_settings" ) && -n
             for guard in safety-check.sh protect-files.sh; do
                 if ! jq -e --arg g "$guard" '[.hooks.PreToolUse[]?.hooks[]?.command // "" | select(contains($g))] | length > 0' "$FILE" >/dev/null 2>&1; then
                     VIOLATIONS+=("$guard is missing from PreToolUse (a Layer 1 blocking hook)")
+                elif ! jq -e --arg g "$guard" '[.hooks.PreToolUse[]?.hooks[]? | select((.command // "") | contains($g)) | select(.onFailure == "block")] | length > 0' "$FILE" >/dev/null 2>&1; then
+                    VIOLATIONS+=("the $guard registration lost onFailure: block (the action goes through whenever the hook cannot start)")
                 fi
             done
         fi

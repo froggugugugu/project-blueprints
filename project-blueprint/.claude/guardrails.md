@@ -5,13 +5,15 @@
 
 ---
 
-## フック一覧(17 スクリプト / settings 20 登録 + agent frontmatter 3 登録)
+## フック一覧(18 スクリプト / settings 27 登録 + agent frontmatter 3 登録)
 
 | フック | イベント | 対象 | 動作 | 説明 |
 | ------ | -------- | ---- | ---- | ---- |
 | `safety-check.sh` | PreToolUse | Bash | ブロック | 危険なシェルコマンドを検出・阻止 |
 | `protect-files.sh` | PreToolUse | Edit\|Write\|NotebookEdit | ブロック | 機密ファイル・設定ファイルへの書き込みを阻止 |
 | `scan-harness.sh` | PreToolUse | Skill | 警告/ブロック | ハーネス自身の SAST(secret 混入・constitution 改変・local deny の弱体化検出) |
+| `scan-harness.sh` | **UserPromptExpansion** | `*`(slash command) | 警告/ブロック | `/skill` の直接入力は PreToolUse(Skill) を通らないため、同じ判定(高リスク skill 抑止・self-SAST)を展開前にかける |
+| `scan-harness.sh filechanged` | **FileChanged** | `constitution.md` | 警告 + 記録 | Edit 以外(`sed -i`・外部エディタ)による `constitution.md` の改変をファイル監視で検知(ブロック不可。`testreport/config-changes/`) |
 | `user-prompt-submit.sh` | UserPromptSubmit | — | 警告/ブロック | 機密パターン検出 |
 | `session-start.sh` | SessionStart | `startup` 等 / **`compact`** | 警告 + 文脈注入 | 起動時は project-config.md / docs/ / settings.local.json のチェックと PROGRESS.md 注入。コンパクト直後は中核ルールを即座に再注入 |
 | `session-end.sh` | SessionEnd | — | 観測 | セッション終了サマリを `output/reports/sessions/<date>.md` に追記 |
@@ -20,15 +22,35 @@
 | `verify-gate.sh track` | PostToolUse | Bash\|Edit\|Write\|NotebookEdit | 観測 | ソース編集 / 検証コマンド実行の時刻を記録(`testreport/.verify/`) |
 | `verify-gate.sh gate` | **Stop** | — | 警告/差し戻し | 編集後に検証コマンドが無ければ standard=警告 / strict=1 回差し戻し(検証ゲート) |
 | `verify-gate.sh task` | **TaskCompleted** | — | 警告/差し止め | 同条件でタスクの完了マークを standard=警告 / strict=exit 2 で差し止め(品質ゲート③の機械強制) |
+| `verify-gate.sh teammate` | **TeammateIdle** | — | 警告/差し止め | agent teams の teammate が手待ちに入る直前に同条件を判定(strict=exit 2 で作業継続を求める) |
 | `permission-denied-log.sh` | **PermissionDenied** | `*` | 観測 | auto mode の分類器による拒否を記録(`testreport/denials/`) |
+| `permission-denied-log.sh request` | **PermissionRequest** | `*` | 観測 | 権限ダイアログが出た / 無人実行(dontAsk・background subagent)で自動拒否された呼び出しを `kind=request` で記録。allow ルール追加の材料 |
 | `config-guard.sh` | **ConfigChange** | `*` | 記録 + ブロック | 設定変更を記録し、`disableAllHooks` / local の deny 定義 / Layer 1 ブロック系フックの削除はセッションへの適用を止める(`testreport/config-changes/`) |
 | `scope-guard.sh <scope>` | PreToolUse(**agent frontmatter**) | Edit\|Write\|NotebookEdit | ブロック | 書込可能な subagent の範囲外書込を阻止(doc-synchronizer=docs / doc-writer=output / test-writer=tests) |
 | `post-failure-log.sh` | **PostToolUseFailure** | `*` | 観測 | ツール失敗時の構造化エラーログ(`testreport/failures/`) |
+| `post-failure-log.sh` | **StopFailure** | `*` | 観測 | API エラー(rate_limit / overloaded / billing_error 等)でターンが終了した事実を `tool=api:<error>` で記録 |
+| `instructions-log.sh` | **InstructionsLoaded** | `*` | 観測 | CLAUDE.md / rules が context に載った事実(`load_reason`)を記録(`testreport/instructions/`)。rule 棚卸しの実測値 |
 | `subagent-audit.sh` | **SubagentStart** | — | 観測 + 文脈注入 | 起動記録 + サブエージェントへガードレールを注入 |
 | `subagent-audit.sh` | SubagentStop | — | 観測 | 完了記録(`testreport/agents/`) |
 | `pre-compact-backup.sh` | PreCompact | — | 観測 | コンパクト直前の会話履歴バックアップ(`testreport/transcripts/`) |
 | `post-compact-restore.sh` | **PostCompact** | — | 観測 | 圧縮後の要約を `testreport/transcripts/` に保全 |
-| `notify-claude.sh` | Stop / Notification | — | 通知(async) | タスク完了時の外部通知(ntfy) |
+| `notify-claude.sh` | Stop / Notification / **StopFailure** | — | 通知(async) | タスク完了・入力待ち・API エラー停止の外部通知(ntfy) |
+
+### フェイルクローズ(`onFailure: block`)
+
+フックは既定で **fail-open**: スクリプトが起動できない(パス間違い・実行権限なし)、タイムアウトした、想定外の exit code を返したとき、
+操作はそのまま通る。壊れた安全フックは「無い」のと同じになる。ブロック系の 4 本には `onFailure: "block"`(v2.1.295)を付け、
+フック自身の故障時は操作を止める(fail-closed):
+
+| フック | 登録先 | 故障時 |
+| ------ | ------ | ------ |
+| `safety-check.sh` / `protect-files.sh` | `settings.json` PreToolUse | ツール呼び出しをブロック |
+| `config-guard.sh` | `settings.json` ConfigChange | 設定変更をセッションに適用しない |
+| `scope-guard.sh` | agent frontmatter(3 agent) | subagent の書込をブロック |
+
+スクリプト内部の fail-open(jq 不在・パース失敗で exit 0)は維持する。`onFailure` が守るのは「フックが走れなかった」場合で、
+「走ったが判定できなかった」場合は作業を止めない。観測系・警告系には付けない(ログの失敗で作業を止める理由がない)。
+`validate-harness.sh` は上記 4 本に `onFailure: block` が無いと WARN する。
 
 ### コンパクト対策(SessionStart の compact source)
 
@@ -47,6 +69,9 @@ SessionStart → session-start.sh        source == "compact" のとき、中核�
 > コンテキストへ追加される。ルート CLAUDE.md・AGENTS.md・`paths:` なし rule はディスクから
 > 自動で再注入されるが、`paths:` 付き rule と skill 本文(skill ごと 5,000 トークン上限)は薄れる。
 
+> **idle compaction**(v2.1.299 以降): 200K トークン超の会話を約 54 分放置すると、キャッシュ失効前に自動でコンパクトされる。
+> 席を離れる前に PROGRESS.md を更新しておけば、戻ったときの再注入は上と同じ経路で効く。止めるなら `"idleCompaction": false`。
+
 ### 検証ゲート(Stop フック)
 
 公式ベストプラクティス「Claude に検証手段を与え、Stop フックで決定論的にゲートする」の実装。
@@ -63,6 +88,7 @@ Stop        → verify-gate.sh gate    最後の編集より後に検証コマ�
   `eslint` / `biome` / `playwright test` / `make test` など(スクリプト内 `VERIFY_PATTERNS`。プロジェクトに合わせて追記可)
 - 対象外: `docs/` `output/` `input/` `.claude/` `.github/` と `.md` / `.json` / `.yaml` / `.toml` の編集
 - `stop_hook_active: true`(自分の差し戻し後)と `background_tasks` 非空(待機中)は必ず通す(pitfalls #27)
+- strict の差し戻しは 1 回だけ。Claude Code 自身も Stop / SubagentStop の連続ブロックを 8 回で打ち切る(`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`。`0` で無制限)
 - 会話内で柔軟な完了条件を判定させたいときは `/goal <条件>`(モデル評価、セッション限り)を併用する
 - 回帰テスト: `bash scripts/validate-harness.sh --hooks` が全フックに hook JSON を流して exit code / 出力を検証する(CI でも実行)
 
@@ -111,6 +137,23 @@ Stop        → verify-gate.sh gate    最後の編集より後に検証コマ�
 - Routines(`/schedule`)は最小間隔 1 時間で、権限プロンプト無しに走る(含めたコネクタの書込ツールも確認なし)。
   含めるリポジトリ・コネクタ・環境を最小にし、緑のステータスを「成功」と読まずトランスクリプトを確認する
 
+### コントロールの棚卸し(harness rot 対策)
+
+ハーネスの各要素は「モデルがまだ自力でできないこと」の仮定を 1 つずつ符号化している。モデル世代が上がると仮定は陳腐化し、
+残った指示は context を食うだけでなく互いに矛盾して従われなくなる。`/harness-refine` の Round 0 で次を棚卸しする:
+
+| 種別 | 判断材料 | 剪定の基準 |
+| ---- | -------- | ---------- |
+| 指示(CLAUDE.md / rules / skill 本文) | `testreport/instructions/`(load 実績)、`/doctor prompt-audit`(旧世代向けの書き方・存在しない参照・矛盾)、`/skill-doctor`(未使用 skill と一覧コスト) | 直近 N セッションで load も発動も無い `paths:` 付き rule、消しても挙動が変わらない行は消す |
+| 強制(hook / deny / ask) | `testreport/denials/`(拒否・ダイアログ)、`testreport/config-changes/`、`testreport/failures/` | **発火が無くても消さない**(安全・不可逆操作の規則に限る。好みを符号化したフックは消す)。由来の pitfall 番号か事故を本ファイルに残し、仕様変更で無意味になったものだけ外す |
+| 検証(verify-gate / evals) | `testreport/evals/` の pass rate、`validate-harness.sh --hooks` | 新モデルで同じ eval を回し、下がっていなければ指示側の冗長な検証文を削る |
+
+ルール: 強制は「事故 → 対策」の記録(`pitfalls.md` の番号)を持つ。指示は「消すと Claude が間違えるか?」で毎回判定する。
+モデル更新のたびに 1 つずつ外して eval で確かめる(複数同時に外すと原因が分からない)。
+
+公式の目安: 強制(hook / deny)は「例外が 1 つも無い規則」にだけ使い、好みを符号化したフックは消して Claude の判断に戻す。
+本テンプレートのブロック系は 5 本 + deny / ask ルールで、残りは観測・通知系。強制が 40 個に近づいたら大半は好みだと疑う。
+
 ### 組織展開(managed settings / OpenTelemetry)
 
 個人が上書きできない組織ポリシーとして固定する場合は managed settings を使う。同梱の
@@ -119,11 +162,20 @@ OpenTelemetry(`CLAUDE_CODE_ENABLE_TELEMETRY` + OTLP エクスポータ)/ `requir
 本テンプレートの `testreport/` ログは machine-local なので、チーム横断の利用量・skill 使用率は OTel で集約する
 (`OTEL_LOG_TOOL_DETAILS=1` で skill 名が記録され、未使用 skill を特定できる)。
 
+- **セッション間メッセージ**: 同一マシンの他セッションから、指示に見える文面が届きうる。`settings.json` の `isolatePeerMachines: true`
+  (マシン外へ送る前に必ず確認。project 設定からも有効)を既定にし、CI や無人実行では `crossSessionInbound: "refuse"` と
+  `permissions.deny` の `SendMessage` / `ListAgents` で両方向を止める(例は `managed-settings.example.json`)
+- **OpenTelemetry でのガードレール集計**: `claude_code.safety_event`(v2.1.307)は v2.1.312 で送信されなくなった(docs には記述が残る)。
+  フリート横断の発火率は `claude_code.tool_decision`(`decision: reject`、`source: config | hook | user`、auto mode の判定は `classifier_verdict`)で取り、
+  どの規則が止めたかは本テンプレートの `testreport/denials/` / `config-changes/` / `failures/` の JSONL で補う
+- **agent memory はコードレビュー対象**: `memory: project` の学習は `.claude/agent-memory/<name>/` にコミットされ、次回以降の subagent が指示として読む。
+  PR でこの配下が変わったら「指示の変更」として読む(メモリ経由のプロンプトインジェクション対策)
+
 ### Hook profile 切替
 
 `BLUEPRINT_HOOK_PROFILE` 環境変数で挙動を切替可能
 (`user-prompt-submit.sh` / `session-end.sh` / `scan-harness.sh` / `post-compact-restore.sh` / `subagent-audit.sh` /
-`verify-gate.sh` / `permission-denied-log.sh` / `config-guard.sh` 対応。`config-guard.sh` は minimal でだけ無効になり、standard と strict は同じ):
+`verify-gate.sh` / `permission-denied-log.sh` / `config-guard.sh` / `instructions-log.sh` 対応。`config-guard.sh` は minimal でだけ無効になり、standard と strict は同じ):
 
 | profile | 用途 | 挙動 |
 | ------- | ---- | ---- |
@@ -149,7 +201,8 @@ OpenTelemetry(`CLAUDE_CODE_ENABLE_TELEMETRY` + OTLP エクスポータ)/ `requir
 - フックは `--dangerously-skip-permissions` モードでも有効(多層防御)
 - **Stop フックの差し戻しは 8 回連続で Claude Code に無視される**。`stop_hook_active` を見て 1 回で通す設計にする
 - ハンドラの追加フィールド: `if`(権限ルール構文で発火条件を絞る。例 `"if": "Bash(git *)"`。ツール系 5 イベント限定・best-effort なので安全用途には使わない)/
-  `once`(初回成功後に解除。skill frontmatter のフックのみ)/ `asyncRewake`(バックグラウンド実行し exit 2 で Claude を起こす)/ `args`(exec 形式)/ `statusMessage`
+  `once`(初回成功後に解除。skill frontmatter のフックのみ)/ `asyncRewake`(バックグラウンド実行し exit 2 で Claude を起こす)/ `args`(exec 形式)/ `statusMessage` /
+  `onFailure`(`block` でフック自身の故障時に操作を止める。上記「フェイルクローズ」)
 
 ### イベント別の decision 可否(抜粋)
 
@@ -159,6 +212,7 @@ OpenTelemetry(`CLAUDE_CODE_ENABLE_TELEMETRY` + OTLP エクスポータ)/ `requir
 | `UserPromptSubmit` / `PostToolUse` / `PostToolUseFailure` / `Stop` / `SubagentStop` / `PreCompact` | トップレベル `decision: "block"` + `reason` |
 | `SessionStart` / `Setup` / `SubagentStart` | **文脈注入のみ**(`additionalContext`)。ブロック不可 |
 | `ConfigChange` | トップレベル `decision: "block"` か exit 2 で変更の適用を止める(`policy_settings` は不可。ブロックの文言は誰にも表示されない) |
+| `UserPromptExpansion` / `TeammateIdle` / `TaskCompleted` | exit 2 でブロック(展開の中止 / 手待ちの差し止め / 完了マークの差し止め)。`UserPromptExpansion` はプレーンテキストの stdout も文脈として渡る |
 | `PostCompact` / `SessionEnd` / `Notification` / `FileChanged` 等 | **制御なし**。ログ・クリーンアップ等の副作用専用 |
 
 ### フックタイプの使い分け
@@ -182,14 +236,9 @@ OpenTelemetry(`CLAUDE_CODE_ENABLE_TELEMETRY` + OTLP エクスポータ)/ `requir
 | イベント | タイミング | 用途例 |
 | -------- | ---------- | ------ |
 | `Setup` | `--init-only` / `-p --init` 実行時 | CI での依存インストール・定期クリーンアップ |
-| `InstructionsLoaded` | CLAUDE.md / rules 読込時 | ルール適用の可観測性 |
-| `PermissionRequest` | 権限ダイアログ発生時 | 組織ポリシーによる自動 allow/deny |
 | `PreModelSwitch` / `PostModelSwitch` | `/model` 等でモデルを切り替える前後 | 高コストモデルへの切替の確認・監査(切替はキャッシュを無効化する) |
 | `PostToolBatch` | 並列ツール実行の一括完了時 | バッチ単位の検証 |
 | `TaskCreated` | タスク作成時(Task ツールは Claude 5 系では `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` が要る。本テンプレートは設定済み) | タスク命名規約の強制 |
-| `TeammateIdle` | チームメイトが手待ちになったとき | エージェントチームの品質ゲート |
-| `StopFailure` | ターンがエラー終了したとき | 失敗率の計測 |
-| `FileChanged` | ファイル変更検知時 | 外部ツールとの同期 |
 | `WorktreeCreate` / `WorktreeRemove` | worktree 作成・削除時 | 分離環境のセットアップ |
 | `CwdChanged` / `DirectoryAdded` | 作業ディレクトリの変更・追加時 | 環境変化の監査(direnv の再読込など) |
 | `MessageDisplay` | アシスタント出力の表示時 | 表示内容のマスキング |
@@ -320,14 +369,18 @@ Layer 0: OS サンドボックス(任意 / settings.local.json で opt-in)
   ↓
 Layer 1: フック群(--dangerously-skip-permissions でも有効)
    ├─ PreToolUse: safety-check / protect-files / scan-harness(Skill)
-   ├─ PostToolUse: commit-quality / console-warn
-   ├─ PostToolUseFailure: post-failure-log
+   ├─ UserPromptExpansion: scan-harness(/skill の直接入力)
+   ├─ PostToolUse: commit-quality / console-warn / verify-gate(track)
+   ├─ PostToolUseFailure / StopFailure: post-failure-log
+   ├─ PermissionRequest / PermissionDenied: permission-denied-log
    ├─ ConfigChange: config-guard(防御層を弱める設定変更をセッションに適用させない)
+   ├─ FileChanged(constitution.md): scan-harness(ディスク上の改変を検知)
    ├─ UserPromptSubmit: user-prompt-submit
-   ├─ SessionStart / SessionEnd: session-start / session-end
+   ├─ SessionStart / SessionEnd / InstructionsLoaded: session-start / session-end / instructions-log
    ├─ SubagentStart / SubagentStop: subagent-audit
    ├─ PreCompact / PostCompact: pre-compact-backup / post-compact-restore
-   └─ Stop / Notification: notify-claude(async)
+   ├─ Stop / TaskCompleted / TeammateIdle: verify-gate(検証ゲート)
+   └─ Stop / StopFailure / Notification: notify-claude(async)
   ↓
 Layer 2: Deny / Ask ルール(settings.json — チーム共有)
    ├─ deny: 破壊的操作・シークレット読取を無条件で遮断
@@ -340,9 +393,9 @@ env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1(agent の入れ子禁止 = constit
        CLAUDE_CODE_ENABLE_TODO_TOOLS=1(TaskCompleted ゲートの前提。Claude 5 系では既定で無い)
 ```
 
-> Layer 1 にはブロック系(`safety-check.sh` / `protect-files.sh` / `scan-harness.sh` / `config-guard.sh`)
-> + 観測系(`subagent-audit.sh` / `pre-compact-backup.sh` / `post-compact-restore.sh` /
-> `post-failure-log.sh` / `session-end.sh`) + 警告系(`commit-quality.sh` /
+> Layer 1 にはブロック系(`safety-check.sh` / `protect-files.sh` / `scan-harness.sh` / `config-guard.sh` / `scope-guard.sh`。
+> `onFailure: block` で故障時も fail-closed)+ 観測系(`subagent-audit.sh` / `pre-compact-backup.sh` / `post-compact-restore.sh` /
+> `post-failure-log.sh` / `permission-denied-log.sh` / `instructions-log.sh` / `session-end.sh`) + 警告系(`commit-quality.sh` /
 > `console-warn.sh` / `user-prompt-submit.sh`) + 通知系(`notify-claude.sh`)が含まれる。
 > 観測・通知系はブロックしないが、`--dangerously-skip-permissions` でも記録・通知が残る点で
 > 防御機構の一部として機能する。
@@ -350,6 +403,9 @@ env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1(agent の入れ子禁止 = constit
 - Layer 0 は既定で無効。閉域運用や外部コード実行を伴うプロジェクトで有効化する
 - Layer 1 は常に有効。最も信頼性の高い防御層
 - Layer 2 は通常モードで自動適用。`ask` は `acceptEdits` / `bypassPermissions` でも効く
+- Layer 2 の補強(任意): `permissions.blockReadsOutsideWorkingDirectories` と `blockWritesOutsideWorkingDirectories`(v2.1.314)は
+  作業ディレクトリ外の読み書きを全権限モードで拒否する(`true` は他の settings で打ち消せない)。例は `managed-settings.example.json`、
+  個人で試すなら `settings.local.json.template` の `_comment_working_dir_fence`
 - Layer 3 はプロジェクト固有の許可ルール(テンプレートから設定)
 
 ### Layer 0 の有効化(任意)

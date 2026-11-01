@@ -3,6 +3,8 @@
 # post-failure-log.sh — PostToolUseFailure hook
 #
 # Records tool failure events as structured JSONL for debugging and audit.
+# Also registered on `StopFailure` (a turn ended by an API error: rate_limit / overloaded /
+# billing_error / ...), logged with tool = `api:<error>` so unattended runs leave a trace.
 # Runs AFTER a tool has failed (not blocking — the failure already happened).
 #
 # Registered on the dedicated `PostToolUseFailure` event (official spec): it fires
@@ -43,7 +45,8 @@ fi
 # recorded rather than silently dropped (prevents audit evasion).
 IS_ERROR="unknown"
 if command -v jq &>/dev/null; then
-    if [[ "$(echo "$INPUT" | jq -r '.hook_event_name // ""' 2>/dev/null)" == "PostToolUseFailure" ]]; then
+    EVENT_NAME="$(echo "$INPUT" | jq -r '.hook_event_name // ""' 2>/dev/null)"
+    if [[ "$EVENT_NAME" == "PostToolUseFailure" || "$EVENT_NAME" == "StopFailure" ]]; then
         IS_ERROR="true"
     else
         IS_ERROR="$(echo "$INPUT" | jq -r '.tool_result.is_error // .tool_response.is_error // (if .error then "true" else "unknown" end)' 2>/dev/null)"
@@ -71,6 +74,11 @@ if command -v jq &>/dev/null; then
     TOOL_NAME="$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null)"
     # jq's .[0:500] is a character-based slice (multibyte-safe).
     ERROR_MSG="$(echo "$INPUT" | jq -r '(.error // .tool_result.error // .tool_result.content[0].text // "unknown") | tostring | .[0:500]' 2>/dev/null)"
+    if [[ "${EVENT_NAME:-}" == "StopFailure" ]]; then
+        # StopFailure carries `error` (type) / `error_details` / `last_assistant_message` instead of a tool
+        TOOL_NAME="api:$(echo "$INPUT" | jq -r '.error // "unknown"' 2>/dev/null)"
+        ERROR_MSG="$(echo "$INPUT" | jq -r '(.error_details // .last_assistant_message // "unknown") | tostring | .[0:500]' 2>/dev/null)"
+    fi
     DURATION_MS="$(echo "$INPUT" | jq -r '(.duration_ms // "") | tostring' 2>/dev/null)"
     IS_INTERRUPT="$(echo "$INPUT" | jq -r '(.is_interrupt // false) | tostring' 2>/dev/null)"
     # Redact sensitive keys and truncate by character count (multibyte-safe).

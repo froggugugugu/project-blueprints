@@ -160,6 +160,7 @@ output/
 ### Reviewer
 
 - Conduct code review, security scan, legal check, and HIG-compliance check after implementation
+- First run the `verifier` agent to check the diff against the TASK's acceptance criteria; return any gap to the developer (once per task)
 - Skills used: `/code-review`, `/security-scan`, `/legal-check`, `/hig-compliance`
 - Output reports to respective subdirectories under `output/reports/`
 - Send specific feedback to the developer

@@ -18,6 +18,8 @@ paths:
 - One term per concept. Never call the same thing by different names
 - Use emphasis (**bold** / IMPORTANT) only on the one line that truly must hold. Overuse makes it ineffective
 - Don't keep contradicting rules in different files. When you find one, delete the other
+- Give each rule its reason ("don't X because Y", not "don't X"). Claude 5-family models generalize from the reason, and an absolute rule without one is the first to be dropped when rules conflict
+- Reserve absolute rules (prohibitions) for safety and irreversible operations. Describe the desired state for everything else ("match the surrounding comment density", not "never write comments")
 - To merely mention a path, use a code span. A bare `@path` at the start of a line is read as a load instruction
 - Put maintainer notes in block HTML comments (stripped from context in CLAUDE.md)
 - Use `/` as the only path separator
@@ -59,6 +61,7 @@ paths:
 - Turn complex procedures into a copyable checklist and spell out the "validate → fix → re-validate" loop
 - Show output formats as templates. When style matters, include 2-3 input/output example pairs
 - Add `disable-model-invocation: true` to workflows with side effects (push, deploy)
+- After editing a skill, check `/skill-doctor` (listing cost and usage). After each model update, run `/doctor prompt-audit` for older-model phrasing, dangling references, and contradictions
 
 ## Skill evals (eval-first)
 
@@ -78,12 +81,16 @@ paths:
 - For a write-capable agent, register `scope-guard.sh <docs|output|tests>` under `hooks.PreToolUse` in the frontmatter to enforce the write scope
 - Never list `Agent` in an agent's `tools` (constitution ④). Nesting is refused mechanically by the env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` in `settings.json`; put parallel fan-out in a workflow
 - Give a read-only agent that needs none of the CLAUDE.md rules `omitClaudeMd: true` to cut its startup cost (never on a write-capable agent)
+- For the spec check right before completion, hand `verifier` (read-only, fresh context) only the diff and the spec. Never use a subagent for mid-implementation re-checks (over-verification)
 
 ## Hooks (settings.json)
 
 - On tool events (PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest / PermissionDenied), narrow a hook with `if` (e.g. `"if": "Bash(git commit *)"`). It is best-effort, so safety checks stay in `permissions.deny` and in hooks on the whole matcher
 - Re-inject context after compaction from the SessionStart hook with the `compact` source (PostCompact cannot inject context)
 - Rules with `paths:` dissolve into the compaction summary. A rule that must always hold goes in CLAUDE.md or in a rule without `paths:`
+- Give blocking hooks (the safety devices doubled up with deny rules) `onFailure: block`. Without it, an action goes through whenever the hook cannot start
+- Typing `/skill` directly bypasses PreToolUse(Skill). Register the same script on `UserPromptExpansion` for any per-skill suppression
+- Use a hook only for a rule with zero exceptions. Delete hooks that encode a preference (naming, style) and move them back to CLAUDE.md prose. Keep the enforced set small (near forty, most are preferences)
 
 ## Workflows (.claude/workflows/*.js)
 

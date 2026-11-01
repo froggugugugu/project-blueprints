@@ -8,6 +8,56 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (公式仕様 2.1.283〜2.1.316 とハーネス工学の知見の取り込み, 2026-10-26 / 10-31)
+
+- **フック 6 イベントを追加(JP/EN、settings 登録 20 → 27、スクリプト 17 → 18)**:
+  `UserPromptExpansion`(`scan-harness.sh` — `/skill` の直接入力は PreToolUse(Skill) を通らないため、同じ判定を展開前に掛ける)/
+  `FileChanged`(`scan-harness.sh filechanged` — `sed -i` や外部エディタによる `constitution.md` の改変をファイル監視で検知し `testreport/config-changes/` に記録)/
+  `StopFailure`(`post-failure-log.sh` が `tool=api:<error>` で記録、`notify-claude.sh failure` が通知)/
+  `TeammateIdle`(`verify-gate.sh teammate` — agent teams の teammate の手待ちにも検証ゲート)/
+  `PermissionRequest`(`permission-denied-log.sh request` — 無人実行で止まった呼び出しを `kind=request` で記録)/
+  `InstructionsLoaded`(新規 `instructions-log.sh` — CLAUDE.md / rules の load 実績を `testreport/instructions/` に記録。rule 棚卸しの実測値)。
+- **フェイルクローズ**: ブロック系 4 本(`safety-check.sh` / `protect-files.sh` / `config-guard.sh` / agent frontmatter の `scope-guard.sh`)に
+  `onFailure: "block"`(v2.1.295)。フックが起動できない・タイムアウトしたときに操作が素通りしなくなった。
+  `validate_harness.py` が欠落を WARN し、`onFailure` の値(continue / block)と型(command / http 限定)、`FileChanged` matcher の正規表現混入を検査。
+- **`.claude/agents/verifier.md`(JP/EN、agent 8 → 9)**: 完了直前に 1 回だけ差分を受け入れ条件・検証結果と照合する読取専用の第三者レビュー
+  (公式 best-practices の adversarial review step。`memory` を持たず判定を持ち越さない)。`/implementing-features` の手順 6、
+  TEAM_PJM / TEAM_FEATURE のレビュアー、teams/README の dispatch 表、`project-config.md` §13.4、CLAUDE.md のサブエージェント戦略に組み込み。
+- **`settings.json` の `isolatePeerMachines: true`(JP/EN)**: 他マシンのセッションへメッセージを送る前に必ず確認(cross-session messaging)。
+  `managed-settings.example.json` に `crossSessionInbound` と `SendMessage` / `ListAgents` の deny の案内。
+- **`guardrails.md`**: 「フェイルクローズ(`onFailure: block`)」「コントロールの棚卸し(harness rot 対策)」節、idle compaction・セッション間メッセージ・
+  OTel `claude_code.safety_event`・agent memory のレビュー対象化の注記。**`pitfalls.md` #37〜#39**(`/skill` 直接入力の抜け道 / プロンプトキャッシュを
+  無効化する操作 / フックの fail-open)。
+- **`validate-harness.sh --test` 47 → 52 件 / `--hooks` 106 → 150 件**(UserPromptExpansion の must-block / must-allow、FileChanged の一致 / 不一致、
+  teammate、StopFailure、request、instructions-log)。
+- **作業ディレクトリ外への書込拒否(v2.1.314)**: `permissions.blockWritesOutsideWorkingDirectories` を `managed-settings.example.json`
+  (`requiredMinimumVersion` 2.1.314)と `settings.local.json.template` の `_comment_working_dir_fence`(opt-in)、`guardrails.md` の Layer 2、
+  `permissions-guide.md` に追加。`validate_harness.py` は `permissions` の未知キー(黙って無視される)を ERROR にし、`--test` 52 → 53 件。
+- **`config-guard.sh`(JP/EN)**: `safety-check.sh` / `protect-files.sh` の登録から `onFailure: block` が消える変更(フェイルオープン化)もブロック。`--hooks` 150 → 152 件。
+- **`project-config.md` §13.1b(JP/EN)**: effort の動かし方の表(`high` / `xhigh`・`low`・`max`・`ultrathink`(v2.1.311 で `xhigh`)・
+  `CLAUDE_CODE_SUBAGENT_EFFORT`(v2.1.316))。
+
+### Changed (公式仕様 2.1.283〜2.1.316 とハーネス工学の知見の取り込み, 2026-10-26 / 10-31)
+
+- **auto mode の既定**: v2.1.283 以降は全プラン・全プロバイダで既定の権限モードになったため、「Pro / Max / Team の既定」という記述を
+  CLAUDE.md / pitfalls #23 / settings.local.json.template / permission-denied-log.sh で更新。README のクイックスタートに `/auto-mode-setup` を追加。
+- **`project-config.md` §13(JP/EN)**: 固定 ID を Sonnet 5.5(`claude-sonnet-5-5`)/ Haiku 5.5(`claude-haiku-5-5`)に更新。§13.1c advisor(上位モデルへの相談)、
+  Sonnet 5.5 の `low` effort は検証せず完了報告しがちという注意、§13.5「セッション途中でモデルを切り替えない(キャッシュ無効化)」を追加。
+- **`harness-authoring.md`(JP/EN)**: 規則には理由を添える / 絶対規則は安全と不可逆操作に限り、他は望ましい状態を記述する(Claude 5 系の公式ガイダンス:
+  rules から judgement へ)/ skill 編集後の `/skill-doctor`、モデル更新時の `/doctor prompt-audit` / ブロック系フックの `onFailure: block` /
+  `UserPromptExpansion` への二重登録。
+- **`/harness-refine` Round 0(JP/EN)**: `/doctor prompt-audit` と「コントロールの棚卸し」(`testreport/instructions|denials|failures|config-changes` の集計)を追加。
+- **`permission-denied-log.sh` / `post-failure-log.sh` / `verify-gate.sh` / `scan-harness.sh` / `notify-claude.sh`(JP/EN)**: 上記イベントに対応するモード引数を追加。
+  既存の挙動(PermissionDenied / PostToolUseFailure / Stop・TaskCompleted / PreToolUse(Skill) / stop・notify)は変えていない。
+- **OTel の記述(`guardrails.md`)**: `claude_code.safety_event` は v2.1.312 で送信停止。フリート集計は `claude_code.tool_decision` と `testreport/` の JSONL に改めた。
+- **effort の既定値(`project-config.md` §13.1)**: Opus 5.5 / Sonnet 5.5 / Haiku 5.5 が `medium`、他は `high`(公式)。§13.1c advisor を §13.1b の後ろへ移動。
+- **コントロールの棚卸し(`guardrails.md` / `harness-authoring.md`)**: 公式の「好みを符号化したフックは消す・強制は少数に保つ」を追記。
+  `guardrails.md` の 3 層防御図の Layer 1 を 27 登録に合わせ、検証ゲートに `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` を追記。
+- **`/harness-refine`(JP/EN)**: Round 0 の棚卸しに `/usage`。基準ソースを `changelog` 主軸(`whats-new` は補助)、`.md` 直接取得、anthropic.com/research に更新。
+- **`claude-review.yml.template`(JP/EN)**: `--model claude-sonnet-5` → `claude-sonnet-5-5`。
+- **`settings.local.json.template` / `managed-settings.example.json`(JP/EN)**: autoMode の各リストに `"$defaults"` を残す注意、`/fewer-permission-prompts`、
+  `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`、`CLAUDE_CODE_SUBAGENT_EFFORT` の案内。
+
 ### Added (Claude 5 系対応 + 公式仕様の総点検, 2026-09-26)
 
 - **`.claude/hooks/config-guard.sh`(JP/EN)**: `ConfigChange` フック。セッション中の設定変更を

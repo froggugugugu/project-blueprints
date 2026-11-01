@@ -16,8 +16,9 @@ To invoke explicitly, use the `Agent` tool with `subagent_type: <name>`.
 | `doc-synchronizer` | Sync updates to **existing** files under `docs/` | `haiku` | low | Read / Edit / Write / Grep / Glob | `docs/` only |
 | `doc-writer` | Author **new** documents under `output/` | `sonnet` | medium | Read / Edit / Write / Grep / Glob | `output/` only |
 | `test-writer` | Unit and E2E test creation | `sonnet` | medium | Read / Edit / Write / Grep / Glob / Bash | Test files only |
+| `verifier` | Spec conformance right before completion (diff × acceptance criteria × verification results) | `sonnet` | high | Read / Grep / Glob / Bash | None |
 
-Every agent also sets `memory: project` and `maxTurns` (runaway protection plus cross-session learning).
+Every agent sets `maxTurns` (runaway protection). All but `verifier` set `memory: project` (cross-session learning; the verifier carries no memory so verdicts never carry over).
 
 ## agent vs team vs skill — when to use which
 
@@ -49,7 +50,7 @@ Agent({
 Each agent's `tools` field contains the **minimum set required for its role**.
 
 - Exploratory agents (`explorer`, `planner`) have no write access at all
-- Audit agents are read-focused. Only `performance-analyst` has Bash (for measurement commands); `security-reviewer` is fully read-only
+- Audit agents are read-focused. Only `performance-analyst` (measurement commands) and `verifier` (runs the verification commands itself) have Bash; `security-reviewer` is fully read-only
 - Write-capable agents (`doc-synchronizer`, `doc-writer`, `test-writer`) are scoped to specific paths by role
 - `doc-synchronizer` and `doc-writer` set `permissionMode: acceptEdits` to skip permission prompts. In exchange, their
   frontmatter registers `scope-guard.sh docs` / `scope-guard.sh output` under `hooks.PreToolUse`, which stops out-of-scope writes with exit 2.
@@ -137,6 +138,10 @@ If unspecified, the session default is inherited.
   `Agent(model:opus)` / `Agent(isolation:worktree)` are supported (`Tool(param:value)` syntax)
 - **Memory**: `memory: project` learnings are stored in `.claude/agent-memory/<name>/` and **committed to git** (meant for team sharing).
   Use `local` (`.claude/agent-memory-local/`, gitignored) to keep them personal
+
+- **Spec conformance right before completion**: the adversarial review step in the official best practices has a fresh context,
+  separate from the implementer, check the diff against the spec. Here that is `verifier` (once per task; hand it only the diff and
+  the spec, never the parent's reasoning). Do not use it for mid-implementation re-checks
 
 ## Pitfalls
 

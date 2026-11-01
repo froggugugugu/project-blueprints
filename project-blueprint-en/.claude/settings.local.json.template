@@ -19,6 +19,8 @@
     "    PreToolUse(Bash/Edit|Write|NotebookEdit/Skill) + PostToolUse + PostToolUseFailure",
     "    + UserPromptSubmit + SessionStart/SessionEnd + SubagentStart/SubagentStop",
     "    + PreCompact/PostCompact + Stop(verify-gate verification gate / notify) / Notification + PermissionDenied(denial log) + TaskCompleted(verification gate) + ConfigChange (config-guard: refuses settings changes that weaken the guardrails)",
+    "    + UserPromptExpansion (scan-harness: direct /skill input) + PermissionRequest (dialog log) + StopFailure (API-error log + notification) + TeammateIdle (verification gate) + FileChanged (constitution watch) + InstructionsLoaded (rule load log)",
+    "    The 4 blocking hooks (safety-check / protect-files / config-guard / scope-guard) carry onFailure: block, so a failure of the hook itself still stops the action",
     "- Layer 2: deny / ask rules (already in settings.json; do not override them here)",
     "- Layer 3: allow rules (this file, active in normal mode)",
     "- meta : self-SAST via scan-harness.sh (constitution hash / secret leakage / deny weakening)",
@@ -33,10 +35,11 @@
     "you want to permit is a Write."
   ],
   "_comment_auto_mode": [
-    "Relation to auto mode (the default permission mode on Pro / Max / Team):",
+    "Relation to auto mode (the default permission mode on every plan and provider since v2.1.283; run /auto-mode-setup in the first session to describe the environment):",
     "- deny rules in settings.json apply before the classifier; ask rules always prompt, even in auto mode",
     "- `permissions.defaultMode: \"auto\"` and `autoMode.*` are NOT read from project / local settings (official spec).",
     "  Put them in your personal ~/.claude/settings.json or managed settings; /auto-mode-setup drafts them",
+    "- Keep \"$defaults\" in every autoMode list (environment / allow / soft_deny). Without it your entries replace the built-in context, exceptions and the default blocks on force pushes / production deploys",
     "- The classifier also reads CLAUDE.md, so project-specific prohibitions belong in CLAUDE.md itself too (not only in the imported AGENTS.md)",
     "- Classifier denials are logged by permission-denied-log.sh under testreport/denials/. Add repeatedly",
     "  denied legitimate actions to the allow list in this file"
@@ -48,7 +51,7 @@
     "- For a permanent model-judged gate, add a prompt-type Stop hook to this file:",
     "  \"hooks\": { \"Stop\": [ { \"hooks\": [ { \"type\": \"prompt\",",
     "    \"prompt\": \"Evaluate if Claude should stop: $ARGUMENTS. Block only if tests were not run after code changes.\" } ] } ] }",
-    "  NOTE: Claude Code overrides the hook after 8 consecutive blocks. Check stop_hook_active and block only once"
+    "  NOTE: Claude Code overrides the hook after 8 consecutive blocks (CLAUDE_CODE_STOP_HOOK_BLOCK_CAP changes it; 0 removes the cap). Check stop_hook_active and block only once"
   ],
   "_comment_telemetry": [
     "Observability / cost (organization rollout): OpenTelemetry variables in the env of project / local settings are ignored",
@@ -74,10 +77,23 @@
   },
   "_comment_hook_profile": [
     "BLUEPRINT_HOOK_PROFILE: behavior switch for the extended hooks",
-    "  Honored by: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit / verify-gate / permission-denied-log / config-guard",
+    "  Honored by: user-prompt-submit / session-end / scan-harness / post-compact-restore / subagent-audit / verify-gate / permission-denied-log / config-guard / instructions-log",
     "  - 'minimal':  pass-through (skip inspection). For CI / automation",
     "  - 'standard': warn only on detection (non-blocking, default)",
     "  - 'strict':   block the skill / prompt on detection. For high-risk work"
+  ],
+  "_comment_limits": [
+    "Cost caps for unattended runs (the official recommendation is deterministic caps): CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 is pinned in settings.json.",
+    "Concurrent subagents: CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS (default 20); workflows: CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS and workflowSizeGuideline;",
+    "CI: --max-turns / --max-budget-usd on claude -p. If you set one in env here, write it as an integer string, e.g. \"CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS\": \"4\".",
+    "Messages from other sessions: isolatePeerMachines is true in settings.json. To stop inbound messages too, set \"crossSessionInbound\": \"refuse\" (project settings only tighten).",
+    "Default subagent effort: an agent without effort in its frontmatter inherits the session's effort. To pin it, set \"CLAUDE_CODE_SUBAGENT_EFFORT\": \"medium\" (v2.1.316)."
+  ],
+  "_comment_working_dir_fence": [
+    "Refuse reads and writes outside the working directories in every permission mode (optional; honored from project settings, and a true cannot be lifted by another settings file):",
+    "  \"permissions\": { \"blockReadsOutsideWorkingDirectories\": true, \"blockWritesOutsideWorkingDirectories\": true }",
+    "blockWrites requires v2.1.314+. Skills / rules / CLAUDE.md under ~/.claude stay readable. For another directory, add it with --add-dir or",
+    "additionalDirectories in ~/.claude/settings.json (additionalDirectories in project settings does not count as a working directory)."
   ],
   "permissions": {
     "allow": [
@@ -138,7 +154,10 @@
     "'WebFetch(domain:*)' — but note that this permits reaching any URL.",
     "",
     "Workflow(<name>) skips the run confirmation for a saved workflow; the bundled review-sweep / skill-eval are allowed here.",
-    "Tune the size with workflowSizeGuideline (default medium = fewer than 10 agents; small on Pro)."
+    "Tune the size with workflowSizeGuideline (default medium = fewer than 10 agents; small on Pro).",
+    "",
+    "When Manual mode prompts too often, /fewer-permission-prompts scans recent transcripts for read-only Bash / MCP calls and",
+    "writes allow rules to .claude/settings.json. This template keeps allow rules out of the shared file, so move the generated lines here."
   ],
   "_comment_pkg_manager": [
     "Switching package manager — swap the npm/npx block inside allow",

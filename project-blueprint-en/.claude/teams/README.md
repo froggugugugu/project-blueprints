@@ -268,6 +268,7 @@ Team members can delegate to the following subagents on demand (see `.claude/age
 | `doc-synchronizer` | Developer | Developer | — | — | — | Refactorer |
 | `doc-writer` | Analyst/Reviewer | — | Reviewer | Analyst | — | — |
 | `test-writer` | Developer/Tester | Developer | Tester | — | — | Tester |
+| `verifier` | Reviewer | Reviewer | Reviewer | — | — | Reviewer |
 
 ### Typical dispatch examples
 
@@ -276,6 +277,7 @@ Team members can delegate to the following subagents on demand (see `.claude/age
 - **TEAM_FEATURE during implementation**: Developer calls `researcher` to confirm the official spec of an unfamiliar dependency before touching it (avoid wheel reinvention)
 - **TEAM_QA**: Security role combines `security-reviewer` agent + `researcher` (latest CVE intelligence) for audits
 - **TEAM_PLANNING**: Architect uses `researcher` to gather comparison data on candidate frameworks → grounding for design decisions
+- **Implementation gate (every team)**: the Reviewer calls `verifier` once before `/code-review` to check the diff against the TASK's acceptance criteria (confirm there are no gaps before hunting bugs)
 
 Agents and teams live on different layers (the three-layer separation principle). Team members dispatch agents on demand for single-shot work; agents must not launch teams (no circular invocation).
 

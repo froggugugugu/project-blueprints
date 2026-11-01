@@ -109,14 +109,18 @@ Round 0(非破壊・自己強化)        ラウンド 1                         
 1. **最新公式ガイダンスの取得**: 末尾「ベストプラクティス基準ソース」の URL を WebFetch、
    ライブラリ系は Context7 で取得する。取得失敗時は **degraded モード**として訓練データ + 過去レポートで継続し、
    その旨を会話とレポートに明示する(無言で訓練データに退行しない)。
-   併せて `/skill-doctor`(未使用 skill と一覧コスト)と `/doctor`(CLAUDE.md の削減提案)の出力を採点根拠に加える。
+   併せて `/skill-doctor`(未使用 skill と一覧コスト)、`/doctor`(CLAUDE.md の削減提案)、`/doctor prompt-audit`(旧世代向けの書き方・存在しない参照・矛盾)の出力を採点根拠に加える。
 2. **過去レポート学習**: `output/reports/harness-refine/REFINE_*.md`(あれば最新 2〜3 件)を読み、
    (a) **未解決課題** (b) **2 回以上再発した指摘** を抽出する。
-3. **ライブ・ルーブリック差分の生成**: 取得した最新ガイダンスを下記 15 項目 rubric と突き合わせ、
+3. **コントロールの棚卸し**: `testreport/instructions/`(rule の load 実績)、`testreport/denials/`(拒否・ダイアログ)、
+   `testreport/failures/`(ツール失敗・API エラー)、`testreport/config-changes/` を集計し、`.claude/guardrails.md` の「コントロールの棚卸し」の基準で
+   剪定候補の指示と、由来(pitfall 番号)の無い強制を列挙する。`/usage`(skill / subagent / plugin / MCP 別の使用量と、長い context・
+   キャッシュミスの警告)で、コストに見合わない subagent と未使用 skill を実測で裏付ける。モデルが更新されていれば、外せる可能性のある指示を 1 つずつ候補にする。
+4. **ライブ・ルーブリック差分の生成**: 取得した最新ガイダンスを下記 15 項目 rubric と突き合わせ、
    - 既存項目の判定基準が古ければ **今回ラウンドの暫定基準**として更新する
    - 公式に新しい強い推奨があれば **新規採点項目候補**として記録する
    - 再発課題は **優先補正対象**へ昇格する
-4. **人間承認ゲート**: 新規採点項目の追加提案、または `constitution.md` に波及する変更は、
+5. **人間承認ゲート**: 新規採点項目の追加提案、または `constitution.md` に波及する変更は、
    **採用前に人間へ提示して承認を得る**(自動編集禁止)。
 
 Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取得可否」「再発課題リスト」「今回適用する rubric 差分」。
@@ -273,17 +277,18 @@ Round 0 の出力(会話 + 最終レポートに記載):「取得ソースと取
 | code.claude.com/docs `sub-agents` / `skills` / `hooks` / `permissions` / `settings-reference` | 公式 enum・既定値(fork mode / bundled skill 上書き / `Tool(param:value)` ルール等) | 3, 5, 10, 13 |
 | code.claude.com/docs `memory` / `context-window` / `prompt-caching` / `costs` | CLAUDE.md 行数 / 起動時 load コスト / キャッシュ無効化要因 / compact 指示 | 2, 12 |
 | claude.com/blog `steering-claude-code-skills-hooks-rules-subagents-and-more` | CLAUDE.md / rules / skills / hooks / subagents / output styles の使い分け | 4, 10 |
-| code.claude.com/docs `whats-new`(直近 8 週) | 新機能・既定値変更の検知(rubric 自己進化の入力) | 全項目 |
-| code.claude.com/docs `tools-reference` / `changelog`(直近 30 版) | ツールのモデル別可用性(Task ツール等)・削除や変更された挙動 | 5, 10 |
+| code.claude.com/docs `changelog`(直近 30 版。`whats-new` は更新が止まることがあるので補助) | 新機能・既定値変更・削除された挙動の検知(rubric 自己進化の入力) | 全項目 |
+| code.claude.com/docs `tools-reference` | ツールのモデル別可用性(Task ツール等) | 5, 10 |
 | platform.claude.com/docs `prompt-engineering/prompting-claude-{opus-5,opus-5-5,fable-5,fable-5-1}` + `claude-prompting-best-practices` | Claude 5 系で逆効果になる指示(過剰検証・過剰委譲・保守的レビュー・思考の開示)の除去 | 10, 11, 12 |
 | agentskills.io `specification` / `skill-creation/evaluating-skills` | description 上限 / `evals/evals.json` 形式 / assertion の書き方 | 11, 15 |
 | claude.com/blog `a-harness-for-every-task-dynamic-workflows-in-claude-code` | workflow パターン(fan-out / adversarial verify / loop-until-done) | 4, 9 |
-| anthropic.com/engineering `writing-tools-for-agents` | ツール定義の明確さ・トークン効率 | 10, 11 |
-| anthropic.com/engineering `effective-context-engineering-for-ai-agents` | コンテキスト curation / sub-agent 隔離 | 12, 13 |
-| anthropic.com/engineering `effective-harnesses-for-long-running-agents` | 起動オリエンテーション / 検証ループ | 9, 15 |
+| anthropic.com/research(旧 engineering)`writing-tools-for-agents` | ツール定義の明確さ・トークン効率 | 10, 11 |
+| anthropic.com/research `effective-context-engineering-for-ai-agents` | コンテキスト curation / sub-agent 隔離 | 12, 13 |
+| anthropic.com/research `effective-harnesses-for-long-running-agents` | 起動オリエンテーション / 検証ループ | 9, 15 |
 | GitHub: spec-kit / BMAD-METHOD / SuperClaude / agent-os / superpowers | acceptance checklist / モデル tier / standards 集約 / discoverability | 9, 14, 15 |
 
 > 取得に失敗したソースは degraded として明示し、当該 rubric 項目は前回基準で暫定採点する。
+> code.claude.com/docs のページは URL 末尾に `.md` を付けると生 Markdown が返る(索引は `/docs/llms.txt`)。HTML 経由の WebFetch は本文が落ちやすいので `.md` を先に試す。
 
 ## 関連参照
 

@@ -5,6 +5,7 @@
 #   notify-claude.sh stop                 — 完了通知
 #   notify-claude.sh notify               — stdin の JSON からメッセージを送信（fire-and-forget）
 #   notify-claude.sh notify --wait [秒]   — 通知送信 + 応答待ち（デフォルト120秒）
+#   notify-claude.sh failure              — StopFailure(API エラー停止)の通知
 #
 # --wait モードの応答フロー:
 #   1. リクエストID(4文字hex)を生成し、メッセージ先頭に [ID] を付与
@@ -132,6 +133,13 @@ case "$event_type" in
         exit 2
       fi
     fi
+    ;;
+
+  failure)
+    # StopFailure: API エラーでターンが終了(rate_limit / overloaded / billing_error ...)。無人実行の停止を知らせる
+    input=$(cat)
+    err=$(echo "$input" | jq -r '.error // "unknown"' 2>/dev/null)
+    curl -s -d "Claude Code: API エラーで停止しました (${err:-unknown})" "$NTFY_URL" >/dev/null 2>&1 || true
     ;;
 
   *)

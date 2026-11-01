@@ -195,7 +195,7 @@ common in long-running Claude Code sessions.
 
 | Field | Content |
 | ----- | ------- |
-| **Symptom** | Auto mode is the default on Pro / Max / Team, so work proceeds with no permission prompts, and a boundary that relied only on "never do X" in CLAUDE.md is crossed |
+| **Symptom** | Auto mode is the default on every plan and provider since v2.1.283, so work proceeds with no permission prompts, and a boundary that relied only on "never do X" in CLAUDE.md is crossed |
 | **Cause** | Auto mode routes each action through a classifier model. Prompted instructions can be lost in long sessions or through prompt injection from a file |
 | **Mitigation** | Use `permissions.deny` for actions that must never run (applies before the classifier) and `permissions.ask` for actions to confirm every time (always prompts, even in auto mode). Hooks (Layer 1) stay active. The classifier also reads CLAUDE.md, so write prohibitions in CLAUDE.md itself too (the docs do not say whether the classifier reads imported files such as `AGENTS.md`). Denials are recorded by `permission-denied-log.sh` under `testreport/denials/` |
 
@@ -302,6 +302,30 @@ common in long-running Claude Code sessions.
 | **Symptom** | `"if": "Bash(rm *)"` meant to stop dangerous commands does not fire on `$VAR rm ...` or compound commands |
 | **Cause** | `if` parses subcommands and `$()` on a best-effort basis. When it cannot decide it errs toward running the hook, but the purpose of narrowing is cost, not safety |
 | **Mitigation** | Keep safety checks in `permissions.deny` and in hooks on the whole matcher (this template's `safety-check.sh`); use `if` to narrow observation hooks such as `commit-quality.sh`. On a non-tool event `if` stops the hook from running at all |
+
+### 37. Typing `/skill` directly bypasses the PreToolUse(Skill) hook
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | A PreToolUse hook on the `Skill` matcher (this template's `scan-harness.sh`) blocks deploy-class skills, yet typing `/deploy` directly runs it |
+| **Cause** | PreToolUse(Skill) fires only when Claude calls the `Skill` tool. A human typing `/name` goes through the `UserPromptExpansion` event, which needs its own registration |
+| **Mitigation** | Make `permissions.deny` (`Skill(skill:deploy*)`) the primary control, and register the same script on both `PreToolUse(Skill)` and `UserPromptExpansion` (this template registers `scan-harness.sh` on both and reads `command_name`) |
+
+### 38. Repeating operations that invalidate the prompt cache without knowing it
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | One turn is suddenly slow and expensive. The cache-read ratio in `/usage` drops |
+| **Cause** | Switching models, changing effort, fast mode, connecting or removing an MCP server, enabling a plugin, denying a whole tool, compaction, accumulating images, and upgrading Claude Code all invalidate the cache. Editing CLAUDE.md mid-session (#24), editing files, changing the permission mode, and invoking skills do not |
+| **Mitigation** | Do not switch models mid-session; give each role its own `model:` and `effort:` in agents / skills instead (`project-config.md` §13). Line up MCP servers and plugins before starting. A subagent has its own cache, so a different model there does not touch the parent's |
+
+### 39. A broken safety hook is the same as no hook (fail-open)
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | The hook's path was mistyped, the execute bit was lost, or it timed out, and the dangerous command went through anyway. The transcript shows a single `hook error` line |
+| **Cause** | Hooks are fail-open by default: on a start failure, timeout, or unexpected exit code the action continues. Policy hooks are exactly the ones whose breakage goes unnoticed |
+| **Mitigation** | Give blocking hooks `"onFailure": "block"` (v2.1.295) so a hook failure stops the action (this template: `safety-check.sh` / `protect-files.sh` / `config-guard.sh` / `scope-guard.sh`). `validate-harness.sh` warns when it is missing, and `--hooks` regression-tests every guard in both directions (must-block / must-allow) |
 
 ## Recommended session-management commands
 
