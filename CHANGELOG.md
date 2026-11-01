@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-11-01
+
+Claude 5 系対応と公式仕様 2.1.283〜2.1.316 への追従をまとめたリリース。フック 18 本 / 登録 27、agent 9、skill 17、
+フェイルクローズ、`verifier` agent、`config-guard.sh`、`AGENTS.md` 分離、検証ゲート(`--test` 53 / `--hooks` 152)を含む。
+0.3.0 以降の Unreleased を全て含む(PR #16〜#28)。
+
 ### Added (公式仕様 2.1.283〜2.1.316 とハーネス工学の知見の取り込み, 2026-10-26 / 10-31)
 
 - **フック 6 イベントを追加(JP/EN、settings 登録 20 → 27、スクリプト 17 → 18)**:
@@ -400,7 +406,8 @@ Initial blueprint self-enhancement series(PR #10 マージ — `17cbf99`)。
 15 skills + 6 teams + 6 agents + 9 hooks + MCP テンプレート + 13 セクションの
 project-config.md を備えたブループリント初版(PR #2 マージ — `c46966a`)。
 
-[Unreleased]: https://github.com/froggugugugu/project-blueprints/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/froggugugugu/project-blueprints/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/froggugugugu/project-blueprints/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/froggugugugu/project-blueprints/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/froggugugugu/project-blueprints/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/froggugugugu/project-blueprints/releases/tag/v0.1.0
