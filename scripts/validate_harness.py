@@ -887,6 +887,7 @@ def check_constitution(root: Path, rep: Report) -> None:
 
 
 NPM_SPEC_RE = re.compile(r"^(@?[\w.-]+(?:/[\w.-]+)?)(?:@([\w.^~<>=*-]+))?$")
+EXACT_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$")
 
 
 def collect_npx_specs(obj, active: bool, out: dict) -> None:
@@ -909,11 +910,17 @@ def collect_npx_specs(obj, active: bool, out: dict) -> None:
             collect_npx_specs(v, active, out)
 
 
-def check_npm_packages(root: Path, rep: Report) -> None:
+def check_mcp_template(root: Path, rep: Report, online: bool) -> None:
+    """`.mcp.json.template`: every `npx -y <pkg>` must be pinned to an exact version
+    (ERROR for active servers, WARN for `_example` blocks); with --online the packages
+    must also resolve on the registry and not be deprecated."""
     tmpl = root / ".mcp.json.template"
     if not tmpl.exists():
         return
-    cfg = json.loads(tmpl.read_text(encoding="utf-8"))
+    try:
+        cfg = json.loads(tmpl.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return   # check_json_files already reported it
     specs: dict = {}
     collect_npx_specs(cfg.get("mcpServers", {}), True, specs)
     for k, v in cfg.items():
@@ -925,12 +932,15 @@ def check_npm_packages(root: Path, rep: Report) -> None:
         if not m:
             continue
         name, ver = m.group(1), m.group(2)
-        if active and not ver:
-            rep.warn(
-                str(tmpl),
-                f"有効な MCP サーバーの npm パッケージ `{name}` がバージョン固定されていません"
-                " — サプライチェーン対策として `name@<version>` で固定してください",
-            )
+        if not ver or not EXACT_VERSION_RE.match(ver):
+            msg = (f"npm パッケージ `{name}` がバージョン固定されていません"
+                   " — サプライチェーン対策として `name@x.y.z` で固定してください")
+            if active:
+                rep.error(str(tmpl), "有効な MCP サーバーの " + msg)
+            else:
+                rep.warn(str(tmpl), "例示ブロックの " + msg)
+        if not online:
+            continue
         target = f"{name}@{ver}" if ver else name
         res = subprocess.run(["npm", "view", target, "version"], capture_output=True, text=True)
         if res.returncode != 0 or not res.stdout.strip():
@@ -939,6 +949,29 @@ def check_npm_packages(root: Path, rep: Report) -> None:
         dep = subprocess.run(["npm", "view", name, "deprecated"], capture_output=True, text=True)
         if dep.stdout.strip():
             rep.warn(str(tmpl), f"npm パッケージ `{name}` は deprecated です: {dep.stdout.strip()[:70]}")
+
+
+RELEASE_HEADING_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.M)
+
+
+def check_release_version(repo: Path, rep: Report) -> None:
+    """`VERSION` must be x.y.z and equal the newest release heading in CHANGELOG.md
+    (both are bumped together by scripts/release.sh; setup.sh stamps the value into
+    the target project's manifest, so a stale VERSION breaks `--upgrade` reporting)."""
+    vf, cl = repo / "VERSION", repo / "CHANGELOG.md"
+    if not vf.exists() or not cl.exists():
+        return
+    version = vf.read_text(encoding="utf-8").strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        rep.error("VERSION", f"`{version}` は x.y.z 形式ではありません")
+        return
+    text = cl.read_text(encoding="utf-8")
+    m = RELEASE_HEADING_RE.search(text)
+    if m and m.group(1) != version:
+        rep.error("VERSION", f"VERSION `{version}` と CHANGELOG.md の最新リリース見出し `{m.group(1)}` が一致しません"
+                  " — `bash scripts/release.sh prepare <version>` で同時に更新する")
+    if "## [Unreleased]" not in text:
+        rep.warn("CHANGELOG.md", "`## [Unreleased]` 節がありません(Keep a Changelog)")
 
 
 def check_mirror_parity(a: Path, b: Path, rep: Report) -> None:
@@ -968,8 +1001,7 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_imports_and_limits(root, rep)
     check_loop_md(root, rep)
     check_constitution(root, rep)
-    if online:
-        check_npm_packages(root, rep)
+    check_mcp_template(root, rep, online)
 
 
 def main() -> int:
@@ -1002,6 +1034,8 @@ def main() -> int:
     if parity:
         print("日英ミラー構成の一致を検証中")
         check_mirror_parity(roots[0], roots[1], rep)
+    if not args.root:
+        check_release_version(repo, rep)
 
     print()
     for w in rep.warnings:

@@ -1,0 +1,195 @@
+{
+  "date": "2026-11-01",
+  "mirror": "project-blueprint",
+  "model": "sonnet",
+  "grader_model": "sonnet",
+  "effort": "",
+  "max_turns": 40,
+  "max_budget_usd": 3.0,
+  "claude_version": "2.1.314 (Claude Code)",
+  "runs": 28,
+  "skills": {
+    "prd": {
+      "with": {
+        "cases": 2,
+        "passed": 8,
+        "total": 8,
+        "cases_all_pass": 2,
+        "skill_invoked": 2,
+        "cost_usd": 0.51,
+        "duration_s": 74.0,
+        "errors": 0,
+        "pass_rate": 100.0
+      },
+      "without": {
+        "cases": 2,
+        "passed": 8,
+        "total": 8,
+        "cases_all_pass": 2,
+        "skill_invoked": 1,
+        "cost_usd": 0.3,
+        "duration_s": 48.0,
+        "errors": 0,
+        "pass_rate": 100.0
+      }
+    },
+    "plan": {
+      "with": {
+        "cases": 2,
+        "passed": 6,
+        "total": 8,
+        "cases_all_pass": 1,
+        "skill_invoked": 1,
+        "cost_usd": 0.42,
+        "duration_s": 68.0,
+        "errors": 0,
+        "pass_rate": 75.0
+      },
+      "without": {
+        "cases": 2,
+        "passed": 5,
+        "total": 8,
+        "cases_all_pass": 0,
+        "skill_invoked": 0,
+        "cost_usd": 0.35,
+        "duration_s": 54.0,
+        "errors": 0,
+        "pass_rate": 62.5
+      }
+    },
+    "adr": {
+      "with": {
+        "cases": 2,
+        "passed": 6,
+        "total": 7,
+        "cases_all_pass": 1,
+        "skill_invoked": 2,
+        "cost_usd": 0.39,
+        "duration_s": 47.0,
+        "errors": 0,
+        "pass_rate": 85.7
+      },
+      "without": {
+        "cases": 2,
+        "passed": 4,
+        "total": 7,
+        "cases_all_pass": 1,
+        "skill_invoked": 0,
+        "cost_usd": 0.3,
+        "duration_s": 35.0,
+        "errors": 0,
+        "pass_rate": 57.1
+      }
+    },
+    "code-review": {
+      "with": {
+        "cases": 2,
+        "passed": 3,
+        "total": 8,
+        "cases_all_pass": 0,
+        "skill_invoked": 2,
+        "cost_usd": 0.55,
+        "duration_s": 91.0,
+        "errors": 0,
+        "pass_rate": 37.5
+      },
+      "without": {
+        "cases": 2,
+        "passed": 1,
+        "total": 8,
+        "cases_all_pass": 0,
+        "skill_invoked": 0,
+        "cost_usd": 0.31,
+        "duration_s": 39.0,
+        "errors": 0,
+        "pass_rate": 12.5
+      }
+    },
+    "brainstorm": {
+      "with": {
+        "cases": 2,
+        "passed": 8,
+        "total": 8,
+        "cases_all_pass": 2,
+        "skill_invoked": 1,
+        "cost_usd": 0.32,
+        "duration_s": 51.0,
+        "errors": 0,
+        "pass_rate": 100.0
+      },
+      "without": {
+        "cases": 2,
+        "passed": 4,
+        "total": 8,
+        "cases_all_pass": 0,
+        "skill_invoked": 0,
+        "cost_usd": 0.27,
+        "duration_s": 33.0,
+        "errors": 0,
+        "pass_rate": 50.0
+      }
+    },
+    "implementing-features": {
+      "with": {
+        "cases": 2,
+        "passed": 3,
+        "total": 8,
+        "cases_all_pass": 0,
+        "skill_invoked": 1,
+        "cost_usd": 0.26,
+        "duration_s": 24.0,
+        "errors": 0,
+        "pass_rate": 37.5
+      },
+      "without": {
+        "cases": 2,
+        "passed": 1,
+        "total": 8,
+        "cases_all_pass": 0,
+        "skill_invoked": 1,
+        "cost_usd": 0.38,
+        "duration_s": 69.0,
+        "errors": 0,
+        "pass_rate": 12.5
+      }
+    },
+    "architecture": {
+      "with": {
+        "cases": 2,
+        "passed": 5,
+        "total": 8,
+        "cases_all_pass": 1,
+        "skill_invoked": 2,
+        "cost_usd": 0.73,
+        "duration_s": 181.0,
+        "errors": 0,
+        "pass_rate": 62.5
+      },
+      "without": {
+        "cases": 2,
+        "passed": 7,
+        "total": 8,
+        "cases_all_pass": 1,
+        "skill_invoked": 1,
+        "cost_usd": 0.36,
+        "duration_s": 127.0,
+        "errors": 0,
+        "pass_rate": 87.5
+      }
+    }
+  },
+  "totals": {
+    "with": {
+      "passed": 39,
+      "total": 55,
+      "cost_usd": 3.18,
+      "pass_rate": 70.9
+    },
+    "without": {
+      "passed": 30,
+      "total": 55,
+      "cost_usd": 2.27,
+      "pass_rate": 54.5
+    }
+  }
+}

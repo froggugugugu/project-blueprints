@@ -134,6 +134,7 @@ claude
 bash scripts/validate-harness.sh            # 両ミラー + 日英の構造一致
 bash scripts/validate-harness.sh --test     # バリデータ自身の負のテスト
 bash scripts/validate-harness.sh --hooks    # フックの機能テスト
+bash scripts/validate-harness.sh --setup    # setup.sh の導入 / --upgrade の機能テスト
 bash scripts/validate-harness.sh --online   # .mcp.json の npm パッケージ実在確認
 ```
 
@@ -146,9 +147,14 @@ LLM を使わず決定論的に、次を検査する。
 - `CLAUDE.md` の `@AGENTS.md` 取り込み、`AGENTS.md` の行頭 `@`、両ファイルが引く `project-config.md` の §番号の実在、2 ファイル合計の行数
 - 書込可能な agent の `scope-guard.sh` 登録
 - `constitution.md` のハッシュ、日英ミラーの構成一致
+- `.mcp.json.template` の npm パッケージの版固定、`VERSION` と CHANGELOG の最新リリース見出しの整合
 
-CI（`.github/workflows/validate-harness.yml`）が push と PR で同じものを走らせる。
+CI（`.github/workflows/validate-harness.yml`）が push と PR で同じものを走らせ、main は branch protection でこのチェックを必須にしている。
 `/harness-refine` は LLM 側の対になる仕組みで、このゲートが通ってから使う。
+
+skill が挙動を変えているかは LLM 側のゲート `scripts/run_skill_evals.py` で測る。各 skill の `evals/evals.json` を `setup.sh` で作った使い捨てプロジェクトで
+skill あり / なしの 2 系統で実行し、ツールを持たない別の `claude -p` が assertion ごとに採点する。結果は [`evals/`](evals/)（方法とベースライン）に残し、
+`.github/workflows/skill-evals.yml` が週 1 回ベースラインからの劣化を検出する。
 
 ---
 
@@ -172,6 +178,39 @@ CI（`.github/workflows/validate-harness.yml`）が push と PR で同じもの�
 ```
 
 MCP サーバーを足すときは `cp .mcp.json.template .mcp.json` に書いてコミットする（プロジェクト共有）。
+
+---
+
+## 計測（エビデンス）
+
+skill が挙動を変えているかを、同じ依頼を skill あり / なしで実行して assertion ごとに採点した数値で持つ（`scripts/run_skill_evals.py`）。
+2026-11-01、`sonnet`(採点 `sonnet`)、Claude Code 2.1.314、JP ミラー、各 skill 2 ケース × 2 系統 = 28 実行、合計 $5.45。**skill あり 39/55(70.9%)、skill なし 30/55(54.5%)**。
+
+| skill | skill あり | 全件通過ケース | skill 発動 | skill なし | Δ pts |
+| --- | --- | --- | --- | --- | --- |
+| `adr` | 6/7 (85.7%) | 1/2 | 2/2 | 4/7 (57.1%) | +28.6 |
+| `architecture` | 5/8 (62.5%) | 1/2 | 2/2 | 7/8 (87.5%) | -25.0 |
+| `brainstorm` | 8/8 (100.0%) | 2/2 | 1/2 | 4/8 (50.0%) | +50.0 |
+| `code-review` | 3/8 (37.5%) | 0/2 | 2/2 | 1/8 (12.5%) | +25.0 |
+| `implementing-features` | 3/8 (37.5%) | 0/2 | 1/2 | 1/8 (12.5%) | +25.0 |
+| `plan` | 6/8 (75.0%) | 1/2 | 1/2 | 5/8 (62.5%) | +12.5 |
+| `prd` | 8/8 (100.0%) | 2/2 | 2/2 | 8/8 (100.0%) | +0.0 |
+
+落ちた assertion と対策候補は [`evals/README.md`](evals/README.md)。数値を上げる変更は 1 つずつ入れ、同じ eval で確かめる。
+
+---
+
+## バージョンと更新
+
+リリースは SemVer（`VERSION` + `CHANGELOG.md` + git tag + GitHub Release）。`bash scripts/release.sh prepare <x.y.z>` が VERSION と
+CHANGELOG をブランチ上で揃え、PR マージ後に `bash scripts/release.sh publish <x.y.z>` がタグと Release を作る。バリデータが VERSION と
+CHANGELOG の不一致を落とす。
+
+導入済みプロジェクトは `bash setup.sh <dir> --upgrade`（`--dry-run` で計画だけ）で追従する。導入時の `.claude/blueprint-manifest.txt`
+（版とファイルごとのハッシュ）と比べ、手を入れていないファイルだけ上書きし、変更済みのものは `<path>.blueprint-new` を横に置く。
+`project-config.md` と `docs/` `input/` `output/` は触らない。手順は [`project-blueprint/README.md`](project-blueprint/README.md) の「更新」。
+
+脆弱性の報告経路と対象は [`SECURITY.md`](SECURITY.md)。
 
 ---
 
@@ -210,6 +249,8 @@ plugin 単体でインストールしても、**全 skill が前提を欠いた�
 - [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 17 skill の SKILL.md
 - [`constitution.md`](constitution.md) — 7 不変原則（変更プロトコル付き）
 - [`CHANGELOG.md`](CHANGELOG.md) — リリースノート（SemVer + Keep a Changelog）
+- [`evals/README.md`](evals/README.md) — skill eval の方法とベースライン（skill あり / なしの pass rate）
+- [`SECURITY.md`](SECURITY.md) — セキュリティポリシー（対象・報告・サポート版）
 
 ---
 

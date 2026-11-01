@@ -1,0 +1,16 @@
+[
+  ["<!-- プロジェクト名を記入 -->", "備品管理 (equipment-ledger)"],
+  ["<!-- プロジェクトの概要を記入 -->", "社内備品の貸出・返却・棚卸しを行う Web アプリ"],
+  ["<!-- 例: 20以上 -->", "22 以上"],
+  ["<!-- 例: React 19, TypeScript 5.x, Vite 7 -->", "React 19, TypeScript 5.x, Vite 7"],
+  ["<!-- 例: Tailwind CSS 4, shadcn/ui -->", "Tailwind CSS 4"],
+  ["<!-- 例: Zustand 5 -->", "Zustand 5"],
+  ["<!-- 例: Zod 3.x -->", "Zod 3.x"],
+  ["<!-- 例: React Router DOM 7 -->", "React Router DOM 7"],
+  ["<!-- 例: lucide-react -->", "lucide-react"],
+  ["<!-- 例: Biome 2.x / ESLint 9 -->", "Biome 2.x"],
+  ["<!-- 例: dependency-cruiser 17 / なし -->", "なし"],
+  ["<!-- 例: husky 9, lint-staged 16 / なし -->", "なし"],
+  ["<!-- 例: Vitest 4, Playwright 1.x -->", "Vitest 4, Playwright 1.x"],
+  ["<pm> run", "npm run"]
+]

@@ -16,17 +16,24 @@ project-blueprints/
 ├── README-en.md                 # Root docs (English)
 ├── CLAUDE.md                    # This file (repo-wide guidance)
 ├── constitution.md              # Inviolable principles (7)
+├── VERSION                      # Released version (x.y.z); must match the newest CHANGELOG heading (validator checks)
+├── SECURITY.md                  # Vulnerability scope, reporting channel, supported versions (JP + EN)
+├── evals/                       # Skill eval evidence: fixtures/ (seed projects), baseline/ (committed pass rates); results/ is gitignored
 ├── .github/
 │   ├── pages/                   # GitHub Pages source (index.html, en/index.html, assets/, _config.yml)
 │   ├── demo/                    # quickstart.gif used by the READMEs and the site
-│   └── workflows/               # validate-harness.yml (CI gate) + pages.yml (site deploy)
+│   └── workflows/               # validate-harness.yml (CI gate) + skill-evals.yml (weekly LLM eval gate) + pages.yml (site deploy)
 ├── scripts/                     # Harness validator (CI gate) — see Build / Test / Lint
 │   ├── validate-harness.sh      # Entry point
 │   ├── validate_harness.py      # Checks
-│   └── test_validate_harness.py # Negative tests for the checks
+│   ├── test_validate_harness.py # Negative tests for the checks
+│   ├── test_hooks.sh            # Functional tests of the hook scripts (--hooks)
+│   ├── test_setup.sh            # Functional tests of setup.sh install / --upgrade (--setup)
+│   ├── run_skill_evals.py       # Headless skill evals: with / without the skill, independent grader, baseline comparison
+│   └── release.sh               # prepare (VERSION + CHANGELOG on a branch) / publish (tag + GitHub Release)
 ├── project-blueprint/           # The Japanese blueprint template
 │   ├── README.md                # Setup guide & quick start
-│   ├── setup.sh                 # One-command setup script
+│   ├── setup.sh                 # One-command setup script; --upgrade applies template updates via .claude/blueprint-manifest.txt
 │   ├── AGENTS.md                # Tool-agnostic rules (copied to target root; imported by CLAUDE.md via @AGENTS.md)
 │   ├── REVIEW.md                # Review-only criteria for Claude's Code Review (GitHub App); the local /code-review does not read it
 │   ├── project-config.md        # Template: human decisions (13 sections)
@@ -46,6 +53,7 @@ project-blueprints/
 │   │   ├── agents/              # 9 subagent definitions (.claude/agents/*.md)
 │   │   ├── rules/               # Language/path-specific rule extensions (.example opt-in)
 │   │   ├── hooks/               # 18 hook scripts (safety + observability + verification gate + agent scope guard + config guard + instruction-load log; .sh count)
+│   │   ├── scripts/             # harness-stats.sh: aggregates the hooks' testreport/ JSONL into one Markdown report (control inventory input)
 │   │   └── tasks/               # Task instruction templates
 │   ├── docs/                    # AI-managed technical docs (stubs)
 │   ├── input/                   # Human requirements input
@@ -75,7 +83,10 @@ project-blueprints/
 
 **Hook system** (18 hook scripts in `.claude/hooks/*.sh`, 27 registered invocations in `settings.json` plus 3 agent-frontmatter registrations of `scope-guard.sh`): Defense in depth across `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `PermissionRequest` / `PermissionDenied` / `ConfigChange` / `FileChanged` / `TaskCompleted` / `TeammateIdle` / `SessionStart` / `InstructionsLoaded` / `SessionEnd` / `SubagentStart` / `SubagentStop` / `PreCompact` / `PostCompact` / `UserPromptSubmit` / `UserPromptExpansion` / `Stop` / `StopFailure` / `Notification`. The four blocking hooks (`safety-check.sh`, `protect-files.sh`, `config-guard.sh`, agent-frontmatter `scope-guard.sh`) carry `onFailure: "block"` so a hook that cannot start fails closed; the validator warns when that is missing. `scan-harness.sh` is registered on `UserPromptExpansion` as well because typing `/skill` directly bypasses `PreToolUse(Skill)`. Mix of block / observe / notify / backup / gate roles. `verify-gate.sh` (PostToolUse + Stop + TaskCompleted) is the deterministic verification gate from the official best practices; `permission-denied-log.sh` records auto mode denials; `config-guard.sh` (ConfigChange) refuses settings changes that weaken the guardrails; `session-start.sh` re-injects the core rules on the `compact` source (the official pattern; the older PostCompact-marker approach is gone). `settings.json` `env` enables the Task tools (absent by default on Claude 5-family models, required by the TaskCompleted gate) and pins subagent spawn depth to 1 (constitution ④). See `.claude/guardrails.md`.
 
-**Distribution**: `setup.sh` + clone only. Plugin packaging was evaluated twice (adopted 2026-04, withdrawn 2026-06, re-evaluated and withdrawn again 2026-08) and does not fit: a plugin can only declare `skills`/`agents`/`outputStyles`/`hooks`, while **17 of 17 skills reference files a plugin cannot ship** (`docs/` 16, `output/` 15, `quality-gates.md` 15, `project-config.md` 14, `pitfalls.md` 12, `.claude/rules/` 3). Do not re-open this without new evidence that those dependencies have gone away.
+**Distribution**: `setup.sh` + clone only. `setup.sh` writes `.claude/blueprint-manifest.txt` (version, profile, per-file
+hashes) into the target; `setup.sh <dir> --upgrade [--dry-run]` later overwrites untouched files, places `<path>.blueprint-new`
+next to locally modified ones, adds new template files (profile pruning preserved) and never touches `project-config.md`,
+`docs/`, `input/`, `output/` or `settings.local.json` (tested by `--setup`). Plugin packaging was evaluated twice (adopted 2026-04, withdrawn 2026-06, re-evaluated and withdrawn again 2026-08) and does not fit: a plugin can only declare `skills`/`agents`/`outputStyles`/`hooks`, while **17 of 17 skills reference files a plugin cannot ship** (`docs/` 16, `output/` 15, `quality-gates.md` 15, `project-config.md` 14, `pitfalls.md` 12, `.claude/rules/` 3). Do not re-open this without new evidence that those dependencies have gone away.
 
 **MCP + GitHub Actions**: `.mcp.json.template` for project-shared MCP servers. Two workflow templates: `claude-review.yml.template` (conversational `@claude` PR review via `anthropics/claude-code-action`) and `claude-skills-ci.yml.template` (headless `claude -p` running `/code-review` and `/security-scan` on every PR, with `--permission-mode dontAsk` and no `--bare` so the project's `.claude/` loads), plus `claude-scheduled-audit.yml.template` (weekly `/security-scan` + `/legal-check` into a GitHub Issue). Durable scheduling belongs on Actions, not on session-scoped `/loop`/`CronCreate`, which fire only while a session is idle and expire after 7 days.
 
@@ -90,7 +101,16 @@ bash scripts/validate-harness.sh          # both mirrors + JP/EN structural pari
 bash scripts/validate-harness.sh --online # also resolve the npm packages in .mcp.json.template
 bash scripts/validate-harness.sh --test   # negative tests for the validator itself
 bash scripts/validate-harness.sh --hooks  # functional tests of the hook scripts (feeds hook JSON on stdin; needs jq)
+bash scripts/validate-harness.sh --setup  # functional tests of setup.sh (profiles, manifest, --upgrade conflicts)
 ```
+
+The LLM-side counterpart is `scripts/run_skill_evals.py`: it runs each skill's `evals/evals.json` headlessly in a
+throwaway project built by `setup.sh`, once with the skill and once without, grades every assertion with a separate
+tool-less `claude -p` call, and compares the with-skill pass rate against `evals/baseline/latest.json`. It needs a
+logged-in `claude` CLI and costs API money, so it runs weekly / on demand in `.github/workflows/skill-evals.yml`
+(gated by the repository variable `SKILL_EVALS_ENABLED` and the `ANTHROPIC_API_KEY` secret), not on every PR.
+Update the committed baseline from a local run (copy `summary.json` to `evals/baseline/latest.json`) so number
+changes are reviewed in a PR. Method and current numbers: `evals/README.md`.
 
 It is deterministic (no LLM) and enforces the parts of the official spec that are easy to
 drift from: frontmatter values outside the official enums, permission rules the runtime
@@ -100,6 +120,11 @@ commit that touches `.claude/`. CI runs it on push and pull request
 (`.github/workflows/validate-harness.yml`).
 
 `/harness-refine` is the LLM-driven counterpart and runs *after* this gate passes.
+
+Releases: `bash scripts/release.sh prepare <x.y.z>` bumps `VERSION` and turns the CHANGELOG `Unreleased` section into
+a release heading on a `chore/release-<x.y.z>` branch; after the PR merges, `bash scripts/release.sh publish <x.y.z>`
+tags `main` and creates the GitHub Release from that CHANGELOG section. `main` is protected (the `validate` check is
+required, force pushes and deletion are blocked, admins included), so every change goes through a PR.
 
 ## Editing Guidelines
 

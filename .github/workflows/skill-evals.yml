@@ -1,0 +1,85 @@
+name: skill-evals
+
+# skill の evals/evals.json を headless で実行し、with / without の pass rate を計測する(LLM 側の回帰ゲート)。
+# validate-harness.yml が「構成が正しいか」を見るのに対し、ここは「skill が挙動を変えているか」を見る。
+# API 費用が掛かるため PR ごとには回さない: 週 1 回の定期実行と手動実行だけ。
+# ANTHROPIC_API_KEY が無いリポジトリ(fork 等)ではジョブを丸ごとスキップする。
+#
+# ベースライン(evals/baseline/latest.json)から --tolerance ポイント以上下がった skill があると失敗する。
+# 計測結果は Actions の artifact に残す。ベースラインの更新はローカルで scripts/run_skill_evals.py を回し、
+# evals/baseline/ にコピーして PR で入れる(数値の変化を人間がレビューする)。
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"   # 毎週月曜 00:00 UTC
+  workflow_dispatch:
+    inputs:
+      skills:
+        description: "対象 skill(空白区切り。空なら core 5 本)"
+        default: ""
+      cases:
+        description: "ケース ID(カンマ区切り。空なら全ケース)"
+        default: ""
+      model:
+        description: "実行モデル"
+        default: "sonnet"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-evals
+  cancel-in-progress: false
+
+jobs:
+  evals:
+    if: ${{ vars.SKILL_EVALS_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code and jq
+        run: |
+          npm install -g @anthropic-ai/claude-code@2
+          sudo apt-get install -y -qq jq >/dev/null
+
+      - name: Run skill evals
+        # 入力は env 経由で渡し、run: に直接展開しない(workflow injection 対策)。値は英数字と区切りだけに制限する
+        env:
+          IN_SKILLS: ${{ github.event.inputs.skills }}
+          IN_CASES: ${{ github.event.inputs.cases }}
+          IN_MODEL: ${{ github.event.inputs.model }}
+        run: |
+          SKILLS="${IN_SKILLS:-brainstorm prd plan code-review adr}"
+          [[ "$SKILLS" =~ ^[a-z0-9 -]+$ ]] || { echo "invalid skills input"; exit 1; }
+          [[ -z "$IN_CASES" || "$IN_CASES" =~ ^[0-9,]+$ ]] || { echo "invalid cases input"; exit 1; }
+          MODEL="${IN_MODEL:-sonnet}"
+          [[ "$MODEL" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "invalid model input"; exit 1; }
+          ARGS=()
+          for s in $SKILLS; do ARGS+=(--skill "$s"); done
+          [[ -n "$IN_CASES" ]] && ARGS+=(--cases "$IN_CASES")
+          python3 scripts/run_skill_evals.py "${ARGS[@]}" \
+            --model "$MODEL" \
+            --parallel 2 --max-turns 40 --max-budget-usd 3 \
+            --out evals/results/ci \
+            --baseline evals/baseline/latest.json --tolerance 15
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-evals-${{ github.run_id }}
+          path: evals/results/ci
+          retention-days: 90

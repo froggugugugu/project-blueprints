@@ -11,6 +11,7 @@
 #   bash scripts/validate-harness.sh --online         # npm パッケージの実在確認も行う
 #   bash scripts/validate-harness.sh --test           # バリデータ自身の負のテスト
 #   bash scripts/validate-harness.sh --hooks          # フックスクリプトの機能テスト(要 jq)
+#   bash scripts/validate-harness.sh --setup          # setup.sh の導入 / --upgrade の機能テスト
 #
 # 終了コード: 0 = 合格 / 1 = ERROR あり / 2 = 実行環境の不備
 # ==============================================================================
@@ -32,13 +33,16 @@ if [[ -z "$PYTHON" ]]; then
     exit 2
 fi
 
-# --test はバリデータ自身のテスト、--hooks はフックの機能テストに振り分ける
+# --test はバリデータ自身のテスト、--hooks はフックの機能テスト、--setup は setup.sh のテストに振り分ける
 for arg in "$@"; do
     if [[ "$arg" == "--test" ]]; then
         exec "$PYTHON" "$SCRIPT_DIR/test_validate_harness.py"
     fi
     if [[ "$arg" == "--hooks" ]]; then
         exec bash "$SCRIPT_DIR/test_hooks.sh"
+    fi
+    if [[ "$arg" == "--setup" ]]; then
+        exec bash "$SCRIPT_DIR/test_setup.sh"
     fi
 done
 

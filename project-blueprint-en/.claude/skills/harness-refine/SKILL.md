@@ -120,7 +120,7 @@ Edits **no files**. Research and delta generation only. Steps:
 2. **Learn from past reports**: read `output/reports/harness-refine/REFINE_*.md` (the latest 2-3, if any)
    and extract (a) **unresolved findings** (b) **issues that recurred 2+ times**.
 3. **Control inventory**: aggregate `testreport/instructions/` (rule loads), `testreport/denials/`, `testreport/failures/` and
-   `testreport/config-changes/`, then, by the criteria in the "Control inventory" section of `.claude/guardrails.md`, list the instructions
+   `testreport/config-changes/` with `bash .claude/scripts/harness-stats.sh --since 30`, then, by the criteria in the "Control inventory" section of `.claude/guardrails.md`, list the instructions
    that are pruning candidates and the enforcements with no recorded origin (pitfall number). Back this with `/usage` (usage per skill /
    subagent / plugin / MCP server, plus cache-miss warnings). If the model has been updated, nominate removable instructions one at a time.
 4. **Generate the live rubric delta**: compare the fetched guidance against the 15-item rubric below, and

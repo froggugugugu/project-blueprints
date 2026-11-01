@@ -23,6 +23,7 @@ usage() {
     cat <<'EOF'
 Usage:
   bash setup.sh <target-directory> [--profile minimal|standard|full]
+  bash setup.sh <target-directory> --upgrade [--dry-run]
 
 Description:
   Copies the Project Blueprint files to the target project.
@@ -45,6 +46,13 @@ Profiles (--profile, defaults to full):
   This is a separate axis from the "minimal/recommended/full" guidance in project-config.md
   (which is about how much of project-config.md to fill in).
 
+Upgrade (--upgrade):
+  Brings an installed project up to this template's version. Files are compared with the
+  per-file hashes recorded at install time in .claude/blueprint-manifest.txt: untouched files are
+  overwritten, modified files get the new version placed next to them as <path>.blueprint-new.
+  project-config.md / docs/ / input/ / output/ / settings.local.json are never touched.
+  --dry-run prints the plan only.
+
 Examples:
   bash setup.sh /path/to/my-project
   bash setup.sh /path/to/my-project --profile minimal
@@ -59,6 +67,8 @@ EOF
 
 # -- Argument parsing ------------------------------------------------
 PROFILE="full"   # Defaults to full (no pruning) for backward compatibility
+MODE="install"
+DRY_RUN=0
 TARGET_DIR=""
 
 while [[ $# -gt 0 ]]; do
@@ -69,6 +79,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --profile=*)
             PROFILE="${1#*=}"
+            shift
+            ;;
+        --upgrade)
+            MODE="upgrade"
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=1
             shift
             ;;
         -h|--help)
@@ -119,8 +137,26 @@ TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
 
 info "Target: $TARGET_DIR"
 
+MANIFEST_REL=".claude/blueprint-manifest.txt"
+BLUEPRINT_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/../VERSION" 2>/dev/null || true)"
+[[ -z "${BLUEPRINT_VERSION}" ]] && BLUEPRINT_VERSION="unknown"
+BLUEPRINT_COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+MIRROR_LANG="ja"; [[ "$(basename "$SCRIPT_DIR")" == *-en ]] && MIRROR_LANG="en"
+INSTALLED_VERSION=""
+
+if [[ "$MODE" == "upgrade" ]]; then
+    if [[ ! -f "$TARGET_DIR/$MANIFEST_REL" ]]; then
+        error "No .claude/blueprint-manifest.txt (installed with a setup.sh older than 0.5.0, or copied by hand). Re-run setup.sh <dir> once (the existing .claude/ is moved to .claude.bak/) and then use --upgrade"
+        exit 1
+    fi
+    INSTALLED_VERSION="$(sed -n 's/^# version: //p' "$TARGET_DIR/$MANIFEST_REL" | head -1)"
+    PROFILE="$(sed -n 's/^# profile: //p' "$TARGET_DIR/$MANIFEST_REL" | head -1)"
+    case "$PROFILE" in minimal|standard|full) ;; *) PROFILE="full" ;; esac
+fi
+
 # -- Back up existing .claude/ -------------------------------------
-if [[ -d "$TARGET_DIR/.claude" ]]; then
+# --upgrade keeps the existing .claude/ in place (no backup/move)
+if [[ "$MODE" == "install" && -d "$TARGET_DIR/.claude" ]]; then
     BACKUP_DIR="$TARGET_DIR/.claude.bak"
     if [[ -d "$BACKUP_DIR" ]]; then
         warn "Overwriting existing backup at $BACKUP_DIR"
@@ -173,8 +209,156 @@ prune_dir() {
     done
 }
 
+
+# -- --upgrade: bring an installed project up to this template's version --
+sha256_of() {
+    if command -v shasum &>/dev/null; then shasum -a 256 "$1" | cut -d' ' -f1
+    elif command -v sha256sum &>/dev/null; then sha256sum "$1" | cut -d' ' -f1
+    else cksum "$1" | cut -d' ' -f1; fi
+}
+
+# Decide, from the keep lists, whether a template-relative path is part of this profile
+keep_path() {
+    local rel="$1" second k
+    case "$rel" in
+        .claude/skills/*)
+            second="${rel#.claude/skills/}"; second="${second%%/*}"
+            [[ "${KEEP_SKILLS[0]:-}" == "*" ]] && return 0
+            for k in "${KEEP_SKILLS[@]}"; do [[ "$second" == "$k" ]] && return 0; done
+            return 1 ;;
+        .claude/agents/*)
+            second="${rel#.claude/agents/}"
+            [[ "${KEEP_AGENTS[0]:-}" == "*" || "$second" == "README.md" ]] && return 0
+            for k in "${KEEP_AGENTS[@]}"; do [[ "$second" == "$k" ]] && return 0; done
+            return 1 ;;
+        .claude/hooks/*)
+            second="${rel#.claude/hooks/}"
+            [[ "${KEEP_HOOKS[0]:-}" == "*" ]] && return 0
+            for k in "${KEEP_HOOKS[@]}"; do [[ "$second" == "$k" ]] && return 0; done
+            return 1 ;;
+        .claude/teams/*|.claude/workflows/*)
+            [[ "${#KEEP_TEAMS[@]}" -gt 0 ]] ;;
+        .claude/settings.minimal.json) [[ "$PROFILE" == "minimal" ]] ;;
+        .claude/settings.json) [[ "$PROFILE" != "minimal" ]] ;;
+        .claude/blueprint-manifest.txt) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+# Template-relative path -> target-relative path
+target_path() {
+    case "$1" in
+        .claude/CLAUDE.md) echo "CLAUDE.md" ;;
+        .claude/settings.minimal.json) echo ".claude/settings.json" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+# Template-relative paths covered by upgrade / manifest (after pruning)
+template_files() {
+    local rel
+    {
+        (cd "$SCRIPT_DIR" && find .claude -type f | sed 's#^\./##')
+        for rel in AGENTS.md REVIEW.md constitution.md .mcp.json.template project-config.md; do
+            if [[ -f "$SCRIPT_DIR/$rel" ]]; then echo "$rel"; fi
+        done
+        (cd "$SCRIPT_DIR" && find .github -type f \( -name '*.template' -o -name '*.md' \) 2>/dev/null | sed 's#^\./##')
+    } | while IFS= read -r rel; do
+        if keep_path "$rel"; then echo "$rel"; fi
+    done | LC_ALL=C sort
+}
+
+# Records per-file hashes at install time; --upgrade overwrites only files that still match them
+write_manifest() {   # <target-dir> <profile>
+    local rel tp
+    {
+        echo "# blueprint-manifest v1 — generated by setup.sh; used by --upgrade. Do not edit by hand"
+        echo "# version: ${BLUEPRINT_VERSION}"
+        echo "# commit: ${BLUEPRINT_COMMIT}"
+        echo "# profile: $2"
+        echo "# mirror: $MIRROR_LANG"
+        echo "# installed: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        template_files | while IFS= read -r rel; do
+            tp="$(target_path "$rel")"
+            echo "$(sha256_of "$SCRIPT_DIR/$rel")  $tp"
+        done
+    } > "$1/$MANIFEST_REL"
+}
+
+manifest_hash() {   # <manifest> <target-relative-path>
+    awk -v p="$2" '$1 !~ /^#/ && $2 == p {print $1; exit}' "$1"
+}
+
+run_upgrade() {
+    local mf="$TARGET_DIR/$MANIFEST_REL" rel tp th ch mh dst s found
+    local added=0 updated=0 unchanged=0 conflicts=0 skipped=0 removed=0
+    local -a seen=() conflict_lines=()
+    info "Upgrade: ${INSTALLED_VERSION} → ${BLUEPRINT_VERSION} (${BLUEPRINT_COMMIT}, profile: ${PROFILE})"
+    if [[ $DRY_RUN -eq 1 ]]; then warn "--dry-run: no files will be changed"; fi
+    while IFS= read -r rel; do
+        tp="$(target_path "$rel")"
+        mh="$(manifest_hash "$mf" "$tp")"
+        if [[ "$tp" == "AGENTS.md" && -e "$TARGET_DIR/AGENTS.blueprint.md" ]]; then tp="AGENTS.blueprint.md"; fi
+        seen+=("$tp")
+        dst="$TARGET_DIR/$tp"
+        th="$(sha256_of "$SCRIPT_DIR/$rel")"
+        if [[ "$tp" == "project-config.md" ]]; then
+            if [[ -n "$mh" && "$mh" != "$th" ]]; then warn "The template's project-config.md changed (not overwritten: humans own this file). Diff: diff ${SCRIPT_DIR}/project-config.md ${TARGET_DIR}/project-config.md"; fi
+            continue
+        fi
+        if [[ ! -e "$dst" ]]; then
+            if [[ -n "$mh" ]]; then
+                echo "  skip     $tp  (deleted locally; copy by hand to restore)"; skipped=$((skipped + 1))
+            else
+                echo "  add      $tp"; added=$((added + 1))
+                if [[ $DRY_RUN -eq 0 ]]; then mkdir -p "$(dirname "$dst")"; cp "$SCRIPT_DIR/$rel" "$dst"; fi
+            fi
+            continue
+        fi
+        ch="$(sha256_of "$dst")"
+        if [[ "$ch" == "$th" ]]; then
+            unchanged=$((unchanged + 1))
+        elif [[ -n "$mh" && "$ch" == "$mh" ]]; then
+            echo "  update   $tp"; updated=$((updated + 1))
+            if [[ $DRY_RUN -eq 0 ]]; then cp "$SCRIPT_DIR/$rel" "$dst"; fi
+        else
+            echo "  conflict $tp  (modified locally; new version placed next to it: $tp.blueprint-new)"; conflicts=$((conflicts + 1))
+            if [[ $DRY_RUN -eq 0 ]]; then cp "$SCRIPT_DIR/$rel" "$dst.blueprint-new"; fi
+            if [[ -n "$mh" ]]; then conflict_lines+=("$mh  $tp"); fi
+        fi
+    done < <(template_files)
+    while IFS= read -r tp; do
+        [[ -z "$tp" ]] && continue
+        found=0
+        for s in "${seen[@]}"; do [[ "$s" == "$tp" ]] && { found=1; break; }; done
+        if [[ $found -eq 0 && -e "$TARGET_DIR/$tp" ]]; then
+            echo "  removed  $tp  (removed from the template; delete by hand if unneeded)"; removed=$((removed + 1))
+        fi
+    done < <(awk '$1 !~ /^#/ {print $2}' "$mf")
+    if [[ $DRY_RUN -eq 0 ]]; then
+        write_manifest "$TARGET_DIR" "$PROFILE"
+        if [[ ${#conflict_lines[@]} -gt 0 ]]; then
+            awk -v list="$(printf '%s\n' "${conflict_lines[@]}")" '
+                BEGIN { n = split(list, a, "\n"); for (i = 1; i <= n; i++) { split(a[i], b, "  "); keep[b[2]] = b[1] } }
+                $1 !~ /^#/ && ($2 in keep) { print keep[$2] "  " $2; next }
+                { print }' "$mf" > "$mf.tmp" && mv "$mf.tmp" "$mf"
+        fi
+        chmod +x "$TARGET_DIR/.claude/hooks/"*.sh "$TARGET_DIR/.claude/scripts/"*.sh 2>/dev/null || true
+    fi
+    echo ""
+    info "Upgrade complete: added ${added} / updated ${updated} / unchanged ${unchanged} / conflicts ${conflicts} / skipped ${skipped} / removed from template ${removed}"
+    if [[ ${conflicts} -gt 0 ]]; then warn "Next: merge each conflict with diff <path> <path>.blueprint-new and delete the .blueprint-new file, then run /harness-refine in Claude Code"; fi
+    return 0
+}
+
+# --upgrade branches here (the install steps below do not run)
+if [[ "$MODE" == "upgrade" ]]; then
+    run_upgrade
+    exit 0
+fi
+
 # -- Copy files ----------------------------------------------------
-info "Copying blueprint files... (profile: $PROFILE)"
+info "Copying blueprint files... (profile: ${PROFILE})"
 
 cp -r "$SCRIPT_DIR/.claude"          "$TARGET_DIR/.claude"
 cp -r "$SCRIPT_DIR/docs"             "$TARGET_DIR/docs"
@@ -265,6 +449,7 @@ fi
 # -- Make hook scripts executable -----------------------------------
 if [[ -d "$TARGET_DIR/.claude/hooks" ]]; then
     chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
+    chmod +x "$TARGET_DIR/.claude/scripts/"*.sh 2>/dev/null || true
     info "Made hook scripts executable"
 fi
 
@@ -322,9 +507,13 @@ for entry in "${GITIGNORE_ENTRIES[@]}"; do
     fi
 done
 
+# -- Record the installed version (baseline for --upgrade) ----------
+write_manifest "$TARGET_DIR" "$PROFILE"
+info "Recorded the installed version in .claude/blueprint-manifest.txt (update later with bash setup.sh <dir> --upgrade)"
+
 # -- Done ----------------------------------------------------------
 echo ""
-info "Setup complete! (profile: $PROFILE)"
+info "Setup complete! (profile: ${PROFILE})"
 echo ""
 echo "Next steps:"
 echo "  1. Fill in project-config.md (at minimum S1-S3 and S6)"

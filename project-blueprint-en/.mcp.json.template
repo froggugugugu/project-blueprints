@@ -7,9 +7,9 @@
       "command": "npx",
       "args": [
         "-y",
-        "@upstash/context7-mcp@4.1.1"
+        "@upstash/context7-mcp@4.4.4"
       ],
-      "_verify": "Versions are pinned as a supply-chain measure (latest as of 2026-09-26). To update, check `npm view @upstash/context7-mcp version` and verify resolution with `bash scripts/validate-harness.sh --online`",
+      "_verify": "Versions are pinned as a supply-chain measure (latest as of 2026-11-01). To update, check `npm view @upstash/context7-mcp version` and verify resolution with `bash scripts/validate-harness.sh --online`",
       "_plugin_overlap": "When the context7 plugin is enabled in settings.json enabledPlugins, the official remote MCP (mcp.context7.com) is connected. Remove this block in that case to avoid a duplicate server"
     },
     "playwright": {
@@ -17,7 +17,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@0.0.82"
+        "@playwright/mcp@0.0.84"
       ]
     },
     "github": {
@@ -44,10 +44,10 @@
       "  ★★☆ brave-search: WebSearch alternative (works without API key, rate-limited)",
       "  ★★☆ postgres: Read-only schema introspection (NEVER point to a production DSN)",
       "  ★☆☆ slack: Team notification automation (mis-post risk; minimize scopes)",
-      "  ⚠️  Always run 'npm show <package> version' to verify a package exists before use"
+      "  ⚠️  Pin every npx-launched package as name@x.y.z (validate-harness.sh flags unpinned ones). Check updates with npm view <name> version"
     ],
     "filesystem": {
-      "_verify": "Run 'npm show @modelcontextprotocol/server-filesystem version' to confirm the package is current",
+      "_verify": "Run `npm view @modelcontextprotocol/server-filesystem version` and bump the `name@x.y.z` pin (2.1.0 is the latest as of 2026-11-01)",
       "_warning": "The MCP filesystem server can traverse everything under the given root. Scoping is done by **listing only the safe subdirectories as positional arguments** — the server has no CLI-level exclude flag (as of 2026-04). Use multiple defense layers for secret protection:",
       "_protection_layers": [
         "1) Restrict exposed dirs: pass only secret-free subtrees like `${PROJECT_ROOT}/src` as args",
@@ -60,7 +60,7 @@
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-filesystem",
+          "@modelcontextprotocol/server-filesystem@2.1.0",
           "${PROJECT_ROOT}/src",
           "${PROJECT_ROOT}/docs",
           "${PROJECT_ROOT}/tests"
@@ -71,7 +71,7 @@
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-filesystem",
+          "@modelcontextprotocol/server-filesystem@2.1.0",
           "${PROJECT_ROOT}"
         ]
       }
@@ -82,12 +82,15 @@
         "command": "npx",
         "args": [
           "-y",
-          "@modelcontextprotocol/server-postgres",
+          "@bytebase/dbhub@1.5.0",
+          "--readonly",
+          "--transport",
+          "stdio",
+          "--dsn",
           "${DATABASE_URL}"
         ]
       },
-      "_deprecated": true,
-      "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
+      "_note": "The old @modelcontextprotocol/server-postgres is deprecated on npm (removed from the official repository). Replaced by DBHub (PostgreSQL / MySQL / SQL Server / SQLite / DuckDB). `--readonly` is a SQL keyword allowlist that was bypassable before 0.22.6 (CVE-2026-61788), so also connect with a database role that has SELECT only"
     },
     "sentry": {
       "_warning": "Useful for production error investigation. Export $SENTRY_AUTH_TOKEN first",
@@ -96,12 +99,13 @@
         "command": "npx",
         "args": [
           "-y",
-          "@sentry/mcp-server"
+          "@sentry/mcp-server@0.42.0"
         ],
         "env": {
           "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
         }
-      }
+      },
+      "_note": "Sentry's official remote MCP (https://mcp.sentry.dev/mcp, OAuth) offers the same tools; prefer it when you do not want a token on the machine"
     },
     "brave-search": {
       "_warning": "Web search alternative. Export $BRAVE_API_KEY (free tier available). Useful when WebSearch is unavailable",
@@ -110,7 +114,7 @@
         "command": "npx",
         "args": [
           "-y",
-          "@brave/brave-search-mcp-server"
+          "@brave/brave-search-mcp-server@2.1.4"
         ],
         "env": {
           "BRAVE_API_KEY": "${BRAVE_API_KEY}"
@@ -119,19 +123,12 @@
       "_note": "Moved to Brave's official MCP server. The old @modelcontextprotocol/server-brave-search is deprecated on npm"
     },
     "slack": {
-      "_warning": "Chat notifications and sharing. Requires $SLACK_BOT_TOKEN. Restrict scope to chat:write only",
+      "_warning": "Chat notifications and sharing. Because of the mis-post risk, confirm write tools (sending messages) through permissions.ask every time and have a workspace admin approve the MCP client",
       "_example": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-slack"
-        ],
-        "env": {
-          "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
-        }
+        "type": "http",
+        "url": "https://mcp.slack.com/mcp"
       },
-      "_deprecated": true,
-      "_deprecation_note": "WARNING: this package is deprecated on npm (checked 2026-08). Look for a successor before using it"
+      "_note": "Slack's official remote MCP server (GA 2026-02, OAuth; the first connection authorizes in the browser, Streamable HTTP only). Replaces the deprecated @modelcontextprotocol/server-slack npm package. Only Marketplace-listed or internal apps can connect"
     },
     "_comment_fetch_removed": "Use Claude Code's built-in WebFetch tool for web retrieval. The previously listed @modelcontextprotocol/server-fetch does not exist on npm (checked 2026-08) and was removed."
   }

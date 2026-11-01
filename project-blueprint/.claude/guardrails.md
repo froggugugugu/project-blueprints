@@ -150,6 +150,8 @@ Stop        → verify-gate.sh gate    最後の編集より後に検証コマ�
 
 ルール: 強制は「事故 → 対策」の記録(`pitfalls.md` の番号)を持つ。指示は「消すと Claude が間違えるか?」で毎回判定する。
 モデル更新のたびに 1 つずつ外して eval で確かめる(複数同時に外すと原因が分からない)。
+集計は `bash .claude/scripts/harness-stats.sh --since 30` で出す(`testreport/` の JSONL を拒否・失敗・設定変更・rule の load・subagent 起動ごとに
+集計した Markdown。`--json` で機械可読)。skill の寄与は `/skill-eval` か、テンプレート元リポジトリの `scripts/run_skill_evals.py` の pass rate で測る。
 
 公式の目安: 強制(hook / deny)は「例外が 1 つも無い規則」にだけ使い、好みを符号化したフックは消して Claude の判断に戻す。
 本テンプレートのブロック系は 5 本 + deny / ask ルールで、残りは観測・通知系。強制が 40 個に近づいたら大半は好みだと疑う。

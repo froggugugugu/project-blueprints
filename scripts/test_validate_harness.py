@@ -47,6 +47,32 @@ def case(name: str, mutate, expect: str) -> bool:
         return ok
 
 
+def repo_case(name: str, mutate, expect: str) -> bool:
+    """Like case(), but for repository-level checks (VERSION ↔ CHANGELOG): copies both
+    mirrors plus the validator so it runs in auto-detect mode."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td) / "repo"
+        root.mkdir()
+        for item in ("project-blueprint", "project-blueprint-en"):
+            shutil.copytree(REPO / item, root / item, symlinks=True)
+        (root / "scripts").mkdir()
+        shutil.copy2(VALIDATOR, root / "scripts" / "validate_harness.py")
+        for f in ("VERSION", "CHANGELOG.md"):
+            shutil.copy2(REPO / f, root / f)
+        mutate(root)
+        proc = subprocess.run([sys.executable, str(root / "scripts" / "validate_harness.py")],
+                              capture_output=True, text=True)
+        out = proc.stdout + proc.stderr
+        ok = expect in out
+        print(f"  [{'PASS' if ok else 'FAIL'}] {name}")
+        if not ok:
+            print(f"        期待した文字列: {expect}")
+            for line in out.splitlines():
+                if "ERROR" in line or "WARN" in line:
+                    print("        got:", line.strip()[:150])
+        return ok
+
+
 # ── 注入する不具合(すべて実際にこのリポジトリで発生したもの) ──────────
 def m_color(root: Path) -> None:
     p = root / ".claude/agents/explorer.md"
@@ -345,6 +371,20 @@ def m_scope_guard_fail_open(root: Path) -> None:
     p.write_text(p.read_text().replace("          onFailure: block\n", "", 1))
 
 
+def m_mcp_unpinned_active(root: Path) -> None:
+    p = root / ".mcp.json.template"
+    p.write_text(p.read_text().replace('"@upstash/context7-mcp@4.4.4"', '"@upstash/context7-mcp"'))
+
+
+def m_mcp_unpinned_example(root: Path) -> None:
+    p = root / ".mcp.json.template"
+    p.write_text(p.read_text().replace('"@sentry/mcp-server@0.42.0"', '"@sentry/mcp-server@^0.42"'))
+
+
+def m_version_mismatch(root: Path) -> None:
+    (root / "VERSION").write_text("9.9.9\n")
+
+
 CASES = [
     ("color が公式 8 色外", m_color, "公式の 8 色外"),
     ("Write(path) の権限ルール", m_write_rule, "は参照されません"),
@@ -399,12 +439,19 @@ CASES = [
     ("FileChanged の matcher が正規表現", m_filechanged_regex_matcher, "リテラルなファイル名"),
     ("scope-guard.sh に onFailure: block が無い", m_scope_guard_fail_open, "scope-guard.sh に `onFailure: block` がありません"),
     ("permissions に未知キー", m_unknown_permissions_key, "公式の permissions キーではありません"),
+    ("有効な MCP サーバーの npm パッケージが未固定", m_mcp_unpinned_active, "有効な MCP サーバーの npm パッケージ"),
+    ("例示ブロックの npm パッケージが範囲指定", m_mcp_unpinned_example, "例示ブロックの npm パッケージ"),
+]
+
+# リポジトリ水準のチェック(--root では走らない)
+REPO_CASES = [
+    ("VERSION と CHANGELOG の最新リリース見出しが不一致", m_version_mismatch, "一致しません"),
 ]
 
 
 def main() -> int:
     print("負のテスト: 既知の不具合を注入して検出を確認")
-    results = [case(n, m, e) for n, m, e in CASES]
+    results = [case(n, m, e) for n, m, e in CASES] + [repo_case(n, m, e) for n, m, e in REPO_CASES]
     print()
     print(f"結果: {sum(results)}/{len(results)} 検出")
     if not all(results):

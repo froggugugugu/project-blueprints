@@ -1,0 +1,13 @@
+# Keep the GitHub Actions used by the CI workflows current.
+# The MCP packages in project-blueprint*/.mcp.json.template are not a manifest Dependabot
+# understands; `bash scripts/validate-harness.sh --online` (main push / manual run) checks
+# that they still resolve and are not deprecated.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencies"]

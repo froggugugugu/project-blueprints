@@ -64,6 +64,17 @@ bash setup.sh /path/to/your-project
 
 ## セットアップ手順（詳細）
 
+### 前提条件
+
+| 必要なもの | 用途 | 確認 |
+| --- | --- | --- |
+| Claude Code 2.1.314 以上 | `onFailure: block`（2.1.295）、`blockWritesOutsideWorkingDirectories`（2.1.314）、Task ツールの env 有効化 | `claude --version` |
+| bash 3.2 以上 + git | `setup.sh`（導入と `--upgrade`）、フック | macOS 標準の bash で動く |
+| jq | 全フックが JSON の読み書きに使う（無いと `safety-check.sh` が最重要パターン以外をスキップする） | `brew install jq` / `apt-get install jq` |
+| python3 | テンプレート元リポジトリの `scripts/validate-harness.sh` だけ（導入先では不要） | `python3 --version` |
+
+Windows は WSL2 か Git Bash で上記を揃える。
+
 ### 方法A: setup.sh で1コマンドセットアップ（推奨）
 
 ```bash
@@ -77,6 +88,7 @@ bash setup.sh /path/to/your-project
 - `.claude/settings.local.json` を雛形から生成(無い場合のみ)
 - `.gitignore` への `testreport/` などローカル状態の追記
 - 既存 `.claude/` がある場合は `.claude.bak/` に自動バックアップ
+- `.claude/blueprint-manifest.txt`（導入した版とファイルごとのハッシュ）を記録。`--upgrade` の基準になる
 
 #### プロファイル（段階的インストール）
 
@@ -85,8 +97,8 @@ bash setup.sh /path/to/your-project
 | プロファイル | skills | agents | hooks | teams | 用途 |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | なし | まず最速で試す軽量構成 |
-| `standard` | 17 | 8 | 17 | なし | チーム機能以外フル |
-| `full`（デフォルト） | 17 | 8 | 17 | 6 | 現行と同じフル構成 |
+| `standard` | 17 | 9 | 18 | なし | チーム機能以外フル |
+| `full`（デフォルト） | 17 | 9 | 18 | 6 | 現行と同じフル構成 |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -99,6 +111,27 @@ bash setup.sh /path/to/your-project --profile standard
 
 > project-config.md の「ミニマル/推奨/フル」（§記入量の目安）とは**別の独立した軸**。
 > 例えば `--profile minimal` で導入しても project-config.md はフルまで記入して構わない。
+
+#### 更新（`--upgrade`）
+
+導入済みプロジェクトをテンプレートの新しい版に追従させる。導入時に書かれた `.claude/blueprint-manifest.txt`（版・プロファイル・ファイルごとのハッシュ）と比べ、差分だけを適用する。
+
+```bash
+git -C /path/to/project-blueprints pull                   # テンプレートを更新
+bash setup.sh /path/to/your-project --upgrade --dry-run   # 計画だけ表示
+bash setup.sh /path/to/your-project --upgrade             # 適用
+```
+
+| 状態 | 動作 |
+| --- | --- |
+| 導入後に手を入れていないファイル | 新版で上書き |
+| 手を入れたファイル | 触らず、新版を `<path>.blueprint-new` として横に置く（`diff` で統合して削除する） |
+| テンプレートに増えたファイル | 追加する（プロファイルの剪定は維持） |
+| ローカルで削除したファイル | 復活させない |
+| `project-config.md` / `docs/` / `input/` / `output/` / `settings.local.json` | 触らない（`project-config.md` のテンプレートが変わったときは警告だけ出す） |
+
+0.5.0 より前の `setup.sh` で導入した（manifest が無い）プロジェクトは、一度 `setup.sh <dir>` で再導入する（既存の `.claude/` は `.claude.bak/` に退避される）。
+観測フックのログは `bash .claude/scripts/harness-stats.sh --since 30` で集計できる。
 
 ### 方法B: 手動コピー
 
@@ -400,6 +433,9 @@ project-blueprint/
 │   │   ├── post-compact-restore.sh          コンパクト後の要約保全（PostCompact）
 │   │   ├── notify-claude.sh                 完了・確認プッシュ通知（Stop/Notification）
 │   │   └── ntfy-topic.txt                   notify-claude.sh の通知先トピック（要書き換え）
+│   │
+│   ├── scripts/                           ← [汎用] 観測の集計
+│   │   └── harness-stats.sh                 testreport/ の JSONL（拒否・失敗・設定変更・rule の load・subagent）を 1 枚に集計
 │   │
 │   ├── skills/                            ← [汎用] 17スキル定義（各 SKILL.md + evals/evals.json + 必要に応じて references/）
 │   │   ├── brainstorm/SKILL.md              前提整理（/prd前段）

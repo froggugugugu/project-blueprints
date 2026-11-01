@@ -8,6 +8,32 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (運用面の強化: 配布と更新 / 検証の実測 / サプライチェーン / 観測, 2026-11-01)
+
+- **`setup.sh --upgrade [--dry-run]`(JP/EN)**: 導入時に `.claude/blueprint-manifest.txt`(版・プロファイル・ファイルごとの SHA-256)を記録し、
+  テンプレート更新時は未変更のファイルだけ上書き、手で変えたファイルは `<path>.blueprint-new` を横に置いて報告、テンプレートに増えたファイルは
+  追加(プロファイルの剪定は維持)、`project-config.md` / `docs/` / `input/` / `output/` / `settings.local.json` は触らない。
+  `scripts/test_setup.sh`(`validate-harness.sh --setup`、96 ケース)が導入 / プロファイル / 更新 / 競合 / 冪等性 / manifest 不在を検証。
+- **`scripts/run_skill_evals.py`**: skill の `evals/evals.json` を `setup.sh` で作った使い捨てプロジェクトで headless 実行(skill あり / なし、
+  許可リスト + `dontAsk`、Stream JSON から Skill 発動を検出)し、ツール無しの別 `claude -p` が assertion ごとに採点、`evals/baseline/latest.json`
+  との比較で劣化を検出(exit 1)。`evals/fixtures/ja/`(§1〜§3 を埋めた project-config、PRD / TASK / レビュー対象コードの seed)。
+  `.github/workflows/skill-evals.yml`(週 1 + 手動。リポジトリ変数 `SKILL_EVALS_ENABLED` と `ANTHROPIC_API_KEY` でゲート、artifact に保存)。
+- **`.claude/scripts/harness-stats.sh`(JP/EN)**: 観測フックの `testreport/` JSONL(拒否・失敗・設定変更・rule の load・subagent 起動)を
+  1 枚の Markdown(`--json` で機械可読)に集計。`/harness-refine` Round 0 と guardrails「コントロールの棚卸し」の実測値。`--hooks` 152 → 168 件。
+- **`VERSION` + `scripts/release.sh`(prepare / publish)**: VERSION と CHANGELOG の最新リリース見出しの整合を validator が検査(`--test` 53 → 56)。
+- **`SECURITY.md`**(対象・報告経路・サポート版・防御モデル、JP + EN)、`.github/CODEOWNERS`、`.github/dependabot.yml`(Actions の更新)。
+  GitHub 側: main の branch protection(`validate` 必須、force push / 削除禁止、管理者にも適用)と Private vulnerability reporting を有効化。
+
+### Changed (2026-11-01)
+
+- **`.mcp.json.template`(JP/EN)**: 全 npx パッケージを `name@x.y.z` で固定(context7 4.4.4 / playwright 0.0.84 / filesystem 2.1.0 /
+  sentry 0.42.0 / brave-search 2.1.4)。deprecated の `server-postgres` → `@bytebase/dbhub@1.5.0 --readonly`(SELECT 専用ロール併用を注記)、
+  `server-slack` → Slack 公式リモート MCP(`https://mcp.slack.com/mcp`)。validator は有効サーバーの未固定を ERROR、例示ブロックの
+  未固定(範囲指定含む)を WARN にし、`--online` 無しでも検査する。
+- **README(JP/EN)**: 前提条件(Claude Code 2.1.314 以上 / bash / git / jq)、`--upgrade` の手順、プロファイル表の agent 9 / hook 18 への修正。
+  ルート README に「バージョンと更新」「計測」節。
+- **guardrails.md / `/harness-refine` Round 0(JP/EN)**: 棚卸しの集計を `harness-stats.sh` に。
+
 ## [0.4.0] — 2026-11-01
 
 Claude 5 系対応と公式仕様 2.1.283〜2.1.316 への追従をまとめたリリース。フック 18 本 / 登録 27、agent 9、skill 17、

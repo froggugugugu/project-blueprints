@@ -64,6 +64,17 @@ That's it. AI reads `project-config.md` and generates a structured design docume
 
 ## Setup Instructions (Detailed)
 
+### Prerequisites
+
+| Requirement | Used for | Check |
+| --- | --- | --- |
+| Claude Code 2.1.314 or later | `onFailure: block` (2.1.295), `blockWritesOutsideWorkingDirectories` (2.1.314), enabling the Task tools via env | `claude --version` |
+| bash 3.2 or later + git | `setup.sh` (install and `--upgrade`), the hooks | The stock macOS bash works |
+| jq | Every hook reads and writes JSON with it (without it `safety-check.sh` skips everything but the most critical patterns) | `brew install jq` / `apt-get install jq` |
+| python3 | Only `scripts/validate-harness.sh` in the template repository (not needed in the target project) | `python3 --version` |
+
+On Windows, use WSL2 or Git Bash to provide the above.
+
 ### Method A: One-command setup with setup.sh (recommended)
 
 ```bash
@@ -77,6 +88,7 @@ This single command handles everything:
 - Generates `.claude/settings.local.json` from its template (only when absent)
 - Adds `testreport/` and other local state to `.gitignore`
 - Automatically backs up any existing `.claude/` to `.claude.bak/`
+- Records `.claude/blueprint-manifest.txt` (installed version and a hash per file), the baseline for `--upgrade`
 
 #### Profiles (staged installation)
 
@@ -85,8 +97,8 @@ The `--profile` option controls how much of `.claude/` gets installed (defaults 
 | Profile | skills | agents | hooks | teams | Use case |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | none | Fastest way to try it out, lightweight |
-| `standard` | 17 | 8 | 17 | none | Everything but team mode |
-| `full` (default) | 17 | 8 | 17 | 6 | Same as the current full setup |
+| `standard` | 17 | 9 | 18 | none | Everything but team mode |
+| `full` (default) | 17 | 9 | 18 | 6 | Same as the current full setup |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -100,6 +112,27 @@ trims safeguard hooks such as `session-start.sh`.
 > This is a **separate, independent axis** from project-config.md's "minimal/recommended/full"
 > guidance (which is about how much of project-config.md to fill in). For example, you can install
 > with `--profile minimal` and still fill in project-config.md all the way to full.
+
+#### Upgrading (`--upgrade`)
+
+Brings an installed project up to a newer version of the template. Files are compared with `.claude/blueprint-manifest.txt` (version, profile and a hash per file, written at install time) and only the differences are applied.
+
+```bash
+git -C /path/to/project-blueprints pull                   # update the template
+bash setup.sh /path/to/your-project --upgrade --dry-run   # print the plan only
+bash setup.sh /path/to/your-project --upgrade             # apply
+```
+
+| State | Action |
+| --- | --- |
+| File untouched since install | Overwritten with the new version |
+| File modified locally | Left alone; the new version is placed next to it as `<path>.blueprint-new` (merge with `diff`, then delete it) |
+| File added to the template | Added (profile pruning is preserved) |
+| File deleted locally | Not restored |
+| `project-config.md` / `docs/` / `input/` / `output/` / `settings.local.json` | Never touched (a changed template `project-config.md` only produces a warning) |
+
+A project installed with a `setup.sh` older than 0.5.0 (no manifest) is re-installed once with `setup.sh <dir>` (the existing `.claude/` is moved to `.claude.bak/`).
+The observability hooks' logs are summarized with `bash .claude/scripts/harness-stats.sh --since 30`.
 
 ### Method B: Manual copy
 
@@ -402,6 +435,9 @@ project-blueprint-en/
 |   |   +-- post-compact-restore.sh          Summary preservation after compaction (PostCompact)
 |   |   +-- notify-claude.sh                 Completion/confirmation push notifications (Stop/Notification)
 |   |   +-- ntfy-topic.txt                   Notification topic for notify-claude.sh (replace it)
+|   |
+|   +-- scripts/                           <-- [Generic] Observability aggregation
+|   |   +-- harness-stats.sh                 One-page summary of the testreport/ JSONL (denials, failures, settings changes, rule loads, subagents)
 |   |
 |   +-- skills/                            <-- [Generic] 17 skill definitions (SKILL.md + evals/evals.json + references/ where needed)
 |   |   +-- brainstorm/SKILL.md              Premise elicitation (pre-/prd)
