@@ -119,6 +119,26 @@ if [[ "$TOOL" == "apply_patch" ]]; then
         fi
         PATHS="$(printf '%s\n' "$PATHS" | grep -vxF '@@BLUEPRINT_BAD_DIRECTIVE@@' || true)"
     fi
+    # A path with Unicode whitespace (NBSP, full-width space, ...) at either end, or a control character anywhere, counts as an
+    # unreadable directive. Codex trims those from the path, so `.env` + NBSP edits `.env` under Codex while this check would see
+    # a differently named file and let it through. Other non-ASCII characters (Japanese file names, say) are allowed
+    if [[ $FAIL_CLOSED -eq 1 && -n "$PATHS" ]]; then
+        # Unicode の White_Space のうち ASCII 以外のもの(UTF-8 のバイト列): U+0085 U+00A0 U+1680 U+2000〜U+200A U+2028 U+2029 U+202F U+205F U+3000
+        UNICODE_WS=($'\xc2\x85' $'\xc2\xa0' $'\xe1\x9a\x80' $'\xe2\x80\x80' $'\xe2\x80\x81' $'\xe2\x80\x82' $'\xe2\x80\x83'
+            $'\xe2\x80\x84' $'\xe2\x80\x85' $'\xe2\x80\x86' $'\xe2\x80\x87' $'\xe2\x80\x88' $'\xe2\x80\x89' $'\xe2\x80\x8a'
+            $'\xe2\x80\xa8' $'\xe2\x80\xa9' $'\xe2\x80\xaf' $'\xe2\x81\x9f' $'\xe3\x80\x80')
+        while IFS= read -r rel; do
+            bad=0
+            case "$rel" in *[[:cntrl:]]*) bad=1 ;; esac
+            for ws in "${UNICODE_WS[@]}"; do
+                case "$rel" in "$ws"*|*"$ws") bad=1 ;; esac
+            done
+            if [[ $bad -eq 1 ]]; then
+                echo "codex-adapter: a path has invisible whitespace at its edge or a control character. Stopped because it could slip past the protected-file check" >&2
+                exit 2
+            fi
+        done <<< "$PATHS"
+    fi
     if [[ -z "$PATHS" && $FAIL_CLOSED -eq 1 ]]; then
         echo "codex-adapter: no file path could be extracted from the patch. Stopped because an edit that cannot be inspected must not go through" >&2
         exit 2

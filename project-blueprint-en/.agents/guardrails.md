@@ -44,7 +44,9 @@ each carrying `tool_input.file_path`, so the hooks only ever handle the input sh
 If the adapter's parser disagrees with Codex's own, an edit to a file the adapter missed would run uninspected. For the blocking hooks (`--fail-closed`) the adapter therefore
 strips surrounding whitespace and CR before matching and stops the edit when a line contains a directive word (Add / Update / Delete File, Move to) but is not in the canonical form
 (including indentation with a full-width space or NBSP; body lines starting with `+` or `-` are exempt), when no path can be extracted at all, or when
-`jq` is missing and the patch cannot be parsed. `jq` is required to use the blocking hooks under Codex.
+a path has invisible whitespace (NBSP, full-width space, ...) at its edge or a control character, or when `jq` is missing and the patch cannot be parsed. `jq` is required to use the blocking hooks under Codex.
+This parser is the adapter's own and is not guaranteed to match Codex's parser exactly. It errs toward stopping anything it cannot read, but secret protection should not rest on hooks alone:
+treat it together with the `deny` entries of the permission profile.
 
 ### Where Codex does not give the same guarantee (official spec and measurements, 2026-11-14 / codex-cli 0.162.1)
 

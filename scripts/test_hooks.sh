@@ -323,6 +323,13 @@ for MIRROR in project-blueprint project-blueprint-en; do
     expect_rc "codex-adapter: NBSP で字下げした指示行は --fail-closed で止める" 2 "$RC"
     run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: docs/patch-format.md\n@@\n+*** Update File: .env\n-*** Add File: old.pem\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
     expect_rc "codex-adapter: 追加・削除される本文の行(+ / - 始まり)は指示として扱わない" 0 "$RC"
+    # パスの前後の不可視の空白: Codex は落とすので `.env` + NBSP は `.env` への編集になる。別名に見せて検査を通さない
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: config/.env\xc2\xa0\n@@\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: パスの末尾に NBSP がある指示行は --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Add File: \xe3\x80\x80id_rsa\n+x\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: パスの先頭に全角空白がある指示行は --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: docs/\xe8\xa8\xad\xe8\xa8\x88\xe3\x83\xa1\xe3\x83\xa2.md\n@@\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: 日本語のファイル名は通す" 0 "$RC"
     # jq が無い環境: ブロック系は apply_patch を検査できないので止める。Bash はフック自身のフォールバックに任せる
     NOJQ="$C/nojq-bin"
     mkdir -p "$NOJQ"
