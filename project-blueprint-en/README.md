@@ -1,6 +1,6 @@
 # Project Blueprint
 
-AI-collaborative development environment template for Claude Code projects.
+AI-collaborative development environment template for Claude Code and Codex. Use either one alone, or both as equals.
 
 Consolidate all project-specific human decisions into a **single `project-config.md` file**,
 and let AI automatically generate and maintain design artifacts such as routing maps, store inventories, and data models.
@@ -14,11 +14,12 @@ You don't need to use every section, team, or skill. **Get started in 3 steps.**
 ### Step 1: Copy
 
 ```bash
-bash setup.sh /path/to/your-project
+bash setup.sh /path/to/your-project                  # Claude Code and Codex (default)
+bash setup.sh /path/to/your-project --agent claude   # Claude Code only
+bash setup.sh /path/to/your-project --agent codex    # Codex only
 ```
 
-> Want it even lighter? `bash setup.sh /path/to/your-project --profile minimal`
-> installs just 5 skills / 2 agents / 2 hooks (see "Profiles" below for details).
+> Want it even lighter? Add `--profile minimal` to install just 5 skills / 2 agents / 2 hooks (see "Profiles" below for details).
 
 ### Step 2: Fill in just 3 sections of project-config.md
 
@@ -43,10 +44,12 @@ Language: English
 ### Step 3: Try one skill
 
 ```text
-/plan Design a login feature
+/plan Design a login feature       # Claude Code
+$plan Design a login feature       # Codex
 ```
 
 That's it. AI reads `project-config.md` and generates a structured design document.
+The examples below use Claude Code's `/name`. Under Codex read it as `$name`.
 
 ### Scale up gradually
 
@@ -68,12 +71,13 @@ That's it. AI reads `project-config.md` and generates a structured design docume
 
 | Requirement | Used for | Check |
 | --- | --- | --- |
-| Claude Code 2.1.314 or later | `onFailure: block` (2.1.295), `blockWritesOutsideWorkingDirectories` (2.1.314), enabling the Task tools via env | `claude --version` |
-| bash 3.2 or later + git | `setup.sh` (install and `--upgrade`), the hooks | The stock macOS bash works |
+| Claude Code 2.1.314 or later (`--agent claude` / `both`) | `onFailure: block` (2.1.295), `blockWritesOutsideWorkingDirectories` (2.1.314), enabling the Task tools via env | `claude --version` |
+| Codex CLI 0.162 or later (`--agent codex` / `both`) | Hooks (`.codex/hooks.json`), permission profiles, loading `.agents/skills/` | `codex --version` |
+| bash 3.2 or later + git | `setup.sh` (install and `--upgrade`), `migrate.sh`, the hooks | The stock macOS bash works |
 | jq | Every hook reads and writes JSON with it (without it `safety-check.sh` skips everything but the most critical patterns) | `brew install jq` / `apt-get install jq` |
 | python3 | Only `scripts/validate-harness.sh` in the template repository (not needed in the target project) | `python3 --version` |
 
-On Windows, use WSL2 or Git Bash to provide the above.
+On Windows, use WSL2 or Git Bash to provide the above. Git Bash sometimes cannot create symbolic links; `setup.sh` then falls back to copies (see "Shared core and links" below).
 
 ### Method A: One-command setup with setup.sh (recommended)
 
@@ -81,18 +85,46 @@ On Windows, use WSL2 or Git Bash to provide the above.
 bash setup.sh /path/to/your-project
 ```
 
-This single command handles everything:
-- Copies `.claude/`, `docs/`, `input/`, `output/`, `testreport/`, and `project-config.md`
-- Places `CLAUDE.md` and `AGENTS.md` (tool-agnostic rules) at the project root (an existing `AGENTS.md` is kept; `AGENTS.blueprint.md` is placed next to it)
-- Places `constitution.md`, `REVIEW.md` (criteria for Claude's Code Review), `.mcp.json.template`, and `.github/` (workflow templates), never overwriting existing files
-- Generates `.claude/settings.local.json` from its template (only when absent)
+This single command does all of the following:
+- Places `.agents/` (the shared core: skills, hooks, rules, quality gates)
+- Places `.claude/` (the Claude Code adapter) and `.codex/` (the Codex adapter). `--agent` limits it to one
+- Places `docs/`, `input/`, `output/`, `testreport/`, `project-config.md` (existing files are not overwritten)
+- Places `AGENTS.md` (tool-agnostic rules) and `CLAUDE.md` at the project root (an existing `AGENTS.md` is kept with `AGENTS.blueprint.md` placed next to it, and an existing `CLAUDE.md` is kept with `CLAUDE.md.blueprint-new` placed next to it)
+- Places `constitution.md`, `REVIEW.md` (review criteria for Claude's Code Review), `.mcp.json.template` and `.github/` (workflow templates) without overwriting existing files
+- Links `.claude/skills/` and `.claude/rules/` to `.agents/`, and generates `.claude/settings.local.json` from the template (only if missing)
 - Adds `testreport/` and other local state to `.gitignore`
-- Automatically backs up any existing `.claude/` to `.claude.bak/`
-- Records `.claude/blueprint-manifest.txt` (installed version and a hash per file), the baseline for `--upgrade`
+- Backs up an existing `.agents/` `.claude/` `.codex/` to `<name>.bak/` (an existing `.bak/` is never deleted; the new backup goes to `<name>.bak.<timestamp>/`)
+- Records `.agents/blueprint-manifest.txt` (installed version, agent and per-file hashes), the baseline for `--upgrade`
+
+An installed project cannot be installed again (`setup.sh` stops, because that would push the skills you added and your edits into a backup). Use `--upgrade` to follow a new version,
+`--upgrade --agent both` to add an adapter and `--relink` to refresh the links. It also stops without changing anything when `.agents`, `.claude` or `.codex` is a symbolic link,
+or when the target is the template itself.
+
+#### Agent (`--agent`)
+
+| Value | What is installed | First step after starting |
+| --- | --- | --- |
+| `both` (default) | `.agents/` + `.claude/` + `.codex/` + `CLAUDE.md` | Both of the below |
+| `claude` | `.agents/` + `.claude/` + `CLAUDE.md` | Start `claude` and run `/plan ...` |
+| `codex` | `.agents/` + `.codex/` | Start `codex`, trust the project, review and trust the hooks with `/hooks`, then run `$plan ...` |
+
+Codex does not read `.codex/` until the project is trusted, and does not run a hook until you trust it with `/hooks` (again after every hook update).
+To add the other agent later, run `bash setup.sh <dir> --upgrade --agent both`. The mapping of safety mechanisms and their differences is in "Per-agent mapping" in `.agents/guardrails.md`.
+
+#### Shared core and links (`--links` / `--relink`)
+
+Skills, hooks and rules have a single source under `.agents/`. Codex reads `.agents/skills/` directly.
+Claude Code reads only `.claude/skills/` and `.claude/rules/`, so `setup.sh` creates one symbolic link per entry.
+
+| Goal | What to do |
+| --- | --- |
+| Add or remove a skill or a rule | Edit `.agents/skills/<name>/` or `.agents/rules/<name>.md`, then run `bash setup.sh <dir> --relink` |
+| Enable a sample rule | `cp .agents/rules/language-typescript.md.example .agents/rules/language-typescript.md`, then `--relink` |
+| Symbolic links are unavailable | Install with `--links copy`. Edit under `.agents/` only and apply to `.claude/` with `--relink` |
 
 #### Profiles (staged installation)
 
-The `--profile` option controls how much of `.claude/` gets installed (defaults to `full`):
+The `--profile` option controls how many skills, agents and hooks get installed (defaults to `full`; combine it with `--agent`):
 
 | Profile | skills | agents | hooks | teams | Use case |
 | --- | --- | --- | --- | --- | --- |
@@ -115,45 +147,78 @@ trims safeguard hooks such as `session-start.sh`.
 
 #### Upgrading (`--upgrade`)
 
-Brings an installed project up to a newer version of the template. Files are compared with `.claude/blueprint-manifest.txt` (version, profile and a hash per file, written at install time) and only the differences are applied.
+Brings an installed project up to a newer version of the template. It compares against `.agents/blueprint-manifest.txt` (version, profile, agent and per-file hashes) written at install time and applies only the differences.
 
 ```bash
 git -C /path/to/project-blueprints pull                   # update the template
-bash setup.sh /path/to/your-project --upgrade --dry-run   # print the plan only
+bash setup.sh /path/to/your-project --upgrade --dry-run   # show the plan only
 bash setup.sh /path/to/your-project --upgrade             # apply
 ```
 
-| State | Action |
+| State | Behavior |
 | --- | --- |
 | File untouched since install | Overwritten with the new version |
-| File modified locally | Left alone; the new version is placed next to it as `<path>.blueprint-new` (merge with `diff`, then delete it) |
+| File you modified | Left alone; the new version is placed next to it as `<path>.blueprint-new` (merge with `diff`, then delete). A leftover `.blueprint-new` with different content is kept as `.blueprint-new.old` |
 | File added to the template | Added (profile pruning is preserved) |
-| File deleted locally | Not restored |
-| `project-config.md` / `docs/` / `input/` / `output/` / `settings.local.json` | Never touched (a changed template `project-config.md` only produces a warning) |
+| File you deleted locally | Not restored |
+| `project-config.md` / `docs/` / `input/` / `output/` / `settings.local.json` | Never touched (a warning is printed when the template's `project-config.md` changed) |
 
-A project installed with a `setup.sh` older than 0.5.0 (no manifest) is re-installed once with `setup.sh <dir>` (the existing `.claude/` is moved to `.claude.bak/`).
-The observability hooks' logs are summarized with `bash .claude/scripts/harness-stats.sh --since 30`.
+Aggregate the observation-hook logs with `bash .agents/scripts/harness-stats.sh --since 30`.
+
+#### Migrating from 0.x (`migrate.sh`)
+
+A project installed with 0.x keeps its skills and hooks under `.claude/` and cannot be updated with `--upgrade`. Move it to the 1.0 layout with `migrate.sh` first.
+
+```bash
+git -C /path/to/project-blueprints pull                    # the 1.0 template (cloned with its git history)
+bash migrate.sh /path/to/your-project --dry-run            # run the whole migration on a temporary copy and print the result
+bash migrate.sh /path/to/your-project                      # apply (stops when there are uncommitted changes)
+bash migrate.sh /path/to/your-project --rollback           # undo (possible until you delete the backup)
+```
+
+| Stage | What happens |
+| --- | --- |
+| Classify | Decides for each file whether it is untouched or modified. 0.x kept no install record, so the content is matched against the template's git history |
+| Back up | Saves `.claude/` and every file it will change to `.blueprint-migrate-backup/` (added to `.gitignore`) |
+| Move | `.claude/{skills,hooks,rules,scripts,learnings,tasks}` and `guardrails.md` / `quality-gates.md` / `pitfalls.md` go to `.agents/`. Skills and hooks you added move with them |
+| Rewrite references | References such as `.claude/hooks/...` become `.agents/...` in `.agents/` `.claude/` `CLAUDE.md` `AGENTS.md` `project-config.md` `constitution.md` `docs/` `.github/` `.gitignore`. The paths of your own hooks registered in `settings.json` are fixed here too |
+| Update | Calls `setup.sh --upgrade`: untouched files get the 1.0 content, the Codex adapter and other new files are added, and files you modified are kept with `<path>.blueprint-new` placed next to them |
+
+| Option | Use |
+| --- | --- |
+| `--agent claude` | Migrate without adding the Codex adapter, staying Claude Code only (the default is `both`) |
+| `--assume-pristine` | When you never edited the harness, or the template clone has no git history. Overwrites every file with 1.0 (your versions stay in the backup) |
+| `--allow-dirty` | Proceed despite uncommitted changes (not recommended) |
+
+A failure midway, or an interruption such as Ctrl-C, restores the pre-migration state automatically (if something cannot be restored, the backup is kept and you are told).
+After migrating, review the result with `git status`, merge and delete each `.blueprint-new`, and restart Claude Code (the hook paths changed).
+
+Old paths left in places the script does not rewrite are listed at the end (for example `package.json`, a `Makefile`, git-hook configuration or the root `README.md` calling
+`.claude/scripts/` or `.claude/hooks/`). Home-directory paths such as `~/.claude/skills/` are not part of the move and are left alone.
+A project whose `.claude` is a symbolic link is not migrated, to keep the link target intact (turn it into a real directory first).
 
 ### Method B: Manual copy
 
-> This manual copy is always equivalent to `full`. If you need a staged install (profile),
-> use Method A (`setup.sh --profile`) above instead.
+> A manual copy always equals `full` and writes no manifest (so `--upgrade` cannot be used later). Use Method A unless you have a specific reason.
 
 ```bash
-cp -r project-blueprint-en/.claude /path/to/new-project/.claude
-cp -r project-blueprint-en/docs /path/to/new-project/docs
-cp -r project-blueprint-en/input /path/to/new-project/input
-cp -r project-blueprint-en/output /path/to/new-project/output
-cp -r project-blueprint-en/testreport /path/to/new-project/testreport
-cp project-blueprint-en/project-config.md /path/to/new-project/project-config.md
-cp project-blueprint-en/constitution.md /path/to/new-project/constitution.md
-cp project-blueprint-en/.mcp.json.template /path/to/new-project/.mcp.json.template
-cp -r project-blueprint-en/.github /path/to/new-project/.github
+cd /path/to/new-project
+B=/path/to/project-blueprints/project-blueprint-en
 
-# Move CLAUDE.md to the project root (removing the copy inside .claude/)
-mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
-# Tool-agnostic rules (CLAUDE.md imports them via @AGENTS.md)
-cp project-blueprint-en/AGENTS.md /path/to/new-project/AGENTS.md
+cp -r "$B/.agents" .agents                      # shared core
+cp -r "$B/.claude" .claude                      # if you use Claude Code
+cp -r "$B/.codex" .codex                        # if you use Codex
+cp -r "$B/docs" "$B/input" "$B/output" "$B/testreport" .
+cp "$B/project-config.md" "$B/constitution.md" "$B/AGENTS.md" "$B/.mcp.json.template" .
+cp -r "$B/.github" .github
+
+# For Claude Code: move CLAUDE.md to the root and link skills and rules to .agents/
+mv .claude/CLAUDE.md CLAUDE.md
+rm -f .claude/settings.minimal.json .codex/hooks.minimal.json
+mkdir -p .claude/skills .claude/rules
+for d in .agents/skills/*/; do ln -s "../../.agents/skills/$(basename "$d")" ".claude/skills/$(basename "$d")"; done
+for f in .agents/rules/*.md; do [ "$(basename "$f")" = README.md ] || ln -s "../../.agents/rules/$(basename "$f")" ".claude/rules/$(basename "$f")"; done
+chmod +x .agents/hooks/*.sh .agents/hooks/lib/*.sh .agents/scripts/*.sh
 ```
 
 ### 2. Fill in project-config.md
@@ -240,19 +305,28 @@ These are automatically generated when the following skills are run:
 > reading `project-config.md` directly when `docs/` files are still stubs.
 > When using the PJM team, these are automatically generated during Phases 2-4.
 
-### 7. Using other agents alongside Claude Code (optional)
+### 7. Claude Code and Codex, plus other agents (optional)
 
-Claude Code is the primary agent. Tool-agnostic rules live in the root `AGENTS.md`, which Claude Code imports through `@AGENTS.md` in `CLAUDE.md`.
-If you also use Codex, Cursor, or others, record which ones, their roles, and their write scopes in `project-config.md` §13.7.
+Claude Code and Codex are treated as equals. Both read `AGENTS.md` (tool-agnostic rules) and `.agents/` (skills, hooks, rules), and each can run every phase alone.
+When you use both, record the owner of each phase in `project-config.md` §13.7 (for example, a different agent reviews and verifies what the other implemented).
+
+| | Claude Code | Codex |
+| --- | --- | --- |
+| Instruction file | `CLAUDE.md` (imports `@AGENTS.md`) | `AGENTS.md` |
+| Invoking a skill | `/name` | `$name` |
+| Settings | `.claude/settings.json` | `.codex/config.toml` + `.codex/hooks.json` + `.codex/rules/` |
+| Subagents | `.claude/agents/*.md` | `.codex/agents/*.toml` |
+| Teams / saved workflows | Yes (`full` profile) | No (run the same skills in order) |
+
+Any other agent reads `AGENTS.md` as an auxiliary and acts read-only unless marked `yes` in §13.7.
 
 | Agent | How it reads `AGENTS.md` |
 | --- | --- |
-| OpenAI Codex CLI / Cursor | Reads it by default |
+| Cursor | Reads it by default |
 | GitHub Copilot (VS Code) | Setting `chat.useAgentsMdFile: true` |
-| Gemini CLI | `{"context": {"fileName": ["AGENTS.md"]}}` in `.gemini/settings.json` (defaults to `GEMINI.md`) |
+| Gemini CLI | `{"context": {"fileName": ["AGENTS.md"]}}` in `.gemini/settings.json` (the default is `GEMINI.md`) |
 
-> An agent not marked `yes` in §13.7 acts read-only. `.claude/` hooks and deny rules do not apply to agents other than Claude Code,
-> so if you let one write, also enforce the prohibitions through CI or git hooks.
+> Hooks and deny rules apply to Claude Code and Codex only. If an auxiliary agent may write, also enforce the prohibitions through CI or git hooks.
 
 ---
 
@@ -341,10 +415,10 @@ Teams focused on specific phases are also available. All arguments are optional:
 |                                                           |
 |  AGENTS.md .................... Shared rules (any agent)  |
 |  .claude/CLAUDE.md ............ Guide (Claude Code only)  |
-|  .claude/hooks/ ............... Safety hooks (defense)    |
-|  .claude/skills/ .............. 17 skill definitions      |
+|  .agents/hooks/ ............... Safety hooks (defense)    |
+|  .agents/skills/ .............. 17 skill definitions      |
 |  .claude/teams/ ............... 6 team definitions        |
-|  .claude/tasks/ ............... Task instruction templates |
+|  .agents/tasks/ ............... Task instruction templates |
 |  .claude/settings.json ........ Plugin & hook config      |
 |  .claude/settings.local.json .. Permission settings       |
 |                                                           |
@@ -359,7 +433,8 @@ Teams focused on specific phases are also available. All arguments are optional:
 project-blueprint-en/
 |
 +-- README.md                              <-- This file
-+-- setup.sh                               <-- One-command setup script
++-- setup.sh                               <-- One-command setup script (install / --upgrade / --relink)
++-- migrate.sh                             <-- Migration script from the 0.x layout (everything under .claude/) to 1.0
 +-- AGENTS.md                              <-- [Generic] Tool-agnostic development rules (also read by Codex / Cursor / Copilot, etc.)
 +-- project-config.md                      <-- [Human+AI] Config file (13 sections)
 +-- project-config.sample.md               <-- Filled sample (task management app)
@@ -389,23 +464,11 @@ project-blueprint-en/
 |   +-- e2e/                                 E2E test reports & traces
 |   +-- security/                            Security scan raw data
 |
-+-- .claude/
-|   +-- CLAUDE.md                          <-- [Generic] Development guide (Claude Code-specific; imports @AGENTS.md)
-|   +-- settings.json                      <-- [Generic] Plugin & hook configuration
-|   +-- settings.local.json.template       <-- [Customizable] Permission settings template (generated by setup.sh)
-|   +-- managed-settings.example.json      <-- [Reference] Org policy example (deny / sandbox / OTel)
-|   +-- settings.minimal.json              <-- [Generic] Settings for the minimal profile (swapped in by setup.sh)
-|   +-- statusline.sh                      <-- [Generic] Shows the current output style and phase
++-- .agents/                               <-- [Generic] Shared core (used by Claude Code and Codex; the single source lives here)
 |   +-- .constitution.sha256               <-- [Auto] Hash of constitution.md
 |   +-- guardrails.md                      <-- [Generic] Safety mechanisms as a whole
-|   +-- permissions-guide.md               <-- [Generic] Permission design and auto mode guidance
 |   +-- quality-gates.md                   <-- [Generic] Criteria for the 5 quality gates
 |   +-- pitfalls.md                        <-- [Generic] 31 failure patterns and mitigations
-|   |
-|   +-- agents/                            <-- [Generic] 9 subagents + README.md (selection guide)
-|   |                                        explorer / researcher / planner / security-reviewer /
-|   |                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
-|   |
 |   +-- rules/                             <-- [Generic] Rules (1 always-on + 3 path-scoped + 3 samples)
 |   |   +-- git-conventions.md               Always loaded: Git and commit conventions
 |   |   +-- document-management.md           When editing docs/ or output/: document management
@@ -413,10 +476,9 @@ project-blueprint-en/
 |   |   +-- harness-authoring.md             When editing the harness: authoring conventions
 |   |   +-- *.md.example                     Language / path samples (drop .example to enable)
 |   |
-|   +-- output-styles/                     <-- [Generic] 4 phase output styles (phase-prd / design / implementation / review)
 |   +-- learnings/                         <-- [Generic] Success-pattern records (README.md / TEMPLATE.md / example)
-|   |
 |   +-- hooks/                             <-- [Generic] Safety hooks (defense in depth, 18 scripts)
+|   |   +-- lib/codex-adapter.sh             Turns Codex input into the shared shape and calls the same hooks
 |   |   +-- safety-check.sh                  Blocks dangerous commands (PreToolUse)
 |   |   +-- protect-files.sh                 Protects sensitive & config files (PreToolUse)
 |   |   +-- scan-harness.sh                  Harness self-SAST & risky-skill blocking (PreToolUse)
@@ -462,6 +524,25 @@ project-blueprint-en/
 |   |   +-- review-fix/SKILL.md              PR review auto-fix
 |   |   +-- harness-refine/SKILL.md          Harness self-audit & refinement
 |   |
+|   +-- tasks/                             <-- [Generic] Task templates
+|       +-- TASK_TEMPLATE.md                 Feature development instructions
+|       +-- TASK_REVIEW_TEMPLATE.md          Review instructions
+|       +-- LESSONS_TEMPLATE.md              Lessons learned template
+|       +-- PROGRESS_TEMPLATE.md             Multi-session progress handoff note
+|
++-- .claude/                               <-- [Generic] Claude Code adapter (setup.sh links skills/ and rules/ to .agents/)
+|   +-- CLAUDE.md                          <-- [Generic] Development guide (Claude Code-specific; imports @AGENTS.md)
+|   +-- settings.json                      <-- [Generic] Plugin & hook configuration
+|   +-- settings.local.json.template       <-- [Customizable] Permission settings template (generated by setup.sh)
+|   +-- managed-settings.example.json      <-- [Reference] Org policy example (deny / sandbox / OTel)
+|   +-- settings.minimal.json              <-- [Generic] Settings for the minimal profile (swapped in by setup.sh)
+|   +-- statusline.sh                      <-- [Generic] Shows the current output style and phase
+|   +-- permissions-guide.md               <-- [Generic] Permission design and auto mode guidance
+|   +-- agents/                            <-- [Generic] 9 subagents + README.md (selection guide)
+|   |                                        explorer / researcher / planner / security-reviewer /
+|   |                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
+|   |
+|   +-- output-styles/                     <-- [Generic] 4 phase output styles (phase-prd / design / implementation / review)
 |   +-- teams/                             <-- [Generic] 6 team definitions
 |   |   +-- README.md                        Team usage guide
 |   |   +-- TEAM_PJM.md                      Full lifecycle management
@@ -472,14 +553,15 @@ project-blueprint-en/
 |   |   +-- TEAM_REFACTOR.md                 Refactoring
 |   |
 |   +-- workflows/                         <-- [Generic] Saved workflow (full profile only)
-|   |   +-- review-sweep.js                  4-angle parallel review + adversarial MUST verification
-|   |   +-- skill-eval.js                    Runs a skill's evals with and without the skill
-|   |
-|   +-- tasks/                             <-- [Generic] Task templates
-|       +-- TASK_TEMPLATE.md                 Feature development instructions
-|       +-- TASK_REVIEW_TEMPLATE.md          Review instructions
-|       +-- LESSONS_TEMPLATE.md              Lessons learned template
-|       +-- PROGRESS_TEMPLATE.md             Multi-session progress handoff note
+|       +-- review-sweep.js                  4-angle parallel review + adversarial MUST verification
+|       +-- skill-eval.js                    Runs a skill's evals with and without the skill
+|
++-- .codex/                                <-- [Generic] Codex adapter
+|   +-- config.toml                        <-- [Generic] Approval policy, permission profile (secret-read denial), Codex-specific readings
+|   +-- hooks.json                         <-- [Generic] Registers the shared hooks (through lib/codex-adapter.sh)
+|   +-- hooks.minimal.json                 <-- [Generic] For the minimal profile (swapped in by setup.sh)
+|   +-- rules/default.rules                <-- [Generic] Forbidden / prompted commands (matches deny / ask in .claude/settings.json)
+|   +-- agents/                            <-- [Generated] 9 subagents (generated from .claude/agents/*.md; do not edit)
 |
 +-- docs/                                  <-- [AI-generated] Technical documentation
     +-- project.md                           Routing, stores, commands
@@ -593,33 +675,15 @@ Steps for adding the blueprint to a project that already has source code.
 
 ### 1. Copy files
 
-Using `setup.sh` completes everything in one command, including automatic backup of any existing `.claude/`:
+`setup.sh` works on an existing project as is. It does not overwrite your `docs/`, `project-config.md`, `AGENTS.md` and the like,
+and moves an existing `.agents/` `.claude/` `.codex/` to `<name>.bak/` before placing its own:
 
 ```bash
 bash setup.sh /path/to/existing-project
-bash setup.sh /path/to/existing-project --profile minimal   # for a lightweight install
+bash setup.sh /path/to/existing-project --agent codex --profile minimal   # Codex only, lightweight
 ```
 
-For manual setup (back up any existing `.claude/` first; manual copy is always equivalent to `full`):
-
-```bash
-# Back up existing .claude/ if present
-[ -d /path/to/project/.claude ] && mv /path/to/project/.claude /path/to/project/.claude.bak
-
-cp -r project-blueprint-en/.claude /path/to/project/.claude
-cp -r project-blueprint-en/docs /path/to/project/docs
-cp -r project-blueprint-en/input /path/to/project/input
-cp -r project-blueprint-en/output /path/to/project/output
-cp -r project-blueprint-en/testreport /path/to/project/testreport
-cp project-blueprint-en/project-config.md /path/to/project/project-config.md
-[ -e /path/to/project/constitution.md ] || cp project-blueprint-en/constitution.md /path/to/project/constitution.md
-[ -e /path/to/project/.mcp.json.template ] || cp project-blueprint-en/.mcp.json.template /path/to/project/.mcp.json.template
-mkdir -p /path/to/project/.github/workflows && cp -n project-blueprint-en/.github/workflows/*.template /path/to/project/.github/workflows/
-
-mv /path/to/project/.claude/CLAUDE.md /path/to/project/CLAUDE.md
-# If an AGENTS.md already exists, merge into it instead of overwriting
-[ -e /path/to/project/AGENTS.md ] || cp project-blueprint-en/AGENTS.md /path/to/project/AGENTS.md
-```
+A project that already has Project Blueprint 0.x uses `migrate.sh`, not `setup.sh` (see "Migrating from 0.x" above).
 
 ### 2. Fill in project-config.md from the existing project
 
@@ -646,10 +710,11 @@ After filling in `project-config.md`, generate the initial `docs/` using one of 
 /implementing-features Initial generation of docs/
 ```
 
-### 4. Migrating from an existing .claude/
+### 4. Carrying over existing settings
 
-If your backed-up `.claude.bak/` contains project-specific settings:
+If the backed-up `.claude.bak/` `.agents.bak/` `.codex.bak/` hold settings of your own:
 
-- `settings.local.json` -> Merge into the new template
-- Custom skills -> Copy into `.claude/skills/`
-- memory/ -> Located outside `.claude/` at the user level, so no impact
+- `settings.local.json` → merge into the new `.claude/settings.local.json`
+- Custom skills → copy into `.agents/skills/`, then run `bash setup.sh <dir> --relink`
+- Your own Codex settings → merge into `.codex/config.toml` (personal allows belong in `~/.codex/`)
+- memory/ → unaffected (user-level settings outside `.claude/`)

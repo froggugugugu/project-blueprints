@@ -76,5 +76,5 @@ maxTurns: 30
 
 ## 関連参照
 
-- `.claude/quality-gates.md` — ゲート④(実装)の通過基準を確認するとき
-- `.claude/tasks/TASK_TEMPLATE.md` — 受け入れ条件の書式を確認するとき
+- `.agents/quality-gates.md` — ゲート④(実装)の通過基準を確認するとき
+- `.agents/tasks/TASK_TEMPLATE.md` — 受け入れ条件の書式を確認するとき

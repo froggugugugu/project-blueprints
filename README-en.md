@@ -1,10 +1,10 @@
 # Project Blueprints
 
-**A template for standing up Claude Code as a development harness.**
+**A template for standing up Claude Code and Codex as a development harness.**
 
 It carries a single requirement note through PRD, design, task breakdown, implementation and review.
 Instructions, skills, subagents, guardrails and a validation gate arrive together and work as soon as they are copied.
-Nothing here is tied to a language or a framework.
+Nothing here is tied to a language or a framework. Use Claude Code or Codex alone, or both as equals.
 
 [Site](https://froggugugugu.github.io/project-blueprints/en/) ·
 [日本語](README.md) ·
@@ -23,7 +23,7 @@ Nothing here is tied to a language or a framework.
 - The Japanese mirror `project-blueprint/` and the English mirror `project-blueprint-en/` share the **same structure**
 
 **What it is not**: an application starter. There is no React, no FastAPI, no Rails.
-What ships is the instructions and mechanisms handed to Claude Code, so the target project can use any stack.
+What ships is the instructions and mechanisms handed to Claude Code and Codex, so the target project can use any stack.
 It can also be added to an existing project later.
 
 ---
@@ -35,8 +35,17 @@ git clone https://github.com/froggugugugu/project-blueprints.git
 cd project-blueprints
 bash project-blueprint-en/setup.sh /path/to/your-project   # Japanese: project-blueprint/setup.sh
 cd /path/to/your-project
-claude
+claude          # or codex (trust the project on first run, then review and trust the hooks with /hooks)
 ```
+
+| Agent | What you get | Good for |
+| --- | --- | --- |
+| `--agent both` (default) | The shared core `.agents/` + `.claude/` + `.codex/` | Using both, or weighing a switch |
+| `--agent claude` | `.agents/` + `.claude/` | Claude Code only |
+| `--agent codex` | `.agents/` + `.codex/` | Codex only |
+
+Skills, hooks and rules have a single source under `.agents/`, read by both agents. `.claude/` and `.codex/` are thin adapters
+fitted to each agent (settings, hook registrations, deny rules, subagent definitions).
 
 | Profile | What you get | Good for |
 | --- | --- | --- |
@@ -62,7 +71,8 @@ Summary: Internal inventory management
 The remaining ten sections can stay empty. Fill them in when a skill needs them.
 
 ```text
-/plan design the stocktaking feature
+/plan design the stocktaking feature      # Claude Code
+$plan design the stocktaking feature      # Codex
 ```
 
 That alone reads `project-config.md` and writes a structured design document into `output/`.
@@ -91,23 +101,26 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
 ## What is in the box
 
 ```text
- 2 guides    AGENTS.md (tool-agnostic rules, also read by Codex / Cursor) + CLAUDE.md (Claude Code-specific, imports AGENTS.md)
+ 2 guides    AGENTS.md (tool-agnostic rules, read directly by Codex) + CLAUDE.md (Claude Code-specific, imports AGENTS.md)
+ 2 adapters  .claude/ (settings.json, agents, teams) / .codex/ (config.toml, hooks.json, rules, agents). The source is the shared .agents/
 17 skills    ideation, design, implementation, review, security, legal, performance, refactoring
              long detail moves into references/ (20 files) so SKILL.md keeps only the procedure
  9 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
-             doc-synchronizer / doc-writer / test-writer / verifier (spec conformance before completion)
- 6 teams     TEAM_PJM (full lifecycle, recommended) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
+             doc-synchronizer / doc-writer / test-writer / verifier (spec conformance before completion). The Codex versions are generated from the same definitions
+ 6 teams     TEAM_PJM (full lifecycle, recommended) / FEATURE / QA / PLANNING / DESIGN / REFACTOR (a Claude Code extension)
 18 hooks     PreToolUse / UserPromptExpansion / PostToolUse / SessionStart (compact re-injection) / ConfigChange / FileChanged / StopFailure and more
              dangerous-command blocking, protected files, unverified-stop detection, write-scope enforcement, refusing guardrail-weakening settings changes; blocking hooks fail closed via onFailure: block
+             Codex calls the same scripts (12 of the 18 registered; lib/codex-adapter.sh absorbs the input differences)
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
  7 rules     1 always-on (git conventions) + 3 path-scoped (document management, workflow detail, harness authoring)
              + 3 language samples (drop the .example suffix to enable)
- 2 workflows review-sweep (4-angle parallel review + adversarial verification) / skill-eval (with and without)
+ 2 workflows review-sweep (4-angle parallel review + adversarial verification) / skill-eval (with and without) (Claude Code extensions)
 34 evals     evals.json for all 17 skills (typical + boundary), 128 assertions
  1 gate      scripts/validate-harness.sh — a static check that fails CI on spec drift
- 3 CI        claude-review.yml (conversational @claude review) /
-             claude-skills-ci.yml (/code-review + /security-scan on every PR) /
+ 4 CI        claude-review.yml (conversational @claude review) /
+             claude-skills-ci.yml and codex-skills-ci.yml (code-review + security-scan on every PR; enable one or both) /
              claude-scheduled-audit.yml (weekly /security-scan + /legal-check into an Issue)
+ 2 scripts   setup.sh (install / --upgrade / --relink) / migrate.sh (0.x layout to 1.0, with --dry-run / --rollback)
  2 extras    REVIEW.md (criteria for Claude's Code Review) / .claude/loop.md (default prompt for /loop)
 ```
 
@@ -119,7 +132,7 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
 - **Enforce instead of instruct** — "always do X" becomes a hook, not a paragraph. Three layers: hooks → deny/ask → allow
 - **Give the work places to stop** — five quality gates, plus a hook that catches a stop with unverified source edits
 - **Do not burn the context** — CLAUDE.md stays under 200 lines together with the AGENTS.md it imports; skills read detail only when they need it
-- **Claude Code first, rules shared with other agents** — tool-agnostic rules live in `AGENTS.md` and only Claude Code-specific mechanisms stay in `CLAUDE.md`. When Codex / Cursor / Copilot / Gemini CLI join in, a human sets their roles and write scopes in `project-config.md` §13.7
+- **Claude Code and Codex as equals** — skills, hooks and rules live once in `.agents/` and both agents read them; only agent-specific settings are split into `.claude/` and `.codex/`. Either agent can run the whole lifecycle alone, and with both, a different model can review and verify what the other implemented. Differences that cannot be closed (Codex hooks do not run until trusted, for example) are written down in `guardrails.md` rather than hidden. Cursor / Copilot / Gemini CLI read `AGENTS.md` as auxiliaries, with roles and write scopes set by a human in `project-config.md` §13.7
 - **Keep expected behaviour as tests** — after changing a skill, compare pass rates with and without it via `/skill-eval`
 - **Break it and CI fails** — the harness validates itself, including drift between the two mirrors
 
@@ -129,13 +142,14 @@ The seven inviolable principles live in [`constitution.md`](constitution.md) and
 
 ## Validation
 
-After editing anything under `.claude/`, run the gate before committing.
+After editing the harness (`.agents/` `.claude/` `.codex/`), run the gate before committing.
 
 ```bash
 bash scripts/validate-harness.sh            # both mirrors and their structural parity
 bash scripts/validate-harness.sh --test     # negative tests for the validator itself
 bash scripts/validate-harness.sh --hooks    # functional tests for the hooks
-bash scripts/validate-harness.sh --setup    # functional tests for setup.sh install / --upgrade
+bash scripts/validate-harness.sh --setup    # functional tests for setup.sh install / agent selection / links / --upgrade
+bash scripts/validate-harness.sh --migrate  # functional tests for migrate.sh (migrates real 0.x installs rebuilt from history)
 bash scripts/validate-harness.sh --online   # resolve the npm packages in .mcp.json
 ```
 
@@ -147,6 +161,9 @@ It checks the following deterministically, with no LLM involved.
 - The schema of `evals/evals.json`, the `meta` declaration of workflows, and calls that break determinism
 - The `@AGENTS.md` import in `CLAUDE.md`, line-start `@` in `AGENTS.md`, that every `project-config.md` § either file cites exists, and the combined line count of both
 - `scope-guard.sh` registration on write-capable agents
+- Codex side: hooks registered through the adapter with `--fail-closed` on the blocking ones, `.codex/agents/*.toml` equal to what the source regenerates,
+  Claude Code's deny / ask matched by the Codex rules and the `Read()` deny list matched by the permission profile, and the harness itself read-only
+- No second copy of the shared core under `.claude/`, and `setup.sh` / `migrate.sh` identical across the two mirrors
 - The hash of `constitution.md` and the file layout parity of both mirrors
 - Version pins of the npm packages in `.mcp.json.template`, and `VERSION` matching the newest release heading in the CHANGELOG
 
@@ -154,7 +171,7 @@ CI (`.github/workflows/validate-harness.yml`) runs the same thing on push and pu
 `/harness-refine` is the LLM-side counterpart and runs after this gate passes.
 
 Whether a skill actually changes behaviour is measured by the LLM-side gate `scripts/run_skill_evals.py`. It runs each skill's `evals/evals.json`
-in a throwaway project built by `setup.sh`, once with the skill and once without, and a separate tool-less `claude -p` grades every assertion.
+in a throwaway project built by `setup.sh`, once with the skill and once without, and a separate tool-less `claude -p` grades every assertion (measured on Claude Code only for now; the same measurement on Codex is not implemented).
 Results live in [`evals/`](evals/) (method and baseline), and `.github/workflows/skill-evals.yml` checks weekly for regressions against that baseline.
 
 ---
@@ -208,9 +225,14 @@ the CHANGELOG on a branch; after the PR merges, `bash scripts/release.sh publish
 fails when VERSION and the CHANGELOG disagree.
 
 An installed project follows along with `bash setup.sh <dir> --upgrade` (`--dry-run` prints the plan). It compares against the
-`.claude/blueprint-manifest.txt` written at install time (version plus a hash per file), overwrites only untouched files and places
+`.agents/blueprint-manifest.txt` written at install time (version plus a hash per file), overwrites only untouched files and places
 `<path>.blueprint-new` next to modified ones. `project-config.md`, `docs/`, `input/` and `output/` are never touched. See "Upgrading" in
 [`project-blueprint-en/README.md`](project-blueprint-en/README.md).
+
+**Migrating from 0.x**: 1.0 changed the layout (skills, hooks and rules moved from `.claude/` to `.agents/`). For a project installed with 0.x, check the result with
+`bash migrate.sh <dir> --dry-run` and move it with `bash migrate.sh <dir>` before using `--upgrade`. Skills and hooks you added move too, references and hook registration
+paths are rewritten, and files you modified are kept with `<path>.blueprint-new` placed next to them. A failure restores the previous state automatically, and `--rollback`
+undoes a successful run. See "Migrating from 0.x" in [`project-blueprint-en/README.md`](project-blueprint-en/README.md).
 
 Vulnerability scope and reporting: [`SECURITY.md`](SECURITY.md).
 
@@ -222,7 +244,7 @@ Vulnerability scope and reporting: [`SECURITY.md`](SECURITY.md).
 re-evaluated in August 2026 and withdrawn again. The reason is structural, not a matter of taste.
 
 A plugin can declare only `skills`, `agents`, `outputStyles` and `hooks`. It cannot ship
-`project-config.md`, `docs/`, `input/`, `output/`, `.claude/rules/` or `.claude/teams/`.
+`project-config.md`, `docs/`, `input/`, `output/`, `.agents/rules/` or `.claude/teams/`.
 This harness, meanwhile, is in the following state.
 
 ```text
@@ -230,7 +252,7 @@ This harness, meanwhile, is in the following state.
 
   docs/               16 / 17        project-config.md   14 / 17
   output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .claude/rules/       3 / 17
+  quality-gates.md    15 / 17        .agents/rules/       3 / 17
 ```
 
 Installed as a plugin alone, **every skill would run with its premises missing**.
@@ -246,9 +268,10 @@ This is a project scaffold rather than a general-purpose tool collection, and
 - [`project-blueprint-en/README.md`](project-blueprint-en/README.md) — detailed setup guide
 - [`project-blueprint-en/AGENTS.md`](project-blueprint-en/AGENTS.md) — tool-agnostic development rules (read by any coding agent)
 - [`project-blueprint-en/.claude/CLAUDE.md`](project-blueprint-en/.claude/CLAUDE.md) — the Claude Code-specific development guide (imports AGENTS.md; under 200 lines combined)
-- [`project-blueprint-en/.claude/guardrails.md`](project-blueprint-en/.claude/guardrails.md) — the safety mechanisms as a whole
-- [`project-blueprint-en/.claude/pitfalls.md`](project-blueprint-en/.claude/pitfalls.md) — recurring failure patterns in AI-assisted development
-- [`project-blueprint-en/.claude/skills/`](project-blueprint-en/.claude/skills/) — SKILL.md for all 17 skills
+- [`project-blueprint-en/.agents/guardrails.md`](project-blueprint-en/.agents/guardrails.md) — the safety mechanisms as a whole, the Claude Code / Codex mapping and where the guarantees differ
+- [`project-blueprint-en/.codex/`](project-blueprint-en/.codex/) — the Codex adapter (config.toml / hooks.json / rules / agents)
+- [`project-blueprint-en/.agents/pitfalls.md`](project-blueprint-en/.agents/pitfalls.md) — recurring failure patterns in AI-assisted development
+- [`project-blueprint-en/.agents/skills/`](project-blueprint-en/.agents/skills/) — SKILL.md for all 17 skills
 - [`constitution.md`](constitution.md) — the seven principles, with the protocol for changing them
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes (SemVer + Keep a Changelog)
 - [`evals/README.md`](evals/README.md) — how the skill evals run, and the baseline (with / without pass rates)

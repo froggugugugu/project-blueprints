@@ -96,7 +96,7 @@ const FILES = scope.files.join('\n')
 const DIMENSIONS = [
   {
     key: 'spec-quality',
-    prompt: `Following review perspectives 1-3, 8, and 9 and the severity definitions in .claude/skills/code-review/SKILL.md, review the changes since ${BASE} in these files for spec compliance, code quality, architecture, backward compatibility, and doc sync.\n${FILES}\n${READ_ONLY}`,
+    prompt: `Following review perspectives 1-3, 8, and 9 and the severity definitions in .agents/skills/code-review/SKILL.md, review the changes since ${BASE} in these files for spec compliance, code quality, architecture, backward compatibility, and doc sync.\n${FILES}\n${READ_ONLY}`,
   },
   {
     key: 'security',
@@ -110,7 +110,7 @@ const DIMENSIONS = [
   },
   {
     key: 'tests',
-    prompt: `Following review perspective 7 in .claude/skills/code-review/SKILL.md, check whether the tests for these changes verify behavior and whether boundary and error cases are missing.\n${FILES}\n${READ_ONLY}`,
+    prompt: `Following review perspective 7 in .agents/skills/code-review/SKILL.md, check whether the tests for these changes verify behavior and whether boundary and error cases are missing.\n${FILES}\n${READ_ONLY}`,
   },
 ]
 
@@ -172,7 +172,7 @@ const failedDimensions = DIMENSIONS.filter((d, i) => !reviews[i]).map((d) => d.k
 phase('Report')
 const report = await agent(
   `Write a review report from the JSON below. Run \`date +%Y%m%d-%H%M\` and name the file output/reports/review/SWEEP_<timestamp>.md; write nowhere outside output/reports/review/.
-Follow the "Report Format" in .claude/skills/code-review/SKILL.md and always include:
+Follow the "Report Format" in .agents/skills/code-review/SKILL.md and always include:
 - Overview: the diff base (${BASE}), file count, failed angles
 - Findings: MUST (confirmed only) → SHOULD → CONSIDER. Each with angle, file:line, reason, and fix
 - Separate sections listing refuted MUST findings and unverified MUST findings (mark unverified ones for human review)

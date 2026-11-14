@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Project Blueprints — a Claude Code development harness template</title>
-<meta name="description" content="A Claude Code template that takes a requirement note through PRD, design, implementation and review. Ships instructions, skills, subagents, guardrails and a validation gate in Japanese and English.">
+<title>Project Blueprints — a development harness template for Claude Code and Codex</title>
+<meta name="description" content="A template for Claude Code and Codex that takes a requirement note through PRD, design, implementation and review. Ships instructions, skills, subagents, guardrails and a validation gate in Japanese and English.">
 <meta property="og:title" content="Project Blueprints">
-<meta property="og:description" content="Stand up Claude Code as a development harness: 17 skills, 9 subagents, 6 teams, 18 hooks, and a deterministic validation gate.">
+<meta property="og:description" content="Stand up Claude Code and Codex as a development harness: 17 skills, 9 subagents, 6 teams, 18 hooks, and a deterministic validation gate.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://froggugugugu.github.io/project-blueprints/en/">
 <link rel="stylesheet" href="../assets/site.css">
@@ -35,11 +35,11 @@
 <section class="hero">
   <div class="wrap">
     <span class="eyebrow">MIT licensed · Japanese and English mirrors</span>
-    <h1>Stand up Claude Code<br>as a development harness.</h1>
+    <h1>Stand up Claude Code and Codex<br>as a development harness.</h1>
     <p class="lead">
       One template that carries a requirement note through PRD, design, task breakdown, implementation and review.
       Instructions, skills, subagents, guardrails and a validation gate arrive together and work as soon as they are copied.
-      Nothing here is tied to a language or a framework.
+      Nothing here is tied to a language or a framework. Use Claude Code or Codex alone, or both as equals.
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://github.com/froggugugugu/project-blueprints">View the repository</a>
@@ -71,7 +71,7 @@
   <div class="wrap">
     <h2>What is in the box</h2>
     <p class="section-lead">
-      Claude Code-specific layers live under <code>.claude/</code> and the tool-agnostic rules in the root <code>AGENTS.md</code>; both are reusable as is. Project-specific values are collected in the 13 sections of <code>project-config.md</code>.
+      Skills, hooks and rules live once in the shared <code>.agents/</code>, agent-specific settings in <code>.claude/</code> and <code>.codex/</code>, and the tool-agnostic rules in the root <code>AGENTS.md</code>; all are reusable as is. Project-specific values are collected in the 13 sections of <code>project-config.md</code>.
     </p>
     <div class="grid grid-4">
       <div class="card"><div class="num">17</div><div class="label">skills</div></div>
@@ -95,7 +95,7 @@
         <tr><td>Output styles</td><td>A response shape per phase</td><td>Requirements, design, implementation, review</td></tr>
         <tr><td>Workflows</td><td>Deterministic control over many agents</td><td>An exhaustive review sweep and a skill eval runner</td></tr>
         <tr><td>CI templates</td><td>Automation on the repository side</td><td>Pull request review, headless runs, and a weekly audit</td></tr>
-        <tr><td>Shared rules</td><td>Shared with other agents</td><td><code>AGENTS.md</code>. Claude Code is primary; Codex / Cursor read it by default and Copilot / Gemini CLI through configuration. A human sets their roles and write scopes in <code>project-config.md</code> §13.7</td></tr>
+        <tr><td>Shared rules</td><td>Claude Code and Codex as equals</td><td>Both read <code>AGENTS.md</code> and <code>.agents/</code>. <code>setup.sh --agent claude|codex|both</code> picks which to install. Cursor / Copilot / Gemini CLI read <code>AGENTS.md</code> as auxiliaries, with roles and write scopes set by a human in <code>project-config.md</code> §13.7</td></tr>
       </tbody>
     </table>
   </div>
@@ -145,7 +145,7 @@ cd project-blueprints
 bash project-blueprint-en/setup.sh /path/to/your-project   <span class="c"># Japanese: project-blueprint/setup.sh</span>
 
 cd /path/to/your-project
-claude</code></pre>
+claude          <span class="c"># or codex. Pass --agent claude / --agent codex to setup.sh to install one side only</span></code></pre>
     </div>
     <div style="height:26px"></div>
     <table>
@@ -180,7 +180,7 @@ Summary: Internal inventory management
     <h2>Validation</h2>
     <p class="section-lead">
       A harness configuration fails quietly when it fails at all, so this one is checked deterministically, without an LLM.
-      Run it before committing anything under <code>.claude/</code>. CI runs the same command.
+      Run it before committing anything in the harness (<code>.agents/</code> <code>.claude/</code> <code>.codex/</code>). CI runs the same command.
     </p>
     <div class="codeblock">
       <button class="copy" type="button">Copy</button>
@@ -208,8 +208,8 @@ bash scripts/validate-harness.sh --online   <span class="c"># resolve the npm pa
       <a href="../README.html"><strong>README（日本語）</strong><span>同じ内容の日本語版</span></a>
       <a href="../constitution.html"><strong>Constitution</strong><span>Seven principles that must not change, and how to change them anyway</span></a>
       <a href="../CHANGELOG.html"><strong>Changelog</strong><span>Release notes in Keep a Changelog format</span></a>
-      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint-en/.claude/skills"><strong>Skill definitions</strong><span>SKILL.md, references and evals for all 17 skills</span></a>
-      <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint-en/.claude/pitfalls.md"><strong>Pitfalls</strong><span>Failure patterns that keep recurring in AI-assisted development</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint-en/.agents/skills"><strong>Skill definitions</strong><span>SKILL.md, references and evals for all 17 skills</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint-en/.agents/pitfalls.md"><strong>Pitfalls</strong><span>Failure patterns that keep recurring in AI-assisted development</span></a>
     </div>
   </div>
 </section>

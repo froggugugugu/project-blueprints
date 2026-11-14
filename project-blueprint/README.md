@@ -1,6 +1,6 @@
 # Project Blueprint
 
-Claude Codeプロジェクトの AI協調開発環境テンプレート。
+Claude Code と Codex のための AI協調開発環境テンプレート。どちらか片方でも、両方を対等に併用しても使える。
 
 プロジェクト固有の「人間の決定事項」を **`project-config.md`の1ファイルに集約**し、
 ルーティング・ストア一覧・データモデル等の設計成果物はAIが自動生成・メンテナンスする。
@@ -14,11 +14,12 @@ Claude Codeプロジェクトの AI協調開発環境テンプレート。
 ### Step 1: コピー
 
 ```bash
-bash setup.sh /path/to/your-project
+bash setup.sh /path/to/your-project                  # Claude Code と Codex の両方(既定)
+bash setup.sh /path/to/your-project --agent claude   # Claude Code だけ
+bash setup.sh /path/to/your-project --agent codex    # Codex だけ
 ```
 
-> さらに軽くしたい場合は `bash setup.sh /path/to/your-project --profile minimal` で
-> skills 5 / agents 2 / hooks 2 だけを導入できる(詳細は下記「プロファイル」参照)。
+> さらに軽くしたい場合は `--profile minimal` を足すと skills 5 / agents 2 / hooks 2 だけを導入できる(詳細は下記「プロファイル」参照)。
 
 ### Step 2: project-config.md に3セクションだけ記入
 
@@ -43,10 +44,12 @@ bash setup.sh /path/to/your-project
 ### Step 3: スキルを1つ試す
 
 ```text
-/plan ログイン機能の設計
+/plan ログイン機能の設計       # Claude Code
+$plan ログイン機能の設計       # Codex
 ```
 
 これだけで AI が `project-config.md` を読み取り、構造化された設計ドキュメントを生成する。
+以降の例は Claude Code の `/name` で書く。Codex では `$name` と読み替える。
 
 ### 段階的に広げる
 
@@ -68,12 +71,13 @@ bash setup.sh /path/to/your-project
 
 | 必要なもの | 用途 | 確認 |
 | --- | --- | --- |
-| Claude Code 2.1.314 以上 | `onFailure: block`（2.1.295）、`blockWritesOutsideWorkingDirectories`（2.1.314）、Task ツールの env 有効化 | `claude --version` |
-| bash 3.2 以上 + git | `setup.sh`（導入と `--upgrade`）、フック | macOS 標準の bash で動く |
+| Claude Code 2.1.314 以上(`--agent claude` / `both`) | `onFailure: block`（2.1.295）、`blockWritesOutsideWorkingDirectories`（2.1.314）、Task ツールの env 有効化 | `claude --version` |
+| Codex CLI 0.162 以上(`--agent codex` / `both`) | フック(`.codex/hooks.json`)、権限プロファイル、`.agents/skills/` の読み込み | `codex --version` |
+| bash 3.2 以上 + git | `setup.sh`（導入と `--upgrade`）、`migrate.sh`、フック | macOS 標準の bash で動く |
 | jq | 全フックが JSON の読み書きに使う（無いと `safety-check.sh` が最重要パターン以外をスキップする） | `brew install jq` / `apt-get install jq` |
 | python3 | テンプレート元リポジトリの `scripts/validate-harness.sh` だけ（導入先では不要） | `python3 --version` |
 
-Windows は WSL2 か Git Bash で上記を揃える。
+Windows は WSL2 か Git Bash で上記を揃える。Git Bash ではシンボリックリンクを作れないことがあり、その場合 `setup.sh` はコピーに切り替える(下記「共通の核とリンク」)。
 
 ### 方法A: setup.sh で1コマンドセットアップ（推奨）
 
@@ -82,17 +86,45 @@ bash setup.sh /path/to/your-project
 ```
 
 これだけで以下がすべて完了する:
-- `.claude/`、`docs/`、`input/`、`output/`、`testreport/`、`project-config.md` のコピー
-- `CLAUDE.md` と `AGENTS.md`(ツール共通ルール)のプロジェクトルートへの配置(既存の `AGENTS.md` は上書きせず `AGENTS.blueprint.md` を横に置く)
+- `.agents/`(共通の核: skill・フック・ルール・品質ゲート)の配置
+- `.claude/`(Claude Code 用アダプタ)と `.codex/`(Codex 用アダプタ)の配置。`--agent` で片方だけにできる
+- `docs/`、`input/`、`output/`、`testreport/`、`project-config.md` の配置(既存ファイルは上書きしない)
+- `AGENTS.md`(ツール共通ルール)と `CLAUDE.md` のプロジェクトルートへの配置(既存の `AGENTS.md` は上書きせず `AGENTS.blueprint.md` を、既存の `CLAUDE.md` は上書きせず `CLAUDE.md.blueprint-new` を横に置く)
 - `constitution.md`・`REVIEW.md`(Claude の Code Review 用の審査基準)・`.mcp.json.template`・`.github/`(ワークフローテンプレート)の配置(既存ファイルは上書きしない)
-- `.claude/settings.local.json` を雛形から生成(無い場合のみ)
+- `.claude/skills/` と `.claude/rules/` から `.agents/` へのリンク作成、`.claude/settings.local.json` を雛形から生成(無い場合のみ)
 - `.gitignore` への `testreport/` などローカル状態の追記
-- 既存 `.claude/` がある場合は `.claude.bak/` に自動バックアップ
-- `.claude/blueprint-manifest.txt`（導入した版とファイルごとのハッシュ）を記録。`--upgrade` の基準になる
+- 既存の `.agents/` `.claude/` `.codex/` がある場合は `<名前>.bak/` に自動バックアップ(`.bak/` が既にあれば消さず、`<名前>.bak.<日時>/` に置く)
+- `.agents/blueprint-manifest.txt`（導入した版・エージェント・ファイルごとのハッシュ）を記録。`--upgrade` の基準になる
+
+導入済みのプロジェクトにもう一度導入することはできない(足した skill や編集を退避先へ回してしまうため、`setup.sh` が止める)。版の追従は `--upgrade`、
+アダプタの追加は `--upgrade --agent both`、リンクの張り直しは `--relink` を使う。`.agents` `.claude` `.codex` のどれかがシンボリックリンクの場合と、
+ターゲットがテンプレート自身の場合も、何も変更せずに止まる。
+
+#### エージェント（`--agent`）
+
+| 値 | 入るもの | 起動後の最初の一歩 |
+| --- | --- | --- |
+| `both`（デフォルト） | `.agents/` + `.claude/` + `.codex/` + `CLAUDE.md` | 下の両方 |
+| `claude` | `.agents/` + `.claude/` + `CLAUDE.md` | `claude` を起動し `/plan ...` |
+| `codex` | `.agents/` + `.codex/` | `codex` を起動してプロジェクトを信頼し、`/hooks` でフックを確認して信頼してから `$plan ...` |
+
+Codex はプロジェクトを信頼するまで `.codex/` の設定を読まず、フックは `/hooks` で信頼するまで実行しない(フックを更新したあとも同じ)。
+あとからもう一方を足すには `bash setup.sh <dir> --upgrade --agent both`。安全装置の対応関係と差は `.agents/guardrails.md` の「エージェント別の対応」。
+
+#### 共通の核とリンク（`--links` / `--relink`）
+
+skill・フック・ルールの原本は `.agents/` に 1 つだけ置く。Codex は `.agents/skills/` を直接読む。
+Claude Code は `.claude/skills/` と `.claude/rules/` しか読まないため、`setup.sh` が項目ごとにシンボリックリンクを作る。
+
+| やりたいこと | 操作 |
+| --- | --- |
+| skill やルールを足した・消した | `.agents/skills/<名前>/` か `.agents/rules/<名前>.md` を編集し、`bash setup.sh <dir> --relink` |
+| サンプルのルールを有効にする | `cp .agents/rules/language-typescript.md.example .agents/rules/language-typescript.md` のあと `--relink` |
+| シンボリックリンクを使えない | `--links copy` で導入する。編集は `.agents/` 側だけで行い、`--relink` で `.claude/` 側へ反映する |
 
 #### プロファイル（段階的インストール）
 
-`--profile` オプションで導入する `.claude/` の範囲を選べる（省略時は `full`）:
+`--profile` オプションで導入する skill・agent・フックの範囲を選べる（省略時は `full`。`--agent` と組み合わせられる）:
 
 | プロファイル | skills | agents | hooks | teams | 用途 |
 | --- | --- | --- | --- | --- | --- |
@@ -114,7 +146,7 @@ bash setup.sh /path/to/your-project --profile standard
 
 #### 更新（`--upgrade`）
 
-導入済みプロジェクトをテンプレートの新しい版に追従させる。導入時に書かれた `.claude/blueprint-manifest.txt`（版・プロファイル・ファイルごとのハッシュ）と比べ、差分だけを適用する。
+導入済みプロジェクトをテンプレートの新しい版に追従させる。導入時に書かれた `.agents/blueprint-manifest.txt`（版・プロファイル・エージェント・ファイルごとのハッシュ）と比べ、差分だけを適用する。
 
 ```bash
 git -C /path/to/project-blueprints pull                   # テンプレートを更新
@@ -125,34 +157,67 @@ bash setup.sh /path/to/your-project --upgrade             # 適用
 | 状態 | 動作 |
 | --- | --- |
 | 導入後に手を入れていないファイル | 新版で上書き |
-| 手を入れたファイル | 触らず、新版を `<path>.blueprint-new` として横に置く（`diff` で統合して削除する） |
+| 手を入れたファイル | 触らず、新版を `<path>.blueprint-new` として横に置く（`diff` で統合して削除する）。前回の `.blueprint-new` が残っていて内容が違えば `.blueprint-new.old` に退避する |
 | テンプレートに増えたファイル | 追加する（プロファイルの剪定は維持） |
 | ローカルで削除したファイル | 復活させない |
 | `project-config.md` / `docs/` / `input/` / `output/` / `settings.local.json` | 触らない（`project-config.md` のテンプレートが変わったときは警告だけ出す） |
 
-0.5.0 より前の `setup.sh` で導入した（manifest が無い）プロジェクトは、一度 `setup.sh <dir>` で再導入する（既存の `.claude/` は `.claude.bak/` に退避される）。
-観測フックのログは `bash .claude/scripts/harness-stats.sh --since 30` で集計できる。
+観測フックのログは `bash .agents/scripts/harness-stats.sh --since 30` で集計できる。
+
+#### 0.x からの移行（`migrate.sh`）
+
+0.x で導入したプロジェクトは skill もフックも `.claude/` の下にあり、`--upgrade` では更新できない。先に `migrate.sh` で 1.0 の配置へ移す。
+
+```bash
+git -C /path/to/project-blueprints pull                    # 1.0 のテンプレート(git の履歴つきで clone したもの)
+bash migrate.sh /path/to/your-project --dry-run            # 一時コピー上で最後まで実行し、結果だけ表示
+bash migrate.sh /path/to/your-project                      # 適用(未コミットの変更があると止まる)
+bash migrate.sh /path/to/your-project --rollback           # 取り消し(バックアップを消すまで可能)
+```
+
+| 段階 | 行うこと |
+| --- | --- |
+| 分類 | 各ファイルが「テンプレートのまま」か「手で変更あり」かを決める。0.x は導入時の記録を持たないため、テンプレートの git 履歴にある内容と照合する |
+| 退避 | `.blueprint-migrate-backup/` に `.claude/` と書き換えるファイルを保存する(`.gitignore` に追加される) |
+| 移動 | `.claude/{skills,hooks,rules,scripts,learnings,tasks}` と `guardrails.md` / `quality-gates.md` / `pitfalls.md` を `.agents/` へ。自分で足した skill やフックも一緒に移る |
+| 参照修正 | `.claude/hooks/...` などの参照を `.agents/...` に書き換える。対象は `.agents/` `.claude/` `CLAUDE.md` `AGENTS.md` `project-config.md` `constitution.md` `docs/` `.github/` `.gitignore`。`settings.json` に登録した独自フックのパスもここで直る |
+| 更新 | `setup.sh --upgrade` を呼び、未変更ファイルを 1.0 の内容に置き換え、Codex 用アダプタなどを足す。手で変えたファイルは上書きせず `<path>.blueprint-new` を横に置く |
+
+| オプション | 用途 |
+| --- | --- |
+| `--agent claude` | Codex 用アダプタを足さず、Claude Code だけのまま移行する(既定は `both`) |
+| `--assume-pristine` | ハーネスを一度も編集していないとき、またはテンプレートに git 履歴が無いとき。全ファイルを 1.0 で上書きする(元の版はバックアップに残る) |
+| `--allow-dirty` | 未コミットの変更があっても進める(非推奨) |
+
+途中で失敗した場合と、Ctrl-C などで中断した場合は、自動で移行前の状態へ戻る(戻し切れなかったときはバックアップを残して知らせる)。
+移行後は `git status` で結果を確認し、`.blueprint-new` を統合して消し、Claude Code を起動し直す(フックのパスが変わるため)。
+
+自動で書き換えない場所に旧パスが残っていれば、最後に一覧で知らせる(`package.json`・`Makefile`・git フックの設定・ルートの `README.md` などから
+`.claude/scripts/` や `.claude/hooks/` を呼んでいる場合)。`~/.claude/skills/` のようなホーム側のパスは移動対象ではないので書き換えない。
+`.claude` がシンボリックリンクのプロジェクトは、リンク先の実体を壊さないよう移行を始めない(実体のディレクトリにしてから実行する)。
 
 ### 方法B: 手動コピー
 
-> この手動コピーは常に `full` 相当になる。段階的な導入（プロファイル）が必要な場合は
-> 上記「方法A」（`setup.sh --profile`）を使用すること。
+> 手動コピーは常に `full` 相当になり、manifest も書かれない(あとで `--upgrade` を使えない)。特別な理由が無ければ「方法A」を使う。
 
 ```bash
-cp -r project-blueprint/.claude /path/to/new-project/.claude
-cp -r project-blueprint/docs /path/to/new-project/docs
-cp -r project-blueprint/input /path/to/new-project/input
-cp -r project-blueprint/output /path/to/new-project/output
-cp -r project-blueprint/testreport /path/to/new-project/testreport
-cp project-blueprint/project-config.md /path/to/new-project/project-config.md
-cp project-blueprint/constitution.md /path/to/new-project/constitution.md
-cp project-blueprint/.mcp.json.template /path/to/new-project/.mcp.json.template
-cp -r project-blueprint/.github /path/to/new-project/.github
+cd /path/to/new-project
+B=/path/to/project-blueprints/project-blueprint
 
-# CLAUDE.md をプロジェクトルートに移動（.claude/ 内の重複を除去）
-mv /path/to/new-project/.claude/CLAUDE.md /path/to/new-project/CLAUDE.md
-# ツール共通ルール（CLAUDE.md が @AGENTS.md で取り込む）
-cp project-blueprint/AGENTS.md /path/to/new-project/AGENTS.md
+cp -r "$B/.agents" .agents                      # 共通の核
+cp -r "$B/.claude" .claude                      # Claude Code を使う場合
+cp -r "$B/.codex" .codex                        # Codex を使う場合
+cp -r "$B/docs" "$B/input" "$B/output" "$B/testreport" .
+cp "$B/project-config.md" "$B/constitution.md" "$B/AGENTS.md" "$B/.mcp.json.template" .
+cp -r "$B/.github" .github
+
+# Claude Code 用: CLAUDE.md をルートへ移し、skill とルールを .agents/ へリンクする
+mv .claude/CLAUDE.md CLAUDE.md
+rm -f .claude/settings.minimal.json .codex/hooks.minimal.json
+mkdir -p .claude/skills .claude/rules
+for d in .agents/skills/*/; do ln -s "../../.agents/skills/$(basename "$d")" ".claude/skills/$(basename "$d")"; done
+for f in .agents/rules/*.md; do [ "$(basename "$f")" = README.md ] || ln -s "../../.agents/rules/$(basename "$f")" ".claude/rules/$(basename "$f")"; done
+chmod +x .agents/hooks/*.sh .agents/hooks/lib/*.sh .agents/scripts/*.sh
 ```
 
 ### 2. project-config.mdを記入
@@ -239,19 +304,28 @@ cp .claude/settings.local.json.template .claude/settings.local.json
 > `project-config.md` を直接参照してフォールバックする。
 > PJMチームを使う場合は Phase 2〜4 で自動的に生成される。
 
-### 7. 他のエージェントとの併用（任意）
+### 7. Claude Code と Codex、その他のエージェント（任意）
 
-主系は Claude Code。ツール共通のルールはルートの `AGENTS.md` にあり、Claude Code は `CLAUDE.md` の `@AGENTS.md` で取り込む。
-Codex / Cursor などを併用する場合は、利用可否・役割・書込範囲を `project-config.md` §13.7 に記入する。
+Claude Code と Codex は対等に扱う。どちらも `AGENTS.md`(ツール共通ルール)と `.agents/`(skill・フック・ルール)を読み、単独で全工程を回せる。
+両方を使うときは、工程ごとの担当を `project-config.md` §13.7 に記入する(例: 実装した側と別のエージェントがレビューと検証を担当する)。
+
+| | Claude Code | Codex |
+| --- | --- | --- |
+| 指示ファイル | `CLAUDE.md`(`@AGENTS.md` を取り込む) | `AGENTS.md` |
+| skill の起動 | `/name` | `$name` |
+| 設定 | `.claude/settings.json` | `.codex/config.toml` + `.codex/hooks.json` + `.codex/rules/` |
+| サブエージェント | `.claude/agents/*.md` | `.codex/agents/*.toml` |
+| team / saved workflow | あり(`full` プロファイル) | なし(同じ skill を順に実行する) |
+
+それ以外のエージェントは補助として `AGENTS.md` を読む。§13.7 で `yes` にしていなければ読取専用で振る舞う。
 
 | エージェント | `AGENTS.md` を読ませる方法 |
 | --- | --- |
-| OpenAI Codex CLI / Cursor | 既定で読む |
+| Cursor | 既定で読む |
 | GitHub Copilot（VS Code） | 設定 `chat.useAgentsMdFile: true` |
 | Gemini CLI | `.gemini/settings.json` に `{"context": {"fileName": ["AGENTS.md"]}}`（既定は `GEMINI.md`） |
 
-> §13.7 で `yes` にしていないエージェントは読取専用で振る舞う。`.claude/` のフック・deny ルールは Claude Code 以外には効かないため、
-> 書込を許すなら禁止事項を CI や git フックでも強制する。
+> フックと deny ルールが効くのは Claude Code と Codex だけである。補助エージェントに書込を許すなら、禁止事項を CI や git フックでも強制する。
 
 ---
 
@@ -339,10 +413,10 @@ Codex / Cursor などを併用する場合は、利用可否・役割・書込�
 │                                                         │
 │  AGENTS.md .................... 共通ルール（ツール非依存）│
 │  .claude/CLAUDE.md ............ 開発ガイド（Claude Code） │
-│  .claude/hooks/ ............... 安全フック（多層防御）    │
-│  .claude/skills/ .............. 17個のスキル定義         │
+│  .agents/hooks/ ............... 安全フック（多層防御）    │
+│  .agents/skills/ .............. 17個のスキル定義         │
 │  .claude/teams/ ............... 6チーム定義              │
-│  .claude/tasks/ ............... タスク指示書テンプレート  │
+│  .agents/tasks/ ............... タスク指示書テンプレート  │
 │  .claude/settings.json ........ プラグイン・フック設定   │
 │  .claude/settings.local.json .. 権限設定テンプレート     │
 │                                                         │
@@ -357,7 +431,8 @@ Codex / Cursor などを併用する場合は、利用可否・役割・書込�
 project-blueprint/
 │
 ├── README.md                              ← このファイル
-├── setup.sh                               ← 1コマンドセットアップスクリプト
+├── setup.sh                               ← 1コマンドセットアップスクリプト（導入 / --upgrade / --relink）
+├── migrate.sh                             ← 0.x の配置（すべて .claude/ 配下）から 1.0 への移行スクリプト
 ├── AGENTS.md                              ← [汎用] ツール共通の開発ルール（Codex / Cursor / Copilot 等も読む）
 ├── project-config.md                      ← [人間+AI] 設定ファイル（13セクション）
 ├── project-config.sample.md               ← 記入済みサンプル（タスク管理アプリ）
@@ -387,23 +462,11 @@ project-blueprint/
 │   ├── e2e/                                 E2Eテストレポート・トレース
 │   └── security/                            セキュリティスキャン生データ
 │
-├── .claude/
-│   ├── CLAUDE.md                          ← [汎用] 開発ガイド（Claude Code 固有。@AGENTS.md を取り込む）
-│   ├── settings.json                      ← [汎用] プラグイン・フック設定
-│   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
-│   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
-│   ├── settings.minimal.json              ← [汎用] minimal プロファイル用設定（setup.sh が差し替え）
-│   ├── statusline.sh                      ← [汎用] 現在の出力スタイルとフェーズを表示
+├── .agents/                               ← [汎用] 共通の核（Claude Code と Codex が共有。原本はここに 1 つだけ）
 │   ├── .constitution.sha256               ← [自動] constitution.md の hash
 │   ├── guardrails.md                      ← [汎用] 安全機構の全体像
-│   ├── permissions-guide.md               ← [汎用] 権限設計・auto mode の指針
 │   ├── quality-gates.md                   ← [汎用] 5 つの品質ゲートの基準
 │   ├── pitfalls.md                        ← [汎用] 失敗パターン 31 件と対策
-│   │
-│   ├── agents/                            ← [汎用] サブエージェント 9 種 + README.md（使い分け）
-│   │                                        explorer / researcher / planner / security-reviewer /
-│   │                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
-│   │
 │   ├── rules/                             ← [汎用] ルール（常時 1 本 + パス限定 3 本 + サンプル 3 本）
 │   │   ├── git-conventions.md               常時 load: Git・コミット規約
 │   │   ├── document-management.md           docs/・output/ 編集時: ドキュメント管理
@@ -411,10 +474,9 @@ project-blueprint/
 │   │   ├── harness-authoring.md             ハーネス編集時: 執筆規約
 │   │   └── *.md.example                     言語別・パス別サンプル（.example を外して有効化）
 │   │
-│   ├── output-styles/                     ← [汎用] フェーズ別出力スタイル 4 種（phase-prd / design / implementation / review）
 │   ├── learnings/                         ← [汎用] 成功パターンの記録（README.md / TEMPLATE.md / 記入例）
-│   │
 │   ├── hooks/                             ← [汎用] 安全フック（多層防御・18本）
+│   │   ├── lib/codex-adapter.sh             Codex の入力を共通形に直して同じフックを呼ぶ
 │   │   ├── safety-check.sh                  危険コマンドブロック（PreToolUse）
 │   │   ├── protect-files.sh                 機密ファイル・設定ファイル保護（PreToolUse）
 │   │   ├── scan-harness.sh                  ハーネス自己SAST・危険skillブロック（PreToolUse）
@@ -460,6 +522,25 @@ project-blueprint/
 │   │   ├── review-fix/SKILL.md              PRレビュー指摘自動修正
 │   │   └── harness-refine/SKILL.md          ハーネス自己点検・補正
 │   │
+│   └── tasks/                             ← [汎用] タスクテンプレート
+│       ├── TASK_TEMPLATE.md                 機能開発指示書
+│       ├── TASK_REVIEW_TEMPLATE.md          レビュー指示書
+│       ├── LESSONS_TEMPLATE.md              学びの記録テンプレート
+│       └── PROGRESS_TEMPLATE.md             複数セッションの進捗引き継ぎノート
+│
+├── .claude/                               ← [汎用] Claude Code 用アダプタ（skills/ と rules/ は setup.sh が .agents/ へリンクする）
+│   ├── CLAUDE.md                          ← [汎用] 開発ガイド（Claude Code 固有。@AGENTS.md を取り込む）
+│   ├── settings.json                      ← [汎用] プラグイン・フック設定
+│   ├── settings.local.json.template       ← [カスタマイズ] 権限設定テンプレート（setup.sh が自動生成）
+│   ├── managed-settings.example.json      ← [参照用] 組織ポリシー（deny / sandbox / OTel）の例
+│   ├── settings.minimal.json              ← [汎用] minimal プロファイル用設定（setup.sh が差し替え）
+│   ├── statusline.sh                      ← [汎用] 現在の出力スタイルとフェーズを表示
+│   ├── permissions-guide.md               ← [汎用] 権限設計・auto mode の指針
+│   ├── agents/                            ← [汎用] サブエージェント 9 種 + README.md（使い分け）
+│   │                                        explorer / researcher / planner / security-reviewer /
+│   │                                        performance-analyst / doc-synchronizer / doc-writer / test-writer
+│   │
+│   ├── output-styles/                     ← [汎用] フェーズ別出力スタイル 4 種（phase-prd / design / implementation / review）
 │   ├── teams/                             ← [汎用] 6チーム定義
 │   │   ├── README.md                        チーム利用ガイド
 │   │   ├── TEAM_PJM.md                      フルライフサイクル管理
@@ -469,15 +550,16 @@ project-blueprint/
 │   │   ├── TEAM_REFACTOR.md                 リファクタリング
 │   │   └── TEAM_DESIGN.md                   デザインチーム
 │   │
-│   ├── workflows/                         ← [汎用] saved workflow（full プロファイルのみ）
-│   │   ├── review-sweep.js                  4 観点並列レビュー + MUST 指摘の反証検証
-│   │   └── skill-eval.js                    skill の evals を with / without で実行
-│   │
-│   └── tasks/                             ← [汎用] タスクテンプレート
-│       ├── TASK_TEMPLATE.md                 機能開発指示書
-│       ├── TASK_REVIEW_TEMPLATE.md          レビュー指示書
-│       ├── LESSONS_TEMPLATE.md              学びの記録テンプレート
-│       └── PROGRESS_TEMPLATE.md             複数セッションの進捗引き継ぎノート
+│   └── workflows/                         ← [汎用] saved workflow（full プロファイルのみ）
+│       ├── review-sweep.js                  4 観点並列レビュー + MUST 指摘の反証検証
+│       └── skill-eval.js                    skill の evals を with / without で実行
+│
+├── .codex/                                ← [汎用] Codex 用アダプタ
+│   ├── config.toml                        ← [汎用] 承認方式・権限プロファイル（シークレットの読取禁止）・Codex 向けの読み替え
+│   ├── hooks.json                         ← [汎用] 共有フックの登録（lib/codex-adapter.sh 経由）
+│   ├── hooks.minimal.json                 ← [汎用] minimal プロファイル用（setup.sh が差し替え）
+│   ├── rules/default.rules                ← [汎用] 禁止・確認するコマンド（.claude/settings.json の deny / ask に対応）
+│   └── agents/                            ← [生成物] サブエージェント 9 種（.claude/agents/*.md から生成。直接編集しない）
 │
 └── docs/                                  ← [AI生成] 技術ドキュメント
     ├── project.md                           ルーティング・ストア・コマンド
@@ -591,33 +673,15 @@ project-blueprint/
 
 ### 1. ファイルをコピー
 
-`setup.sh` を使えば既存 `.claude/` の自動バックアップ込みで1コマンドで完了する:
+`setup.sh` は既存プロジェクトにそのまま使える。既存の `docs/`・`project-config.md`・`AGENTS.md` などは上書きせず、
+既存の `.agents/` `.claude/` `.codex/` は `<名前>.bak/` に退避してから配置する:
 
 ```bash
 bash setup.sh /path/to/existing-project
-bash setup.sh /path/to/existing-project --profile minimal   # 軽量構成にしたい場合
+bash setup.sh /path/to/existing-project --agent codex --profile minimal   # Codex だけ・軽量構成にしたい場合
 ```
 
-手動の場合は以下（既存の `.claude/` があれば事前にバックアップ。手動コピーは常に `full` 相当）:
-
-```bash
-# 既存の .claude/ があればバックアップ
-[ -d /path/to/project/.claude ] && mv /path/to/project/.claude /path/to/project/.claude.bak
-
-cp -r project-blueprint/.claude /path/to/project/.claude
-cp -r project-blueprint/docs /path/to/project/docs
-cp -r project-blueprint/input /path/to/project/input
-cp -r project-blueprint/output /path/to/project/output
-cp -r project-blueprint/testreport /path/to/project/testreport
-cp project-blueprint/project-config.md /path/to/project/project-config.md
-[ -e /path/to/project/constitution.md ] || cp project-blueprint/constitution.md /path/to/project/constitution.md
-[ -e /path/to/project/.mcp.json.template ] || cp project-blueprint/.mcp.json.template /path/to/project/.mcp.json.template
-mkdir -p /path/to/project/.github/workflows && cp -n project-blueprint/.github/workflows/*.template /path/to/project/.github/workflows/
-
-mv /path/to/project/.claude/CLAUDE.md /path/to/project/CLAUDE.md
-# 既存の AGENTS.md があれば上書きせず、内容を統合する
-[ -e /path/to/project/AGENTS.md ] || cp project-blueprint/AGENTS.md /path/to/project/AGENTS.md
-```
+Project Blueprint 0.x を導入済みのプロジェクトは `setup.sh` ではなく `migrate.sh` を使う(上記「0.x からの移行」)。
 
 ### 2. project-config.md を既存プロジェクトから記入
 
@@ -644,10 +708,11 @@ mv /path/to/project/.claude/CLAUDE.md /path/to/project/CLAUDE.md
 /implementing-features docs/ の初期生成
 ```
 
-### 4. 既存の .claude/ からの移行
+### 4. 既存の設定からの引き継ぎ
 
-バックアップした `.claude.bak/` に固有設定がある場合:
+バックアップされた `.claude.bak/` `.agents.bak/` `.codex.bak/` に固有の設定がある場合:
 
-- `settings.local.json` → 新テンプレートにマージ
-- カスタムスキル → `.claude/skills/` にコピー
+- `settings.local.json` → 新しい `.claude/settings.local.json` にマージ
+- カスタムスキル → `.agents/skills/` にコピーし、`bash setup.sh <dir> --relink`
+- Codex の独自設定 → `.codex/config.toml` にマージ(個人の許可は `~/.codex/` に置く)
 - memory/ → `.claude/` 外のユーザーレベル設定のため影響なし

@@ -12,7 +12,7 @@ hooks:
     - matcher: "Edit|Write|NotebookEdit"
       hooks:
         - type: command
-          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh output'
+          command: '"$CLAUDE_PROJECT_DIR"/.agents/hooks/scope-guard.sh output'
           timeout: 5
           onFailure: block
 color: yellow
@@ -47,7 +47,7 @@ Use `doc-synchronizer` for small diffs to existing docs; use this agent to autho
 
 1. **Decide the reader first** — vary granularity for engineers / reviewers / executives
 2. **Lead with the conclusion** — state "what's the conclusion" in the first 3 lines; details follow
-3. **Prefer existing templates** — if `.claude/tasks/TASK_TEMPLATE.md` or similar exists, follow it
+3. **Prefer existing templates** — if `.agents/tasks/TASK_TEMPLATE.md` or similar exists, follow it
 4. **Stay faithful to data** — don't invent claims absent from the input. Mark uncertainty as "[Needs Confirmation]"
 5. **Write in the project's default language** — match the project's locale convention
 6. **Avoid an auto-generated feel** — do not add machine-style notices like "This file was auto-generated"

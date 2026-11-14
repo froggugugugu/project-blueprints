@@ -1,0 +1,124 @@
+---
+# Codex Skills CI (template)
+#
+# Runs the blueprint skills on every PR with openai/codex-action (`codex exec`).
+# It plays the same role as claude-skills-ci.yml on the Claude Code side; enable either one or both
+# (with both, every PR gets a check from a model other than the one that implemented the change).
+#
+# How to enable:
+#   1. cp .github/workflows/codex-skills-ci.yml.template .github/workflows/codex-skills-ci.yml
+#   2. Add OPENAI_API_KEY to the repository's Secrets
+#   3. Set a spending limit on the OpenAI side
+#
+# Security:
+#   - Never expand untrusted input such as the PR title or body into the prompt (prompt injection)
+#   - Keep safety-strategy at its default, drop-sudo (removes sudo from the job and protects the API key)
+#   - sandbox: workspace-write is needed to write output/ and testreport/. The network stays closed
+#   - Codex in CI has not been told to trust this project, so .codex/ (hooks, rules, permission profile) is
+#     not loaded. Protection in CI comes from the sandbox and safety-strategy above
+#   - PRs from forks receive no secrets, so this workflow is skipped for them
+
+name: Codex Skills CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codex-skills-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  skills:
+    # Skip drafts and fork PRs (no secrets)
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          # Fetch up to the base branch for the diff review
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare output directories
+        run: |
+          mkdir -p output/reports/review output/reports/security testreport/security
+          # Grant write access first so Codex can still write after drop-sudo
+          chmod -R g+rwX output testreport
+
+      - name: Run code-review skill
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          sandbox: workspace-write
+          prompt: |
+            $code-review Review the changes in this PR and save the result as Markdown under output/reports/review/.
+          output-file: output/reports/review/_ci-stdout.md
+
+      - name: Run security-scan skill
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          sandbox: workspace-write
+          prompt: |
+            $security-scan Audit this repository's dependencies and code and save the result as Markdown under output/reports/security/.
+          output-file: output/reports/security/_ci-stdout.md
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-skill-reports
+          path: |
+            output/reports/
+            testreport/
+          retention-days: 14
+
+  post_feedback:
+    needs: skills
+    if: always() && needs.skills.result != 'skipped'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Download reports
+        uses: actions/download-artifact@v4
+        with:
+          name: codex-skill-reports
+          path: reports
+
+      - name: Compose PR comment
+        run: |
+          {
+            echo "## 🤖 Codex Skills CI"
+            echo
+            echo "### code-review"
+            echo
+            cat reports/output/reports/review/_ci-stdout.md 2>/dev/null || echo "_(no output)_"
+            echo
+            echo "### security-scan"
+            echo
+            cat reports/output/reports/security/_ci-stdout.md 2>/dev/null || echo "_(no output)_"
+            echo
+            echo "---"
+            echo "See the Actions artifact codex-skill-reports for the full reports."
+          } > /tmp/codex-ci-comment.md
+          head -c 60000 /tmp/codex-ci-comment.md > /tmp/codex-ci-comment.trimmed.md
+
+      - name: Post PR comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr comment "$PR_NUMBER" --body-file /tmp/codex-ci-comment.trimmed.md

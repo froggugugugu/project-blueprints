@@ -14,7 +14,7 @@ reviews:
 
   path_instructions:
     # --- JP Blueprint ---
-    - path: "project-blueprint/.claude/skills/*/SKILL.md"
+    - path: "project-blueprint/.agents/skills/*/SKILL.md"
       instructions: |
         スキルファイルのレビュー観点:
         - frontmatter(name, description)が正確か
@@ -52,7 +52,7 @@ reviews:
         - テンプレートとしての構造が明確か
         - AIが埋めるべきセクションが分かりやすいか
     # --- EN Blueprint ---
-    - path: "project-blueprint-en/.claude/skills/*/SKILL.md"
+    - path: "project-blueprint-en/.agents/skills/*/SKILL.md"
       instructions: |
         Skill file review criteria:
         - Frontmatter (name, description) is accurate

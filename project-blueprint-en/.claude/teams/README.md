@@ -3,7 +3,7 @@
 ## Overview
 
 Provides 6 specialized team templates for different project activity phases.
-Each team is mapped to the skills under `.claude/skills/`.
+Each team is mapped to the skills under `.agents/skills/`.
 
 ### Relationship to the official Agent Teams feature
 
@@ -209,7 +209,7 @@ project-root/
 │
 ├── project-config.md              Human-authored config file
 ├── .claude/teams/                 Team definitions
-└── .claude/skills/                Skill definitions
+└── .agents/skills/                Skill definitions
 ```
 
 ### Directory Roles
@@ -335,6 +335,6 @@ All teams: Arguments (file path or instruction) are optional. When omitted, the 
 Edit team templates directly or copy and save with a different name.
 
 - Adding/removing roles: Edit the team composition table and each role's responsibility section
-- Changing skills: Modify each role's skills (specify skill names under `.claude/skills/`)
+- Changing skills: Modify each role's skills (specify skill names under `.agents/skills/`)
 - Workflow changes: Edit workflow and dependency rules
 - Adding/removing gates: Edit gate points in the phase workflow

@@ -33,16 +33,16 @@ A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch.
   To isolate the repository, use a subagent's `isolation: worktree`
 - PJM team reads `input/`, generates deliverables in `output/`; PL handles task breakdown / assignment
 
-## Rule hierarchy (`.claude/rules/`)
+## Rule hierarchy (source in `.agents/rules/`, loaded through the links in `.claude/rules/`)
 
 - No `paths:` = loaded in every session (only `git-conventions.md`)
 - With `paths:` = loaded only when Claude touches a matching file (`document-management.md` / `workflow-advanced.md` / `harness-authoring.md`)
-- Enable language- or layer-specific rules by copying a `.example` and editing its `paths:`
+- Enable language- or layer-specific rules by copying a `.example`, editing its `paths:` and running `setup.sh --relink` (the same after adding a skill)
 - Task-specific procedures belong in a skill, not in a rule. "Every time, always do X" belongs in a hook, not in an instruction
 
 ## Quality gate mechanics
 
-- Each phase skill consults the gate criteria in `.claude/quality-gates.md` when needed
+- Each phase skill consults the gate criteria in `.agents/quality-gates.md` when needed
 - `verify-gate.sh` detects an unverified stop (Stop) and an unverified completion mark (TaskCompleted; the Task tools are enabled through `env` in `settings.json`) after source edits (standard = warning / strict = refused)
 - Every skill ships `evals/evals.json` (typical + boundary). After changing a skill, compare with / without pass rates via `/skill-eval skill=<name>`; inventory the instruction files with `/doctor prompt-audit` and `/skill-doctor`
 
@@ -58,7 +58,7 @@ A team reads `.claude/teams/README.md` and `.claude/agents/README.md` at launch.
 - Even in auto mode (the default on every plan since v2.1.283), `ask` always prompts and `deny` applies before the classifier. The classifier also reads this file
 - Hooks remain active even with `--dangerously-skip-permissions`. `scan-harness.sh` detects changes to `constitution.md`
 - SessionStart hook checks `project-config.md` / `docs/` / `settings.local.json` at session start and injects the head of `output/tasks/PROGRESS.md` when present
-- Details (deny lists, protected files, permission design) live in `.claude/guardrails.md` and `.claude/permissions-guide.md`
+- Details (deny lists, protected files, permission design) live in `.agents/guardrails.md` and `.claude/permissions-guide.md`
 
 ## Phase-specific output styles
 
@@ -81,11 +81,11 @@ Right before declaring completion, run fresh-context `/code-review` (bugs) and t
 
 `/rewind` restores files and conversation from a checkpoint (`fileCheckpointingEnabled`). Run `/clear` before an unrelated task.
 After correcting the same issue twice, `/clear` and rewrite the prompt. On compaction, PreCompact backs the transcript up and
-SessionStart (`compact`) re-injects the core rules right away. Rules with `paths:` and skill bodies fade in the summary (see `.claude/guardrails.md`).
+SessionStart (`compact`) re-injects the core rules right away. Rules with `paths:` and skill bodies fade in the summary (see `.agents/guardrails.md`).
 
 ### 4. Detailed procedures (loaded only when needed)
 
-Self-improvement loop / pre-completion verification / autonomous bug fixing / task management / long-running task details: `.claude/rules/workflow-advanced.md` (auto-loads when touching source).
+Self-improvement loop / pre-completion verification / autonomous bug fixing / task management / long-running task details: `.agents/rules/workflow-advanced.md` (auto-loads when touching source).
 
 ## Compact instructions
 

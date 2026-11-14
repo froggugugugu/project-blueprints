@@ -139,7 +139,7 @@ output/
 - 使用スキル: `/brainstorm <メモ>`(条件付) → `/prd <ファイルパス>` → `/architecture <ファイルパス>`
 - 曖昧な要件は「【要確認】」としてPJMに報告する
 - **ソースコードは変更しない**
-- 参考: `.claude/learnings/L0001-brainstorm-before-prd.md`(適用条件と効果)
+- 参考: `.agents/learnings/L0001-brainstorm-before-prd.md`(適用条件と効果)
 
 ### プランナー
 

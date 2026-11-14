@@ -18,6 +18,8 @@ To invoke explicitly, use the `Agent` tool with `subagent_type: <name>`.
 | `test-writer` | Unit and E2E test creation | `sonnet` | medium | Read / Edit / Write / Grep / Glob / Bash | Test files only |
 | `verifier` | Spec conformance right before completion (diff × acceptance criteria × verification results) | `sonnet` | high | Read / Grep / Glob / Bash | None |
 
+This directory is the source of the definitions. The Codex versions, `.codex/agents/<name>.toml`, are generated from it with `python3 scripts/sync_codex_agents.py` (in the template repository); the `tools` and `scope-guard.sh` constraints are written out as instructions (Codex has no per-agent sandbox or hooks). Do not edit them; fix the source and regenerate.
+
 Every agent sets `maxTurns` (runaway protection). All but `verifier` set `memory: project` (cross-session learning; the verifier carries no memory so verdicts never carry over).
 
 ## agent vs team vs skill — when to use which
@@ -25,7 +27,7 @@ Every agent sets `maxTurns` (runaway protection). All but `verifier` set `memory
 | Goal | Choice | Rationale |
 | ---- | ------ | --------- |
 | Routine collaborative work across roles (PRD → design → impl → verify) | **team** (`.claude/teams/TEAM_*.md`) | Pre-wired role assignments and approval gates |
-| Execute a predetermined procedure (PRD generation, code review, etc.) | **skill** (`.claude/skills/*/SKILL.md`) | Defined I/O contracts and output locations |
+| Execute a predetermined procedure (PRD generation, code review, etc.) | **skill** (`.agents/skills/*/SKILL.md`) | Defined I/O contracts and output locations |
 | One-off specialized investigation or review (avoid reinventing wheels) | **agent** (`.claude/agents/*.md`) | Isolated context, lightweight execution |
 
 These three complement rather than compete. For example, a `TEAM_PJM` Reviewer can delegate to `security-reviewer` for a focused audit.
@@ -118,14 +120,14 @@ If unspecified, the session default is inherited.
 ## Concept alignment (Project Blueprint principles)
 
 - Agents live in the generic `.claude/` layer; project-specific rules go in `docs/` or `project-config.md`
-- Agents **inherit the CLAUDE.md hierarchy (including `.claude/rules/*.md`) and a git status snapshot by default** (Claude Code official semantics; only the built-in `Explore`/`Plan` agents skip both to stay minimal). Skills are preloaded in full only when named in the `skills:` frontmatter field — any other skill can still be invoked individually via the `Skill` tool
+- Agents **inherit the CLAUDE.md hierarchy (including `.agents/rules/*.md`) and a git status snapshot by default** (Claude Code official semantics; only the built-in `Explore`/`Plan` agents skip both to stay minimal). Skills are preloaded in full only when named in the `skills:` frontmatter field — any other skill can still be invoked individually via the `Skill` tool
 - Agents never modify `input/` (human domain). Deliverables go to `output/` or role-scoped locations
 
 ## Official-spec notes (verified 2026-09)
 
 - **Execution**: in interactive sessions fork mode is on by default and subagents **run in the background**.
   The result arrives in the conversation on completion. `background: true` forces background execution always
-- **What is inherited / not inherited**: the CLAUDE.md hierarchy, `.claude/rules/`, and git status are inherited (except by the built-in `Explore` / `Plan`).
+- **What is inherited / not inherited**: the CLAUDE.md hierarchy, `.agents/rules/`, and git status are inherited (except by the built-in `Explore` / `Plan`).
   Conversation history, the parent's auto memory, and skill bodies are not (preload skills explicitly with `skills:`)
 - **Nesting**: the official default allows 3 levels (and 20 concurrent subagents). This template follows constitution ④: **never list `Agent` in an agent's `tools`**,
   and the env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` in `settings.json` refuses nesting mechanically. For parallel fan-out use a team or dynamic workflows
@@ -151,4 +153,4 @@ If unspecified, the session default is inherited.
 - A `color` outside the official eight (e.g. `magenta`) breaks the display
 - A `model` ID that does not exist makes the agent fail to launch — use an alias
 
-See `.claude/pitfalls.md` for more.
+See `.agents/pitfalls.md` for more.

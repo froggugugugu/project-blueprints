@@ -140,7 +140,7 @@ output/
 - Skills used: `/brainstorm <note>` (conditional) → `/prd <file-path>` → `/architecture <file-path>`
 - Report ambiguous requirements as "[Needs Confirmation]" to PJM
 - **Do not modify source code**
-- Reference: `.claude/learnings/L0001-brainstorm-before-prd.md` (applicability and impact)
+- Reference: `.agents/learnings/L0001-brainstorm-before-prd.md` (applicability and impact)
 
 ### Planner
 

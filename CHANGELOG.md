@@ -8,6 +8,75 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### ⚠ BREAKING — Claude Code と Codex を対等に扱う 2 本立てへ(1.0 の配置, 2026-11-14)
+
+**次のリリースは 1.0.0 とする**(配置の変更は 0.x と互換が無い)。0.x で導入したプロジェクトは `setup.sh --upgrade` では更新できず、
+先に `migrate.sh` で配置を移す(下記)。「マルチ LLM」とは謳わない。対象は Claude Code と Codex の 2 つで、どちらにも同じ保証を実装して検証する。
+Cursor / Copilot / Gemini CLI は `AGENTS.md` を読む補助に下げた。
+
+- **配置の変更(JP/EN)**: 共通の核を `.agents/` に出した。`.claude/{skills,hooks,rules,scripts,learnings,tasks}` と
+  `guardrails.md` / `quality-gates.md` / `pitfalls.md` / `.constitution.sha256` → `.agents/`。manifest は `.agents/blueprint-manifest.txt`(v2。
+  `agent` と `links` を記録)。`.claude/` は Claude Code 用アダプタ(settings・agents・teams・workflows・loop.md・output-styles)、
+  新設の `.codex/` は Codex 用アダプタ。Claude Code は `.claude/skills/` と `.claude/rules/` しか読まないため、`setup.sh` が項目ごとに
+  `.agents/` へのシンボリックリンクを作る(テンプレートにはリンクを置かない)。
+- **`setup.sh`(JP/EN で同一ファイルに統合)**: `--agent claude|codex|both`(既定 both)、`--links auto|symlink|copy`、`--relink`。
+  `--upgrade --agent both` でもう一方のアダプタを後から足せる。導入は既存の `project-config.md` と `docs/` 等のファイルを上書きしなくなった。
+  0.x の配置を検出すると何も動かさずに `migrate.sh` を案内する。メッセージは `t "<ja>" "<en>"` で切り替え、validator が日英の一致を検査する。
+- **`migrate.sh`(新設、JP/EN で同一ファイル)**: 0.x → 1.0 の移行。リリース済みの 0.x は manifest を持たないため、各ファイルが
+  「テンプレートのまま」か「手で変更あり」かを**テンプレートの git 履歴にある blob との照合**で決める(0.x 末期の manifest v1 があればそのハッシュ)。
+  `.claude/` を退避 → 利用者が足した skill・フックも含めて `.agents/` へ移動 → `.claude/hooks/...` などの参照と `settings.json` のフック登録パスを書き換え →
+  新形式の manifest を書く → `setup.sh --upgrade` で未変更ファイルを 1.0 の内容にし、変更ありのファイルには `<path>.blueprint-new` を置く。
+  `--dry-run` は一時コピー上で最後まで実行して結果を見せる(プロジェクトは変更しない)。途中の失敗は自動で元に戻し、成功後も `--rollback` で戻せる。
+  未コミットの変更があれば止まる(`--allow-dirty`)。別言語のミラーから導入したプロジェクト・移動先に同名ファイルがある場合・テンプレートに履歴が無い場合
+  (`--assume-pristine`)を扱う。
+- **利用者のファイルを失わないための安全策(独立レビューの指摘 24 件のうち 21 件に対応。残りは下の「対応していない点」)**:
+  - `setup.sh`: 既存の `CLAUDE.md` を上書きしない(`CLAUDE.md.blueprint-new` を横に置く)。以前の `<名前>.bak/` を消さない(`.bak.<日時>/` に置く)。
+    導入済みプロジェクトへの再導入、`.agents` `.claude` `.codex` がシンボリックリンクの場合、ターゲットがテンプレート自身の場合は、何も変更せずに止まる。
+    `--dry-run` は `--upgrade` 専用(導入や `--relink` に付けると実行せずにエラー)。`.claude/skills` をディレクトリごと `.agents/skills` へリンクしている場合に
+    原本を消さない。`.gitignore` の末尾に改行が無くても最終行を壊さない。統合途中の `.blueprint-new` は `.blueprint-new.old` に退避する。manifest は一時ファイル経由で書く。
+    rules のサブディレクトリもリンクする。コピー方式の `--relink` は `.agents/` を正としてコピーを作り直す。
+  - `migrate.sh`: 「未変更」の判定を blob とパスの組にした(空にしたフックが、履歴中の別の空ファイルと一致して上書きされるのを防ぐ)。
+    `~/.claude/skills/` などホーム側のパスを書き換えない。Ctrl-C などの中断でも元に戻す。rollback は各操作の失敗を数え、戻し切れなければバックアップを残す。
+    自動修正の対象外(`package.json`・`Makefile` など)に残った旧パスを最後に知らせる。UTF-8 でないファイルがあっても止まらない(`LC_ALL=C`)。
+    旧 manifest のハッシュを新しいパスへ正しく引き継ぐ。`--rollback --dry-run` はエラー。
+  - 対応していない点: `--dry-run` は git の外の一時コピーで走るため、`autocrlf` を使う環境では未変更の判定件数が本番とずれうる。移動先に同名ファイルがあって
+    動かさなかったファイルへの参照も `.agents/...` に書き換わる(動かさなかったファイルは一覧で報告する)。rollback 後のファイルの更新時刻は元に戻らない。
+  - テンプレート自体の修正: 機械的なパス置換が `pitfalls.md` #3 の `~/.claude/skills/`(ホーム側)まで `.agents` に変えていたのを戻した。
+- **Codex 用アダプタ `.codex/`(新設、JP/EN)**:
+  - `hooks.json` / `hooks.minimal.json`: 共有フック 18 本のうち 12 本を 15 登録。すべて `.agents/hooks/lib/codex-adapter.sh` 経由
+  - `lib/codex-adapter.sh`(新設): Codex の `apply_patch`(パッチ本文が `tool_input.command`)を、触るファイルごとの `tool_input.file_path` 入力に直してフックを呼ぶ。
+    プロジェクトルートを自分の位置から求める。`--fail-closed` でフック本体が無いときに止める(`onFailure: block` の代替)。Stop / SubagentStop の非 JSON 出力を落とす。
+    `--fail-closed` では、パッチの指示行を空白・CR を落としてから照合し、指示の語を含むのに正規の形でない行(全角空白・NBSP での字下げを含む)・
+    パスの前後に不可視の空白や制御文字がある指示・パスを取り出せないパッチ・`jq` が無い場合に編集を止める
+    (自動セキュリティレビューの指摘: 解析が Codex 本体と食い違うと保護ファイルの検査をすり抜ける)
+  - `rules/default.rules`: Claude Code の deny(13)/ ask(14)に対応する `forbidden` / `prompt` 規則 18 本(`codex execpolicy check` で確認)
+  - `config.toml`: `approval_policy = "on-request"`、権限プロファイル `blueprint`(Claude Code の `Read()` deny と同じ 16 対象の読取禁止、
+    `.git` `.agents` `.codex` `.claude/settings*.json` を読取専用、ネットワークは都度確認)、Codex 向けの読み替えを書いた `developer_instructions`
+  - `agents/*.toml`(9 本): `scripts/sync_codex_agents.py` が `.claude/agents/*.md` から生成する。Codex にはエージェント単位のサンドボックスとフックが無いため、
+    `tools` の制限と `scope-guard.sh` の範囲は指示文の冒頭に書き下す
+  - 手動起動限定の skill(`review-fix` / `harness-refine`)に `agents/openai.yaml`(`allow_implicit_invocation: false`)
+  - `.github/workflows/codex-skills-ci.yml.template`: `openai/codex-action` で毎 PR に code-review + security-scan
+- **フック(JP/EN)**: プロジェクトルートとセッション ID を `BLUEPRINT_PROJECT_DIR` / `BLUEPRINT_SESSION_ID`(無ければ従来の `CLAUDE_*`)から読む。
+  `protect-files.sh` が `.codex/config.toml` / `hooks.json` / `rules/` も保護。`scan-harness.sh` が Codex の `UserPromptSubmit`(プロンプト中の `$name`)に対応し、
+  `.agents/` と `.codex/` も検査。`session-start.sh` は Codex では Claude Code 専用の点検を出さない。`verify-gate.sh` は `.agents/` `.codex/` を検証対象外に追加。
+- **実機で確かめたこと(codex-cli 0.162.1)**: skill 17 本・`AGENTS.md`・`developer_instructions` が読み込まれる(`codex debug prompt-input`)、
+  読取禁止・ネットワーク遮断・ハーネスの読取専用が効く(`codex sandbox`、`codex doctor` で denied-read rules 16)、rules の判定(`codex execpolicy check`)。
+  公式ドキュメントは「`:workspace` を継げば `.git` `.agents` `.codex` が読取専用のまま」と書くが、**継承だけでは書込めた**ため権限プロファイルで明示した。
+- **確かめていないこと**: 実際の Codex セッションでフックが発火すること(フックは `/hooks` で信頼するまで実行されず、LLM を呼ばない方法では確かめられなかった)。
+  `apply_patch` の入力形は公式ドキュメントの記述に基づく。Codex での skill eval(`run_skill_evals.py` は Claude Code だけを計測する)。
+- **Codex で同じ保証にならない点**を `guardrails.md`「エージェント別の対応」に明記(フックは信頼するまで動かない、完全な強制境界ではない、フェイルクローズの設定が無い、
+  サブエージェント単位の制限が無い、rules は先頭一致だけ、権限プロファイルは beta、team と saved workflow が無い)。
+- **validator**: Codex 側の検査を追加(フックイベント名、アダプタ経由、ブロック系の登録と `--fail-closed`、`approval_policy = "never"`、権限プロファイルと `sandbox_mode` の併用、
+  ハーネスの読取専用、プロジェクト設定で無視されるキー、deny / ask と rules・`Read()` deny と権限プロファイルの対応、`.codex/agents/*.toml` の同期、
+  共通の核の二重配置、手動起動限定 skill の `agents/openai.yaml`、`setup.sh` / `migrate.sh` の日英一致)。機械的な移行で外れていた skill・ルールの文言検査の経路を修正。
+- **テスト**: `--test` 62 → 82、`--hooks` 170 → 260(アダプタと Codex 対応 90 件)、`--setup` 96 → 276、**`--migrate` 228(新設)**。`--migrate` は git 履歴から 0.4.0 と 1.0 直前の
+  テンプレートを取り出し、当時の `setup.sh` で導入したプロジェクトを実際に移行する(CI は `fetch-depth: 0`)。
+- **ドキュメント(JP/EN)**: `AGENTS.md`(冒頭と「エージェント別の読み替え」)、`project-config.md` §13.7(Claude Code と Codex を対等に)、`guardrails.md`、
+  `rules/README.md`、`harness-authoring.md`(「2 つのエージェントで共有する」節と `paths:`)、README(`--agent`・リンク・移行手順・ファイル構成)、
+  ルート README / CLAUDE.md / SECURITY.md / サイト、`constitution.md`(パスの追従と ④⑤⑥ への 2 エージェントの追記。原則の数と趣旨は変えていない)。
+- **移行で気をつける点**: Claude Code は起動し直す(フックのパスが変わる)。Codex はプロジェクトを信頼し、`/hooks` でフックを確認して信頼する。
+  `~/.codex/config.toml` に `sandbox_mode` があると権限プロファイル(シークレットの読取禁止)が効かなくなる。
+
 ### Changed (公式 best-practices「What you can stop doing」と仕様 2.1.317〜2.1.325 への追従, 2026-11-14)
 
 - **CLAUDE.md の常時 import を 4 本 → 2 本(JP/EN)**: 公式 memory ガイドの「import は文脈コストを減らさない」と best-practices の

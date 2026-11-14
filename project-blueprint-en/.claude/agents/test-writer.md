@@ -13,7 +13,7 @@ hooks:
     - matcher: "Edit|Write|NotebookEdit"
       hooks:
         - type: command
-          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh tests'
+          command: '"$CLAUDE_PROJECT_DIR"/.agents/hooks/scope-guard.sh tests'
           timeout: 5
           onFailure: block
 color: pink

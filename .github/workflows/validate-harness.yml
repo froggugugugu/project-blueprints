@@ -1,6 +1,6 @@
 name: validate-harness
 
-# ハーネス(.claude/)の仕様乖離を CI で落とす。
+# ハーネス(.agents/ + .claude/ + .codex/)の仕様乖離を CI で落とす。
 # 人間のレビュー待ちにしていた結果、参照されない権限ルール・存在しない npm パッケージ・
 # パース不能な frontmatter が長期間放置されたため、決定論的なゲートを常設する。
 
@@ -23,6 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # migrate.sh のテストは git 履歴から 0.x のテンプレートを取り出し、履歴との照合で未変更ファイルを判定する
+          fetch-depth: 0
 
       - uses: actions/setup-python@v7
         with:
@@ -40,8 +43,11 @@ jobs:
       - name: フックスクリプトの機能テスト（stdin に hook JSON を流して exit code / 出力を検証）
         run: bash scripts/validate-harness.sh --hooks
 
-      - name: setup.sh の機能テスト（導入 / プロファイル / --upgrade の差分適用と競合）
+      - name: setup.sh の機能テスト（導入 / エージェント / プロファイル / リンク / --upgrade の差分適用と競合）
         run: bash scripts/validate-harness.sh --setup
+
+      - name: migrate.sh の機能テスト（実際の 0.x 導入先を 1.0 へ移行・取り消し・失敗時の自動復元）
+        run: bash scripts/validate-harness.sh --migrate
 
   validate-online:
     # npm レジストリに触るため PR ごとには回さない。

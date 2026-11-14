@@ -33,16 +33,16 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
   リポジトリを分離したいときは subagent の `isolation: worktree` を使う
 - PJM チームは `input/` を読み `output/` に成果物生成、PL がタスク分解・割り当て
 
-## ルール階層(`.claude/rules/`)
+## ルール階層(原本は `.agents/rules/`。`.claude/rules/` のリンク経由で load される)
 
 - `paths:` なし = 全セッション常時 load(`git-conventions.md` のみ)
 - `paths:` あり = 該当ファイルを触ったときだけ load(`document-management.md` / `workflow-advanced.md` / `harness-authoring.md`)
-- 言語別・レイヤー別ルールは `.example` をコピーし `paths:` を編集して有効化する
+- 言語別・レイヤー別ルールは `.example` をコピーし `paths:` を編集して、`setup.sh --relink` で有効化する(skill を足したときも同じ)
 - タスク固有の手順は rules ではなく skill に置く。「毎回必ず X」は指示ではなくフックにする
 
 ## 品質ゲートの仕組み
 
-- 各 phase skill は `.claude/quality-gates.md` のゲート基準を必要時に参照する
+- 各 phase skill は `.agents/quality-gates.md` のゲート基準を必要時に参照する
 - `verify-gate.sh` がソース編集後の未検証終了(Stop)と完了マーク(TaskCompleted。Task ツールは `settings.json` の env で有効化済み)を検知する(standard=警告 / strict=差し止め)
 - 各 skill は `evals/evals.json`(典型 + 境界)を持つ。skill を変えたら `/skill-eval skill=<名>` で with / without の pass rate を比べ、指示文の棚卸しは `/doctor prompt-audit` と `/skill-doctor` で行う
 
@@ -58,7 +58,7 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 - auto mode(v2.1.283 以降は全プランで既定)でも `ask` は必ず確認され、`deny` は分類器より前に効く。分類器は本ファイルも読む
 - フックは `--dangerously-skip-permissions` でも有効。`scan-harness.sh` が `constitution.md` の改変を検知する
 - SessionStart フックが起動時に `project-config.md` / `docs/` / `settings.local.json` をチェックし、`output/tasks/PROGRESS.md` があれば冒頭を注入する
-- 詳細(deny ルール一覧、保護ファイル、権限設計)は `.claude/guardrails.md` と `.claude/permissions-guide.md`
+- 詳細(deny ルール一覧、保護ファイル、権限設計)は `.agents/guardrails.md` と `.claude/permissions-guide.md`
 
 ## フェーズ別出力スタイル
 
@@ -81,11 +81,11 @@ team は起動時に `.claude/teams/README.md` と `.claude/agents/README.md` �
 
 `/rewind` でファイル・会話をチェックポイントから復元できる(`fileCheckpointingEnabled`)。無関係なタスクの前に `/clear`。
 同じ修正を 2 回繰り返したら `/clear` して指示を書き直す。コンパクト時は PreCompact でバックアップし、
-SessionStart(`compact`)が中核ルールを即座に再注入する。`paths:` 付き rule と skill 本文は要約で薄れる(詳細は `.claude/guardrails.md`)。
+SessionStart(`compact`)が中核ルールを即座に再注入する。`paths:` 付き rule と skill 本文は要約で薄れる(詳細は `.agents/guardrails.md`)。
 
 ### 4. 詳細手順(必要時のみ load)
 
-自己改善ループ / 完了前検証 / 自律バグ修正 / タスク管理 / 長期タスクの詳細は `.claude/rules/workflow-advanced.md`(ソースを触ると自動 load)。
+自己改善ループ / 完了前検証 / 自律バグ修正 / タスク管理 / 長期タスクの詳細は `.agents/rules/workflow-advanced.md`(ソースを触ると自動 load)。
 
 ## コンパクト時の指示(Compact instructions)
 

@@ -96,7 +96,7 @@ const FILES = scope.files.join('\n')
 const DIMENSIONS = [
   {
     key: 'spec-quality',
-    prompt: `.claude/skills/code-review/SKILL.md の「レビュー観点」1〜3・8・9 と重要度定義に従い、次のファイルの ${BASE} からの変更を仕様準拠・コード品質・アーキテクチャ・後方互換性・ドキュメント同期の観点でレビューする。\n${FILES}\n${READ_ONLY}`,
+    prompt: `.agents/skills/code-review/SKILL.md の「レビュー観点」1〜3・8・9 と重要度定義に従い、次のファイルの ${BASE} からの変更を仕様準拠・コード品質・アーキテクチャ・後方互換性・ドキュメント同期の観点でレビューする。\n${FILES}\n${READ_ONLY}`,
   },
   {
     key: 'security',
@@ -110,7 +110,7 @@ const DIMENSIONS = [
   },
   {
     key: 'tests',
-    prompt: `.claude/skills/code-review/SKILL.md の「レビュー観点」7 に従い、次のファイルの変更に対してテストが振る舞いを検証しているか、境界値・異常系が抜けていないかをレビューする。\n${FILES}\n${READ_ONLY}`,
+    prompt: `.agents/skills/code-review/SKILL.md の「レビュー観点」7 に従い、次のファイルの変更に対してテストが振る舞いを検証しているか、境界値・異常系が抜けていないかをレビューする。\n${FILES}\n${READ_ONLY}`,
   },
 ]
 
@@ -172,7 +172,7 @@ const failedDimensions = DIMENSIONS.filter((d, i) => !reviews[i]).map((d) => d.k
 phase('Report')
 const report = await agent(
   `次の JSON からレビューレポートを作る。ファイル名は \`date +%Y%m%d-%H%M\` を実行して output/reports/review/SWEEP_<日時>.md とし、output/reports/review/ 以外には書き込まない。
-形式は .claude/skills/code-review/SKILL.md の「レポートフォーマット」に従い、次を必ず含める:
+形式は .agents/skills/code-review/SKILL.md の「レポートフォーマット」に従い、次を必ず含める:
 - 概要: 対象ブランチ差分(${BASE})、ファイル数、失敗した観点
 - 指摘事項: MUST(確定のみ)→ SHOULD → CONSIDER。各指摘に観点名・ファイル:行・理由・修正案
 - 反証された MUST と未検証の MUST を別セクションに列挙(未検証は人間の確認対象として明示)

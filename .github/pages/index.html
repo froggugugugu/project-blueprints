@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Project Blueprints — Claude Code 開発ハーネスのテンプレート</title>
-<meta name="description" content="要求メモから PRD・設計・実装・レビューまでを 1 つの型で回すための Claude Code テンプレート。指示書・スキル・サブエージェント・安全機構・検証ゲートを日英ミラーで同梱。">
+<title>Project Blueprints — Claude Code と Codex の開発ハーネステンプレート</title>
+<meta name="description" content="要求メモから PRD・設計・実装・レビューまでを 1 つの型で回すための Claude Code / Codex 用テンプレート。指示書・スキル・サブエージェント・安全機構・検証ゲートを日英ミラーで同梱。">
 <meta property="og:title" content="Project Blueprints">
-<meta property="og:description" content="Claude Code を開発ハーネスとして立ち上げるテンプレート。スキル 17・サブエージェント 9・チーム 6・フック 18・検証ゲート付き。">
+<meta property="og:description" content="Claude Code と Codex を開発ハーネスとして立ち上げるテンプレート。スキル 17・サブエージェント 9・チーム 6・フック 18・検証ゲート付き。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://froggugugugu.github.io/project-blueprints/">
 <link rel="stylesheet" href="assets/site.css">
@@ -35,11 +35,11 @@
 <section class="hero">
   <div class="wrap">
     <span class="eyebrow">MIT ライセンス · 日本語版と英語版を同梱</span>
-    <h1>Claude Code を、<br>開発ハーネスとして立ち上げる。</h1>
+    <h1>Claude Code と Codex を、<br>開発ハーネスとして立ち上げる。</h1>
     <p class="lead">
       要求メモから PRD、設計、タスク分解、実装、レビューまでを 1 つの型で回すためのテンプレートです。
       指示書、スキル、サブエージェント、安全機構、検証ゲートをひとそろいにして、コピーした時点で動きます。
-      対象は言語もフレームワークも問いません。
+      対象は言語もフレームワークも問いません。エージェントは Claude Code と Codex のどちらか片方でも、両方を対等に併用しても使えます。
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://github.com/froggugugugu/project-blueprints">リポジトリを見る</a>
@@ -71,7 +71,7 @@
   <div class="wrap">
     <h2>入っているもの</h2>
     <p class="section-lead">
-      Claude Code 固有の層は <code>.claude/</code> 配下に、ツール共通のルールはルートの <code>AGENTS.md</code> に置き、どちらもそのまま再利用できます。プロジェクト固有の値は <code>project-config.md</code> の 13 セクションに集約します。
+      skill・フック・ルールは共通の <code>.agents/</code> に 1 つだけ置き、エージェント固有の設定は <code>.claude/</code> と <code>.codex/</code> に、ツール共通のルールはルートの <code>AGENTS.md</code> に置きます。どれもそのまま再利用できます。プロジェクト固有の値は <code>project-config.md</code> の 13 セクションに集約します。
     </p>
     <div class="grid grid-4">
       <div class="card"><div class="num">17</div><div class="label">スキル</div></div>
@@ -95,7 +95,7 @@
         <tr><td>出力スタイル</td><td>フェーズごとの応答の型</td><td>要件、設計、実装、レビューの 4 種</td></tr>
         <tr><td>ワークフロー</td><td>数十エージェントの決定論的な制御</td><td>網羅レビューと skill eval の 2 本</td></tr>
         <tr><td>CI テンプレート</td><td>リポジトリ側の自動化</td><td>PR レビュー、ヘッドレス実行、週次監査の 3 本</td></tr>
-        <tr><td>共通ルール</td><td>他のエージェントとも共有</td><td><code>AGENTS.md</code>。主系は Claude Code で、Codex / Cursor は既定で読み、Copilot / Gemini CLI は設定で読む。役割と書込範囲は <code>project-config.md</code> §13.7 で人間が決める</td></tr>
+        <tr><td>共通ルール</td><td>Claude Code と Codex を対等に</td><td><code>AGENTS.md</code> と <code>.agents/</code> を両方が読む。<code>setup.sh --agent claude|codex|both</code> で使う側を選ぶ。Cursor / Copilot / Gemini CLI は <code>AGENTS.md</code> を読む補助で、役割と書込範囲は <code>project-config.md</code> §13.7 で人間が決める</td></tr>
       </tbody>
     </table>
   </div>
@@ -145,7 +145,7 @@ cd project-blueprints
 bash project-blueprint/setup.sh /path/to/your-project   <span class="c"># 英語版は project-blueprint-en/setup.sh</span>
 
 cd /path/to/your-project
-claude</code></pre>
+claude          <span class="c"># または codex。片方だけ入れるなら setup.sh に --agent claude / --agent codex</span></code></pre>
     </div>
     <div style="height:26px"></div>
     <table>
@@ -180,7 +180,7 @@ claude</code></pre>
     <h2>検証</h2>
     <p class="section-lead">
       ハーネスの設定は壊れても静かに壊れます。そこで、LLM を使わない決定論的な検証を用意しました。
-      <code>.claude/</code> を触ったらコミット前にこれを通します。CI でも同じものが走ります。
+      ハーネス(<code>.agents/</code> <code>.claude/</code> <code>.codex/</code>)を触ったらコミット前にこれを通します。CI でも同じものが走ります。
     </p>
     <div class="codeblock">
       <button class="copy" type="button">コピー</button>
@@ -208,8 +208,8 @@ bash scripts/validate-harness.sh --online   <span class="c"># MCP 設定の npm 
       <a href="README-en.html"><strong>README (English)</strong><span>The same content in English</span></a>
       <a href="constitution.html"><strong>不変原則</strong><span>変更してはいけない 7 原則と、その変更プロトコル</span></a>
       <a href="CHANGELOG.html"><strong>変更履歴</strong><span>Keep a Changelog 形式のリリースノート</span></a>
-      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint/.claude/skills"><strong>スキル定義</strong><span>17 スキルの SKILL.md と references と evals</span></a>
-      <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint/.claude/pitfalls.md"><strong>落とし穴集</strong><span>AI 協調開発で繰り返し踏む失敗パターン</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint/.agents/skills"><strong>スキル定義</strong><span>17 スキルの SKILL.md と references と evals</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint/.agents/pitfalls.md"><strong>落とし穴集</strong><span>AI 協調開発で繰り返し踏む失敗パターン</span></a>
     </div>
   </div>
 </section>

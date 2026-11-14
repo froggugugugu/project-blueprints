@@ -12,7 +12,7 @@ hooks:
     - matcher: "Edit|Write|NotebookEdit"
       hooks:
         - type: command
-          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh docs'
+          command: '"$CLAUDE_PROJECT_DIR"/.agents/hooks/scope-guard.sh docs'
           timeout: 5
           onFailure: block
 color: cyan
@@ -54,7 +54,7 @@ color: cyan
 - `docs/*.md` および `project-config.md` §2（技術スタック）/ §3（コマンド）/ §11（既知の落とし穴）のみ Edit / Write 可
 - 新規ドキュメントの作成は**慎重に**: 既存 4 ファイルに統合できるなら統合する
 - `project-config.md` §11（既知の落とし穴）は他スキルの一次更新者と重複する可能性があるので、
-  `development-patterns.md` 側に書くのを優先する（`.claude/rules/document-management.md` の競合防止テーブル参照）
+  `development-patterns.md` 側に書くのを優先する（`.agents/rules/document-management.md` の競合防止テーブル参照）
 
 ## 制約
 

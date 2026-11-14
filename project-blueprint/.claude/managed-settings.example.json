@@ -69,6 +69,6 @@
   "requiredMinimumVersion": "2.1.314",
   "cleanupPeriodDays": 30,
   "companyAnnouncements": [
-    "このリポジトリは project-blueprint ハーネスで運用しています。ガードレールは .claude/guardrails.md を参照。"
+    "このリポジトリは project-blueprint ハーネスで運用しています。ガードレールは .agents/guardrails.md を参照。"
   ]
 }

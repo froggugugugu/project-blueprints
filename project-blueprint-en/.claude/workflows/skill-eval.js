@@ -100,11 +100,11 @@ const WS = `testreport/evals/${SKILL}/iteration-${ITER}`
 
 phase('Cases')
 const suite = await agent(
-  `Read .claude/skills/${SKILL}/evals/evals.json and return skill_name and cases (id / prompt / expected_output / assertions). If the file does not exist, return an empty cases array. Do not modify files.`,
+  `Read .agents/skills/${SKILL}/evals/evals.json and return skill_name and cases (id / prompt / expected_output / assertions). If the file does not exist, return an empty cases array. Do not modify files.`,
   { label: `cases:${SKILL}`, phase: 'Cases', schema: CASES_SCHEMA, effort: 'low' },
 )
 if (!suite || suite.cases.length === 0) {
-  log(`.claude/skills/${SKILL}/evals/evals.json is missing or has no cases`)
+  log(`.agents/skills/${SKILL}/evals/evals.json is missing or has no cases`)
   return { skill: SKILL, cases: 0 }
 }
 const cases = ONLY ? suite.cases.filter((c) => ONLY.includes(c.id)) : suite.cases

@@ -99,11 +99,11 @@ const WS = `testreport/evals/${SKILL}/iteration-${ITER}`
 
 phase('Cases')
 const suite = await agent(
-  `.claude/skills/${SKILL}/evals/evals.json を読み、skill_name と cases(id / prompt / expected_output / assertions)を返す。ファイルが無ければ cases を空配列で返す。ファイルは変更しない。`,
+  `.agents/skills/${SKILL}/evals/evals.json を読み、skill_name と cases(id / prompt / expected_output / assertions)を返す。ファイルが無ければ cases を空配列で返す。ファイルは変更しない。`,
   { label: `cases:${SKILL}`, phase: 'Cases', schema: CASES_SCHEMA, effort: 'low' },
 )
 if (!suite || suite.cases.length === 0) {
-  log(`.claude/skills/${SKILL}/evals/evals.json が見つからないか、ケースが空です`)
+  log(`.agents/skills/${SKILL}/evals/evals.json が見つからないか、ケースが空です`)
   return { skill: SKILL, cases: 0 }
 }
 const cases = ONLY ? suite.cases.filter((c) => ONLY.includes(c.id)) : suite.cases

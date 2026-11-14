@@ -2,7 +2,7 @@
 
 The criteria Claude's Code Review (the GitHub App) applies to pull requests in this repository. `CLAUDE.md` is the shared
 context for all work; this file is review-only. The local `/code-review` and the CI `claude -p '/code-review'` do not read
-this file, so a rule that must hold in both places belongs in `.claude/skills/code-review/SKILL.md`. Length dilutes it, so
+this file, so a rule that must hold in both places belongs in `.agents/skills/code-review/SKILL.md`. Length dilutes it, so
 keep only rules that change review behavior.
 
 ## What Important means here

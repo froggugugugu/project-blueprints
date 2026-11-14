@@ -352,9 +352,9 @@ output/reports/                <- Human-readable summaries (Git-managed)
 
 ### Harness-side safety mechanisms (provided by this template)
 
-- **3-layer defense**: hooks (Layer 1) → deny rules (Layer 2) → allow rules (Layer 3). Details in `.claude/guardrails.md`
+- **3-layer defense**: hooks (Layer 1) → deny rules (Layer 2) → allow rules (Layer 3). Details in `.agents/guardrails.md`
 - **Self-SAST**: `scan-harness.sh` (PreToolUse: Skill) detects secret leaks / constitution drift / weakened local denies
-- **Inviolable principles**: 7 principles in `@constitution.md`, hash-monitored via `.claude/.constitution.sha256`
+- **Inviolable principles**: 7 principles in `@constitution.md`, hash-monitored via `.agents/.constitution.sha256`
 - **Hook profile**: `BLUEPRINT_HOOK_PROFILE=minimal|standard|strict` toggles inspection strictness
 - **High-risk skill blocking**: `deploy*` skills are blocked at all times by `scan-harness.sh` (only `minimal` profile lets them through)
 - **3-tier permission operation**: allowlist / auto / sandbox usage detailed in `.claude/permissions-guide.md`
@@ -509,7 +509,7 @@ Reviewer is Critical since audit misalignment is costly.
 1. **Use Operational aggressively**: Exploration / sync / templated generation runs fine on Haiku. No need for Opus
 2. **Mix tiers in parallel runs**: For `TEAM_PJM --parallel`, don't put everyone on Opus; mix tiers by role
 3. **Subagents prefer Haiku**: Single-shot delegation stays lightweight; upgrade to Critical only when needed
-4. **Set cost limits on the API key**: See `.claude/pitfalls.md` #6
+4. **Set cost limits on the API key**: See `.agents/pitfalls.md` #6
 5. **Monthly usage review**: Check the Anthropic Console; revise tiers if usage drifts from expectations
 6. **Never switch models mid-session**: a switch invalidates the prompt cache. Put per-role differences in the `model:` of skills / agents (a subagent has its own cache)
 
@@ -519,26 +519,29 @@ Reviewer is Critical since audit misalignment is costly.
 - The tables here are **recommendations** and may be overridden by project needs
 - For a personal "always use Opus" preference, set `model` in `~/.claude/settings.json`
 
-### 13.7 Multi-LLM use (agents other than Claude Code)
+### 13.7 Agent setup (Claude Code and Codex, plus auxiliary agents)
 
-> **Claude Code is the primary agent**. The quality gates and safety mechanisms built from skills, teams, hooks and permissions run only on Claude Code.
-> Other agents read the root `AGENTS.md` (shared rules) and follow the role and write scope assigned in this section.
-> An agent not marked `yes` here acts **read-only** (stated in `AGENTS.md`).
+> **Claude Code and Codex are treated as equals**. Both read the shared core (`AGENTS.md` and the skills, hooks and rules under `.agents/`) and each can run every phase alone.
+> Whether you use both or one is decided at install time with `setup.sh --agent claude|codex|both` and in the table below.
+> Any other agent is auxiliary and acts **read-only** unless it is marked `yes` here (stated in `AGENTS.md`).
 
-| Agent | Use | Role | Write scope | How it reads `AGENTS.md` |
-| ----- | --- | ---- | ----------- | ------------------------ |
-| Claude Code | yes (primary, fixed) | Every phase, quality gates, finalizing deliverables | As defined by skills / agents | Imported through `@AGENTS.md` in `CLAUDE.md` |
-| OpenAI Codex CLI | no | e.g. second-opinion review | e.g. none (read-only) | Reads it by default |
-| Cursor | no | e.g. small in-editor fixes | e.g. `src/**` | Reads it by default |
-| GitHub Copilot | no | e.g. completion, PR summaries | e.g. none (read-only) | VS Code needs the setting `chat.useAgentsMdFile: true` |
+| Agent | Use | Role | Write scope | What it reads |
+| ----- | --- | ---- | ----------- | ------------- |
+| Claude Code | yes | e.g. every phase (owns implementation) | As defined by skills / agents | `CLAUDE.md` (imports `@AGENTS.md`) and `.claude/` |
+| OpenAI Codex | yes | e.g. every phase (owns review and verification) | As defined by skills / agents | `AGENTS.md` and `.codex/` |
+| Cursor | no | e.g. small in-editor fixes | e.g. `src/**` | `AGENTS.md` (read by default) |
+| GitHub Copilot | no | e.g. completion, PR summaries | e.g. none (read-only) | `AGENTS.md` (VS Code needs the setting `chat.useAgentsMdFile: true`) |
 | Gemini CLI | no | e.g. cross-cutting research over a large codebase | e.g. none (read-only) | Defaults to `GEMINI.md`. Put `{"context": {"fileName": ["AGENTS.md"]}}` in `.gemini/settings.json` |
 
-> How each tool loads the file changes between versions. Check each tool's official documentation when you adopt it.
+> Set the row of the agent you do not use to `no` and leave its adapter out (do not install, or delete, `.claude/` or `.codex/`). How each tool loads files changes between versions, so check the official documentation when you adopt it.
 
 **Rules for using several agents** (defaults; adjust them to the project):
 
-- Never let write scopes overlap between agents, and never have several agents edit the same file at once
-- Quality-gate verdicts and finalized deliverables under `output/` come from Claude Code skills. When you take in another agent's result, name its source (the agent)
-- `.claude/` hooks and deny rules do not apply to other agents. If any of them may write, also enforce the prohibitions (secrets, `--no-verify`, pushing with `--force`) through CI or git hooks
-- Manage other agents' API keys and billing in those tools and never commit them (constitution ⑦)
-- If you add an instruction file for another agent (`GEMINI.md`, `.github/copilot-instructions.md`, etc.), make it point to `AGENTS.md` instead of duplicating rules
+- When you use both, assign each phase an owner. Having a different agent review and verify what the other implemented is a check that does not share the same model's assumptions
+- Never have several agents edit the same file at once, and never let auxiliary agents' write scopes overlap
+- Quality-gate verdicts and finalized deliverables under `output/` come from the phase owner's skills. When you take in another agent's result, name its source (the agent)
+- The mapping of safety mechanisms and their differences is in "Per-agent mapping" in `.agents/guardrails.md`. Prohibitions that must hold regardless of the agent
+  (secrets, `--no-verify`, pushing with `--force`) also belong in CI or git hooks, especially when an auxiliary agent may write
+- Manage API keys and billing in each tool and never commit them (constitution ⑦)
+- If you add an instruction file for an auxiliary agent (`GEMINI.md`, `.github/copilot-instructions.md`, etc.), make it point to `AGENTS.md` instead of duplicating rules
+- The model names in §13.1–§13.6 are Claude's. Under Codex, apply the same idea (a stronger model for heavy judgment, a lighter one for exploration) through `[agents]` in `.codex/config.toml`
