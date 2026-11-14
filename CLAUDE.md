@@ -114,7 +114,9 @@ changes are reviewed in a PR. Method and current numbers: `evals/README.md`.
 
 It is deterministic (no LLM) and enforces the parts of the official spec that are easy to
 drift from: frontmatter values outside the official enums, permission rules the runtime
-never consults (`Write(path)` and friends), hook registrations pointing at missing scripts,
+never consults (`Write(path)` and friends), settings keys project settings silently ignore (user / managed / global-config-only keys
+from the settings-reference "Where it's honored" column, plus removed keys), older-model phrasing in instruction files
+(`IMPORTANT`, `YOU MUST`, `think hard`), hook registrations pointing at missing scripts,
 unresolved `@import` targets, the constitution hash, JP/EN parity, line-start `@` attachments in skills, description length and person, `evals/evals.json` schema, reference-file ToCs and linkage from SKILL.md, skill body length, workflow `meta` / determinism rules, agent-frontmatter hooks (including a WARN for write-capable agents without `scope-guard.sh`), and the `AGENTS.md` split (the `@AGENTS.md` import in CLAUDE.md, no line-start `@` in AGENTS.md, every cited `project-config.md` § exists, combined line budget). Run it before every
 commit that touches `.claude/`. CI runs it on push and pull request
 (`.github/workflows/validate-harness.yml`).

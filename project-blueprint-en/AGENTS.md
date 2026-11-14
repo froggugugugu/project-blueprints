@@ -8,7 +8,7 @@ Claude Code-specific mechanisms (skills / teams / subagents / hooks / permission
 
 - Always respond in English
 - **Attach evidence to every completion report** (test output, the command run and its result, screenshots). A "done" without evidence is not allowed
-- Before starting, read `project.md` / `architecture.md` / `data-model.md` / `development-patterns.md` under `docs/` (Claude Code loads them automatically). If they don't exist or are stubs (under 5 lines), refer to the corresponding sections in `project-config.md`
+- Before starting, read `docs/project.md` (commands) and `docs/development-patterns.md` (conventions, gotchas) (Claude Code loads them automatically). Before changing the structure or schema, also read `docs/architecture.md` / `docs/data-model.md`. If they don't exist or are stubs (under 5 lines), refer to the corresponding sections in `project-config.md`
 
 ## Development principles
 

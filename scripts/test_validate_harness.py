@@ -349,6 +349,44 @@ def m_unknown_permissions_key(root: Path) -> None:
     p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
 
 
+def m_user_only_key_in_project(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["denyInsteadOfPrompting"] = True
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_managed_only_key_in_project(root: Path) -> None:
+    p = root / ".claude/settings.local.json.template"
+    cfg = json.loads(p.read_text())
+    cfg["sandbox"] = {"enabled": True, "network": {"allowManagedDomainsOnly": True}}
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_removed_setting(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["subagentStatusLine"] = {"type": "command", "command": "echo x"}
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_bash_allow_var_wildcard(root: Path) -> None:
+    p = root / ".claude/settings.local.json.template"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["allow"].append("Bash(PORT=* npm run dev)")
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_legacy_emphasis(root: Path) -> None:
+    p = root / ".claude/skills/plan/SKILL.md"
+    p.write_text(p.read_text() + "\nIMPORTANT: タスクは必ず 5 件以内にする\n")
+
+
+def m_legacy_think(root: Path) -> None:
+    p = root / ".claude/agents/planner.md"
+    p.write_text(p.read_text() + "\nBefore answering, think harder about edge cases.\n")
+
+
 def m_safety_check_fail_open(root: Path) -> None:
     p = root / ".claude/settings.json"
     cfg = json.loads(p.read_text())
@@ -439,6 +477,12 @@ CASES = [
     ("FileChanged の matcher が正規表現", m_filechanged_regex_matcher, "リテラルなファイル名"),
     ("scope-guard.sh に onFailure: block が無い", m_scope_guard_fail_open, "scope-guard.sh に `onFailure: block` がありません"),
     ("permissions に未知キー", m_unknown_permissions_key, "公式の permissions キーではありません"),
+    ("user / managed 専用キーを project settings に書く", m_user_only_key_in_project, "`permissions.denyInsteadOfPrompting` は ~/.claude/settings.json"),
+    ("managed 専用キーを local settings に書く", m_managed_only_key_in_project, "managed settings でしか効きません"),
+    ("削除済みの settings キー", m_removed_setting, "v2.1.323 で削除"),
+    ("Bash allow ルールの変数の値に *", m_bash_allow_var_wildcard, "変数の値に `*`"),
+    ("指示ファイルに IMPORTANT", m_legacy_emphasis, "`IMPORTANT` は現行モデル"),
+    ("agent に think harder", m_legacy_think, "推論量を上げません"),
     ("有効な MCP サーバーの npm パッケージが未固定", m_mcp_unpinned_active, "有効な MCP サーバーの npm パッケージ"),
     ("例示ブロックの npm パッケージが範囲指定", m_mcp_unpinned_example, "例示ブロックの npm パッケージ"),
 ]

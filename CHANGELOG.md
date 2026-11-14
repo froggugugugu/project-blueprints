@@ -8,6 +8,36 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (公式 best-practices「What you can stop doing」と仕様 2.1.317〜2.1.325 への追従, 2026-11-14)
+
+- **CLAUDE.md の常時 import を 4 本 → 2 本(JP/EN)**: 公式 memory ガイドの「import は文脈コストを減らさない」と best-practices の
+  「アーキテクチャやファイル構成を CLAUDE.md に書かない(Claude はリポジトリを読む)」に合わせ、常時 load を `docs/project.md`(コマンド)と
+  `docs/development-patterns.md`(規約・落とし穴)に限定。`docs/architecture.md` / `docs/data-model.md` は「パス — 読む条件」で示し必要時に Read。
+  `AGENTS.md` の着手前手順、`session-start.sh` の肥大化警告(常時 import の 2 本だけが対象)、`--hooks` に回帰テスト 1 件(170 件)。
+- **CLAUDE.md のスキル表(17 行)を流れと例外の 3 行に**: 説明と引数は skill 一覧として既に文脈に載るため(CLAUDE.md + AGENTS.md 200 → 189 行)。
+- **`harness-authoring.md`(JP/EN)**: 「旧世代向けの書き方を持ち込まない」表(`IMPORTANT` / 全大文字の強調、`think hard`、「止まらず続けろ」、
+  文脈保護のための subagent、CLAUDE.md への構成記述)と「強制するか任せるか(決定論 / 非決定論)」節。
+- **`.claude/loop.md`(JP/EN)**: 間隔なしの `/loop` は次の反復を予約しなかったターンで終わる(v2.1.319)ため、待つ対象が残るときだけ予約するよう指示。
+- **`settings.local.json.template`(JP/EN)**: allow に `Skill(code-review)`(v2.1.325 から `/loop` と予約タスクは `allowed-tools` / `hooks` を宣言した
+  skill を起動前に確認するため、無人ループが手順 4 で止まっていた)。サンドボックス内 Bash が権限フローに従うようになった件と
+  `sandbox.autoAllowBashIfSandboxed`(v2.1.325)、`permissions.denyInsteadOfPrompting`(v2.1.319、user / `--settings` 限定)、
+  `CLAUDE_CODE_DISABLE_AGENT_PROGRESS_SUMMARIES` の注記。`managed-settings.example.json` に `autoAllowBashIfSandboxed: true`。
+- **guardrails.md(JP/EN)**: 定期実行の節に v2.1.319 / v2.1.325 の `/loop` の挙動と `denyInsteadOfPrompting`、Layer 0 に v2.1.325 のサンドボックスの既定変更。
+- **`project-config.md` §13(JP/EN)**: Frontier の固定 ID を `claude-fable-5-2`(v2.1.321 の既定)に。別モデルの subagent はセッションの effort を継承せず
+  そのモデルの保存済み effort か既定値を使う(v2.1.317)。
+- **pitfalls #40 / #41(JP/EN)**: 無人 `/loop` の停止・終了、常時 import した docs/ の肥大化。#1 の対策を #41 に合わせて修正。
+
+### Added (2026-11-14)
+
+- **validator: project settings で効かないキーの検出**: settings-reference の「Where it's honored」列(v2.1.325 時点)から、
+  user / managed 専用 29 キー・共有 settings.json で効かない 4 キー・managed 専用 38 キー・global config の 12 キーを WARN。
+  削除済みの `subagentStatusLine`(v2.1.323)と無視される `pluginDigests`(v2.1.325)も WARN。`permissions.denyInsteadOfPrompting` を既知キーに追加
+  (従来は「公式の permissions キーではありません」と誤って ERROR になった)。
+- **validator: `Bash(PORT=* npm run dev)` のように変数の値に `*` を含む allow ルール**を WARN(v2.1.323 の起動時警告と同じ判定)。
+- **validator: 指示ファイルの旧世代向け表現**(`IMPORTANT` / `YOU MUST` / `think hard(er)` / `be thorough`)を WARN。CLAUDE.md / AGENTS.md / loop.md /
+  rules / agents / output-styles / SKILL.md が対象で、コードスパンとコードブロックは除外。`CRITICAL` は重大度ラベルと区別できないので対象外。
+- `--test` 56 → 62 件。
+
 ### Added (運用面の強化: 配布と更新 / 検証の実測 / サプライチェーン / 観測, 2026-11-01)
 
 - **`setup.sh --upgrade [--dry-run]`(JP/EN)**: 導入時に `.claude/blueprint-manifest.txt`(版・プロファイル・ファイルごとの SHA-256)を記録し、

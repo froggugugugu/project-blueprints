@@ -137,6 +137,11 @@ their **durability differs sharply**.
   `claude-scheduled-audit.yml.template` runs `/security-scan` and `/legal-check`
   weekly and collects the results in an issue
 - Keep `/loop` for short-lived in-session polling (waiting on a build, say)
+- An unattended `/loop` or scheduled task asks before running a skill that declares `allowed-tools` or `hooks` (v2.1.325).
+  Every skill in this template does, so `settings.local.json.template` allows only the read-only `/code-review` the loop uses, as `Skill(code-review)`
+- A `/loop` without an interval ends on a turn that finishes without scheduling the next iteration (v2.1.319; `CLAUDE_CODE_LOOP_KEEPALIVE=1` restores the old behavior)
+- To keep an unwatched terminal session from waiting on a prompt, set `permissions.denyInsteadOfPrompting: true` (v2.1.319). Calls that need approval are denied
+  and recorded by `permission-denied-log.sh`. It works only from `~/.claude/settings.json` or `--settings` (ignored in project settings)
 - Avoid `:00` in an Actions cron â€” that slot is congested and prone to delay
 - Routines (`/schedule`) run at a minimum interval of one hour and without permission prompts (write tools of included connectors run unconfirmed).
   Include the fewest repositories, connectors and environment; a green status is not task success, so read the transcript
@@ -438,6 +443,9 @@ env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 (no agent nesting = constitution â
 ```
 
 If a command fails inside the sandbox, exempt it individually with `sandbox.excludedCommands`.
+
+Since v2.1.325, sandboxed Bash follows the normal permission flow (allow / ask / deny). To run it without prompts as before, add
+`"autoAllowBashIfSandboxed": true` to `sandbox` (ask / deny rules still apply). When an organization turns the sandbox on, set it in the highest-ranking managed source.
 
 There is **no built-in credential deny list** (`~/.aws/credentials` and `~/.ssh` are readable by default). Block them explicitly with `sandbox.credentials`:
 

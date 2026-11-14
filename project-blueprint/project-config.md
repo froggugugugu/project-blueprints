@@ -403,7 +403,7 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 | Tier | エイリアス | 固定 ID | 用途 | コスト感 |
 | ---- | ---------- | ------- | ---- | -------- |
-| **Frontier** | `fable` | `claude-fable-5-1` | 数時間〜複数日の自律実行・根本原因調査・難度の高い設計判断（既定にはならない。明示して使う） | 最高 |
+| **Frontier** | `fable` | `claude-fable-5-2` | 数時間〜複数日の自律実行・根本原因調査・難度の高い設計判断（既定にはならない。明示して使う） | 最高 |
 | **Critical** | `opus` | `claude-opus-5-5` | アーキテクチャ判断・セキュリティ監査・複雑なリファクタリング | 高 |
 | **Complex** | `sonnet` | `claude-sonnet-5-5` | 設計・実装・コードレビュー・E2E 作成 | 中（推奨） |
 | **Operational** | `haiku` | `claude-haiku-5-5` | 探索・ドキュメント同期・軽量な繰り返し作業 | 低 |
@@ -445,7 +445,7 @@ effort の動かし方(公式 best-practices。`medium` が日常の機能実装
 | 対話的に往復し、結果を毎回人が見る(ブレスト・たたき台・数ファイルのリネーム) | `low` |
 | 人が付かない難問(脆弱性探索など)。通常タスクでは考え過ぎて `high` と変わらない | `max` |
 | その 1 ターンだけ深く考えさせたい | プロンプトに `ultrathink`(v2.1.311 以降はそのターンを `xhigh` で実行。設定は変えない) |
-| `effort:` の無い subagent の既定 | セッションの effort を継承。固定するなら env `CLAUDE_CODE_SUBAGENT_EFFORT`(v2.1.316) |
+| `effort:` の無い subagent の既定 | 親と同じモデルならセッションの effort を継承し、別モデルならそのモデルの保存済み effort か既定値(v2.1.317)。固定するなら env `CLAUDE_CODE_SUBAGENT_EFFORT`(v2.1.316) |
 
 ### 13.1c advisor(上位モデルへの相談、任意)
 

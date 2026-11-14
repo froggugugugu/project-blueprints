@@ -122,6 +122,11 @@ for MIRROR in project-blueprint project-blueprint-en; do
     OUT="$(run_hook "$H/session-start.sh" "" '{"session_id":"s","source":"startup"}')"
     expect_contains "session-start: PROGRESS.md を注入" 'progress handoff' "$OUT"
     expect_contains "session-start: docs 肥大化を警告(目安 300 行)" '300' "$OUT"
+    # 常時 import しない architecture.md は大きくても警告しない(必要時に Read する)
+    cp "$T/docs/project.md" "$T/docs/architecture.md"
+    head -n 10 "$T/docs/architecture.md" > "$T/docs/project.md"
+    OUT2="$(run_hook "$H/session-start.sh" "" '{"session_id":"s","source":"startup"}')"
+    [[ "$OUT2" != *"architecture.md が"* && "$OUT2" != *"architecture.md has"* ]] && ok "session-start: 常時 load しない architecture.md の肥大化は警告しない" || ng "session-start: 常時 load しない architecture.md の肥大化は警告しない" "no warning" "$OUT2"
     CTX="$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null)"
     [[ ${#CTX} -le 10000 ]] && ok "session-start: additionalContext は 10,000 文字以内" || ng "session-start: additionalContext は 10,000 文字以内" "<= 10000" "${#CTX}"
     # source == "compact" は起動時チェックを繰り返さず、中核ルールを即座に再注入する(公式の SessionStart compact パターン)

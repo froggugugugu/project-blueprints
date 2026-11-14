@@ -12,7 +12,7 @@ This file contains **universal, template-wide pitfalls** only.
 | ----- | ------- |
 | **Symptom** | As CLAUDE.md grows, Claude stops following earlier instructions |
 | **Cause** | Above ~200 lines, important rules get buried in low-priority noise. Token cost also grows per session |
-| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. Use concrete `@import` paths like `docs/*.md` / `.claude/*.md` (root-relative) |
+| **Mitigation** | Keep CLAUDE.md to cross-cutting rules only. Split details into skills, `docs/`, or `.claude/rules/`. `@import` only files needed every time; name the rest as "path — when to read it" (#41) |
 
 ### 2. Subagents don't get the parent's skills automatically (CLAUDE.md / rules ARE inherited)
 
@@ -326,6 +326,22 @@ common in long-running Claude Code sessions.
 | **Symptom** | The hook's path was mistyped, the execute bit was lost, or it timed out, and the dangerous command went through anyway. The transcript shows a single `hook error` line |
 | **Cause** | Hooks are fail-open by default: on a start failure, timeout, or unexpected exit code the action continues. Policy hooks are exactly the ones whose breakage goes unnoticed |
 | **Mitigation** | Give blocking hooks `"onFailure": "block"` (v2.1.295) so a hook failure stops the action (this template: `safety-check.sh` / `protect-files.sh` / `config-guard.sh` / `scope-guard.sh`). `validate-harness.sh` warns when it is missing, and `--hooks` regression-tests every guard in both directions (must-block / must-allow) |
+
+### 40. An unattended `/loop` stops at a skill prompt, or ends because nothing was scheduled
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | A `/loop` left running overnight is found waiting on a prompt to start `/code-review`. Or the loop is gone after one "no change" turn |
+| **Cause** | Since v2.1.325, `/loop` and scheduled tasks ask before running a skill that declares `allowed-tools` or `hooks` (every skill in this template does). Since v2.1.319, a `/loop` without an interval ends on a turn that schedules no next iteration |
+| **Mitigation** | Add `Skill(<name>)` to `permissions.allow` only for the read-only skills the loop uses (`settings.local.json.template` ships `Skill(code-review)`). `.claude/loop.md` tells Claude to schedule only while something is pending. On an unwatched terminal, `permissions.denyInsteadOfPrompting: true` in `~/.claude/settings.json` denies instead of waiting, and the turn continues |
+
+### 41. Always-imported docs/ grow and eat context every turn
+
+| Field | Content |
+| ----- | ------- |
+| **Symptom** | CLAUDE.md is under 200 lines, yet memory in `/context` is large. The full directory layout and schema ride along on unrelated tasks |
+| **Cause** | `@import` organizes a file; imported files load in full every session together with CLAUDE.md (official memory guide). Claude can read the structure and schema from the repository, so loading them every session buys little |
+| **Mitigation** | Always import only what the code cannot show (commands in `docs/project.md`, conventions and gotchas in `docs/development-patterns.md`). Name `docs/architecture.md` / `docs/data-model.md` in CLAUDE.md as "path — when to read it" so Claude reads them when needed. `session-start.sh` warns when either always-imported file passes 300 lines |
 
 ## Recommended session-management commands
 

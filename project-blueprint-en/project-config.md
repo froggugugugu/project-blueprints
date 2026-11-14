@@ -404,7 +404,7 @@ output/reports/                <- Human-readable summaries (Git-managed)
 
 | Tier | Alias | Pinned ID | Use | Cost level |
 | ---- | ----- | --------- | --- | ---------- |
-| **Frontier** | `fable` | `claude-fable-5-1` | Multi-hour to multi-day autonomous runs, root-cause investigations, hard design decisions (never the default; select it explicitly) | Highest |
+| **Frontier** | `fable` | `claude-fable-5-2` | Multi-hour to multi-day autonomous runs, root-cause investigations, hard design decisions (never the default; select it explicitly) | Highest |
 | **Critical** | `opus` | `claude-opus-5-5` | Architecture decisions, security audits, complex refactors | High |
 | **Complex** | `sonnet` | `claude-sonnet-5-5` | Design, implementation, code review, E2E authoring | Medium (recommended) |
 | **Operational** | `haiku` | `claude-haiku-5-5` | Exploration, doc sync, lightweight repetitive work | Low |
@@ -448,7 +448,7 @@ When to move effort (official best practices; `medium` is the baseline for every
 | Quick back-and-forth where a person reviews every result (brainstorming, a first sketch, a rename across a few files) | `low` |
 | A hard problem Claude works through alone (hunting a vulnerability). On ordinary tasks it overthinks and rarely beats `high` | `max` |
 | Deeper reasoning on one turn only | put `ultrathink` in that prompt (since v2.1.311 the turn runs at `xhigh`; the setting is untouched) |
-| Default for a subagent without `effort:` | inherits the session's effort; pin it with the env `CLAUDE_CODE_SUBAGENT_EFFORT` (v2.1.316) |
+| Default for a subagent without `effort:` | on the parent's model it inherits the session's effort; on another model it uses that model's saved effort or its default (v2.1.317). Pin it with the env `CLAUDE_CODE_SUBAGENT_EFFORT` (v2.1.316) |
 
 ### 13.1c Advisor (consulting a stronger model, optional)
 

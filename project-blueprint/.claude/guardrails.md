@@ -133,6 +133,11 @@ Stop        → verify-gate.sh gate    最後の編集より後に検証コマ�
   `claude-scheduled-audit.yml.template` が週次で `/security-scan` と
   `/legal-check` を回し、結果を Issue に集約する
 - `/loop` はセッション中の短期ポーリング（ビルド待ち等）に限る
+- 無人の `/loop`・予約タスクは、`allowed-tools` か `hooks` を宣言した skill を起動前に確認する(v2.1.325)。
+  本テンプレートの skill は全て該当するため、ループで使う読取専用の `/code-review` だけ `settings.local.json.template` の allow に `Skill(code-review)` を載せている
+- 間隔なしの `/loop` は、次の反復を予約せずに終えたターンで終了する(v2.1.319。旧挙動は `CLAUDE_CODE_LOOP_KEEPALIVE=1`)
+- 見ていない端末セッションを確認待ちで止めないなら `permissions.denyInsteadOfPrompting: true`(v2.1.319)。確認が要る呼び出しは拒否され、
+  `permission-denied-log.sh` が記録する。`~/.claude/settings.json` か `--settings` でしか効かない(project settings では無視される)
 - Actions の cron は `:00` を避ける（混雑して遅延しやすい）
 - Routines(`/schedule`)は最小間隔 1 時間で、権限プロンプト無しに走る(含めたコネクタの書込ツールも確認なし)。
   含めるリポジトリ・コネクタ・環境を最小にし、緑のステータスを「成功」と読まずトランスクリプトを確認する
@@ -425,6 +430,9 @@ env  : CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1(agent の入れ子禁止 = constit
 ```
 
 サンドボックス内で失敗するコマンドがある場合は `sandbox.excludedCommands` で個別に外す。
+
+v2.1.325 以降、サンドボックス内の Bash も通常の権限フロー(allow / ask / deny)に従う。以前のように確認なしで走らせるなら
+`"autoAllowBashIfSandboxed": true` を `sandbox` に足す(ask / deny はそのまま効く)。組織で有効化する場合は最上位の managed source に書く。
 
 認証情報には組み込みの deny リストが**無い**(`~/.aws/credentials` や `~/.ssh` は既定で読める)。`sandbox.credentials` で明示的に塞ぐ:
 

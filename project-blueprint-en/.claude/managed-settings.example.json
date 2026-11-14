@@ -6,7 +6,7 @@
     "Managed settings outrank user / project / local settings and cannot be overridden by individuals.",
     "Claude Code does not read this file itself (reference only). Copy only the keys you need and replace the values.",
     "Draft auto mode trusted infrastructure (autoMode.environment) with /auto-mode-setup and transcribe it here.",
-    "sandbox.credentials is required: there is no built-in credential deny list, so ~/.aws and ~/.ssh are readable by default. failIfUnavailable / allowUnsandboxedCommands follow the official org-wide recommendation.",
+    "sandbox.credentials is required: there is no built-in credential deny list, so ~/.aws and ~/.ssh are readable by default. failIfUnavailable / allowUnsandboxedCommands follow the official org-wide recommendation. autoAllowBashIfSandboxed: since v2.1.325 sandboxed Bash follows the permission flow, so set it true here (the highest-ranking managed source) to keep the sandbox as the boundary and run commands without prompts; set false to confirm every time.",
     "isolatePeerMachines / crossSessionInbound control messages from other sessions (text that reads like instructions). For unattended runs also add SendMessage / ListAgents to permissions.deny. requiredMinimumVersion 2.1.314 is the first version that honors blockWritesOutsideWorkingDirectories (refuses Write / Edit outside the working directories in every mode; onFailure: block needs 2.1.295). Keep \"$defaults\" in every autoMode list you write."
   ],
   "permissions": {
@@ -24,6 +24,7 @@
     "enabled": true,
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
+    "autoAllowBashIfSandboxed": true,
     "network": {
       "allowedDomains": [
         "registry.npmjs.org",
