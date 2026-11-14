@@ -351,9 +351,9 @@ output/reports/                ← 人間向けサマリー（Git管理）
 
 ### ハーネス側の安全機構(本テンプレート提供)
 
-- **3 層防御**: フック(Layer 1) → deny ルール(Layer 2) → allow ルール(Layer 3)。詳細は `.claude/guardrails.md`
+- **3 層防御**: フック(Layer 1) → deny ルール(Layer 2) → allow ルール(Layer 3)。詳細は `.agents/guardrails.md`
 - **Self-SAST**: `scan-harness.sh`(PreToolUse: Skill)が secret 混入 / constitution 改竄 / settings.local の deny 弱体化を検出
-- **不変原則**: `@constitution.md` の 7 原則が `.claude/.constitution.sha256` で hash 監視される
+- **不変原則**: `@constitution.md` の 7 原則が `.agents/.constitution.sha256` で hash 監視される
 - **Hook profile**: `BLUEPRINT_HOOK_PROFILE=minimal|standard|strict` で検査の厳しさを切替可能
 - **高リスク skill 抑止**: `deploy*` 系 skill は `scan-harness.sh` で常時ブロック(profile=minimal でのみ通過)
 - **3 階層 permission 運用**: allowlist / auto / sandbox の使い分けは `.claude/permissions-guide.md` 参照
@@ -504,7 +504,7 @@ PJM（リーダー）は判断精度が重要なので Critical を推奨。
 1. **Operational を積極活用**: 探索・同期・定型生成は Haiku で十分。Opus を使う必要はない
 2. **並行実行時はTier分散**: `TEAM_PJM --parallel` で全員 Opus にしない。役割に応じて Tier を混在
 3. **Subagent は Haiku 優先**: 単発の委譲は軽量運用。必要に応じて Critical に昇格
-4. **コスト上限を API キーに設定**: `.claude/pitfalls.md` #6 参照
+4. **コスト上限を API キーに設定**: `.agents/pitfalls.md` #6 参照
 5. **月次使用量レビュー**: Anthropic Console で確認。想定と乖離したら Tier を見直す
 6. **セッション途中でモデルを切り替えない**: 切替はプロンプトキャッシュを無効化する。役割ごとの違いは skill / agent の `model:` に持たせる(subagent は別キャッシュ)
 
@@ -514,26 +514,29 @@ PJM（リーダー）は判断精度が重要なので Critical を推奨。
 - 本セクションの表は**推奨値**であり、プロジェクト要件に応じてオーバーライド可能
 - 個人設定で常に Opus を使いたい場合は `~/.claude/settings.json` の `model` で指定
 
-### 13.7 マルチ LLM 併用(Claude Code 以外のエージェント)
+### 13.7 エージェントの構成(Claude Code と Codex、その他の補助)
 
-> **主系は Claude Code**。skill・team・フック・権限による品質ゲートと安全装置は Claude Code 上でだけ動く。
-> 他のエージェントはルートの `AGENTS.md`(共通ルール)を読み、本節で割り当てた役割と書込範囲に従う。
-> 本節で `yes` になっていないエージェントは**読取専用**として振る舞う(`AGENTS.md` に明記済み)。
+> **Claude Code と Codex を対等に扱う**。どちらも共通の核(`AGENTS.md` と `.agents/` の skill・フック・ルール)を読み、単独で全フェーズを回せる。
+> 両方を使うか片方だけにするかは、導入時の `setup.sh --agent claude|codex|both` と下の表で決める。
+> それ以外のエージェントは補助で、本節で `yes` になっていなければ**読取専用**として振る舞う(`AGENTS.md` に明記済み)。
 
-| エージェント | 利用 | 役割 | 書込範囲 | `AGENTS.md` を読ませる方法 |
-| ------------ | ---- | ---- | -------- | -------------------------- |
-| Claude Code | yes(主系・固定) | 全フェーズ・品質ゲート・成果物の確定 | skill / agent の定義どおり | `CLAUDE.md` の `@AGENTS.md` で取り込む |
-| OpenAI Codex CLI | no | 例: レビューのセカンドオピニオン | 例: なし(読取専用) | 既定で読む |
-| Cursor | no | 例: エディタ内の小修正 | 例: `src/**` | 既定で読む |
-| GitHub Copilot | no | 例: 補完・PR 要約 | 例: なし(読取専用) | VS Code は設定 `chat.useAgentsMdFile: true` が必要 |
+| エージェント | 利用 | 役割 | 書込範囲 | 読むもの |
+| ------------ | ---- | ---- | -------- | -------- |
+| Claude Code | yes | 例: 全フェーズ(実装の主担当) | skill / agent の定義どおり | `CLAUDE.md`(`@AGENTS.md` を取り込む)と `.claude/` |
+| OpenAI Codex | yes | 例: 全フェーズ(レビューと検証の主担当) | skill / agent の定義どおり | `AGENTS.md` と `.codex/` |
+| Cursor | no | 例: エディタ内の小修正 | 例: `src/**` | `AGENTS.md`(既定で読む) |
+| GitHub Copilot | no | 例: 補完・PR 要約 | 例: なし(読取専用) | `AGENTS.md`(VS Code は設定 `chat.useAgentsMdFile: true` が必要) |
 | Gemini CLI | no | 例: 大規模コードの横断調査 | 例: なし(読取専用) | 既定は `GEMINI.md`。`.gemini/settings.json` に `{"context": {"fileName": ["AGENTS.md"]}}` を置く |
 
-> 読み込み方法はツールの版で変わる。導入時に各ツールの公式ドキュメントで確認する。
+> 使わない方の行は `no` にし、アダプタも外す(`.claude/` または `.codex/` を入れない / 消す)。読み込み方法はツールの版で変わるので、導入時に公式ドキュメントで確認する。
 
 **併用ルール**(既定値。プロジェクトに合わせて変更してよい):
 
-- 書込範囲はエージェント間で重複させない。同じファイルを複数エージェントで同時に編集しない
-- 品質ゲートの判定と `output/` の成果物の確定は Claude Code の skill で行う。他エージェントの結果を取り込むときは出典(エージェント名)を明記する
-- Claude Code 以外には `.claude/` のフック・deny ルールが効かない。書込を許すエージェントがあるなら、禁止事項(シークレット・`--no-verify`・`--force` 付きの push)を CI や git フックでも強制する
-- 他エージェントの API キーや課金設定はそのツール側で管理し、リポジトリにコミットしない(constitution ⑦)
-- 他エージェント用の指示ファイル(`GEMINI.md`・`.github/copilot-instructions.md` 等)を作るなら `AGENTS.md` を参照するだけにし、規則を複製しない
+- 両方を使うときは工程ごとに担当を決める。実装した側と別のエージェントがレビュー・検証を担当すると、同じモデルの思い込みを持ち込まない確認になる
+- 同じファイルを複数エージェントで同時に編集しない。補助エージェントの書込範囲は重複させない
+- 品質ゲートの判定と `output/` の成果物の確定は、その工程の担当エージェントが skill で行う。別のエージェントの結果を取り込むときは出典(エージェント名)を明記する
+- 安全装置の対応関係と差は `.agents/guardrails.md` の「エージェント別の対応」にある。どちらのエージェントにも依存しない強制が要る禁止事項
+  (シークレット・`--no-verify`・`--force` 付きの push)は CI や git フックにも置く。補助エージェントに書込を許す場合は特に必要
+- API キーや課金設定は各ツール側で管理し、リポジトリにコミットしない(constitution ⑦)
+- 補助エージェント用の指示ファイル(`GEMINI.md`・`.github/copilot-instructions.md` 等)を作るなら `AGENTS.md` を参照するだけにし、規則を複製しない
+- §13.1〜§13.6 のモデル名は Claude のものである。Codex では同じ考え方(重い判断に上位モデル、探索に軽量モデル)を `.codex/config.toml` の `[agents]` で指定する

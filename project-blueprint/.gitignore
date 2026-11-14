@@ -16,7 +16,7 @@ output/brainstorm/
 .claude/worktrees/
 .claude/agent-memory-local/
 # skill-creator writes eval workspaces next to each skill (<skill>-workspace/).
-.claude/skills/*-workspace/
+.agents/skills/*-workspace/
 
 # --- Tool raw output (machine-generated, not for review) ---
 # Note: observability hooks (post-failure-log.sh, subagent-audit.sh) write

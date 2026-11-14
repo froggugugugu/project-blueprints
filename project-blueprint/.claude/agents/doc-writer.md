@@ -12,7 +12,7 @@ hooks:
     - matcher: "Edit|Write|NotebookEdit"
       hooks:
         - type: command
-          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/scope-guard.sh output'
+          command: '"$CLAUDE_PROJECT_DIR"/.agents/hooks/scope-guard.sh output'
           timeout: 5
           onFailure: block
 color: yellow
@@ -47,7 +47,7 @@ color: yellow
 
 1. **読み手を決めてから書く** — 想定読者(エンジニア / レビュアー / 経営層)で粒度を変える
 2. **結論先出し** — 冒頭 3 行で「何が結論か」を明示。詳細は後段
-3. **既存テンプレート優先** — `.claude/tasks/TASK_TEMPLATE.md` 等のテンプレがあれば従う
+3. **既存テンプレート優先** — `.agents/tasks/TASK_TEMPLATE.md` 等のテンプレがあれば従う
 4. **データに忠実** — 入力にない主張を勝手に足さない。曖昧箇所は「【要確認】」で残す
 5. **日本語で記述** — プロジェクトの既定言語に従う
 6. **自動生成感を避ける** — 「このファイルは自動生成されました」等の機械的な注記は付けない

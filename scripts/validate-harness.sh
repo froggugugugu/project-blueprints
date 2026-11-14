@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# validate-harness.sh — `.claude/` ハーネスの静的検証ゲート
+# validate-harness.sh — ハーネス(.agents/ + .claude/ + .codex/)の静的検証ゲート
 #
 # 仕様との乖離を人間のレビュー待ちにせず、決定論的に落とす。
 # `/harness-refine`(LLM 判断)の前段に置く非 LLM チェック。
@@ -12,6 +12,7 @@
 #   bash scripts/validate-harness.sh --test           # バリデータ自身の負のテスト
 #   bash scripts/validate-harness.sh --hooks          # フックスクリプトの機能テスト(要 jq)
 #   bash scripts/validate-harness.sh --setup          # setup.sh の導入 / --upgrade の機能テスト
+#   bash scripts/validate-harness.sh --migrate        # migrate.sh(0.x → 1.0)の機能テスト(git の履歴と jq が必要)
 #
 # 終了コード: 0 = 合格 / 1 = ERROR あり / 2 = 実行環境の不備
 # ==============================================================================
@@ -33,7 +34,7 @@ if [[ -z "$PYTHON" ]]; then
     exit 2
 fi
 
-# --test はバリデータ自身のテスト、--hooks はフックの機能テスト、--setup は setup.sh のテストに振り分ける
+# --test はバリデータ自身のテスト、--hooks はフックの機能テスト、--setup / --migrate は導入・移行スクリプトのテストに振り分ける
 for arg in "$@"; do
     if [[ "$arg" == "--test" ]]; then
         exec "$PYTHON" "$SCRIPT_DIR/test_validate_harness.py"
@@ -43,6 +44,9 @@ for arg in "$@"; do
     fi
     if [[ "$arg" == "--setup" ]]; then
         exec bash "$SCRIPT_DIR/test_setup.sh"
+    fi
+    if [[ "$arg" == "--migrate" ]]; then
+        exec bash "$SCRIPT_DIR/test_migrate.sh"
     fi
 done
 

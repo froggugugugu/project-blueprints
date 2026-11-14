@@ -77,5 +77,5 @@ Target: <branch / diff range> / Spec: <file>
 
 ## Related references
 
-- `.claude/quality-gates.md` — when checking the pass criteria of gate ④ (implementation)
-- `.claude/tasks/TASK_TEMPLATE.md` — when checking the acceptance-criteria format
+- `.agents/quality-gates.md` — when checking the pass criteria of gate ④ (implementation)
+- `.agents/tasks/TASK_TEMPLATE.md` — when checking the acceptance-criteria format

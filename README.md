@@ -1,10 +1,10 @@
 # Project Blueprints
 
-**Claude Code を「開発ハーネス」として立ち上げるためのテンプレート。**
+**Claude Code と Codex を「開発ハーネス」として立ち上げるためのテンプレート。**
 
 要求メモ 1 枚から、PRD → 設計 → タスク分解 → 実装 → レビューまでを同じ型で回す。
 指示書・スキル・サブエージェント・安全機構・検証ゲートをひとそろいにして、コピーした時点で動く。
-対象は言語もフレームワークも問わない。
+対象は言語もフレームワークも問わない。エージェントは Claude Code と Codex のどちらか片方でも、両方を対等に併用しても使える。
 
 [サイト](https://froggugugugu.github.io/project-blueprints/) ·
 [English](README-en.md) ·
@@ -23,7 +23,7 @@
 - 日本語版 `project-blueprint/` と英語版 `project-blueprint-en/` を**同じ構造で**同梱する
 
 **これでないもの**: アプリケーションのひな形ではない。React も FastAPI も Rails も入っていない。
-入っているのは Claude Code に渡す指示と仕組みだけで、対象プロジェクトの技術は何でもよい。
+入っているのは Claude Code と Codex に渡す指示と仕組みだけで、対象プロジェクトの技術は何でもよい。
 既存プロジェクトに後から足すこともできる。
 
 ---
@@ -35,8 +35,17 @@ git clone https://github.com/froggugugugu/project-blueprints.git
 cd project-blueprints
 bash project-blueprint/setup.sh /path/to/your-project   # 英語版は project-blueprint-en/setup.sh
 cd /path/to/your-project
-claude
+claude          # または codex(初回はプロジェクトを信頼し、/hooks でフックを確認して信頼する)
 ```
+
+| エージェント | 入るもの | 向いている場面 |
+| --- | --- | --- |
+| `--agent both`（既定） | 共通の核 `.agents/` + `.claude/` + `.codex/` | 併用する。乗り換えを検討している |
+| `--agent claude` | `.agents/` + `.claude/` | Claude Code だけで使う |
+| `--agent codex` | `.agents/` + `.codex/` | Codex だけで使う |
+
+skill・フック・ルールの原本は `.agents/` に 1 つだけ置き、2 つのエージェントが同じものを読む。`.claude/` と `.codex/` は、
+それぞれのエージェントに合わせた薄いアダプタ(設定・フックの登録・禁止ルール・サブエージェント定義)である。
 
 | プロファイル | 入るもの | 向いている場面 |
 | --- | --- | --- |
@@ -62,7 +71,8 @@ claude
 残り 10 セクションは空欄のままで動く。必要になったときに足せばよい。
 
 ```text
-/plan 在庫の棚卸し機能の設計
+/plan 在庫の棚卸し機能の設計      # Claude Code
+$plan 在庫の棚卸し機能の設計      # Codex
 ```
 
 これだけで `project-config.md` を読み取り、構造化された設計ドキュメントが `output/` に出る。
@@ -90,23 +100,26 @@ claude
 ## 入っているもの
 
 ```text
- 2 guides    AGENTS.md(ツール共通ルール。Codex / Cursor なども読む)+ CLAUDE.md(Claude Code 固有。AGENTS.md を取り込む)
+ 2 guides    AGENTS.md(ツール共通ルール。Codex は直接読む)+ CLAUDE.md(Claude Code 固有。AGENTS.md を取り込む)
+ 2 adapters  .claude/(settings.json・agents・teams)/ .codex/(config.toml・hooks.json・rules・agents)。原本は共通の .agents/
 17 skills    企画・設計・実装・レビュー・セキュリティ・法務・性能・リファクタ
              長い詳細は references/(20 ファイル)に分離し、SKILL.md 本文は手順だけに保つ
  9 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
-             doc-synchronizer / doc-writer / test-writer / verifier(完了直前の仕様照合)
- 6 teams     TEAM_PJM(フルライフサイクル・推奨) / FEATURE / QA / PLANNING / DESIGN / REFACTOR
+             doc-synchronizer / doc-writer / test-writer / verifier(完了直前の仕様照合)。Codex 用は同じ定義から生成
+ 6 teams     TEAM_PJM(フルライフサイクル・推奨) / FEATURE / QA / PLANNING / DESIGN / REFACTOR(Claude Code の拡張)
 18 hooks     PreToolUse / UserPromptExpansion / PostToolUse / SessionStart(compact 再注入)/ ConfigChange / FileChanged / StopFailure など
              危険コマンド遮断・保護ファイル・未検証終了の検知・書込範囲の強制・防御層を弱める設定変更の阻止。ブロック系は onFailure: block で fail-closed
+             同じスクリプトを Codex からも呼ぶ(18 本のうち 12 本を登録。入力の違いは lib/codex-adapter.sh が吸収)
  4 styles    phase-prd / phase-design / phase-implementation / phase-review
  7 rules     常時 1(git 規約)+ パス限定 3(ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
              + 言語別サンプル 3(.example を外して有効化)
- 2 workflows review-sweep(4 観点並列レビュー + 反証検証)/ skill-eval(evals を with・without で実行)
+ 2 workflows review-sweep(4 観点並列レビュー + 反証検証)/ skill-eval(evals を with・without で実行)(Claude Code の拡張)
 34 evals     全 17 skill に evals.json(典型 + 境界)、assertions 128 件
  1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
- 3 CI        claude-review.yml(@claude 対話レビュー)/
-             claude-skills-ci.yml(毎 PR に /code-review + /security-scan)/
+ 4 CI        claude-review.yml(@claude 対話レビュー)/
+             claude-skills-ci.yml・codex-skills-ci.yml(毎 PR に code-review + security-scan。片方でも両方でも)/
              claude-scheduled-audit.yml(週次 /security-scan + /legal-check → Issue)
+ 2 scripts   setup.sh(導入 / --upgrade / --relink)/ migrate.sh(0.x の配置から 1.0 への移行。--dry-run / --rollback)
  2 extras    REVIEW.md(Claude の Code Review 用の審査基準)/ .claude/loop.md(/loop の既定プロンプト)
 ```
 
@@ -118,7 +131,7 @@ claude
 - **指示ではなく強制にする** — 「毎回必ず X」は文章ではなくフックにする。3 層防御（フック → deny/ask → allow）
 - **止めどころを用意する** — 5 つの品質ゲートに加え、ソースを編集したまま検証せず終了するとフックが検知する
 - **文脈を食い潰さない** — CLAUDE.md は取り込む AGENTS.md と合わせて 200 行以内。スキルは必要になった詳細だけを読む
-- **Claude Code を主系に、他のエージェントとも共有できる** — ツール共通のルールは `AGENTS.md` に置き、Claude Code 固有の仕組みだけを `CLAUDE.md` に残す。Codex / Cursor / Copilot / Gemini CLI を併用するときの役割と書込範囲は `project-config.md` §13.7 で人間が決める
+- **Claude Code と Codex を対等に扱う** — skill・フック・ルールは `.agents/` に 1 つだけ置いて両方が読み、エージェント固有の設定だけを `.claude/` と `.codex/` に分ける。どちらか単独でも全工程を回せ、併用すれば実装した側と別のモデルがレビューと検証を担当できる。対応できない差(Codex のフックは信頼するまで動かない、など)は隠さず `guardrails.md` に書く。Cursor / Copilot / Gemini CLI は `AGENTS.md` を読む補助で、役割と書込範囲は `project-config.md` §13.7 で人間が決める
 - **期待動作をテストで持つ** — スキルを変えたら `/skill-eval` で with・without の pass rate を比べる
 - **壊れたら CI が落ちる** — ハーネス自身の静的検証があり、日英の構造ずれも検出する
 
@@ -128,13 +141,14 @@ claude
 
 ## 検証
 
-`.claude/` を編集したら、コミット前に検証ゲートを通す。
+ハーネス(`.agents/` `.claude/` `.codex/`)を編集したら、コミット前に検証ゲートを通す。
 
 ```bash
 bash scripts/validate-harness.sh            # 両ミラー + 日英の構造一致
 bash scripts/validate-harness.sh --test     # バリデータ自身の負のテスト
 bash scripts/validate-harness.sh --hooks    # フックの機能テスト
-bash scripts/validate-harness.sh --setup    # setup.sh の導入 / --upgrade の機能テスト
+bash scripts/validate-harness.sh --setup    # setup.sh の導入 / エージェント選択 / リンク / --upgrade の機能テスト
+bash scripts/validate-harness.sh --migrate  # migrate.sh の機能テスト(履歴から取り出した 0.x の導入先を実際に移行する)
 bash scripts/validate-harness.sh --online   # .mcp.json の npm パッケージ実在確認
 ```
 
@@ -146,6 +160,9 @@ LLM を使わず決定論的に、次を検査する。
 - `evals/evals.json` のスキーマ、workflow の `meta` 宣言と決定論を壊す関数
 - `CLAUDE.md` の `@AGENTS.md` 取り込み、`AGENTS.md` の行頭 `@`、両ファイルが引く `project-config.md` の §番号の実在、2 ファイル合計の行数
 - 書込可能な agent の `scope-guard.sh` 登録
+- Codex 側: フックがアダプタ経由で登録されブロック系が `--fail-closed` か、`.codex/agents/*.toml` が原本から生成し直した内容と一致するか、
+  Claude Code の deny / ask と Codex の rules、`Read()` deny と権限プロファイルが対応しているか、ハーネス自体が読取専用になっているか
+- 共通の核が `.claude/` 側に二重に置かれていないか、`setup.sh` と `migrate.sh` が日英で同一か
 - `constitution.md` のハッシュ、日英ミラーの構成一致
 - `.mcp.json.template` の npm パッケージの版固定、`VERSION` と CHANGELOG の最新リリース見出しの整合
 
@@ -153,7 +170,7 @@ CI（`.github/workflows/validate-harness.yml`）が push と PR で同じもの�
 `/harness-refine` は LLM 側の対になる仕組みで、このゲートが通ってから使う。
 
 skill が挙動を変えているかは LLM 側のゲート `scripts/run_skill_evals.py` で測る。各 skill の `evals/evals.json` を `setup.sh` で作った使い捨てプロジェクトで
-skill あり / なしの 2 系統で実行し、ツールを持たない別の `claude -p` が assertion ごとに採点する。結果は [`evals/`](evals/)（方法とベースライン）に残し、
+skill あり / なしの 2 系統で実行し、ツールを持たない別の `claude -p` が assertion ごとに採点する(現状は Claude Code での計測だけ。Codex での同じ計測は未対応)。結果は [`evals/`](evals/)（方法とベースライン）に残し、
 `.github/workflows/skill-evals.yml` が週 1 回ベースラインからの劣化を検出する。
 
 ---
@@ -206,9 +223,14 @@ skill が挙動を変えているかを、同じ依頼を skill あり / なし�
 CHANGELOG をブランチ上で揃え、PR マージ後に `bash scripts/release.sh publish <x.y.z>` がタグと Release を作る。バリデータが VERSION と
 CHANGELOG の不一致を落とす。
 
-導入済みプロジェクトは `bash setup.sh <dir> --upgrade`（`--dry-run` で計画だけ）で追従する。導入時の `.claude/blueprint-manifest.txt`
+導入済みプロジェクトは `bash setup.sh <dir> --upgrade`（`--dry-run` で計画だけ）で追従する。導入時の `.agents/blueprint-manifest.txt`
 （版とファイルごとのハッシュ）と比べ、手を入れていないファイルだけ上書きし、変更済みのものは `<path>.blueprint-new` を横に置く。
 `project-config.md` と `docs/` `input/` `output/` は触らない。手順は [`project-blueprint/README.md`](project-blueprint/README.md) の「更新」。
+
+**0.x からの移行**: 1.0 で配置が変わった(skill・フック・ルールが `.claude/` から `.agents/` へ)。0.x で導入したプロジェクトは `--upgrade` の前に
+`bash migrate.sh <dir> --dry-run` で結果を確かめ、`bash migrate.sh <dir>` で移す。自分で足した skill やフックも一緒に移し、参照とフックの登録パスを書き換え、
+手で変えたファイルは上書きせず `<path>.blueprint-new` を横に置く。失敗時は自動で元に戻り、成功後も `--rollback` で取り消せる。
+手順は [`project-blueprint/README.md`](project-blueprint/README.md) の「0.x からの移行」。
 
 脆弱性の報告経路と対象は [`SECURITY.md`](SECURITY.md)。
 
@@ -220,7 +242,7 @@ CHANGELOG の不一致を落とす。
 2026-08 に再評価して再び撤回した。理由は好みではなく構造的なもの。
 
 plugin が宣言できるのは `skills` / `agents` / `outputStyles` / `hooks` の 4 種だけで、
-`project-config.md` / `docs/` / `input/` / `output/` / `.claude/rules/` / `.claude/teams/` は配布できない。
+`project-config.md` / `docs/` / `input/` / `output/` / `.agents/rules/` / `.claude/teams/` は配布できない。
 一方このハーネスは次の状態にある。
 
 ```text
@@ -228,7 +250,7 @@ plugin が宣言できるのは `skills` / `agents` / `outputStyles` / `hooks` �
 
   docs/               16 / 17        project-config.md   14 / 17
   output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .claude/rules/       3 / 17
+  quality-gates.md    15 / 17        .agents/rules/       3 / 17
 ```
 
 plugin 単体でインストールしても、**全 skill が前提を欠いた状態で動く**。
@@ -244,9 +266,10 @@ plugin 単体でインストールしても、**全 skill が前提を欠いた�
 - [`project-blueprint/README.md`](project-blueprint/README.md) — セットアップの詳細手順
 - [`project-blueprint/AGENTS.md`](project-blueprint/AGENTS.md) — ツール共通の開発ルール（どのコーディングエージェントも読む）
 - [`project-blueprint/.claude/CLAUDE.md`](project-blueprint/.claude/CLAUDE.md) — Claude Code 固有の開発ガイド（AGENTS.md を取り込み、合計 200 行以内）
-- [`project-blueprint/.claude/guardrails.md`](project-blueprint/.claude/guardrails.md) — 安全機構の全体像
-- [`project-blueprint/.claude/pitfalls.md`](project-blueprint/.claude/pitfalls.md) — AI 協調開発の落とし穴
-- [`project-blueprint/.claude/skills/`](project-blueprint/.claude/skills/) — 全 17 skill の SKILL.md
+- [`project-blueprint/.agents/guardrails.md`](project-blueprint/.agents/guardrails.md) — 安全機構の全体像と、Claude Code / Codex の対応表・同じ保証にならない点
+- [`project-blueprint/.codex/`](project-blueprint/.codex/) — Codex 用アダプタ(config.toml / hooks.json / rules / agents)
+- [`project-blueprint/.agents/pitfalls.md`](project-blueprint/.agents/pitfalls.md) — AI 協調開発の落とし穴
+- [`project-blueprint/.agents/skills/`](project-blueprint/.agents/skills/) — 全 17 skill の SKILL.md
 - [`constitution.md`](constitution.md) — 7 不変原則（変更プロトコル付き）
 - [`CHANGELOG.md`](CHANGELOG.md) — リリースノート（SemVer + Keep a Changelog）
 - [`evals/README.md`](evals/README.md) — skill eval の方法とベースライン（skill あり / なしの pass rate）

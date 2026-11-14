@@ -18,13 +18,13 @@
 
 ## どう動くか(`scripts/run_skill_evals.py`)
 
-1. ケースごとに `setup.sh <tmp> --profile full` で使い捨てプロジェクトを作り、`evals/fixtures/<ja|en>/` を重ねる
+1. ケースごとに `setup.sh <tmp> --agent claude --profile full` で使い捨てプロジェクトを作り、`evals/fixtures/<ja|en>/` を重ねる
    (`common/`: §1〜§3 を埋めた `project-config.md` の置換表と最小の `package.json` / `src/`、`<skill>/`: PRD / TASK / レビュー対象コードの seed)。
    `git init` + コミット(`_second_commit/` があれば 2 コミット目として積む。`/code-review` の「直近のコミット」用)
 2. `claude -p "<prompt>" --output-format stream-json --permission-mode dontAsk --allowedTools <許可リスト>` で実行する。
    権限は CI テンプレート(`claude-skills-ci.yml.template`)と同じ「明示的な許可リスト + 自動拒否」。プロジェクト側の deny ルールと
    PreToolUse フックはそのまま効く。`--max-turns` と `--max-budget-usd` で上限を切る
-3. 変更・作成されたファイル(`.claude/` `testreport/` `output/reports/sessions/` を除く)と最終メッセージを集め、
+3. 変更・作成されたファイル(`.agents/` `.claude/` `.codex/` `testreport/` `output/reports/sessions/` を除く)と最終メッセージを集め、
    **ツールを持たない別の `claude -p`**(空ディレクトリ、`--json-schema` で構造化)が assertion ごとに PASS / FAIL と根拠を返す。
    根拠が無ければ FAIL に倒す(自己採点バイアス対策)
 4. `summary.json` / `records.json` / `SUMMARY.md` を書き、`--baseline` があれば skill ごとの with 合格率が `--tolerance` ポイント以上
@@ -38,6 +38,9 @@ python3 scripts/run_skill_evals.py --skill prd --baseline evals/baseline/latest.
 ```
 
 要件: ログイン済みの `claude` CLI(または `ANTHROPIC_API_KEY`)、bash、git、jq。生の結果は `evals/results/`(gitignore)に落ちる。
+
+> **計測対象は Claude Code だけ**である。skill の原本は Codex と共有しているが(`.agents/skills/`)、`codex exec` で同じ 2 系統を回す runner は未実装で、
+> Codex 上で skill が挙動を変えているかの数値はまだ無い。ベースラインの数値を Codex の性能として読まないこと。
 
 ## ベースラインの更新
 

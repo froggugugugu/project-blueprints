@@ -57,7 +57,7 @@
 - ユーザーストーリー・受け入れ基準・優先度を構造化する
 - 曖昧な要件は「【要確認】」としてPLに報告する
 - **ソースコードは変更しない**
-- 参考: `.claude/learnings/L0001-brainstorm-before-prd.md`
+- 参考: `.agents/learnings/L0001-brainstorm-before-prd.md`
 
 ### アーキテクト
 

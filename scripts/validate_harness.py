@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic validator for the .claude/ harness.
+"""Deterministic validator for the harness (.agents/ shared core + .claude/ and .codex/ adapters).
 
 Catches the class of defect that only a human reading the spec would otherwise
 notice: frontmatter fields with values outside the official enums, permission
@@ -13,6 +13,11 @@ Usage (see validate-harness.sh for the wrapper):
     python3 scripts/validate_harness.py                 # both mirrors + parity
     python3 scripts/validate_harness.py --root <dir>    # one harness root
     python3 scripts/validate_harness.py --online        # also resolve npm packages
+
+Layout (1.0): `.agents/` holds what Claude Code and Codex share (skills, hooks, rules, gates);
+`.claude/` and `.codex/` are thin adapters. The Codex-side checks (`check_codex_*`) verify that the
+adapter registers the shared hooks, mirrors the Claude Code deny / ask rules, and that the generated
+agent definitions are in sync with their source.
 """
 from __future__ import annotations
 
@@ -30,6 +35,9 @@ try:
     import yaml  # type: ignore
 except ImportError:  # pragma: no cover - CI images often lack PyYAML
     yaml = None
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sync_codex_agents  # noqa: E402 - .claude/agents/*.md → .codex/agents/*.toml の生成器(同期検査に使う)
 
 # ── 公式仕様の enum(docs.claude.com 準拠) ──────────────────────────────
 HOOK_EVENTS = {
@@ -118,6 +126,30 @@ LEGACY_THINK_RE = re.compile(r"(?i)\b(think hard(?:er)?|be thorough)\b")
 
 # ファイルパス権限は Edit(path) / Read(path) だけが参照される。
 # 下記ツールにパス指定を書いても一切参照されず、起動時に警告が出る。
+# ── Codex 側の仕様(developers.openai.com/codex の hooks / config-reference / rules。2026-11-14 / codex-cli 0.162)──
+CODEX_HOOK_EVENTS = {
+    "SessionStart", "SessionEnd", "SubagentStart", "SubagentStop", "PreToolUse", "PermissionRequest",
+    "PostToolUse", "PreModelRequest", "PostModelRequest", "PreCompact", "PostCompact",
+    "UserPromptSubmit", "Stop", "Interrupt",
+}
+CODEX_HOOK_TYPES = {"command", "mcp_tool"}      # prompt / agent は解釈されるが実行されない
+CODEX_NO_MATCHER_EVENTS = {"UserPromptSubmit", "Stop", "Interrupt", "PreModelRequest", "PostModelRequest"}
+CODEX_BLOCKING_SCRIPTS = {"safety-check.sh", "protect-files.sh"}
+CODEX_CLAUDE_ONLY_HOOK_KEYS = {"onFailure", "if", "continueOnBlock", "once"}
+CODEX_SESSION_END_MAX_TIMEOUT = 3               # SessionEnd / Interrupt は既定 1 秒・上限 3 秒
+# プロジェクトの .codex/config.toml に書いても無視されるキー(ユーザー設定にだけ効く)
+CODEX_PROJECT_IGNORED_KEYS = {
+    "openai_base_url", "chatgpt_base_url", "apps_mcp_product_sku", "model_provider", "model_providers",
+    "notify", "profile", "profiles", "experimental_realtime_ws_base_url", "otel",
+}
+# 権限プロファイルで読取専用にしておくパス(`extends = ":workspace"` だけでは保護が継がれなかった。codex-cli 0.162.1 実測)
+CODEX_PROTECTED_PATHS = (".git", ".agents", ".codex", ".claude/settings.json")
+CODEX_ADAPTER_REL = ".agents/hooks/lib/codex-adapter.sh"
+CODEX_ADAPTER_RE = re.compile(r"/\.agents/hooks/lib/codex-adapter\.sh\"?\s+(--fail-closed\s+)?([\w.-]+\.sh)")
+# .claude/ に実体を置かないもの(原本は .agents/。Claude Code 用には setup.sh がリンクする)
+SHARED_VIA_LINK = ("skills", "rules")
+MOVED_OUT_OF_CLAUDE = ("hooks", "scripts", "learnings", "tasks", "guardrails.md", "quality-gates.md", "pitfalls.md")
+
 NEVER_CONSULTED_PATH_TOOLS = {"Write", "NotebookEdit", "Glob", "MultiEdit"}
 
 CLAUDE_MD_SOFT_LIMIT = 200   # constitution §6 目安
@@ -254,7 +286,7 @@ def check_permission_rules(where: str, rules: list[str], rep: Report) -> None:
 def check_settings(root: Path, rep: Report) -> set[str]:
     """Validate settings*.json. Returns the set of hook scripts referenced."""
     referenced: set[str] = set()
-    hooks_dir = root / ".claude/hooks"
+    hooks_dir = root / ".agents/hooks"
 
     for name in ("settings.json", "settings.minimal.json"):
         p = root / ".claude" / name
@@ -281,7 +313,7 @@ def check_settings(root: Path, rep: Report) -> set[str]:
                     cmd = hook.get("command", "")
                     if event in FAIL_CLOSED_EVENTS and any(s in cmd for s in FAIL_CLOSED_SCRIPTS) and hook.get("onFailure") != "block":
                         rep.warn(where, f"{event} のブロック系フック({cmd.split('/')[-1].split()[0]})に `onFailure: block` がありません — フックが起動できない・タイムアウトしたとき操作が素通りします(v2.1.295)")
-                    m = re.search(r"/\.claude/hooks/([\w.-]+\.sh)", cmd)
+                    m = re.search(r"/\.agents/hooks/([\w.-]+\.sh)", cmd)
                     if not m:
                         continue
                     script = m.group(1)
@@ -432,7 +464,7 @@ def check_enabled_plugins(where: str, cfg: dict, rep: Report) -> None:
 
 
 def check_hook_scripts(root: Path, referenced: set[str], rep: Report) -> None:
-    hooks_dir = root / ".claude/hooks"
+    hooks_dir = root / ".agents/hooks"
     if not hooks_dir.is_dir():
         return
     for p in sorted(hooks_dir.glob("*.sh")):
@@ -526,11 +558,11 @@ def check_agents(root: Path, skill_names: set[str], rep: Report) -> None:
 
         for skill in fm.get("skills") or []:
             if str(skill).strip() not in skill_names:
-                rep.error(where, f"`skills:` が参照する `{skill}` が .claude/skills/ に存在しません")
+                rep.error(where, f"`skills:` が参照する `{skill}` が .agents/skills/ に存在しません")
 
 
 def check_skills(root: Path, rep: Report) -> set[str]:
-    skills_dir = root / ".claude/skills"
+    skills_dir = root / ".agents/skills"
     names: set[str] = set()
     if not skills_dir.is_dir():
         return names
@@ -725,16 +757,16 @@ def check_frontmatter_hooks(root: Path, rep: Report) -> set[str]:
     """Hooks declared in agent / skill frontmatter. Returns the hook scripts they reference."""
     referenced: set[str] = set()
     files = [p for p in sorted((root / ".claude/agents").glob("*.md")) if p.name != "README.md"]
-    files += sorted((root / ".claude/skills").glob("*/SKILL.md"))
+    files += sorted((root / ".agents/skills").glob("*/SKILL.md"))
     for p in files:
         m = FM_RE.match(p.read_text(encoding="utf-8"))
         if not m:
             continue
         block = m.group(1)
-        for sm in re.finditer(r"/\.claude/hooks/([\w.-]+\.sh)(?:[ \t]+([\w-]+))?", block):
+        for sm in re.finditer(r"/\.agents/hooks/([\w.-]+\.sh)(?:[ \t]+([\w-]+))?", block):
             script, arg = sm.group(1), sm.group(2)
             referenced.add(script)
-            if not (root / ".claude/hooks" / script).exists():
+            if not (root / ".agents/hooks" / script).exists():
                 rep.error(str(p), f"frontmatter の hooks が参照する {script} が存在しません")
             if script == "scope-guard.sh" and arg not in SCOPE_GUARD_SCOPES:
                 rep.error(str(p), f"scope-guard.sh の未知のスコープ `{arg}` です (許容値: {', '.join(sorted(SCOPE_GUARD_SCOPES))})")
@@ -865,7 +897,7 @@ def check_output_styles(root: Path, rep: Report) -> None:
 
 
 def check_rules(root: Path, rep: Report) -> None:
-    rules_dir = root / ".claude/rules"
+    rules_dir = root / ".agents/rules"
     if not rules_dir.is_dir():
         return
     for p in sorted(list(rules_dir.glob("*.md")) + list(rules_dir.glob("*.md.example"))):
@@ -941,11 +973,12 @@ def check_imports_and_limits(root: Path, rep: Report) -> None:
 def check_instruction_phrasing(root: Path, rep: Report) -> None:
     """Claude が読む指示ファイルに残った旧世代向けの強調・思考誘導(公式 best-practices「What you can stop doing」)。
     現行モデルは平叙文に従い、強調は過剰適用を、`think hard` は effort と無関係な文字列として扱われる。"""
-    c = root / ".claude"
+    c, shared = root / ".claude", root / ".agents"
     targets = [c / "CLAUDE.md", root / "AGENTS.md", c / "loop.md"]
-    for sub in ("rules", "agents", "output-styles"):
+    for sub in ("agents", "output-styles"):
         targets += sorted((c / sub).glob("*.md"))
-    targets += sorted((c / "skills").glob("*/SKILL.md"))
+    targets += sorted((shared / "rules").glob("*.md"))
+    targets += sorted((shared / "skills").glob("*/SKILL.md"))
     for p in targets:
         if not p.is_file() or p.name == "README.md":
             continue
@@ -968,7 +1001,7 @@ def check_loop_md(root: Path, rep: Report) -> None:
 
 def check_constitution(root: Path, rep: Report) -> None:
     con = root / "constitution.md"
-    digest_file = root / ".claude/.constitution.sha256"
+    digest_file = root / ".agents/.constitution.sha256"
     if not con.exists() or not digest_file.exists():
         return
     import hashlib
@@ -1071,6 +1104,315 @@ def check_release_version(repo: Path, rep: Report) -> None:
         rep.warn("CHANGELOG.md", "`## [Unreleased]` 節がありません(Keep a Changelog)")
 
 
+# ── Codex アダプタ(.codex/)と共通の核(.agents/)────────────────────────────
+
+def parse_toml_light(text: str) -> dict[str, dict[str, object]]:
+    """`.codex/config.toml` を {テーブル名: {キー: 値}} に読む(最上位は "")。
+
+    Python 3.11 未満には tomllib が無いため、ここで使う範囲(文字列・真偽値・数値のスカラーと
+    複数行文字列)だけを解釈する。配列やインラインテーブルの値は生の文字列のまま返す。
+    """
+    tables: dict[str, dict[str, object]] = {"": {}}
+    current = ""
+    lines = text.split("\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        i += 1
+        if not line or line.startswith("#"):
+            continue
+        m = re.match(r"^\[\[?(.+?)\]\]?\s*(#.*)?$", line)
+        if m:
+            current = m.group(1).strip()
+            tables.setdefault(current, {})
+            continue
+        m = re.match(r'^(?:"([^"]+)"|\'([^\']+)\'|([A-Za-z0-9_.-]+))\s*=\s*(.*)$', line)
+        if not m:
+            continue
+        key = m.group(1) or m.group(2) or m.group(3)
+        raw = m.group(4).strip()
+        if raw.startswith('"""') or raw.startswith("'" * 3):
+            quote = raw[:3]
+            body = raw[3:]
+            while quote not in body and i < len(lines):
+                body += "\n" + lines[i]
+                i += 1
+            tables[current][key] = body.split(quote)[0]
+            continue
+        sm = re.match(r'^"((?:[^"\\]|\\.)*)"', raw) or re.match(r"^'([^']*)'", raw)
+        if sm:
+            tables[current][key] = sm.group(1)
+        elif re.match(r"^(true|false)\b", raw):
+            tables[current][key] = raw.startswith("true")
+        else:
+            tables[current][key] = re.sub(r"\s+#.*$", "", raw)
+    return tables
+
+
+def check_codex_hooks(root: Path, rep: Report) -> set[str]:
+    """`.codex/hooks*.json`: 共有フックをアダプタ経由で登録しているか。参照されたフックの集合を返す。"""
+    referenced: set[str] = set()
+    codex = root / ".codex"
+    if not codex.is_dir():
+        return referenced
+    hooks_dir = root / ".agents/hooks"
+    adapter = root / CODEX_ADAPTER_REL
+    if not adapter.is_file():
+        rep.error(str(adapter), "Codex 用アダプタがありません — .codex/hooks.json が共有フックを呼べません")
+    elif not adapter.stat().st_mode & 0o111:
+        rep.error(str(adapter), "実行権限がありません (chmod +x)")
+    else:
+        proc = subprocess.run(["bash", "-n", str(adapter)], capture_output=True, text=True)
+        if proc.returncode != 0:
+            rep.error(str(adapter), f"シェル構文エラー: {proc.stderr.strip()[:120]}")
+
+    for name in ("hooks.json", "hooks.minimal.json"):
+        p = codex / name
+        if not p.exists():
+            continue
+        where = str(p)
+        try:
+            cfg = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001 - check_json_files が報告する
+            continue
+        blocking_seen: set[str] = set()
+        for event, groups in (cfg.get("hooks") or {}).items():
+            if event not in CODEX_HOOK_EVENTS:
+                rep.error(where, f"`{event}` は Codex のフックイベント名ではありません(Claude Code 専用のイベントは .claude/settings.json に書く)")
+            for group in groups or []:
+                if event in CODEX_NO_MATCHER_EVENTS and group.get("matcher"):
+                    rep.warn(where, f"{event} の matcher は Codex では無視されます")
+                for hook in group.get("hooks", []):
+                    htype = hook.get("type")
+                    if htype not in CODEX_HOOK_TYPES:
+                        rep.error(where, f"{event} のフック type `{htype}` は Codex では実行されません(command / mcp_tool のみ)")
+                    for key in sorted(CODEX_CLAUDE_ONLY_HOOK_KEYS & set(hook)):
+                        rep.warn(where, f"{event} のフックにある `{key}` は Claude Code 専用のキーです(Codex は解釈しません)")
+                    timeout = hook.get("timeout")
+                    if event in ("SessionEnd", "Interrupt") and isinstance(timeout, (int, float)) and timeout > CODEX_SESSION_END_MAX_TIMEOUT:
+                        rep.warn(where, f"{event} の timeout {timeout} 秒は上限({CODEX_SESSION_END_MAX_TIMEOUT} 秒)を超えています")
+                    cmd = str(hook.get("command", ""))
+                    if htype != "command":
+                        continue
+                    m = CODEX_ADAPTER_RE.search(cmd)
+                    if not m:
+                        rep.warn(where, f"{event} のフックがアダプタ(lib/codex-adapter.sh)を通していません — apply_patch の入力が変換されず、共有フックがファイルパスを読めません")
+                        continue
+                    script = m.group(2)
+                    referenced.add(script)
+                    if not (hooks_dir / script).exists():
+                        rep.error(where, f"{event} が参照する {script} が存在しません")
+                    if event == "PreToolUse" and script in CODEX_BLOCKING_SCRIPTS:
+                        blocking_seen.add(script)
+                        if not m.group(1):
+                            rep.warn(where, f"PreToolUse のブロック系フック({script})に `--fail-closed` がありません — フック本体が無いとき操作が素通りします(Codex には onFailure: block が無い)")
+        for script in sorted(CODEX_BLOCKING_SCRIPTS - blocking_seen):
+            rep.error(where, f"PreToolUse に {script} が登録されていません — Layer 1 のブロック系フックは Codex 側にも必要です(constitution ⑤)")
+    return referenced
+
+
+def check_codex_config(root: Path, rep: Report) -> dict[str, object]:
+    """`.codex/config.toml`: 防御層を弱める設定・効かないキー・権限プロファイルの穴。deny エントリを返す。"""
+    p = root / ".codex/config.toml"
+    if not p.exists():
+        if (root / ".codex").is_dir():
+            rep.error(str(p), ".codex/ がありますが config.toml がありません")
+        return {}
+    where = str(p)
+    tables = parse_toml_light(p.read_text(encoding="utf-8"))
+    top = tables.get("", {})
+
+    if top.get("approval_policy") == "never":
+        rep.error(where, '`approval_policy = "never"` は確認なしで実行します — 共有設定では使えません(constitution ⑤)')
+    for key in sorted(CODEX_PROJECT_IGNORED_KEYS & (set(top) | {t.split(".")[0] for t in tables if t})):
+        rep.warn(where, f"`{key}` はプロジェクトの config.toml では無視されます(~/.codex/config.toml に書く)")
+    if tables.get("features", {}).get("hooks") is False:
+        rep.error(where, "`[features] hooks = false` はフックを一括で止めます(constitution ⑤)")
+
+    profile = top.get("default_permissions")
+    has_legacy = "sandbox_mode" in top or "sandbox_workspace_write" in tables
+    if profile and has_legacy:
+        rep.error(where, "`default_permissions` と `sandbox_mode` / `[sandbox_workspace_write]` が両方あります — Codex は旧来の設定を使い、権限プロファイル(シークレットの読取禁止)が効かなくなります")
+    if not profile:
+        rep.warn(where, "`default_permissions` がありません — シークレットの読取禁止(Claude Code の Read() deny に当たる層)が Codex 側にありません")
+        return {}
+    if profile == ":danger-full-access":
+        rep.error(where, "`default_permissions = \":danger-full-access\"` はサンドボックスを外します(constitution ⑤)")
+        return {}
+    if str(profile).startswith(":"):
+        rep.warn(where, f"組み込みプロファイル `{profile}` を使っています — シークレットの読取禁止を足すには独自プロファイルが必要です")
+        return {}
+    if f"permissions.{profile}" not in tables:
+        rep.error(where, f"`default_permissions = \"{profile}\"` に対応する `[permissions.{profile}]` がありません")
+        return {}
+    roots_table = tables.get(f'permissions.{profile}.filesystem.":workspace_roots"', {})
+    for path in CODEX_PROTECTED_PATHS:
+        if roots_table.get(path) not in ("read", "deny"):
+            rep.error(where, f"権限プロファイルで `{path}` が読取専用になっていません — Codex がハーネス自体を書き換えられます"
+                             "(`extends = \":workspace\"` だけでは保護が継がれません。codex-cli 0.162.1 実測)")
+    if tables.get(f"permissions.{profile}.network", {}).get("enabled") is True:
+        rep.warn(where, "権限プロファイルがネットワークを常時許可しています — 外向き通信は都度の確認に任せるのが既定です")
+    return {k: v for k, v in roots_table.items() if v == "deny"}
+
+
+def parse_codex_rules(path: Path, rep: Report) -> list[tuple[list, str]]:
+    """`.rules`(Starlark)から (pattern, decision) を取り出す。pattern のリスト記法は Python と同じ。"""
+    import ast
+
+    out: list[tuple[list, str]] = []
+    for block in re.findall(r"prefix_rule\((.*?)\n\)", path.read_text(encoding="utf-8"), flags=re.S):
+        pm = re.search(r"pattern\s*=\s*(\[.*?\]),\s*\n", block, flags=re.S)
+        if not pm:
+            rep.error(str(path), "prefix_rule に `pattern` がありません")
+            continue
+        try:
+            pattern = ast.literal_eval(pm.group(1))
+        except Exception:  # noqa: BLE001
+            rep.error(str(path), f"prefix_rule の pattern を解釈できません: {pm.group(1)[:60]}")
+            continue
+        dm = re.search(r'decision\s*=\s*"([^"]*)"', block)
+        decision = dm.group(1) if dm else "allow"
+        if decision not in ("allow", "prompt", "forbidden"):
+            rep.error(str(path), f"prefix_rule の decision `{decision}` は不正です(allow / prompt / forbidden)")
+            continue
+        if decision == "allow":
+            rep.warn(str(path), f"共有の rules に allow があります({pattern})— サンドボックスの外で確認なしに実行されます。個人の許可は ~/.codex/rules/ に置く")
+        if not re.search(r"match\s*=\s*\[", block):
+            rep.warn(str(path), f"prefix_rule({pattern})に `match` の例がありません — 読み込み時の自己テストが効きません")
+        out.append((pattern, decision))
+    return out
+
+
+def claude_rule_head(rule: str) -> tuple[list[str], bool] | None:
+    """`Bash(git push --force *)` → (["git", "push", "--force"], False)。先頭が `*` の規則は None(prefix で書けない)。
+
+    2 番目の値は「先頭トークンが前方一致」(`mkfs*` など)であることを示す。
+    """
+    m = re.match(r"^Bash\((.*)\)$", rule)
+    if not m:
+        return None
+    tokens = m.group(1).replace(":*", " *").split()
+    if not tokens or tokens[0].startswith("*"):
+        return None
+    head: list[str] = []
+    for tok in tokens:
+        if "*" in tok:
+            lit = tok.split("*")[0]
+            if not head and lit and "=" not in lit:
+                return [lit], True
+            break
+        head.append(tok)
+    return (head, False) if head else None
+
+
+def codex_rule_covers(rules: list[tuple[list, str]], head: list[str], prefix: bool, decisions: set[str]) -> bool:
+    for pattern, decision in rules:
+        if decision not in decisions or len(pattern) != len(head):
+            continue
+        ok = True
+        for i, tok in enumerate(head):
+            alts = pattern[i] if isinstance(pattern[i], list) else [pattern[i]]
+            if prefix and i == 0:
+                ok = any(str(a).startswith(tok) for a in alts)
+            else:
+                ok = tok in alts
+            if not ok:
+                break
+        if ok:
+            return True
+    return False
+
+
+def check_codex_parity(root: Path, codex_deny: dict[str, object], rep: Report) -> None:
+    """Claude Code の deny / ask と Codex の rules / 権限プロファイルが同じ意図になっているか。"""
+    settings = root / ".claude/settings.json"
+    rules_file = root / ".codex/rules/default.rules"
+    if not (root / ".codex").is_dir():
+        return
+    if not rules_file.exists():
+        rep.error(str(rules_file), "Codex のコマンド規則がありません — Claude Code の deny / ask に当たる層が Codex 側にありません")
+        return
+    rules = parse_codex_rules(rules_file, rep)
+    if not settings.exists():
+        return
+    perms = json.loads(settings.read_text(encoding="utf-8")).get("permissions", {})
+    for bucket, decisions, label in (("deny", {"forbidden"}, "forbidden"), ("ask", {"prompt", "forbidden"}, "prompt")):
+        for rule in perms.get(bucket, []):
+            parsed = claude_rule_head(rule)
+            if parsed is None:
+                continue
+            head, prefix = parsed
+            if not codex_rule_covers(rules, head, prefix, decisions):
+                rep.error(str(rules_file), f"Claude Code の {bucket} `{rule}` に対応する {label} 規則がありません(pattern = {head})")
+
+    def claude_key(rule: str) -> str | None:
+        m = re.match(r"^Read\((.*)\)$", rule)
+        if not m:
+            return None
+        key = m.group(1)
+        key = key[2:] if key.startswith("./") else key
+        return key[:-3] if key.endswith("/**") else key
+
+    def codex_key(key: str) -> str:
+        return key[3:] if key.startswith("**/") else key
+
+    claude_keys = {k for k in (claude_key(r) for r in perms.get("deny", [])) if k}
+    codex_keys = {codex_key(k) for k in codex_deny}
+    config = str(root / ".codex/config.toml")
+    for key in sorted(claude_keys - codex_keys):
+        rep.error(config, f"Claude Code が読取を禁じている `{key}` が Codex の権限プロファイルで deny になっていません")
+    for key in sorted(codex_keys - claude_keys):
+        rep.error(str(settings), f"Codex が読取を禁じている `{key}` に対応する `Read()` deny が Claude Code 側にありません")
+
+
+def check_codex_agents(root: Path, rep: Report) -> None:
+    """`.codex/agents/*.toml` が原本(`.claude/agents/*.md`)から生成し直した内容と一致するか。"""
+    if not (root / ".codex").is_dir() or not (root / ".claude/agents").is_dir():
+        return
+    try:
+        want = sync_codex_agents.expected_files(root)
+    except ValueError as exc:
+        rep.error(str(root / ".claude/agents"), f"Codex 用エージェントを生成できません: {exc}")
+        return
+    for path, content in want.items():
+        if not path.is_file():
+            rep.error(str(path), f"原本 .claude/agents/{path.stem}.md に対応する Codex 用エージェントがありません(python3 scripts/sync_codex_agents.py)")
+        elif path.read_text(encoding="utf-8") != content:
+            rep.error(str(path), "原本(.claude/agents/)とずれています — 直接編集せず、python3 scripts/sync_codex_agents.py で再生成してください")
+    for extra in sorted((root / ".codex/agents").glob("*.toml")):
+        if extra not in want:
+            rep.error(str(extra), "原本(.claude/agents/)に無いエージェントです — 原本を足して再生成するか、このファイルを消してください")
+
+
+def check_shared_layout(root: Path, rep: Report) -> None:
+    """共通の核は .agents/ に 1 つだけ置く。.claude/ 側に実体が残っていれば二重管理になる。"""
+    claude = root / ".claude"
+    if not claude.is_dir() or not (root / ".agents").is_dir():
+        return
+    for name in MOVED_OUT_OF_CLAUDE:
+        if (claude / name).exists():
+            rep.error(str(claude / name), f"1.0 の配置では `.agents/{name}` に置きます(.claude/ は Claude Code 専用のアダプタ)")
+    for name in SHARED_VIA_LINK:
+        d = claude / name
+        if not d.is_dir():
+            continue
+        for entry in sorted(d.iterdir()):
+            if entry.is_symlink() and os.readlink(entry).startswith("../../.agents/"):
+                continue
+            if (root / ".agents" / name / entry.name).exists():
+                rep.error(str(entry), f"`.agents/{name}/{entry.name}` と二重になっています — 原本は .agents/ 側だけに置き、.claude/ 側は setup.sh のリンクに任せます")
+            else:
+                rep.warn(str(entry), f"`.claude/{name}/` に実体があります — Codex からは見えません。`.agents/{name}/` へ移して setup.sh --relink してください")
+    for skill in sorted((root / ".agents/skills").glob("*/SKILL.md")):
+        m = FM_RE.match(skill.read_text(encoding="utf-8"))
+        if not m or not re.search(r"^disable-model-invocation:\s*true\s*$", m.group(1), flags=re.M):
+            continue
+        meta = skill.parent / "agents/openai.yaml"
+        if not meta.exists() or not re.search(r"allow_implicit_invocation:\s*false", meta.read_text(encoding="utf-8")):
+            rep.error(str(skill), "`disable-model-invocation: true` の skill に `agents/openai.yaml`(`policy.allow_implicit_invocation: false`)がありません"
+                                  " — Codex ではプロンプトから自動起動されます")
+
+
 def check_mirror_parity(a: Path, b: Path, rep: Report) -> None:
     def tree(root: Path) -> set[str]:
         return {
@@ -1084,14 +1426,22 @@ def check_mirror_parity(a: Path, b: Path, rep: Report) -> None:
         rep.error("mirror parity", f"{a.name} にのみ存在: {f}")
     for f in sorted(only_b):
         rep.error("mirror parity", f"{b.name} にのみ存在: {f}")
+    # 導入・移行スクリプトは日英で同一のファイル(メッセージだけ言語で切り替える)。片方だけ直すと挙動がずれる
+    for name in ("setup.sh", "migrate.sh"):
+        fa, fb = a / name, b / name
+        if fa.is_file() and fb.is_file() and fa.read_bytes() != fb.read_bytes():
+            rep.error("mirror parity", f"{name} が日英ミラーで一致しません(同一ファイルとして保守する。片方を直したらもう片方へコピーする)")
 
 
 def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_json_files(root, rep)
     skill_names = check_skills(root, rep)
     check_agents(root, skill_names, rep)
-    referenced = check_settings(root, rep) | check_frontmatter_hooks(root, rep)
+    referenced = check_settings(root, rep) | check_frontmatter_hooks(root, rep) | check_codex_hooks(root, rep)
     check_hook_scripts(root, referenced, rep)
+    check_codex_parity(root, check_codex_config(root, rep), rep)
+    check_codex_agents(root, rep)
+    check_shared_layout(root, rep)
     check_output_styles(root, rep)
     check_workflows(root, rep)
     check_rules(root, rep)
@@ -1103,7 +1453,7 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="`.claude/` ハーネスの静的検証")
+    ap = argparse.ArgumentParser(description="ハーネス(.agents/ + .claude/ + .codex/)の静的検証")
     ap.add_argument("--root", action="append", default=None,
                     help="検証するハーネスのルート (省略時は日英ミラーを自動検出)")
     ap.add_argument("--online", action="store_true",

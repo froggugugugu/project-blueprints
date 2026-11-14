@@ -18,6 +18,8 @@ Claude Code は各 agent の `description` フィールドを解析して自動�
 | `test-writer` | ユニット・E2E テスト作成 | `sonnet` | medium | Read / Edit / Write / Grep / Glob / Bash | テストファイルのみ |
 | `verifier` | 完了直前の仕様照合(差分 × 受け入れ条件 × 検証結果) | `sonnet` | high | Read / Grep / Glob / Bash | なし |
 
+本ディレクトリが定義の原本である。Codex 用の `.codex/agents/<name>.toml` はここから `python3 scripts/sync_codex_agents.py`(テンプレート元リポジトリ)で生成し、`tools` と `scope-guard.sh` の制約は指示文として書き下す(Codex にはエージェント単位のサンドボックスとフックが無い)。直接編集せず、原本を直して再生成する。
+
 全 agent に `maxTurns` を設定済み(暴走防止)。`verifier` 以外は `memory: project`(セッションをまたいだ学習。verifier は判定の持ち越しを避けるため持たない)。
 
 ## agent vs team vs skill の使い分け
@@ -25,7 +27,7 @@ Claude Code は各 agent の `description` フィールドを解析して自動�
 | やりたいこと | 選ぶべきもの | 理由 |
 | ------------ | ------------ | ---- |
 | 複数役割の定常的な共同作業（PRD→設計→実装→検証） | **team** (`.claude/teams/TEAM_*.md`) | ロール分担と承認ゲートが整備済み |
-| 決まった手順の実行（PRD 生成、コードレビュー等） | **skill** (`.claude/skills/*/SKILL.md`) | 入出力契約・成果物先が定義済み |
+| 決まった手順の実行（PRD 生成、コードレビュー等） | **skill** (`.agents/skills/*/SKILL.md`) | 入出力契約・成果物先が定義済み |
 | 単発の専門調査・レビュー（車輪の再発明を防ぐ） | **agent** (`.claude/agents/*.md`) | コンテキストを隔離して軽量実行 |
 
 3 つは競合せず補完する。たとえば `TEAM_PJM` の「レビュアー」が単発で `security-reviewer` agent を呼ぶ、というネスト運用も可能。
@@ -120,14 +122,14 @@ Agent({
 ## コンセプト整合（プロジェクトブループリント原則）
 
 - agent は `.claude/` 配下の**汎用テンプレート層**。プロジェクト固有のルールは `docs/` や `project-config.md` に
-- agent は **CLAUDE.md 階層(`.claude/rules/*.md` を含む)と git status のスナップショットを既定で継承する**(Claude Code 公式仕様。ビルトインの `Explore` / `Plan` のみ両方をスキップして最小コンテキストで動く)。skill は `skills:` frontmatter で明示指定したもののみ全文プリロードされる — それ以外は `Skill` ツール経由で個別に呼び出せる
+- agent は **CLAUDE.md 階層(`.agents/rules/*.md` を含む)と git status のスナップショットを既定で継承する**(Claude Code 公式仕様。ビルトインの `Explore` / `Plan` のみ両方をスキップして最小コンテキストで動く)。skill は `skills:` frontmatter で明示指定したもののみ全文プリロードされる — それ以外は `Skill` ツール経由で個別に呼び出せる
 - agent は `input/`（人間入力）を書き換えない。成果物は `output/` か、agent ごとに定義されたスコープ内に
 
 ## 公式仕様の補足(2026-09 確認)
 
 - **実行形態**: 対話セッションでは fork mode が既定で ON になり、subagent は**バックグラウンドで実行**される。
   結果は完了時に会話へ届く。`background: true` を書くと常時バックグラウンドを強制できる
-- **継承するもの / しないもの**: CLAUDE.md 階層・`.claude/rules/`・git status は継承(ビルトインの `Explore` / `Plan` を除く)。
+- **継承するもの / しないもの**: CLAUDE.md 階層・`.agents/rules/`・git status は継承(ビルトインの `Explore` / `Plan` を除く)。
   会話履歴・親の auto memory・skill 本文は継承しない(skill は `skills:` で明示プリロード)
 - **ネスト**: 公式の既定は 3 階層まで(同時実行は 20 体まで)。本テンプレートは constitution ④ により **agent の `tools` に `Agent` を含めず**、
   `settings.json` の env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` で入れ子を機械的に禁じる。並列 fan-out が必要なら team か dynamic workflows を使う
@@ -152,4 +154,4 @@ Agent({
 - `color` に公式 8 色以外（例: `magenta`）を書くと表示が壊れる
 - `model` に存在しない ID を書くと起動に失敗する。エイリアスを使う
 
-詳細は `.claude/pitfalls.md` を参照。
+詳細は `.agents/pitfalls.md` を参照。

@@ -5,7 +5,7 @@ repository. It sits above `project-config.md` (variable parameters); when AI
 attempts to violate them, `scan-harness.sh` flags it.
 
 > Changes require an explicit PR with discussion, and the
-> `.claude/.constitution.sha256` must be updated in the same PR.
+> `.agents/.constitution.sha256` must be updated in the same PR.
 > AI is prohibited from rewriting this file unilaterally.
 
 ---
@@ -33,9 +33,9 @@ gates themselves must not be removed.
 
 ## 4. Maintain the three-layer separation (skill / team / agent)
 
-- **Skill**: a procedure for one phase (`.claude/skills/`)
-- **Team**: orchestration combining multiple skills (`.claude/teams/`)
-- **Agent**: single-shot specialist delegation (`.claude/agents/`)
+- **Skill**: a procedure for one phase (`.agents/skills/`)
+- **Team**: orchestration combining multiple skills (`.claude/teams/`; a Claude Code extension)
+- **Agent**: single-shot specialist delegation (`.claude/agents/`; the Codex versions in `.codex/agents/` are generated from the same definitions)
 
 Don't mix layers. A skill calling a team, an agent spawning agents in a loop,
 etc. are prohibited.
@@ -46,15 +46,18 @@ Layer 1: hooks (always-on) / Layer 2: deny rules (shared) / Layer 3: allow rules
 Layer 1 stays active even with `--dangerously-skip-permissions`. Changes that
 disable or stop hooks are prohibited. Adding new hooks is permitted.
 
+The three layers exist for both Claude Code and Codex (Layer 2 on the Codex side is `.codex/rules/` and the permission profile).
+Removing or loosening a layer for only one of the agents also counts as weakening.
+
 ## 6. Keep the always-loaded instructions (CLAUDE.md + AGENTS.md) within 200 lines combined (target), 220 lines (hard cap)
 
 Bloat reduces compliance because important rules get buried (pitfalls.md #1, #18).
 Claude Code reads `CLAUDE.md` and the `AGENTS.md` (tool-agnostic rules) it imports through `@AGENTS.md` in full every session,
-so count the **combined** lines of both files. Moving text from one to the other saves nothing.
+so count the **combined** lines of both files. Moving text from one to the other saves nothing. Codex reads only `AGENTS.md` every session.
 
 - **Target**: under 200 lines combined
 - **Hard cap**: 220 lines combined (must extract on the next edit if exceeded)
-- **Extract to**: `.claude/rules/<topic>.md` (with `paths:`), `.claude/skills/<name>/SKILL.md`, `docs/<topic>.md`
+- **Extract to**: `.agents/rules/<topic>.md` (with `paths:`), `.agents/skills/<name>/SKILL.md`, `docs/<topic>.md`
 - **Heuristic**: a single topic exceeding 20 lines is an extraction candidate. An `@import` loads in full every session and saves nothing,
   so refer to it by path plus the condition for reading it
 
@@ -70,13 +73,13 @@ If a leak is detected, immediately purge the history and rotate the key.
 
 1. Create a PR proposing changes to this file
 2. **Inside the PR** (not after merge), recompute the hash and commit
-   `.claude/.constitution.sha256` in the same PR (no follow-up PR allowed):
+   `.agents/.constitution.sha256` in the same PR (no follow-up PR allowed):
 
    ```bash
    # Linux / GNU coreutils
-   sha256sum constitution.md | cut -d' ' -f1 > .claude/.constitution.sha256
+   sha256sum constitution.md | cut -d' ' -f1 > .agents/.constitution.sha256
    # macOS / BSD (fallback when sha256sum is not installed)
-   shasum -a 256 constitution.md | cut -d' ' -f1 > .claude/.constitution.sha256
+   shasum -a 256 constitution.md | cut -d' ' -f1 > .agents/.constitution.sha256
    ```
 
 3. Reach consensus in review → merge
@@ -91,5 +94,6 @@ detects a hash mismatch (warns only under `standard`).
 - `@project-config.md` — variable parameters (13 sections)
 - `@AGENTS.md` — tool-agnostic development rules (Claude Code imports them from CLAUDE.md)
 - `@.claude/CLAUDE.md` — Claude Code-specific development guide
-- `@.claude/guardrails.md` — 3-layer defense details
-- `@.claude/pitfalls.md` — failure patterns and mitigations
+- `@.codex/config.toml` — Codex-specific settings and readings
+- `@.agents/guardrails.md` — 3-layer defense details
+- `@.agents/pitfalls.md` — failure patterns and mitigations

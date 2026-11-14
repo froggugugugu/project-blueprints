@@ -2,7 +2,7 @@
 
 Claude の Code Review(GitHub App)がこのリポジトリの PR を審査するときの基準。`CLAUDE.md` は全作業の共通文脈で、
 このファイルはレビュー専用。ローカルの `/code-review` と CI の `claude -p '/code-review'` はこのファイルを読まないので、
-両方に効かせたい規則は `.claude/skills/code-review/SKILL.md` に置く。長くすると効きが薄れるため、レビューの挙動を変える規則だけを書く。
+両方に効かせたい規則は `.agents/skills/code-review/SKILL.md` に置く。長くすると効きが薄れるため、レビューの挙動を変える規則だけを書く。
 
 ## Important の定義
 

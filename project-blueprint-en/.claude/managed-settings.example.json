@@ -69,6 +69,6 @@
   "requiredMinimumVersion": "2.1.314",
   "cleanupPeriodDays": 30,
   "companyAnnouncements": [
-    "This repository runs on the project-blueprint harness. See .claude/guardrails.md for the guardrails."
+    "This repository runs on the project-blueprint harness. See .agents/guardrails.md for the guardrails."
   ]
 }

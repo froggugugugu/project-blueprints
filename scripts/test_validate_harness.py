@@ -57,6 +57,7 @@ def repo_case(name: str, mutate, expect: str) -> bool:
             shutil.copytree(REPO / item, root / item, symlinks=True)
         (root / "scripts").mkdir()
         shutil.copy2(VALIDATOR, root / "scripts" / "validate_harness.py")
+        shutil.copy2(VALIDATOR.parent / "sync_codex_agents.py", root / "scripts" / "sync_codex_agents.py")
         for f in ("VERSION", "CHANGELOG.md"):
             shutil.copy2(REPO / f, root / f)
         mutate(root)
@@ -80,12 +81,12 @@ def m_color(root: Path) -> None:
 
 
 def m_write_rule(root: Path) -> None:
-    p = root / ".claude/skills/prd/SKILL.md"
+    p = root / ".agents/skills/prd/SKILL.md"
     p.write_text(p.read_text().replace("Edit(output/**)", "Write(output/**)"))
 
 
 def m_bad_yaml(root: Path) -> None:
-    p = root / ".claude/skills/adr/SKILL.md"
+    p = root / ".agents/skills/adr/SKILL.md"
     t = re.sub(r"(?m)^description: >\n(  .*\n)+",
                "description: Records decisions. Triggers: adr, decision-log.\n",
                p.read_text(), count=1)
@@ -93,7 +94,7 @@ def m_bad_yaml(root: Path) -> None:
 
 
 def m_missing_hook(root: Path) -> None:
-    (root / ".claude/hooks/post-compact-restore.sh").unlink()
+    (root / ".agents/hooks/post-compact-restore.sh").unlink()
 
 
 def m_bad_event(root: Path) -> None:
@@ -114,12 +115,12 @@ def m_bad_import(root: Path) -> None:
 
 
 def m_context_main(root: Path) -> None:
-    p = root / ".claude/skills/refactoring/SKILL.md"
+    p = root / ".agents/skills/refactoring/SKILL.md"
     p.write_text(p.read_text().replace("allowed-tools:", "context: main\nallowed-tools:", 1))
 
 
 def m_fork_askuser(root: Path) -> None:
-    p = root / ".claude/skills/brainstorm/SKILL.md"
+    p = root / ".agents/skills/brainstorm/SKILL.md"
     p.write_text(p.read_text().replace("argument-hint:", "context: fork\nargument-hint:", 1))
 
 
@@ -131,11 +132,11 @@ def m_local_deny(root: Path) -> None:
 
 
 def m_nonexec_hook(root: Path) -> None:
-    (root / ".claude/hooks/safety-check.sh").chmod(0o644)
+    (root / ".agents/hooks/safety-check.sh").chmod(0o644)
 
 
 def m_shell_syntax(root: Path) -> None:
-    p = root / ".claude/hooks/console-warn.sh"
+    p = root / ".agents/hooks/console-warn.sh"
     p.write_text(p.read_text() + "\nif [[ 1 -eq 1 ]]; then\n")
 
 
@@ -190,38 +191,38 @@ def m_output_style_drops_coding(root: Path) -> None:
 
 
 def m_bad_disable_model_invocation(root: Path) -> None:
-    p = root / ".claude/skills/review-fix/SKILL.md"
+    p = root / ".agents/skills/review-fix/SKILL.md"
     p.write_text(p.read_text().replace("disable-model-invocation: true", "disable-model-invocation: yes", 1))
 
 
 def m_skill_at_attachment(root: Path) -> None:
-    p = root / ".claude/skills/code-review/SKILL.md"
-    p.write_text(p.read_text() + "\n@.claude/pitfalls.md\n")
+    p = root / ".agents/skills/code-review/SKILL.md"
+    p.write_text(p.read_text() + "\n@.agents/pitfalls.md\n")
 
 
 def m_desc_first_person(root: Path) -> None:
-    p = root / ".claude/skills/adr/SKILL.md"
+    p = root / ".agents/skills/adr/SKILL.md"
     p.write_text(p.read_text().replace("description: >\n  ", "description: >\n  私が", 1))
 
 
 def m_desc_over_spec(root: Path) -> None:
-    p = root / ".claude/skills/prd/SKILL.md"
+    p = root / ".agents/skills/prd/SKILL.md"
     p.write_text(p.read_text().replace("description: >\n", "description: >\n  " + "要求" * 520 + "\n", 1))
 
 
 def m_evals_skill_name(root: Path) -> None:
-    p = root / ".claude/skills/plan/evals/evals.json"
+    p = root / ".agents/skills/plan/evals/evals.json"
     data = json.loads(p.read_text())
     data["skill_name"] = "plans"
     p.write_text(json.dumps(data, ensure_ascii=False))
 
 
 def m_evals_missing(root: Path) -> None:
-    (root / ".claude/skills/brainstorm/evals/evals.json").unlink()
+    (root / ".agents/skills/brainstorm/evals/evals.json").unlink()
 
 
 def m_reference_no_toc(root: Path) -> None:
-    p = root / ".claude/skills/security-scan/references/scan-categories.md"
+    p = root / ".agents/skills/security-scan/references/scan-categories.md"
     p.write_text(re.sub(r"(?ms)^## 目次\n.*?(?=^## )", "", p.read_text(), count=1))
 
 
@@ -246,16 +247,16 @@ def m_scope_guard_unknown(root: Path) -> None:
 
 
 def m_orphan_reference(root: Path) -> None:
-    (root / ".claude/skills/prd/references/unused.md").write_text("# 使われていない参照\n")
+    (root / ".agents/skills/prd/references/unused.md").write_text("# 使われていない参照\n")
 
 
 def m_broken_reference_link(root: Path) -> None:
-    p = root / ".claude/skills/code-review/SKILL.md"
+    p = root / ".agents/skills/code-review/SKILL.md"
     p.write_text(p.read_text().replace("references/report-template.md)", "references/missing.md)", 1))
 
 
 def m_skill_body_too_long(root: Path) -> None:
-    p = root / ".claude/skills/brainstorm/SKILL.md"
+    p = root / ".agents/skills/brainstorm/SKILL.md"
     p.write_text(p.read_text() + "\n".join(["- pad"] * 320) + "\n")
 
 
@@ -320,7 +321,7 @@ def m_otel_env_in_project(root: Path) -> None:
 
 
 def m_reserved_skill_name(root: Path) -> None:
-    d = root / ".claude/skills/claude-ai"
+    d = root / ".agents/skills/claude-ai"
     d.mkdir()
     (d / "SKILL.md").write_text("---\nname: claude-ai\ndescription: Reserved-name skill that must not load.\n---\n# x\n")
 
@@ -378,7 +379,7 @@ def m_bash_allow_var_wildcard(root: Path) -> None:
 
 
 def m_legacy_emphasis(root: Path) -> None:
-    p = root / ".claude/skills/plan/SKILL.md"
+    p = root / ".agents/skills/plan/SKILL.md"
     p.write_text(p.read_text() + "\nIMPORTANT: タスクは必ず 5 件以内にする\n")
 
 
@@ -421,6 +422,127 @@ def m_mcp_unpinned_example(root: Path) -> None:
 
 def m_version_mismatch(root: Path) -> None:
     (root / "VERSION").write_text("9.9.9\n")
+
+
+# ── Codex アダプタ(.codex/)と共通の核(.agents/)────────────────────────────
+
+def _codex_hooks(root: Path, fn) -> None:
+    p = root / ".codex/hooks.json"
+    cfg = json.loads(p.read_text())
+    fn(cfg)
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def _codex_config(root: Path, old: str, new: str) -> None:
+    p = root / ".codex/config.toml"
+    text = p.read_text()
+    assert old in text, old
+    p.write_text(text.replace(old, new, 1))
+
+
+def m_codex_bad_event(root: Path) -> None:
+    def fn(cfg):
+        cfg["hooks"]["ConfigChange"] = cfg["hooks"]["Stop"]
+    _codex_hooks(root, fn)
+
+
+def m_codex_no_fail_closed(root: Path) -> None:
+    def fn(cfg):
+        for group in cfg["hooks"]["PreToolUse"]:
+            for h in group["hooks"]:
+                h["command"] = h["command"].replace("--fail-closed ", "")
+    _codex_hooks(root, fn)
+
+
+def m_codex_blocking_hook_unregistered(root: Path) -> None:
+    def fn(cfg):
+        cfg["hooks"]["PreToolUse"] = [g for g in cfg["hooks"]["PreToolUse"] if g.get("matcher") != "apply_patch"]
+    _codex_hooks(root, fn)
+
+
+def m_codex_hook_bypasses_adapter(root: Path) -> None:
+    def fn(cfg):
+        cfg["hooks"]["Stop"][0]["hooks"][0]["command"] = '"$(git rev-parse --show-toplevel)/.agents/hooks/verify-gate.sh" gate'
+    _codex_hooks(root, fn)
+
+
+def m_codex_hook_missing_script(root: Path) -> None:
+    def fn(cfg):
+        h = cfg["hooks"]["SessionStart"][0]["hooks"][0]
+        h["command"] = h["command"].replace("session-start.sh", "no-such-hook.sh")
+    _codex_hooks(root, fn)
+
+
+def m_codex_claude_only_hook_key(root: Path) -> None:
+    def fn(cfg):
+        cfg["hooks"]["PreToolUse"][0]["hooks"][0]["onFailure"] = "block"
+    _codex_hooks(root, fn)
+
+
+def m_codex_adapter_missing(root: Path) -> None:
+    (root / ".agents/hooks/lib/codex-adapter.sh").unlink()
+
+
+def m_codex_approval_never(root: Path) -> None:
+    _codex_config(root, 'approval_policy = "on-request"', 'approval_policy = "never"')
+
+
+def m_codex_sandbox_mode_with_profile(root: Path) -> None:
+    _codex_config(root, 'default_permissions = "blueprint"', 'default_permissions = "blueprint"\nsandbox_mode = "workspace-write"')
+
+
+def m_codex_harness_writable(root: Path) -> None:
+    _codex_config(root, '".agents" = "read"\n', "")
+
+
+def m_codex_secret_readable(root: Path) -> None:
+    _codex_config(root, '"**/*.pem" = "deny"\n', "")
+
+
+def m_codex_ignored_key(root: Path) -> None:
+    _codex_config(root, 'approval_policy = "on-request"', 'approval_policy = "on-request"\nmodel_provider = "custom"')
+
+
+def m_codex_rule_missing_prompt(root: Path) -> None:
+    p = root / ".codex/rules/default.rules"
+    text = p.read_text()
+    start = text.index('prefix_rule(\n    pattern = ["git", "push"],')
+    end = text.index("\n)\n", start) + 3
+    p.write_text(text[:start] + text[end:])
+
+
+def m_claude_deny_without_codex_rule(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["permissions"]["deny"].append("Bash(shutdown *)")
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_codex_agent_edited(root: Path) -> None:
+    p = root / ".codex/agents/verifier.toml"
+    p.write_text(p.read_text() + "\n# hand edit\n")
+
+
+def m_codex_agent_missing(root: Path) -> None:
+    (root / ".codex/agents/planner.toml").unlink()
+
+
+def m_skill_duplicated_in_claude(root: Path) -> None:
+    shutil.copytree(root / ".agents/skills/plan", root / ".claude/skills/plan")
+
+
+def m_hooks_left_in_claude(root: Path) -> None:
+    (root / ".claude/hooks").mkdir()
+    shutil.copy2(root / ".agents/hooks/safety-check.sh", root / ".claude/hooks/safety-check.sh")
+
+
+def m_manual_skill_without_codex_policy(root: Path) -> None:
+    (root / ".agents/skills/review-fix/agents/openai.yaml").unlink()
+
+
+def m_setup_mirror_drift(root: Path) -> None:
+    p = root / "project-blueprint-en" / "setup.sh"
+    p.write_text(p.read_text() + "\n# drift\n")
 
 
 CASES = [
@@ -485,11 +607,31 @@ CASES = [
     ("agent に think harder", m_legacy_think, "推論量を上げません"),
     ("有効な MCP サーバーの npm パッケージが未固定", m_mcp_unpinned_active, "有効な MCP サーバーの npm パッケージ"),
     ("例示ブロックの npm パッケージが範囲指定", m_mcp_unpinned_example, "例示ブロックの npm パッケージ"),
+    ("Codex: 存在しないフックイベント名", m_codex_bad_event, "は Codex のフックイベント名ではありません"),
+    ("Codex: ブロック系フックに --fail-closed が無い", m_codex_no_fail_closed, "`--fail-closed` がありません"),
+    ("Codex: ブロック系フックが未登録", m_codex_blocking_hook_unregistered, "PreToolUse に protect-files.sh が登録されていません"),
+    ("Codex: フックがアダプタを通していない", m_codex_hook_bypasses_adapter, "アダプタ(lib/codex-adapter.sh)を通していません"),
+    ("Codex: フックの参照先が存在しない", m_codex_hook_missing_script, "が参照する no-such-hook.sh が存在しません"),
+    ("Codex: Claude Code 専用のフックキー", m_codex_claude_only_hook_key, "`onFailure` は Claude Code 専用のキー"),
+    ("Codex: アダプタが無い", m_codex_adapter_missing, "Codex 用アダプタがありません"),
+    ("Codex: approval_policy = never", m_codex_approval_never, "確認なしで実行します"),
+    ("Codex: 権限プロファイルと sandbox_mode の併用", m_codex_sandbox_mode_with_profile, "両方あります"),
+    ("Codex: ハーネスが書込可能", m_codex_harness_writable, "`.agents` が読取専用になっていません"),
+    ("Codex: シークレットの読取禁止が Claude Code 側とずれる", m_codex_secret_readable, "`*.pem` が Codex の権限プロファイルで deny になっていません"),
+    ("Codex: プロジェクト設定で無視されるキー", m_codex_ignored_key, "`model_provider` はプロジェクトの config.toml では無視されます"),
+    ("Codex: ask に対応する prompt 規則が無い", m_codex_rule_missing_prompt, "Claude Code の ask `Bash(git push *)` に対応する prompt 規則がありません"),
+    ("Claude Code の deny に対応する Codex 規則が無い", m_claude_deny_without_codex_rule, "Claude Code の deny `Bash(shutdown *)` に対応する forbidden 規則がありません"),
+    ("Codex: エージェント定義を直接編集", m_codex_agent_edited, "原本(.claude/agents/)とずれています"),
+    ("Codex: エージェント定義が欠けている", m_codex_agent_missing, "対応する Codex 用エージェントがありません"),
+    ("skill が .claude/ と .agents/ で二重", m_skill_duplicated_in_claude, "二重になっています"),
+    ("フックが .claude/ に残っている", m_hooks_left_in_claude, "1.0 の配置では `.agents/hooks` に置きます"),
+    ("手動起動限定の skill に Codex 用の設定が無い", m_manual_skill_without_codex_policy, "agents/openai.yaml"),
 ]
 
 # リポジトリ水準のチェック(--root では走らない)
 REPO_CASES = [
     ("VERSION と CHANGELOG の最新リリース見出しが不一致", m_version_mismatch, "一致しません"),
+    ("setup.sh が日英ミラーで不一致", m_setup_mirror_drift, "setup.sh が日英ミラーで一致しません"),
 ]
 
 

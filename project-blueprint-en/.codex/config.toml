@@ -1,0 +1,90 @@
+# ==============================================================================
+# Project Blueprint — Codex project configuration (the counterpart of Claude Code's .claude/settings.json)
+#
+# Codex loads this file only when the project is marked "trusted". In an untrusted project the settings
+# here, the hooks in .codex/hooks.json and the rules in .codex/rules/ are all ignored.
+# Hooks additionally do not run until you review and trust them with `/hooks` in Codex (again after every change).
+#
+# Mapping (details in .agents/guardrails.md):
+#   Hooks (Layer 1)          .codex/hooks.json → .agents/hooks/*.sh (the same scripts Claude Code runs)
+#   Deny / ask (Layer 2)     .codex/rules/default.rules + the permission profile below
+#   Personal allow (Layer 3) ~/.codex/config.toml and ~/.codex/rules/ (never in the repository)
+#
+# Provider, auth, notification and profile keys are ignored in project config (put them in ~/.codex/config.toml).
+# Spec: https://developers.openai.com/codex/config-reference
+# ==============================================================================
+
+# Let Codex decide when to ask before running a command. `never` proceeds without asking, so it is not used
+approval_policy = "on-request"
+
+# Permission profile (beta). Makes [permissions.blueprint] below the default.
+# Caution: if `sandbox_mode` appears anywhere in the loaded config (including ~/.codex/config.toml or --sandbox),
+# Codex uses the older sandbox settings and this profile (the secret-read denial) stops applying
+default_permissions = "blueprint"
+
+# Only the Codex-specific readings of skills, subagents and the harness.
+# Tool-agnostic rules live in AGENTS.md, which Codex reads automatically
+developer_instructions = """
+This project runs on the Project Blueprint harness. Rules are in AGENTS.md; procedures are the skills under .agents/skills/.
+- Invoke a skill as `$name`. Where AGENTS.md or a skill body says `/name`, read it as `$name`
+- Specialist work can be delegated to the custom agents in .codex/agents/. An agent does not start another agent
+- Do not let an agent described as read-only (explorer / researcher / planner / security-reviewer / performance-analyst / verifier) edit files
+- .agents/ and .codex/ are read-only in the sandbox. Change the harness itself only after showing the change and getting human approval
+- Before reporting completion, run the verification commands (docs/project.md or project-config.md §3) and show the results
+"""
+
+[permissions.blueprint]
+description = "Project Blueprint: workspace writes allowed, secret reads and network blocked"
+# Build on the built-in profile that allows writes to the workspace and the temp directories
+extends = ":workspace"
+
+[permissions.blueprint.filesystem]
+# Linux / WSL / Windows enumerate deny globs at startup. This bounds that scan
+glob_scan_max_depth = 4
+
+[permissions.blueprint.filesystem.":workspace_roots"]
+# Keep the harness itself read-only. The official docs say extending :workspace keeps .git / .agents / .codex
+# protected, but with codex-cli 0.162.1 they were writable with the inheritance alone, so the rules are explicit here.
+# .claude/settings*.json is included so Codex cannot rewrite Claude Code's hook registrations and deny rules
+".git" = "read"
+".agents" = "read"
+".codex" = "read"
+".claude/settings.json" = "read"
+".claude/settings.local.json" = "read"
+# Same targets as Claude Code's Read() deny (.claude/settings.json). Change both together
+"**/.env" = "deny"
+"**/.env.*" = "deny"
+"secrets" = "deny"
+"**/.npmrc" = "deny"
+"**/credentials.json" = "deny"
+"**/service-account.json" = "deny"
+"**/id_rsa" = "deny"
+"**/id_ed25519" = "deny"
+"**/id_ecdsa" = "deny"
+"**/id_dsa" = "deny"
+"**/*.pem" = "deny"
+"**/*.key" = "deny"
+"**/*.p12" = "deny"
+"**/*.pfx" = "deny"
+"**/*.jks" = "deny"
+"**/*.keystore" = "deny"
+
+[permissions.blueprint.network]
+# When a command needs the network (fetching dependencies, for example), allow it through the per-request prompt
+enabled = false
+
+[agents]
+# How many subagent threads may be open at once. Matches the parallelism guidance on the Claude Code side
+max_concurrent_threads_per_session = 4
+# To pin the subagent model (unset = inherit the parent session's model). Follow the policy in project-config.md §13
+# default_subagent_model = "<model>"
+
+# ── MCP servers (uncomment only what you use; the Claude Code side is .mcp.json.template) ──────
+# Pin every npx package as name@x.y.z (supply-chain protection; keep the versions equal to .mcp.json.template)
+# [mcp_servers.context7]
+# command = "npx"
+# args = ["-y", "@upstash/context7-mcp@4.4.4"]
+#
+# [mcp_servers.playwright]
+# command = "npx"
+# args = ["-y", "@playwright/mcp@0.0.84"]

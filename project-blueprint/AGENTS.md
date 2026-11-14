@@ -1,8 +1,8 @@
 # AGENTS.md
 
-コーディングエージェント共通の開発ルール(ツール非依存)。主系の Claude Code は `CLAUDE.md` の `@AGENTS.md` で取り込み、
-Codex / Cursor は既定で読む。Copilot / Gemini CLI などは設定で読ませる(`project-config.md` §13.7)。
-Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は `CLAUDE.md` に書く。
+コーディングエージェント共通の開発ルール(ツール非依存)。Claude Code は `CLAUDE.md` の `@AGENTS.md` で取り込み、Codex は直接読む。
+この 2 つを対等に扱う。それ以外(Cursor / Copilot / Gemini CLI など)は補助で、役割は `project-config.md` §13.7 に従う。
+共通の核(skill / フック / ルール)は `.agents/`。エージェント固有の仕組みは Claude Code が `CLAUDE.md` と `.claude/`、Codex が `.codex/`。
 
 ## 全般
 
@@ -27,7 +27,7 @@ Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は 
 - **AI 管理**: `docs/*.md`(プロジェクト派生情報) / `output/`(成果物) / `testreport/`(ツール生データ)
 - **AI が更新可能なセクション**: `project-config.md` §2(技術スタック)/ §3(コマンド)/ §11(既知の落とし穴)のみ。§1 / §4-§10 / §12 / §13 は人間決定領域(改変不可)
 - **一次更新責務**: `docs/*.md` と `project-config.md` §2/§3 は実装タスク(`/implementing-features`)が集約。他タスクは発見事項を報告
-- **詳細**(競合防止表 / docs 更新の細則): `docs/`・`output/` を編集する前に `.claude/rules/document-management.md` を読む
+- **詳細**(競合防止表 / docs 更新の細則): `docs/`・`output/` を編集する前に `.agents/rules/document-management.md` を読む
 
 ## アーキテクチャガバナンス
 
@@ -38,7 +38,7 @@ Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は 
 ## 品質基準・ゲート
 
 - TDD(`project-config.md` §6 で有効化時)、ユニット + E2E。カバレッジ目標は `project-config.md` §6
-- **5 つの品質ゲート**: PRD / 設計 / タスク分解 / 実装 / 検証(各 phase で人間介入可)。基準は `.claude/quality-gates.md`
+- **5 つの品質ゲート**: PRD / 設計 / タスク分解 / 実装 / 検証(各 phase で人間介入可)。基準は `.agents/quality-gates.md`
 - **検証手段を先に用意する**: 着手前に pass/fail を返すチェック(テスト / ビルド / lint / スクリーンショット比較)を決め、完了時にその結果を貼る
 
 ## 実装ワークフロー
@@ -46,7 +46,7 @@ Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は 
 要件確認 → 影響調査 → テスト設計 → **🚏 設計ゲート** → 実装 → リファクター → **🚏 実装ゲート** → セルフレビュー → **🚏 最終ゲート**
 
 - 同一ファイルの同時編集は禁止。共有レイヤー変更は逐次
-- 複数セッションにまたがる作業は `output/tasks/PROGRESS.md`(雛形 `.claude/tasks/PROGRESS_TEMPLATE.md`)で引き継ぐ。
+- 複数セッションにまたがる作業は `output/tasks/PROGRESS.md`(雛形 `.agents/tasks/PROGRESS_TEMPLATE.md`)で引き継ぐ。
   1 セッション 1 機能、着手前にスモークテスト、終了時はテスト緑 + コミット + PROGRESS 更新
 
 ## 実装チェックリスト(提出前)
@@ -75,11 +75,17 @@ Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は 
 ## Git 操作
 
 - `--no-verify` 禁止 / `--force` 原則禁止 / フック失敗時はフックを無効化せず原因修正
-- Conventional Commits 必須。コミット前に `.claude/rules/git-conventions.md` を読む(Claude Code は常時 load)
+- Conventional Commits 必須。コミット前に `.agents/rules/git-conventions.md` を読む(Claude Code は常時 load)
 
-## Claude Code 以外で使うとき
+## エージェント別の読み替え
 
-- 利用エージェントの役割と書込範囲は `project-config.md` §13.7 に従う。そこで `yes` になっていなければ読取専用で振る舞う
-- `.claude/` の安全装置(フック・deny/ask ルール・書込範囲の強制)は Claude Code でしか動かない。上記のセキュリティ規則と Git 規則を自分で守る
-- `/prd` などのスラッシュコマンドは使えない。同じ手順が `.claude/skills/<名前>/SKILL.md` にあるので、
-  依頼されたら読んで従う。subagent などの Claude Code 固有機能は、手元で順に実行する形に読み替える
+| | Claude Code | Codex |
+| --- | --- | --- |
+| skill の起動 | `/name` | `$name`(本文の `/name` は `$name` と読む) |
+| サブエージェント | `.claude/agents/*.md` | `.codex/agents/*.toml`(同名・同内容) |
+| 安全装置 | `.claude/settings.json` のフックと deny / ask | `.codex/hooks.json` のフック、`.codex/rules/`、権限プロファイル |
+
+- フック本体(`.agents/hooks/`)は共通。Codex はフックを `/hooks` で信頼するまで実行しないので、信頼前は上のセキュリティ規則と Git 規則を自分で守る
+- team(`.claude/teams/`)と saved workflow は Claude Code の拡張。Codex では同じ skill を順に実行する
+- それ以外のエージェントは `project-config.md` §13.7 で `yes` になっていなければ読取専用で振る舞い、
+  依頼されたら `.agents/skills/<名前>/SKILL.md` を読んで手順に従う

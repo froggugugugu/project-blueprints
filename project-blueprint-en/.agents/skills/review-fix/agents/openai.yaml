@@ -1,0 +1,4 @@
+# Codex-side skill settings. Tells Codex what `disable-model-invocation: true` in SKILL.md tells Claude Code:
+# no implicit invocation from the prompt; the skill runs only when named as `$name`
+policy:
+  allow_implicit_invocation: false

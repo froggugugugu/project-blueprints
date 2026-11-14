@@ -33,7 +33,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 ARMS = ("with", "without")
-SKIP_DIRS = {".claude", ".git", "testreport", "node_modules", ".claude.bak"}
+SKIP_DIRS = {".agents", ".claude", ".codex", ".git", "testreport", "node_modules", ".agents.bak", ".claude.bak", ".codex.bak"}
 DEFAULT_ALLOWED_TOOLS = ",".join([
     "Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "Glob", "Grep", "Skill", "Agent", "TodoWrite",
     "Bash(git *)", "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(wc *)",
@@ -116,7 +116,8 @@ def build_workspace(mirror: Path, fixtures: Path | None, skill: str, arm: str, w
     if ws.exists():
         shutil.rmtree(ws)
     ws.mkdir(parents=True)
-    res = sh(["bash", str(mirror / "setup.sh"), str(ws), "--profile", "full"])
+    # この runner は `claude -p` で回すので Claude Code 用アダプタだけを入れる(Codex 側の実測は未対応)
+    res = sh(["bash", str(mirror / "setup.sh"), str(ws), "--agent", "claude", "--profile", "full"])
     if res.returncode != 0:
         raise RuntimeError(f"setup.sh failed: {res.stderr[-400:]}")
     second_commit: Path | None = None
@@ -133,7 +134,13 @@ def build_workspace(mirror: Path, fixtures: Path | None, skill: str, arm: str, w
             if (per_skill / "_second_commit").is_dir():
                 second_commit = per_skill / "_second_commit"
     if arm == "without":
-        shutil.rmtree(ws / ".claude" / "skills" / skill, ignore_errors=True)
+        # 原本(.agents/skills/)と、Claude Code が読むリンク(.claude/skills/)の両方を外す
+        shutil.rmtree(ws / ".agents" / "skills" / skill, ignore_errors=True)
+        link = ws / ".claude" / "skills" / skill
+        if link.is_symlink():
+            link.unlink()
+        else:
+            shutil.rmtree(link, ignore_errors=True)
     git = {"GIT_AUTHOR_NAME": "eval", "GIT_AUTHOR_EMAIL": "eval@example.invalid",
            "GIT_COMMITTER_NAME": "eval", "GIT_COMMITTER_EMAIL": "eval@example.invalid"}
     env = {**os.environ, **git}
@@ -451,7 +458,7 @@ def main() -> int:
         log(f"WARN no fixtures at {fixtures}; cases that need input files will see an empty project")
         fixtures = None
 
-    skills_dir = mirror / ".claude" / "skills"
+    skills_dir = mirror / ".agents" / "skills"
     names = args.skill or ([p.parent.parent.name for p in sorted(skills_dir.glob("*/evals/evals.json"))] if args.all else [])
     if not names:
         print("specify --skill <name> (repeatable) or --all", file=sys.stderr)

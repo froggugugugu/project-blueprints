@@ -1,0 +1,226 @@
+---
+name: design-system-audit
+description: >
+  Audits design tokens (spacing, typography, color, sizing) against ratio principles, records inconsistencies, and standardizes them.
+  Use when asked to audit design tokens, unify spacing, or fix an inconsistent design. Works for Web, Qt, and mobile.
+argument-hint: "<target-directory or instruction>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), Agent, WebSearch, WebFetch
+---
+
+# Design System Audit Skill
+
+A skill for defining, verifying, and documenting design consistency across the entire UI system.
+Provides numerically-based design principles from the perspective of a **design system engineer** / **frontend architect**.
+
+---
+
+## What This Skill Can Do
+
+| Use Case | Description |
+|----------|-------------|
+| **New Design Guidelines** | Design token definitions and application rules based on ratio principles |
+| **Existing Screen Consistency Audit** | Detect and record inconsistencies using a categorized checklist |
+| **Claude Code Instruction Templates** | Generate standardized prompts to pass during implementation |
+
+### Integration with Other Skills
+
+| Previous Step | This Skill | Next Step |
+| ------------- | ---------- | --------- |
+| `/ui-ux-design` (design review) | `/design-system-audit` | `/implementing-features` (token application) `/hig-compliance` (UI consistency) |
+
+---
+
+## STEP 1: Design Token Definition
+
+### Choosing a Ratio System
+
+First, decide on a **base size** and **scale ratio**.
+
+| Ratio Name | Value | Best Suited For |
+|------------|-------|-----------------|
+| **Golden Ratio** | 1.618 | Spacious layouts, reading-oriented UIs |
+| **Silver Ratio** | 1.414 | Japanese-style balance, compact UIs |
+| **Major Third** | 1.250 | High information density, business UIs |
+| **Perfect Fourth** | 1.333 | General purpose, balanced |
+
+> **Recommended**: For business tools, automotive HUDs, and other visibility-focused use cases, **Silver Ratio (1.414)** or **Major Third (1.250)** are easiest to work with.
+
+### Spacing Tokens (Margins & Gaps)
+
+Set the base as `base = 8px` (or any reference value) and expand the scale.
+
+```
+space-1 = base × 0.5   =  4px   (minimum margin, icon inner spacing, etc.)
+space-2 = base × 1     =  8px   (between related elements)
+space-3 = base × 1.5   = 12px   (intra-group margin)
+space-4 = base × 2     = 16px   (standard intra-section margin)
+space-5 = base × 3     = 24px   (between sections)
+space-6 = base × 4     = 32px   (between blocks, large margin)
+space-7 = base × 6     = 48px   (screen edge margin, etc.)
+space-8 = base × 8     = 64px   (before/after large headings, etc.)
+```
+
+Ratio-scaled version (golden ratio base, base=8px):
+```
+space-1 =  5px  (8 ÷ 1.618)
+space-2 =  8px  (base)
+space-3 = 13px  (8 × 1.618)
+space-4 = 21px  (13 × 1.618)
+space-5 = 34px  (21 × 1.618)
+space-6 = 55px  (34 × 1.618)
+```
+
+### Typography Tokens
+
+Set the base font size as `base = 14px` or `16px`.
+
+```
+text-xs   = base ÷ ratio²
+text-sm   = base ÷ ratio
+text-md   = base             (body text)
+text-lg   = base × ratio     (subheading)
+text-xl   = base × ratio²    (heading)
+text-2xl  = base × ratio³    (large heading, screen title)
+text-3xl  = base × ratio⁴    (hero, number emphasis)
+```
+
+Example with Silver Ratio (1.414), base=14px:
+```
+text-xs  =  7px
+text-sm  = 10px
+text-md  = 14px
+text-lg  = 20px
+text-xl  = 28px
+text-2xl = 40px
+text-3xl = 56px
+```
+
+### Component Size Tokens
+
+```
+button-height-sm  = space-6         (approx. 32px)
+button-height-md  = space-7         (approx. 48px)
+button-height-lg  = space-7         (approx. 48px)
+button-padding-x  = space-4 to 5    (16-24px)
+
+input-height      = align with button-height-md
+icon-size-sm      = 16px
+icon-size-md      = 24px
+icon-size-lg      = 32px
+
+border-radius-sm  = 4px
+border-radius-md  = 8px
+border-radius-lg  = 16px
+border-radius-full= 9999px
+```
+
+### Title & Header Position Unification Rules
+
+```
+Screen Title
+  - Font size: text-2xl fixed
+  - Top margin (screen edge to title): space-6 or space-7
+  - Bottom margin (title to content): space-5
+  - Horizontal position: left-align (business) / center (wizard/modal)
+
+Section Heading
+  - Font size: text-xl
+  - Top margin: space-6
+  - Bottom margin: space-4
+
+Subheading
+  - Font size: text-lg
+  - Top margin: space-5
+  - Bottom margin: space-3
+```
+
+---
+
+## STEP 2: Consistency Audit Checklist
+
+When evaluating existing screens, check from the following perspectives.
+→ See [references/audit-checklist.md](references/audit-checklist.md) for the detailed checklist.
+
+### Audit Categories
+
+| # | Category | Key Checks |
+|---|----------|------------|
+| A | **Spacing** | Whether margins follow token values |
+| B | **Typography** | Consistency of font size, weight, and line height |
+| C | **Components** | Unified height and shape of buttons, inputs, and icons |
+| D | **Title & Heading Position** | Unified title top/bottom and horizontal position across screens |
+| E | **Color** | Whether colors outside color tokens are used |
+| F | **Grid & Alignment** | Alignment of element left/right edges |
+| G | **Ratio Compliance** | Whether exception values outside the scale exist |
+| H | **Interaction** | Unified hover, focus, and disabled states |
+
+### Inconsistency Recording Format
+
+```
+[Audit Record]
+Screen Name: ___________
+Date: ___________
+
+| Category | Location | Issue | Current Value | Correct Value | Priority |
+|----------|----------|-------|---------------|---------------|----------|
+| A | Button bottom margin | Uses space-3 (12px) | 12px | 16px (space-4) | Medium |
+| D | Screen title top margin | Varies 20-40px across screens | Variable | 32px (space-6) fixed | High |
+```
+
+---
+
+## STEP 3: Claude Code Instruction Templates
+
+### For New Component Implementation
+
+The skeleton is in the "For New Component Implementation" section of [references/templates.md](references/templates.md). Read it when needed and copy it as is.
+
+### For Existing Screen Fix Instructions
+
+```
+Please fix the following consistency issues.
+
+[Fix Target: Spacing]
+- [Location]: [current]px → [correct]px (token: space-N)
+
+[Fix Target: Title Position]
+- Unify title top margin to 32px across all screens
+- Target files: [file paths]
+
+[Verification]
+- After fixing, verify that balance with other elements is not broken
+- Keep fixes minimal; do not change unrelated areas
+```
+
+---
+
+## STEP 4: Design System Documentation Generation
+
+Store in the project's `design-system.md` or `DESIGN_TOKENS.md` with the following structure.
+
+The skeleton is in the "STEP 4: Design System Documentation Generation" section of [references/templates.md](references/templates.md). Read it when needed and copy it as is.
+
+---
+
+## Output Contract
+
+| Deliverable | Required | Constraints |
+| ----------- | -------- | ----------- |
+| Design system storage document | Yes | Must satisfy the STEP 4 structure (core principles/design tokens/per-screen rules/audit log) |
+| Inconsistency record (during audit) | Conditional | Only when STEP 2 detects issues, output in the category-based record format |
+
+**PASS criteria**: all categories A–H have been checked in STEP 2 / every detected inconsistency has current value, correct value, and priority filled in the record format / any deviation from the scale ratio has a stated reason.
+
+---
+
+## Reference Files
+
+Detailed audit checklist → [references/audit-checklist.md](references/audit-checklist.md)
+Ratio calculation reference → [references/ratio-reference.md](references/ratio-reference.md)
+
+## Related references
+
+Read only when needed:
+
+- `.agents/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.agents/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

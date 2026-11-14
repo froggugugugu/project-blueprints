@@ -58,7 +58,7 @@ Arguments are optional. When omitted, the PL checks `input/requirements/` and id
 - Structure user stories, acceptance criteria, and priorities
 - Report ambiguous requirements as "[Needs Confirmation]" to PL
 - **Do not modify source code**
-- Reference: `.claude/learnings/L0001-brainstorm-before-prd.md`
+- Reference: `.agents/learnings/L0001-brainstorm-before-prd.md`
 
 ### Architect
 

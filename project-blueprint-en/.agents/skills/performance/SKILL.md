@@ -1,0 +1,171 @@
+---
+name: performance
+description: >
+  Analyzes bundle size, rendering, state management, and memory measurement-first, and shows optimizations as Before / After numbers.
+  Use when something is slow or when asked to optimize performance, reduce bundle size, or fix memory leaks or re-renders.
+argument-hint: "<target-component or instruction>"
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git *), WebSearch, WebFetch, Agent, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__plugin_context7_context7__resolve-library-id, mcp__plugin_context7_context7__query-docs
+---
+
+# Performance Optimization
+
+Performs performance optimization using a measurement-first approach.
+Strictly follow the `AGENTS.md` (shared rules) and `CLAUDE.md` policies. For project-specific code patterns, refer to [docs/development-patterns.md](../../../docs/development-patterns.md).
+
+## Prerequisites
+
+| Reference File | Purpose | Fallback When Stub |
+| -------------- | ------- | ------------------ |
+| `docs/project.md` | Commands | Refer directly to `project-config.md` §3 |
+| `docs/development-patterns.md` | Performance patterns | Refer directly to `project-config.md` §2, §11 |
+
+## Core Principles
+
+- **No optimization without measurement** — Base decisions on data, not guesses
+- Always compare before/after numbers (Before/After)
+- Sacrificing readability for optimization is a last resort
+- Avoid excessive optimization (skip if there's no perceivable improvement)
+- Do not break existing tests
+
+## Usage
+
+```text
+/performance <target-component or optimization instruction>
+```
+
+Arguments are optional. When omitted, confirm interactively with the user.
+When a file path is specified, analyze performance around that file.
+
+### Examples
+
+```text
+/performance Dashboard initial load is slow
+/performance src/features/assignment/components/AssignmentTreeGrid.tsx
+/performance Optimize bundle size
+```
+
+### Output Destination
+
+- Optimized code: Under `src/` (following the project's directory structure)
+- Report: Presented in conversation (raw profiler data saved to `testreport/perf/`)
+
+### Integration with Other Skills
+
+| Previous Step | This Skill | Next Step |
+| ------------- | ---------- | --------- |
+| `/implementing-features` | `/performance` | `/code-review` |
+
+## Optimization Categories
+
+### 1. Bundle Optimization
+
+- Visualize bundle composition with bundle analysis tools
+- Code splitting via dynamic imports
+- Verify tree-shaking (eliminate imports with side effects)
+- Measure build size
+
+### 2. Rendering Optimization
+
+- Identify bottlenecks with profiler
+- Appropriate use of memoization (framework-provided memoization APIs)
+- Detect and eliminate unnecessary re-renders
+- Minimize re-render scope through component splitting
+
+**Note**: Only add memoization when bottlenecks are confirmed through measurement. Do not add preventive memoization.
+
+### 3. State Management Optimization
+
+- Avoid anti-patterns documented in `docs/development-patterns.md` for state management
+- Subscribe to individual fields (only needed fields, not entire objects)
+- Minimize state updates
+
+### 4. Memory & Storage Management
+
+- Storage quota monitoring
+- Split storage strategies for large-scale data
+- Cleanup of unnecessary data
+
+## Optimization Workflow
+
+1. **Identify Bottleneck** — Identify problem areas through user reports or measurement tools
+2. **Baseline Measurement** — Record pre-optimization numbers
+3. **Root Cause Analysis** — Identify root cause from profiling results
+4. **🚏 Analysis Gate** — Present bottleneck and optimization approach, wait for confirmation
+5. **Implement Optimization** — Make changes with minimum impact scope
+6. **Verify Effect** — Measure post-optimization numbers and compare Before/After
+7. **Test Verification** — Run the project's verification commands (see `docs/project.md`)
+8. **🚏 Completion Gate** — Present effectiveness report
+
+## Output Contract
+
+### 🚏 Analysis Gate Output
+
+| Field | Type | Required | Constraints |
+| ----- | ---- | -------- | ----------- |
+| Bottleneck Location | file-path:line-number | ✅ | Identified based on measurement data |
+| Measurement Value | Number + Unit | ✅ | Guessed values not allowed. State measurement method |
+| Root Cause Analysis | Text | ✅ | Explain root cause in 1–3 sentences |
+| Optimization Approach | Bullet points | ✅ | List optimizations to perform in priority order |
+| Expected Improvement | Text | Conditional | When quantitatively estimable |
+
+### 🚏 Completion Gate Output
+
+| Field | Type | Required | Constraints |
+| ----- | ---- | -------- | ----------- |
+| Before/After Comparison | Table | ✅ | Metric name, Before value, After value, Improvement rate |
+| Test Results | `X pass / Y fail` | ✅ | |
+| Coverage | `Line: X% / Branch: Y%` | ✅ | Delta from baseline |
+| Static Analysis | `Errors: X` | ✅ | |
+
+### Vocabulary Constraints
+
+| Term | Definition |
+| ---- | ---------- |
+| Baseline | Pre-optimization measurement values. The basis for comparison |
+| Bottleneck | The primary cause of performance degradation identified through measurement |
+| Improvement Rate | `(Before - After) / Before × 100` (percentage) |
+| Perceivable Improvement | A change in response speed that users can notice |
+
+### Structural Constraints
+
+- Before/After table metrics must be measured under identical conditions
+- Measurement values must always include units (KB, ms, count, items)
+- Optimization decisions based on "guessing" or "probably" are prohibited
+
+**PASS criteria**: every Before/After metric improved (state a reason for any that regressed) / tests and static analysis pass at least as many checks as the baseline / zero optimization proposals lack a measured value.
+
+## Report Format
+
+The skeleton is in [references/report-template.md](references/report-template.md). Read it when needed and copy it as is.
+
+## Documentation Sync
+
+After optimization changes, always update affected `docs/` files.
+
+| Change | Update Target |
+| ------ | ------------- |
+| Code pattern/optimization pattern discovery | `docs/development-patterns.md` |
+| Feature structure changes (lazy load, etc.) | `docs/architecture.md` |
+| Store split/merge | `docs/project.md` |
+| Dependency package additions | `docs/project.md` |
+
+## Git Operations
+
+- `--no-verify` is prohibited (do not bypass pre-commit / pre-push hooks)
+- When hooks fail, fix the cause of the error
+- `--force` is prohibited in principle
+
+## Prohibited Actions
+
+- Optimization without measurement (no starting based on "probably slow")
+- Using anti-patterns documented in `docs/development-patterns.md`
+- Micro-optimizations that significantly degrade readability
+- Changes that break existing tests
+- Bypassing hooks with `--no-verify`
+
+## Related references
+
+Read only when needed:
+
+- `.agents/quality-gates.md` — when checking gate pass criteria and the measurement table
+- `.agents/pitfalls.md` — when a known failure pattern may apply (read only the matching section)

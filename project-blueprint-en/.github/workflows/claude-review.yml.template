@@ -65,7 +65,7 @@ jobs:
             2. **Security**: OWASP Top 10, leaked secrets, input validation
             3. **Tests**: coverage, edge cases, TDD alignment
             4. **Readability**: naming, comments, separation of concerns
-            5. **Known pitfalls**: any case matching `.claude/pitfalls.md`
+            5. **Known pitfalls**: any case matching `.agents/pitfalls.md`
 
             Classify findings as CRITICAL / HIGH / MEDIUM / LOW / INFO,
             and propose fixes as concrete diff suggestions.
