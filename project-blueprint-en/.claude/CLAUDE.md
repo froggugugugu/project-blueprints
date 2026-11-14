@@ -7,27 +7,12 @@ Tool-agnostic development rules live in `AGENTS.md` (imported on the next line).
 > **Slim "core"** (Pro-plan friendly). Skills / teams / agents read detailed procedures when needed (never via a line-start `@` in a skill, which attaches the file in full).
 > Keep a line only if removing it would make Claude make mistakes (official guidance). Tool-agnostic rules go in `AGENTS.md`.
 
-## Skill catalog (all arguments optional)
+## Skills (descriptions and arguments appear in the skill listing, so this section holds only the order and the exceptions)
 
-| Skill | Purpose / trigger |
-| ----- | ----------------- |
-| `/brainstorm <requirement-note>` | Pre-`/prd` Socratic clarification (read-only) |
-| `/prd <file>` | PRD generation from requirement notes (read-only) |
-| `/architecture <file>` | System architecture design (read-only) |
-| `/plan <description or file>` | Design document generation (read-only) |
-| `/adr <decision-title>` | Record design decision rationale |
-| `/implementing-features <task>` | Feature implementation / bug fixes via TDD |
-| `/ui-ux-design <target>` | Design-system-aware UI/UX implementation |
-| `/hig-compliance <target>` | Apple HIG-based system-wide UI consistency |
-| `/design-system-audit <target>` | Design token consistency audit |
-| `/e2e-testing <feature>` | Playwright E2E test creation |
-| `/code-review <target>` | Code review (read-only). The bundled version remains available as `/review` |
-| `/security-scan <target>` | Vulnerability scan / OWASP / CVE audit (read-only) |
-| `/legal-check <target>` | OSS license / privacy / IP compliance (read-only) |
-| `/performance <target>` | Measurement-first performance optimization |
-| `/refactoring <target>` | Large-scale restructuring / responsibility migration |
-| `/review-fix <PR#>` | Auto-fix CodeRabbit/Copilot review comments (manual invocation only) |
-| `/harness-refine <target or instruction>` | Self-score → improve → review the harness scaffolding (manual invocation only / JP-EN mirror parity required) |
+- Standard flow: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` →
+  `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
+- Auxiliary: `/ui-ux-design` / `/hig-compliance` / `/design-system-audit` / `/adr`. Manual invocation only: `/review-fix <PR#>` / `/harness-refine` (JP-EN mirror parity required)
+- `/code-review` means this template's read-only skill. Call the bundled version as `/review`
 
 Each skill reads details (`pitfalls.md` etc.) when needed and keeps its expected behavior in `evals/evals.json`. Use the bundled skills alongside them:
 `/verify` (confirm against the running app) / `/btw` (side question kept out of context) / `/goal <condition>` (keep working until it holds) / `/batch` (parallel change across files) / `/loop` (default prompt in `.claude/loop.md`).
@@ -107,9 +92,13 @@ Self-improvement loop / pre-completion verification / autonomous bug fixing / ta
 When compacting, always preserve: the list of modified files / the verification commands run and their results / unfinished tasks and the next step /
 design decisions adopted or rejected and constraints the user stated (verbatim) / blockers hit and workarounds tried / the output-location conventions (`output/`). Raw tool output may be dropped.
 
-## Project-specific info (always loaded)
+## Project-specific info
+
+Load every session only what the code cannot show (commands, conventions, gotchas). Importing does not reduce context cost (official memory guide).
 
 @docs/project.md              <!-- Tech stack, commands, routing -->
-@docs/architecture.md          <!-- Directory structure, test list -->
-@docs/data-model.md            <!-- Schema, validation -->
-@docs/development-patterns.md  <!-- Code conventions, patterns -->
+@docs/development-patterns.md  <!-- Code conventions, patterns, past problems -->
+
+Claude can read the structure and schema from the repository, so they are not loaded every session. Read them when needed:
+`docs/architecture.md` — before a change that crosses layers or dependency direction, or before creating a new directory /
+`docs/data-model.md` — before changing the schema, persistence, or validation

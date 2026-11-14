@@ -8,7 +8,7 @@ Claude Code 固有の仕組み(skill / team / subagent / フック / 権限)は 
 
 - 必ず日本語で応対する
 - **完了報告には証拠を添える**(テスト出力・実行コマンドと結果・スクリーンショット)。証拠のない「完了」は禁止
-- 着手前に `docs/` の `project.md` / `architecture.md` / `data-model.md` / `development-patterns.md` を読む(Claude Code は自動 load)。無い or stub(5 行未満)なら `project-config.md` の該当セクションを参照する
+- 着手前に `docs/project.md`(コマンド)と `docs/development-patterns.md`(規約・落とし穴)を読む(Claude Code は自動 load)。構成・スキーマを変える前は `docs/architecture.md` / `docs/data-model.md` も読む。無い or stub(5 行未満)なら `project-config.md` の該当セクションを参照する
 
 ## 開発原則
 

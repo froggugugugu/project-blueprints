@@ -14,3 +14,5 @@ Rules:
 - Never perform irreversible actions (push, merge, delete) unless they continue work the conversation already authorized
 - Never report unverified work as done. When stuck, write down why and defer to the next iteration
 - If CI is green and the PR is quiet, reply "no change" in one line
+- In a `/loop` without an interval, schedule the next iteration only while something is still pending (CI, reviews). A turn that ends without scheduling ends the loop.
+  Match the wait to how long CI actually takes, and schedule nothing when there is nothing to wait for

@@ -6,7 +6,7 @@
     "managed settings は user / project / local より優先され、個人が上書きできない。",
     "このファイル自体は Claude Code に読まれない(参照用)。必要なキーだけ写して値を差し替えること。",
     "auto mode の trusted infrastructure(autoMode.environment)は /auto-mode-setup で下書きを作り、ここに転記する。",
-    "sandbox.credentials は必須: 認証情報に組み込みの deny リストは無く、既定では ~/.aws や ~/.ssh も読める。failIfUnavailable / allowUnsandboxedCommands は公式の組織向け推奨値。",
+    "sandbox.credentials は必須: 認証情報に組み込みの deny リストは無く、既定では ~/.aws や ~/.ssh も読める。failIfUnavailable / allowUnsandboxedCommands は公式の組織向け推奨値。autoAllowBashIfSandboxed: v2.1.325 以降サンドボックス内の Bash も権限フローに従うため、サンドボックスを境界として確認なしで走らせるならここ(最上位の managed source)で true にする。毎回確認させるなら false。",
     "isolatePeerMachines / crossSessionInbound: 他セッションからのメッセージ(指示に見える文面が届く)を制御する。無人実行では permissions.deny に SendMessage / ListAgents も足す。requiredMinimumVersion 2.1.314 は blockWritesOutsideWorkingDirectories(作業ディレクトリ外への Write / Edit を全モードで拒否)が効く最小版(onFailure: block は 2.1.295)。autoMode の各リストを書くときは \"$defaults\" を残す。"
   ],
   "permissions": {
@@ -24,6 +24,7 @@
     "enabled": true,
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
+    "autoAllowBashIfSandboxed": true,
     "network": {
       "allowedDomains": [
         "registry.npmjs.org",

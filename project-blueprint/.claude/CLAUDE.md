@@ -7,27 +7,12 @@
 > **"core" として軽量化**(Pro 契約 friendly)。詳細な手順は skill / team / agent が必要時に Read する(skill の行頭 `@` は起動時に全文添付されるため使わない)。
 > 各行は「消すと Claude が間違えるか?」で判定して残す(公式ガイド)。ツール共通の規則は `AGENTS.md` に書く。
 
-## スキル一覧(全引数省略可)
+## スキル(説明と引数は skill 一覧に出るので、ここでは順序と例外だけを書く)
 
-| スキル | 用途・トリガー |
-| ------ | -------------- |
-| `/brainstorm <要求メモ>` | `/prd` 前段の Socratic 質問駆動(読取専用) |
-| `/prd <ファイル>` | 要求メモから PRD 生成(読取専用) |
-| `/architecture <ファイル>` | 要求メモからシステムアーキテクチャ設計(読取専用) |
-| `/plan <説明 or ファイル>` | 設計ドキュメント生成(読取専用) |
-| `/adr <判断タイトル>` | 設計判断の経緯・根拠を ADR に記録 |
-| `/implementing-features <タスク>` | TDD による機能実装・バグ修正 |
-| `/ui-ux-design <対象>` | デザインシステム準拠の UI/UX 設計・レビュー・実装 |
-| `/hig-compliance <対象>` | Apple HIG 準拠のシステム横断 UI 一貫性チェック |
-| `/design-system-audit <対象>` | デザイントークン整合性監査・標準化 |
-| `/e2e-testing <対象機能>` | Playwright E2E テスト作成 |
-| `/code-review <対象>` | コードレビュー(読取専用)。同梱の bundled 版は `/review` |
-| `/security-scan <対象>` | 脆弱性スキャン・OWASP / CVE 監査(読取専用) |
-| `/legal-check <対象>` | OSS ライセンス・プライバシー・知財チェック(読取専用) |
-| `/performance <対象>` | 計測ファーストのパフォーマンス最適化 |
-| `/refactoring <対象>` | 大規模コード再構成・責務移動 |
-| `/review-fix <PR番号>` | CodeRabbit/Copilot レビュー指摘の自動修正(手動起動のみ) |
-| `/harness-refine <対象 or 指示>` | ハーネス骨格の自己採点 → 強化 → セルフレビュー(手動起動のみ / 日英ミラー同期必須) |
+- 標準の流れ: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` →
+  `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
+- 補助: `/ui-ux-design` / `/hig-compliance` / `/design-system-audit` / `/adr`。手動起動のみ: `/review-fix <PR番号>` / `/harness-refine`(日英ミラー同期必須)
+- `/code-review` は本テンプレートの読取専用 skill を指す。同梱の bundled 版は `/review` で呼ぶ
 
 各 skill は詳細(`pitfalls.md` 等)を必要時に Read し、期待動作の基準を `evals/evals.json` に持つ。同梱 skill も併用する:
 `/verify`(実アプリで動作確認)/ `/btw`(文脈を汚さない脇質問)/ `/goal <完了条件>`(条件を満たすまで継続)/ `/batch`(大量ファイル並列変更)/ `/loop`(既定プロンプトは `.claude/loop.md`)。
@@ -107,9 +92,13 @@ SessionStart(`compact`)が中核ルールを即座に再注入する。`paths:` 
 コンパクト(要約)では次を必ず保持する: 変更したファイル一覧 / 実行した検証コマンドと結果 / 未完了タスクと次の一手 /
 採用・却下した設計判断とユーザーが述べた制約(原文のまま)/ 行き詰まりと試した回避策 / 出力先(`output/`)の規約。ツール出力の生データは捨ててよい。
 
-## プロジェクト固有情報(常時 load)
+## プロジェクト固有情報
+
+常時 load するのはコードから読めない情報(コマンド・規約・落とし穴)だけにする。import しても文脈コストは減らない(公式 memory ガイド)。
 
 @docs/project.md              <!-- 技術スタック・コマンド・ルーティング -->
-@docs/architecture.md          <!-- ディレクトリ構成・テスト一覧 -->
-@docs/data-model.md            <!-- スキーマ・バリデーション -->
-@docs/development-patterns.md  <!-- コード規約・パターン -->
+@docs/development-patterns.md  <!-- コード規約・パターン・過去の問題 -->
+
+構成とスキーマは Claude がリポジトリから読めるので常時 load しない。必要なときに Read する:
+`docs/architecture.md` — レイヤーや依存方向をまたぐ変更・新しいディレクトリを作る前 /
+`docs/data-model.md` — スキーマ・永続化・バリデーションを変える前

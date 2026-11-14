@@ -16,13 +16,31 @@ paths:
 - Structure with headings and bullets. Put parallel data in tables. Don't explain in paragraphs
 - Write concretely enough to verify ("2-space indentation", not "format properly"; "run `npm test`", not "test your changes")
 - One term per concept. Never call the same thing by different names
-- Use emphasis (**bold** / IMPORTANT) only on the one line that truly must hold. Overuse makes it ineffective
+- Use **bold** only on the one line that truly must hold. Overuse makes it ineffective (for all-caps warning words, see the table below)
 - Don't keep contradicting rules in different files. When you find one, delete the other
 - Give each rule its reason ("don't X because Y", not "don't X"). Claude 5-family models generalize from the reason, and an absolute rule without one is the first to be dropped when rules conflict
 - Reserve absolute rules (prohibitions) for safety and irreversible operations. Describe the desired state for everything else ("match the surrounding comment density", not "never write comments")
 - To merely mention a path, use a code span. A bare `@path` at the start of a line is read as a load instruction
 - Put maintainer notes in block HTML comments (stripped from context in CLAUDE.md)
 - Use `/` as the only path separator
+
+## Don't carry over phrasing written for older models (official best-practices "What you can stop doing")
+
+| Don't write | Why, and what to do instead |
+| ----------- | --------------------------- |
+| `IMPORTANT` / `CRITICAL` / `YOU MUST` / all-caps emphasis | Current models follow a plainly worded line, and emphasis makes them over-apply the rule. Turn a rule with no exceptions into a hook / deny rule; fix a line that gets lost by shortening the file |
+| `think hard` / `think harder` / `be thorough` | Effort controls reasoning (`project-config.md` §13.1b). For one deeper turn, use `ultrathink` |
+| "keep going", "don't be lazy", "loop until done" | These cause over-work. Hand over a pass/fail check instead, and enforce unattended runs with `/goal` or a Stop hook |
+| "use subagents to protect your context", "delegate for a better answer" | With a 1M window, running out is rare, and delegating the same task does not improve the answer. Use subagents only for parallelism, isolating long output, an independent reviewer that hasn't seen the reasoning, or restricted tools |
+| Architecture or directory layout in CLAUDE.md | Claude reads the repo. Write only what isn't in it (check commands, misleading spots, decisions made outside the repo, anything corrected twice) |
+
+`validate-harness.sh` flags `IMPORTANT` / `YOU MUST` and the `think hard` family with a WARN (`CRITICAL` is excluded because it cannot be told apart from a severity label).
+
+## Enforce or leave to Claude (deterministic / non-deterministic)
+
+- Default to letting Claude decide (CLAUDE.md, skills, prompts). Current models judge whether a guideline fits the code in front of them
+- Enforce only what must *always* (or *never*) happen: hooks, deny rules, managed settings, CI, branch protection
+- A line Claude still misses after you add emphasis belongs in a hook. Conversely, delete hooks that encode a preference and let Claude decide
 
 ## Where content belongs
 
@@ -40,7 +58,7 @@ paths:
 ## CLAUDE.md
 
 - Judge each line by "would removing it make Claude make mistakes?" Omit what code shows and common knowledge
-- `@import` targets load in full every session. Import only files that are needed every time
+- `@import` targets load in full every session. An import organizes a file but does not reduce its context cost. Import only files needed every time and name the rest as "path — when to read it"
 - With any CLAUDE.md present, Claude Code does not read `AGENTS.md` directly. Keep the `@AGENTS.md` line at the top of CLAUDE.md and never duplicate shared rules into CLAUDE.md. The exception is safety prohibitions, which also go in CLAUDE.md itself so they reach the auto mode classifier
 - Do not put a line-start `@` in `AGENTS.md` (agents other than Claude Code do not interpret imports). Name files to read in the body instead
 

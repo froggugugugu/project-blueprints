@@ -67,7 +67,54 @@ PERMISSION_KEYS = {
     "allow", "ask", "deny", "additionalDirectories", "defaultMode",
     "disableBypassPermissionsMode", "disableAutoMode",
     "blockReadsOutsideWorkingDirectories", "blockWritesOutsideWorkingDirectories",
+    "denyInsteadOfPrompting",  # v2.1.319。ただし user / managed / --settings でしか効かない(下の表)
 }
+
+# settings-reference の「Where it's honored」列(2026-11-14 時点, v2.1.325)。project の settings.json /
+# settings.local.json に書いても黙って無視されるキー。autoMode / pluginConfigs / sandbox.ripgrep は
+# check_project_scope_keys が個別の文言で警告するのでここには載せない。
+USER_OR_MANAGED_KEYS = {
+    "askUserQuestionTimeout", "appendPlugins", "autoContinueAtUsageLimit", "autoMode.classifyAllShell",
+    "axScreenReader", "bashEditDiffEnabled", "desktopSessionCleanupPeriodDays", "dialogExpiry",
+    "feedbackDrafts", "footerLinksRegexes", "forceLoginGatewayUrl", "modelPicker",
+    "permissions.denyInsteadOfPrompting", "prependPlugins", "processWrapper",
+    "sandbox.allowAppleEvents", "sandbox.allowNestedUserNamespaces", "sandbox.credentials.allowPlaintextInject",
+    "sandbox.credentials.awsPairs", "sandbox.credentials.sigv4", "sandbox.filesystem.disabled",
+    "sandbox.network.strictAllowlist", "sandbox.network.tlsTerminate", "skipAutoPermissionPrompt",
+    "spellcheck", "sshConfigs", "sshHostCommands", "vimInsertModeRemaps", "worktree.location",
+}
+# local(settings.local.json)では効くが、共有 settings.json では効かないキー
+USER_LOCAL_OR_MANAGED_KEYS = {
+    "skipDangerousModePermissionPrompt", "syncClaudeAiPlugins", "syncClaudeAiSkills", "useAutoModeDuringPlan",
+}
+MANAGED_ONLY_KEYS = {
+    "allowAllClaudeAiMcps", "allowClaudeInChromeWithManagedMcp", "allowedChannelPlugins", "allowedProviders",
+    "allowManagedHooksOnly", "allowManagedMcpServersOnly", "allowManagedPermissionRulesOnly",
+    "availableModelsMatch", "blockedMarketplaces", "browserExternalPageTools", "channelsEnabled", "claudeMd",
+    "deniedModels", "disableBrowserExternalNavigation", "disableCommandPluginSources",
+    "disableDesktopLocalSessions", "disableMobileSimulatorTools", "disableRemotePreviewScripts",
+    "disableSideloadFlags", "forceRemoteSettingsRefresh", "gatewayInternalNetworks", "managedMcpServers",
+    "managedSourcesBehavior", "modelPricing", "parentSettingsBehavior", "pluginSuggestionMarketplaces",
+    "pluginTrustMessage", "policyHelper", "requiredMaximumVersion", "requiredMinimumVersion",
+    "sandbox.bwrapPath", "sandbox.filesystem.allowManagedReadPathsOnly", "sandbox.network.allowManagedDomainsOnly",
+    "sandbox.socatPath", "sshHostAllowlist", "strictKnownMarketplaces", "strictPluginOnlyCustomization",
+    "wslInheritsWindowsSettings",
+}
+# ~/.claude.json(global config)のキー。settings*.json に書いても読まれない
+GLOBAL_CONFIG_KEYS = {
+    "autoConnectIde", "autoInstallIdeExtension", "claudeInChromeDefaultEnabled", "copyFullResponse",
+    "copyOnSelect", "defaultToAgentsView", "diffTool", "externalEditorContext", "leftArrowOpensAgents",
+    "permissionExplainerEnabled", "prStatusFooterEnabled", "teammateDefaultModel",
+}
+# 削除済み・無視されるようになったキー(書いても効かない)
+REMOVED_SETTINGS = {
+    "subagentStatusLine": "v2.1.323 で削除されました(subagent の行は常に既定の表示)",
+    "pluginDigests": "v2.1.325 で deprecated になり無視されます",
+}
+# 旧世代モデル向けの書き方(公式 best-practices「What you can stop doing」)。コードスパン・コードブロックの中は数えない
+# (`CRITICAL` は脆弱性・ライセンスの重大度ラベルとして正当に使うので対象外)
+LEGACY_EMPHASIS_RE = re.compile(r"\b(IMPORTANT|YOU MUST)\b")
+LEGACY_THINK_RE = re.compile(r"(?i)\b(think hard(?:er)?|be thorough)\b")
 
 # ファイルパス権限は Edit(path) / Read(path) だけが参照される。
 # 下記ツールにパス指定を書いても一切参照されず、起動時に警告が出る。
@@ -193,6 +240,9 @@ def check_permission_rules(where: str, rules: list[str], rep: Report) -> None:
         # `Bash(git * main)` のようにサブコマンドの前にワイルドカードを置くと意図と違う一致になり、起動時に警告される(v2.1.246)
         if tool == "Bash" and re.match(r"^\S+\s+\*\s+\S", spec):
             rep.warn(where, f"`{rule}` — サブコマンドの前の `*` は起動時に警告されます。`Bash({spec.split()[0]} <sub> *)` の形にしてください")
+        # `Bash(PORT=* npm run dev)` は変数の値に任意のコマンド片を許してしまい、起動時に警告される(v2.1.323)
+        if tool == "Bash" and "[permissions.allow]" in where and re.match(r"^\w+=\S*\*", spec):
+            rep.warn(where, f"`{rule}` — 変数の値に `*` を含む allow ルールは起動時に警告されます。値を固定するか変数を外してください")
         if tool in NEVER_CONSULTED_PATH_TOOLS and ":" not in spec:
             rep.error(
                 where,
@@ -305,6 +355,17 @@ def check_permission_keys(where: str, cfg: dict, rep: Report) -> None:
             rep.error(where, f"`permissions.{key}` は公式の permissions キーではありません — 黙って無視されます")
 
 
+def flatten_keys(cfg: dict, prefix: str = "", depth: int = 3) -> set[str]:
+    """`{"sandbox": {"network": {"x": 1}}}` → {"sandbox", "sandbox.network", "sandbox.network.x"}."""
+    keys: set[str] = set()
+    for k, v in cfg.items():
+        path = f"{prefix}{k}"
+        keys.add(path)
+        if isinstance(v, dict) and depth > 1:
+            keys |= flatten_keys(v, path + ".", depth - 1)
+    return keys
+
+
 def check_project_scope_keys(where: str, cfg: dict, rep: Report) -> None:
     """Keys the runtime ignores in project / local settings (repo-borne privilege escalation guard)."""
     mode = cfg.get("permissions", {}).get("defaultMode")
@@ -322,6 +383,21 @@ def check_project_scope_keys(where: str, cfg: dict, rep: Report) -> None:
         rep.warn(where, "`remoteControlAtStartup: true` は project / local settings では効きません(v2.1.222)")
     if isinstance(cfg.get("sandbox"), dict) and "ripgrep" in cfg["sandbox"]:
         rep.warn(where, "`sandbox.ripgrep` は user / managed / --settings からしか読まれません(v2.1.232)")
+    is_local = "settings.local" in where
+    for key in sorted(flatten_keys(cfg)):
+        top = key.split(".")[0]
+        if top.startswith("_comment") or top in ("hooks", "env", "enabledPlugins", "mcpServers"):
+            continue
+        if key in REMOVED_SETTINGS:
+            rep.warn(where, f"`{key}` は {REMOVED_SETTINGS[key]}")
+        elif key in USER_OR_MANAGED_KEYS:
+            rep.warn(where, f"`{key}` は ~/.claude/settings.json・managed settings・--settings でしか効きません — project settings では無視されます")
+        elif key in USER_LOCAL_OR_MANAGED_KEYS and not is_local:
+            rep.warn(where, f"`{key}` は共有の settings.json では無視されます — settings.local.json か ~/.claude/settings.json に置いてください")
+        elif key in MANAGED_ONLY_KEYS:
+            rep.warn(where, f"`{key}` は managed settings でしか効きません — project settings では無視されます")
+        elif key in GLOBAL_CONFIG_KEYS:
+            rep.warn(where, f"`{key}` は ~/.claude.json(global config)のキーです — settings*.json に書いても読まれません")
     for key in sorted(cfg.get("env", {}) or {}):
         if key in PROJECT_IGNORED_ENV or key.startswith("OTEL_"):
             rep.warn(
@@ -862,6 +938,27 @@ def check_imports_and_limits(root: Path, rep: Report) -> None:
             rep.warn(str(claude_md), f"{label} {n} 行 — 目安の {CLAUDE_MD_SOFT_LIMIT} 行を超えています")
 
 
+def check_instruction_phrasing(root: Path, rep: Report) -> None:
+    """Claude が読む指示ファイルに残った旧世代向けの強調・思考誘導(公式 best-practices「What you can stop doing」)。
+    現行モデルは平叙文に従い、強調は過剰適用を、`think hard` は effort と無関係な文字列として扱われる。"""
+    c = root / ".claude"
+    targets = [c / "CLAUDE.md", root / "AGENTS.md", c / "loop.md"]
+    for sub in ("rules", "agents", "output-styles"):
+        targets += sorted((c / sub).glob("*.md"))
+    targets += sorted((c / "skills").glob("*/SKILL.md"))
+    for p in targets:
+        if not p.is_file() or p.name == "README.md":
+            continue
+        text = re.sub(r"`[^`\n]*`", "", strip_fences(p.read_text(encoding="utf-8")))
+        for rx, msg in (
+            (LEGACY_EMPHASIS_RE, "は現行モデルで規則の過剰適用を招きます — 平叙文にし、例外の無い規則はフック / deny にしてください"),
+            (LEGACY_THINK_RE, "は推論量を上げません(effort が制御します) — 消すか、その 1 ターンだけなら ultrathink にしてください"),
+        ):
+            m = rx.search(text)
+            if m:
+                rep.warn(str(p), f"`{m.group(0)}` {msg}")
+
+
 def check_loop_md(root: Path, rep: Report) -> None:
     """`.claude/loop.md`(bare `/loop` の既定プロンプト)は 25,000 文字を超えた分が読まれない。"""
     p = root / ".claude/loop.md"
@@ -1000,6 +1097,7 @@ def validate_root(root: Path, online: bool, rep: Report) -> None:
     check_rules(root, rep)
     check_imports_and_limits(root, rep)
     check_loop_md(root, rep)
+    check_instruction_phrasing(root, rep)
     check_constitution(root, rep)
     check_mcp_template(root, rep, online)
 

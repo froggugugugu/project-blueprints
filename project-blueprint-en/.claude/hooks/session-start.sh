@@ -66,8 +66,8 @@ for doc in project.md architecture.md data-model.md development-patterns.md; do
         content_lines=${content_lines:-0}
         if [[ "$content_lines" -lt 5 ]]; then
             warnings+=("docs/$doc is still a stub. Generate content as implementation progresses.")
-        elif [[ "$content_lines" -gt 300 ]]; then
-            # docs/*.md are @imported by CLAUDE.md in every session, so growth becomes startup cost
+        elif [[ "$content_lines" -gt 300 && ( "$doc" == "project.md" || "$doc" == "development-patterns.md" ) ]]; then
+            # CLAUDE.md @imports only these two every session (architecture / data-model are read when needed); growth becomes startup cost
             warnings+=("docs/$doc has ${content_lines} lines (guideline: 300). It loads in every session; move details into a skill's references/ or a path-scoped rule.")
         fi
     fi

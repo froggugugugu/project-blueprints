@@ -12,7 +12,7 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | ---- | ---- |
 | **現象** | CLAUDE.md が長くなるほど、書いた指示が守られなくなる |
 | **原因** | 200 行を超えると重要度の低い指示に埋もれて参照精度が落ちる。全セクションを毎セッション読み込むためトークンコストも肥大 |
-| **対策** | 横断ルールのみに絞る。詳細は skill / `docs/` / `.claude/rules/` に分離。`docs/*.md` / `.claude/*.md` 等の具体パスで `@import` する(ルート相対) |
+| **対策** | 横断ルールのみに絞る。詳細は skill / `docs/` / `.claude/rules/` に分離。常時 `@import` するのは毎回必要なファイルだけにし、他は「パス — 読む条件」で示す(#41) |
 
 ### 2. subagent に親の skill が自動では載らない(CLAUDE.md / rules は継承される)
 
@@ -325,6 +325,22 @@ AI 協調開発で頻出する失敗事例と対策をまとめる。
 | **現象** | フックのパスを打ち間違えた・実行権限が落ちた・タイムアウトしたのに、危険コマンドがそのまま通った。transcript に `hook error` が 1 行出るだけ |
 | **原因** | フックは既定で fail-open: 起動失敗・タイムアウト・想定外の exit code のとき操作は続行する。ポリシー用のフックほど、壊れたことに気づきにくい |
 | **対策** | ブロック系フックには `"onFailure": "block"`(v2.1.295)を付けて故障時は操作を止める(本テンプレートは `safety-check.sh` / `protect-files.sh` / `config-guard.sh` / `scope-guard.sh`)。`validate-harness.sh` が欠落を WARN し、`--hooks` が must-block / must-allow の両方向を回帰テストする |
+
+### 40. 無人の `/loop` が skill の確認待ちで止まる / 予約し忘れで終わる
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | 夜間に回した `/loop` が朝見ると `/code-review` の起動確認で止まっている。あるいは「変更なし」の 1 ターン後にループが消えている |
+| **原因** | v2.1.325 から `/loop` と予約タスクは `allowed-tools` か `hooks` を宣言した skill を起動前に確認する(本テンプレートの skill は全て該当)。v2.1.319 から間隔なしの `/loop` は次の反復を予約しなかったターンで終わる |
+| **対策** | ループで使う読取専用 skill だけ `permissions.allow` に `Skill(<名前>)` を足す(`settings.local.json.template` は `Skill(code-review)` を同梱)。`.claude/loop.md` は待つ対象が残るときだけ予約するよう指示している。見ていない端末では `~/.claude/settings.json` に `permissions.denyInsteadOfPrompting: true` を置くと、確認待ちで止まらず拒否して続く |
+
+### 41. 常時 import した docs/ が育ち、毎ターンの文脈を食う
+
+| 項目 | 内容 |
+| ---- | ---- |
+| **現象** | CLAUDE.md は 200 行以内なのに `/context` の memory が大きい。無関係なタスクでもディレクトリ構成やスキーマの全文が載っている |
+| **原因** | `@import` は整理の道具で、取り込んだファイルは CLAUDE.md と一緒に毎セッション全文 load される(公式 memory ガイド)。構成・スキーマは Claude がリポジトリから読めるので常時 load する価値が低い |
+| **対策** | 常時 import はコードから読めない情報(`docs/project.md` のコマンド、`docs/development-patterns.md` の規約・落とし穴)に限る。`docs/architecture.md` / `docs/data-model.md` は CLAUDE.md に「パス — 読む条件」で示し、必要時に Read させる。`session-start.sh` が常時 import の 2 本が 300 行を超えると警告する |
 
 ## 推奨セッション運用コマンド
 
