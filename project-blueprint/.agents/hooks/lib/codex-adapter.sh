@@ -69,8 +69,13 @@ run_hook() {
     fi
 }
 
-# jq が無ければ変換せずに渡す(各フックの jq 不在時フォールバックに任せる)
+# jq が無いと apply_patch を変換できない。ブロック系フックは、検査できない編集を通さずに止める
+# (Bash の入力は変換が要らないので、各フックの jq 不在時フォールバックに任せてそのまま渡す)
 if ! command -v jq &>/dev/null; then
+    if [[ $FAIL_CLOSED -eq 1 ]] && printf '%s' "$INPUT" | grep -qE '"tool_name"[[:space:]]*:[[:space:]]*"apply_patch"'; then
+        echo "codex-adapter: jq が無いため、この編集がどのファイルに触るかを検査できません。安全のため止めました。jq を導入してください(brew install jq / apt-get install jq)" >&2
+        exit 2
+    fi
     run_hook "$INPUT" "$@"
     exit $?
 fi
@@ -86,10 +91,32 @@ TOOL="$(printf '%s' "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)"
 if [[ "$TOOL" == "apply_patch" ]]; then
     CWD="$(printf '%s' "$INPUT" | jq -r '.cwd // empty' 2>/dev/null || true)"
     [[ -n "$CWD" ]] || CWD="$BLUEPRINT_PROJECT_DIR"
+    # Codex 本体のパッチ解析と食い違うと、こちらが見落としたファイルへの編集が検査を通らずに実行される。
+    # 行の前後の空白と CR を落としてから照合し、ファイルを指す指示(Add / Update / Delete File、Move to)なのにパスを読めない行には印を付ける。
+    # 本文の行(先頭が空白の文脈行など)がたまたま指示の形をしていても、検査対象が増えるだけで見落としにはならない
     PATHS="$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null | awk '
-        /^\*\*\* (Add File|Update File|Delete File): / { sub(/^\*\*\* [A-Za-z]+ File: /, ""); print; next }
-        /^\*\*\* Move to: /                           { sub(/^\*\*\* Move to: /, ""); print }
+        {
+            line = $0
+            sub(/\r$/, "", line); sub(/^[ \t]+/, "", line); sub(/[ \t]+$/, "", line)
+            if (line !~ /^\*\*\* (Add File|Update File|Delete File|Move to)/) next
+            if (line ~ /^\*\*\* (Add File|Update File|Delete File|Move to):/) {
+                sub(/^\*\*\* (Add File|Update File|Delete File|Move to):[ \t]*/, "", line)
+                if (line != "") { print line; next }
+            }
+            print "@@BLUEPRINT_BAD_DIRECTIVE@@"
+        }
     ')"
+    if printf '%s\n' "$PATHS" | grep -qxF '@@BLUEPRINT_BAD_DIRECTIVE@@'; then
+        if [[ $FAIL_CLOSED -eq 1 ]]; then
+            echo "codex-adapter: パッチに解釈できない指示行があります。保護ファイルの検査をすり抜ける恐れがあるため止めました" >&2
+            exit 2
+        fi
+        PATHS="$(printf '%s\n' "$PATHS" | grep -vxF '@@BLUEPRINT_BAD_DIRECTIVE@@' || true)"
+    fi
+    if [[ -z "$PATHS" && $FAIL_CLOSED -eq 1 ]]; then
+        echo "codex-adapter: パッチからファイルパスを取り出せません。検査できない編集は通せないため止めました" >&2
+        exit 2
+    fi
     if [[ -n "$PATHS" ]]; then
         CONTEXTS=""
         while IFS= read -r rel; do
@@ -116,7 +143,7 @@ if [[ "$TOOL" == "apply_patch" ]]; then
         fi
         exit 0
     fi
-    # パスを取り出せなかったパッチは変換せずに渡す(フック側は file_path が無ければ通過させる)
+    # パスを取り出せなかったパッチ: 観測系フックは変換せずに渡す(フック側は file_path が無ければ何もしない)
 fi
 
 # ── それ以外: そのまま渡す ───────────────────────────────────────────────

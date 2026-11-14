@@ -70,8 +70,13 @@ run_hook() {
     fi
 }
 
-# Without jq, pass the input through unchanged (each hook has its own no-jq fallback)
+# Without jq an apply_patch cannot be converted. A blocking hook stops an edit it cannot inspect instead of letting it through
+# (Bash input needs no conversion, so it is passed on and each hook's own no-jq fallback applies)
 if ! command -v jq &>/dev/null; then
+    if [[ $FAIL_CLOSED -eq 1 ]] && printf '%s' "$INPUT" | grep -qE '"tool_name"[[:space:]]*:[[:space:]]*"apply_patch"'; then
+        echo "codex-adapter: jq is missing, so the files this edit touches cannot be inspected. Stopped for safety. Install jq (brew install jq / apt-get install jq)" >&2
+        exit 2
+    fi
     run_hook "$INPUT" "$@"
     exit $?
 fi
@@ -87,10 +92,32 @@ TOOL="$(printf '%s' "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)"
 if [[ "$TOOL" == "apply_patch" ]]; then
     CWD="$(printf '%s' "$INPUT" | jq -r '.cwd // empty' 2>/dev/null || true)"
     [[ -n "$CWD" ]] || CWD="$BLUEPRINT_PROJECT_DIR"
+    # If this parser disagrees with Codex's own patch parser, an edit to a file missed here would run uninspected.
+    # Strip surrounding whitespace and CR before matching, and mark a file directive (Add / Update / Delete File, Move to) whose path cannot be read.
+    # A body line (a context line with a leading space, say) that happens to look like a directive only adds a path to check; it never hides one
     PATHS="$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null | awk '
-        /^\*\*\* (Add File|Update File|Delete File): / { sub(/^\*\*\* [A-Za-z]+ File: /, ""); print; next }
-        /^\*\*\* Move to: /                           { sub(/^\*\*\* Move to: /, ""); print }
+        {
+            line = $0
+            sub(/\r$/, "", line); sub(/^[ \t]+/, "", line); sub(/[ \t]+$/, "", line)
+            if (line !~ /^\*\*\* (Add File|Update File|Delete File|Move to)/) next
+            if (line ~ /^\*\*\* (Add File|Update File|Delete File|Move to):/) {
+                sub(/^\*\*\* (Add File|Update File|Delete File|Move to):[ \t]*/, "", line)
+                if (line != "") { print line; next }
+            }
+            print "@@BLUEPRINT_BAD_DIRECTIVE@@"
+        }
     ')"
+    if printf '%s\n' "$PATHS" | grep -qxF '@@BLUEPRINT_BAD_DIRECTIVE@@'; then
+        if [[ $FAIL_CLOSED -eq 1 ]]; then
+            echo "codex-adapter: the patch has a directive line that cannot be read. Stopped because it could slip past the protected-file check" >&2
+            exit 2
+        fi
+        PATHS="$(printf '%s\n' "$PATHS" | grep -vxF '@@BLUEPRINT_BAD_DIRECTIVE@@' || true)"
+    fi
+    if [[ -z "$PATHS" && $FAIL_CLOSED -eq 1 ]]; then
+        echo "codex-adapter: no file path could be extracted from the patch. Stopped because an edit that cannot be inspected must not go through" >&2
+        exit 2
+    fi
     if [[ -n "$PATHS" ]]; then
         CONTEXTS=""
         while IFS= read -r rel; do
@@ -117,7 +144,7 @@ if [[ "$TOOL" == "apply_patch" ]]; then
         fi
         exit 0
     fi
-    # A patch whose paths could not be extracted is passed through unchanged (hooks allow input without file_path)
+    # A patch with no extractable path: an observation hook gets the input unchanged (hooks do nothing without file_path)
 fi
 
 # ── Everything else: pass through ──────────────────────────────────────────

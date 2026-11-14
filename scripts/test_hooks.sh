@@ -301,6 +301,33 @@ for MIRROR in project-blueprint project-blueprint-en; do
     expect_rc "codex-adapter: 通常ファイルだけの apply_patch は通過" 0 "$RC"
     run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: notes.txt\n*** Move to: .claude/settings.json\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
     expect_rc "codex-adapter: Move to の移動先も検査する(Claude Code 側の設定を守る)" 2 "$RC"
+    # Codex 本体のパッチ解析とこちらの解析が食い違うと、見落としたファイルへの編集が検査を通らずに実行される
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n   *** Update File: config/.env\n@@\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: 字下げされた指示行のファイルも検査する" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\r\n*** Add File: secrets/id_rsa\r\n+x\r\n*** End Patch\r\n')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: CRLF のパッチでもファイルを検査する" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File:\n@@\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: パスを読めない指示行は --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File src/app.ts\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: 形の崩れた指示行は --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 'no patch headers at all')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: パスを 1 つも取り出せないパッチは --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PostToolUse c1 'no patch headers at all')" console-warn.sh >/dev/null
+    expect_rc "codex-adapter: 観測系はパスを取り出せなくても通す" 0 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: docs/robot.md\n@@\n *** Settings ***\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: 本文に *** で始まる行があっても誤って止めない" 0 "$RC"
+    # jq が無い環境: ブロック系は apply_patch を検査できないので止める。Bash はフック自身のフォールバックに任せる
+    NOJQ="$C/nojq-bin"
+    mkdir -p "$NOJQ"
+    for tool in bash dirname cat grep basename sed head awk tr cut wc date mkdir; do ln -s "$(command -v "$tool")" "$NOJQ/$tool"; done
+    BASH_BIN="$(command -v bash)"
+    printf '%s' "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: src/app.ts\n*** End Patch')" | PATH="$NOJQ" "$BASH_BIN" "$AD" --fail-closed protect-files.sh >/dev/null 2>&1
+    expect_rc "codex-adapter: jq が無いと --fail-closed の apply_patch は止める" 2 "$?"
+    printf '%s' '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}' | PATH="$NOJQ" "$BASH_BIN" "$AD" --fail-closed safety-check.sh >/dev/null 2>&1
+    expect_rc "codex-adapter: jq が無くても Bash はフックのフォールバックへ渡す" 0 "$?"
+    printf '%s' "$(patch_json PostToolUse c1 '*** Begin Patch\n*** Update File: src/app.ts\n*** End Patch')" | PATH="$NOJQ" "$BASH_BIN" "$AD" console-warn.sh >/dev/null 2>&1
+    expect_rc "codex-adapter: jq が無くても観測系は作業を止めない" 0 "$?"
+
     run_adapter standard '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git push origin main --force"}}' --fail-closed safety-check.sh >/dev/null
     expect_rc "codex-adapter: Bash の危険コマンドはブロック" 2 "$RC"
     run_adapter standard '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}' --fail-closed safety-check.sh >/dev/null

@@ -41,6 +41,10 @@ From "Hook inventory" onward this document describes the Claude Code settings (`
 A Codex file edit arrives as `apply_patch` with the patch text in `tool_input.command`. The adapter turns it into one input per touched file,
 each carrying `tool_input.file_path`, so the hooks only ever handle the input shape Claude Code sends.
 
+If the adapter's parser disagrees with Codex's own, an edit to a file the adapter missed would run uninspected. For the blocking hooks (`--fail-closed`) the adapter therefore
+strips surrounding whitespace and CR before matching and stops the edit when a file directive has no readable path, when no path can be extracted at all, or when
+`jq` is missing and the patch cannot be parsed. `jq` is required to use the blocking hooks under Codex.
+
 ### Where Codex does not give the same guarantee (official spec and measurements, 2026-11-14 / codex-cli 0.162.1)
 
 | Point | What happens | How it is covered |
