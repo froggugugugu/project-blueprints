@@ -46,7 +46,8 @@ Cursor / Copilot / Gemini CLI は `AGENTS.md` を読む補助に下げた。
   - `hooks.json` / `hooks.minimal.json`: 共有フック 18 本のうち 12 本を 15 登録。すべて `.agents/hooks/lib/codex-adapter.sh` 経由
   - `lib/codex-adapter.sh`(新設): Codex の `apply_patch`(パッチ本文が `tool_input.command`)を、触るファイルごとの `tool_input.file_path` 入力に直してフックを呼ぶ。
     プロジェクトルートを自分の位置から求める。`--fail-closed` でフック本体が無いときに止める(`onFailure: block` の代替)。Stop / SubagentStop の非 JSON 出力を落とす。
-    `--fail-closed` では、パッチの指示行を空白・CR を落としてから照合し、パスを読めない指示行・パスを取り出せないパッチ・`jq` が無い場合に編集を止める
+    `--fail-closed` では、パッチの指示行を空白・CR を落としてから照合し、指示の語を含むのに正規の形でない行(全角空白・NBSP での字下げを含む)・
+    パスを取り出せないパッチ・`jq` が無い場合に編集を止める
     (自動セキュリティレビューの指摘: 解析が Codex 本体と食い違うと保護ファイルの検査をすり抜ける)
   - `rules/default.rules`: Claude Code の deny(13)/ ask(14)に対応する `forbidden` / `prompt` 規則 18 本(`codex execpolicy check` で確認)
   - `config.toml`: `approval_policy = "on-request"`、権限プロファイル `blueprint`(Claude Code の `Read()` deny と同じ 16 対象の読取禁止、
@@ -68,7 +69,7 @@ Cursor / Copilot / Gemini CLI は `AGENTS.md` を読む補助に下げた。
 - **validator**: Codex 側の検査を追加(フックイベント名、アダプタ経由、ブロック系の登録と `--fail-closed`、`approval_policy = "never"`、権限プロファイルと `sandbox_mode` の併用、
   ハーネスの読取専用、プロジェクト設定で無視されるキー、deny / ask と rules・`Read()` deny と権限プロファイルの対応、`.codex/agents/*.toml` の同期、
   共通の核の二重配置、手動起動限定 skill の `agents/openai.yaml`、`setup.sh` / `migrate.sh` の日英一致)。機械的な移行で外れていた skill・ルールの文言検査の経路を修正。
-- **テスト**: `--test` 62 → 82、`--hooks` 170 → 248(アダプタと Codex 対応 78 件)、`--setup` 96 → 276、**`--migrate` 228(新設)**。`--migrate` は git 履歴から 0.4.0 と 1.0 直前の
+- **テスト**: `--test` 62 → 82、`--hooks` 170 → 254(アダプタと Codex 対応 84 件)、`--setup` 96 → 276、**`--migrate` 228(新設)**。`--migrate` は git 履歴から 0.4.0 と 1.0 直前の
   テンプレートを取り出し、当時の `setup.sh` で導入したプロジェクトを実際に移行する(CI は `fetch-depth: 0`)。
 - **ドキュメント(JP/EN)**: `AGENTS.md`(冒頭と「エージェント別の読み替え」)、`project-config.md` §13.7(Claude Code と Codex を対等に)、`guardrails.md`、
   `rules/README.md`、`harness-authoring.md`(「2 つのエージェントで共有する」節と `paths:`)、README(`--agent`・リンク・移行手順・ファイル構成)、

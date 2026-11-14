@@ -42,7 +42,8 @@ A Codex file edit arrives as `apply_patch` with the patch text in `tool_input.co
 each carrying `tool_input.file_path`, so the hooks only ever handle the input shape Claude Code sends.
 
 If the adapter's parser disagrees with Codex's own, an edit to a file the adapter missed would run uninspected. For the blocking hooks (`--fail-closed`) the adapter therefore
-strips surrounding whitespace and CR before matching and stops the edit when a file directive has no readable path, when no path can be extracted at all, or when
+strips surrounding whitespace and CR before matching and stops the edit when a line contains a directive word (Add / Update / Delete File, Move to) but is not in the canonical form
+(including indentation with a full-width space or NBSP; body lines starting with `+` or `-` are exempt), when no path can be extracted at all, or when
 `jq` is missing and the patch cannot be parsed. `jq` is required to use the blocking hooks under Codex.
 
 ### Where Codex does not give the same guarantee (official spec and measurements, 2026-11-14 / codex-cli 0.162.1)

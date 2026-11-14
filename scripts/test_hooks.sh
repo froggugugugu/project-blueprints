@@ -316,6 +316,13 @@ for MIRROR in project-blueprint project-blueprint-en; do
     expect_rc "codex-adapter: 観測系はパスを取り出せなくても通す" 0 "$RC"
     run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: docs/robot.md\n@@\n *** Settings ***\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
     expect_rc "codex-adapter: 本文に *** で始まる行があっても誤って止めない" 0 "$RC"
+    # Codex は ASCII 以外の空白(全角空白・NBSP)も行の前後から落とす。指示の語を含むのに正規の形でない行は止める
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n\xe3\x80\x80*** Update File: config/.env\n@@\n-a\n+b\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: 全角空白で字下げした指示行は --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n\xc2\xa0*** Add File: id_rsa\n+x\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: NBSP で字下げした指示行は --fail-closed で止める" 2 "$RC"
+    run_adapter standard "$(patch_json PreToolUse c1 '*** Begin Patch\n*** Update File: docs/patch-format.md\n@@\n+*** Update File: .env\n-*** Add File: old.pem\n*** End Patch')" --fail-closed protect-files.sh >/dev/null
+    expect_rc "codex-adapter: 追加・削除される本文の行(+ / - 始まり)は指示として扱わない" 0 "$RC"
     # jq が無い環境: ブロック系は apply_patch を検査できないので止める。Bash はフック自身のフォールバックに任せる
     NOJQ="$C/nojq-bin"
     mkdir -p "$NOJQ"

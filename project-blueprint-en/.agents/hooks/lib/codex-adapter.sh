@@ -94,12 +94,17 @@ if [[ "$TOOL" == "apply_patch" ]]; then
     [[ -n "$CWD" ]] || CWD="$BLUEPRINT_PROJECT_DIR"
     # If this parser disagrees with Codex's own patch parser, an edit to a file missed here would run uninspected.
     # Strip surrounding whitespace and CR before matching, and mark a file directive (Add / Update / Delete File, Move to) whose path cannot be read.
-    # A body line (a context line with a leading space, say) that happens to look like a directive only adds a path to check; it never hides one
+    # A body line (a context line with a leading space, say) that happens to look like a directive only adds a path to check; it never hides one.
+    # Codex trims more kinds of whitespace than this does (full-width space, NBSP and so on). Instead of reproducing that rule,
+    # every line that contains a directive word but is not in the canonical form (`*** <directive>: <path>` from the start of the line)
+    # counts as an unreadable directive. Lines starting with `+` or `-` are added / removed body text and are skipped
     PATHS="$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null | awk '
         {
             line = $0
-            sub(/\r$/, "", line); sub(/^[ \t]+/, "", line); sub(/[ \t]+$/, "", line)
-            if (line !~ /^\*\*\* (Add File|Update File|Delete File|Move to)/) next
+            gsub(/^[ \t\r\f\v]+|[ \t\r\f\v]+$/, "", line)
+            first = substr(line, 1, 1)
+            if (first == "+" || first == "-") next
+            if (line !~ /\*\*\*[^A-Za-z]*(Add File|Update File|Delete File|Move to)/) next
             if (line ~ /^\*\*\* (Add File|Update File|Delete File|Move to):/) {
                 sub(/^\*\*\* (Add File|Update File|Delete File|Move to):[ \t]*/, "", line)
                 if (line != "") { print line; next }

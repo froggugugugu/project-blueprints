@@ -93,12 +93,17 @@ if [[ "$TOOL" == "apply_patch" ]]; then
     [[ -n "$CWD" ]] || CWD="$BLUEPRINT_PROJECT_DIR"
     # Codex 本体のパッチ解析と食い違うと、こちらが見落としたファイルへの編集が検査を通らずに実行される。
     # 行の前後の空白と CR を落としてから照合し、ファイルを指す指示(Add / Update / Delete File、Move to)なのにパスを読めない行には印を付ける。
-    # 本文の行(先頭が空白の文脈行など)がたまたま指示の形をしていても、検査対象が増えるだけで見落としにはならない
+    # 本文の行(先頭が空白の文脈行など)がたまたま指示の形をしていても、検査対象が増えるだけで見落としにはならない。
+    # Codex 側の空白の扱いはこちらより広い(全角空白や NBSP なども前後から落とす)。同じ規則を再現する代わりに、
+    # 指示の語を含むのに正規の形(行頭から `*** <指示>: <パス>`)でない行はすべて「読めない指示」として扱う。
+    # `+` `-` で始まる行は追加・削除される本文なので対象外
     PATHS="$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null | awk '
         {
             line = $0
-            sub(/\r$/, "", line); sub(/^[ \t]+/, "", line); sub(/[ \t]+$/, "", line)
-            if (line !~ /^\*\*\* (Add File|Update File|Delete File|Move to)/) next
+            gsub(/^[ \t\r\f\v]+|[ \t\r\f\v]+$/, "", line)
+            first = substr(line, 1, 1)
+            if (first == "+" || first == "-") next
+            if (line !~ /\*\*\*[^A-Za-z]*(Add File|Update File|Delete File|Move to)/) next
             if (line ~ /^\*\*\* (Add File|Update File|Delete File|Move to):/) {
                 sub(/^\*\*\* (Add File|Update File|Delete File|Move to):[ \t]*/, "", line)
                 if (line != "") { print line; next }
