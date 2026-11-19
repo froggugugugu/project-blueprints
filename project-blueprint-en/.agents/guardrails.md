@@ -39,7 +39,8 @@ From "Hook inventory" onward this document describes the Claude Code settings (`
 | SessionEnd | — | `session-end.sh` |
 
 A Codex file edit arrives as `apply_patch` with the patch text in `tool_input.command`. The adapter turns it into one input per touched file,
-each carrying `tool_input.file_path`, so the hooks only ever handle the input shape Claude Code sends.
+each carrying `tool_input.file_path`, so the hooks only ever handle the input shape Claude Code sends
+(this input shape was confirmed in the codex-cli 0.170.0 source, `codex-rs/core/src/tools/handlers/apply_patch.rs`).
 
 If the adapter's parser disagrees with Codex's own, an edit to a file the adapter missed would run uninspected. For the blocking hooks (`--fail-closed`) the adapter therefore
 strips surrounding whitespace and CR before matching and stops the edit when a line contains a directive word (Add / Update / Delete File, Move to) but is not in the canonical form
@@ -48,7 +49,7 @@ a path has invisible whitespace (NBSP, full-width space, ...) at its edge or a c
 This parser is the adapter's own and is not guaranteed to match Codex's parser exactly. It errs toward stopping anything it cannot read, but secret protection should not rest on hooks alone:
 treat it together with the `deny` entries of the permission profile.
 
-### Where Codex does not give the same guarantee (official spec and measurements, 2026-11-14 / codex-cli 0.162.1)
+### Where Codex does not give the same guarantee (official spec and measurements, 2026-11-14 / codex-cli 0.162.1; measured again with 0.170.0 on 2026-11-19)
 
 | Point | What happens | How it is covered |
 | --- | --- | --- |
@@ -58,7 +59,7 @@ treat it together with the `deny` entries of the permission profile.
 | No per-subagent restriction | A custom agent inherits the parent's sandbox and permissions, and there are no per-agent hooks | Read-only and write-scope constraints are written at the top of the instructions in `.codex/agents/*.toml` (not enforced) |
 | Rules match prefixes only | Dangerous flags in the middle or at the end of the arguments, as in `git push origin main --force` or `<anything> --no-verify`, cannot be expressed | `safety-check.sh` stops them with regular expressions |
 | Permission profiles are beta | If `sandbox_mode` appears anywhere in the loaded config (including `~/.codex/config.toml` or `--sandbox`), the older settings win and the secret-read denial stops applying | Do not set `sandbox_mode` in personal config. Check that `denied-read rules` in `codex doctor` is not 0 |
-| Extending `:workspace` alone does not protect | The official docs say `.git` `.agents` `.codex` stay read-only when you extend it, but they were writable in our measurement | The permission profile states them explicitly (the validator reports an ERROR if one is missing) |
+| Protection from extending `:workspace` depends on the version | The official docs say `.git` `.agents` `.codex` stay read-only when you extend it. With codex-cli 0.162.1 they were writable with the inheritance alone. With 0.170.0 they were read-only with the inheritance alone, as the docs say | The permission profile states them explicitly, so the oldest supported version (0.162) is protected too (the validator reports an ERROR if one is missing). `.claude/settings*.json` is not part of the built-in protection, so it needs the explicit entry on every version |
 | No matching event | `config-guard.sh` (ConfigChange) / `instructions-log.sh` / `post-failure-log.sh` / `post-compact-restore.sh` / the task and teammate modes of `verify-gate.sh` / notifications (`notify-claude.sh`) | The permission profile protects the settings. Notifications use `notify` in `~/.codex/config.toml` |
 | No teams or saved workflows | They are Claude Code extensions | Run the same skills in order |
 

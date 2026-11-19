@@ -41,7 +41,10 @@
     "- autoMode の environment / allow / soft_deny には必ず \"$defaults\" を残す。無いと組み込みの文脈・例外・force push / 本番デプロイの既定ブロックが置き換わる",
     "- 分類器は CLAUDE.md も読む。プロジェクト固有の禁止事項は CLAUDE.md 本体にも書く(import 先の AGENTS.md だけに置かない)",
     "- 分類器の拒否は permission-denied-log.sh が testreport/denials/ に記録する。繰り返し拒否される",
-    "  正当な操作はこのファイルの allow に追加する"
+    "  正当な操作はこのファイルの allow に追加する",
+    "- auto mode に入ると、任意のコードを実行できる広い allow は外される(下の `Bash(node *)` `Bash(npm run *)` のような、",
+    "  インタプリタ + ワイルドカード、パッケージマネージャの run / dlx 系。v2.1.327 で対象が広がった)。これらは分類器が判定する。",
+    "  auto mode でも確実に通したい操作は `Bash(npm test)` のように引数まで書いた狭いルールにする"
   ],
   "_comment_stop_gate": [
     "検証ゲート(Stop フック)の使い分け:",

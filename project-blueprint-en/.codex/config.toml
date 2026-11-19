@@ -44,7 +44,8 @@ glob_scan_max_depth = 4
 
 [permissions.blueprint.filesystem.":workspace_roots"]
 # Keep the harness itself read-only. The official docs say extending :workspace keeps .git / .agents / .codex
-# protected, but with codex-cli 0.162.1 they were writable with the inheritance alone, so the rules are explicit here.
+# protected. With codex-cli 0.162.1 they were writable with the inheritance alone (with 0.170.0 they were read-only
+# with the inheritance alone). The rules are explicit here so that 0.162 is protected too.
 # .claude/settings*.json is included so Codex cannot rewrite Claude Code's hook registrations and deny rules
 ".git" = "read"
 ".agents" = "read"

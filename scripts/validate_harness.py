@@ -118,6 +118,9 @@ GLOBAL_CONFIG_KEYS = {
 REMOVED_SETTINGS = {
     "subagentStatusLine": "v2.1.323 で削除されました(subagent の行は常に既定の表示)",
     "pluginDigests": "v2.1.325 で deprecated になり無視されます",
+    # settings-reference の索引で「効果なし / 削除済み」とされているキー(2026-11-19 時点, v2.1.328)
+    "keybindingFlavor": "v2.1.261 で deprecated になり効果がありません(単語編集のキーは常に readline の流儀)",
+    "taskOutputMaxChars": "v2.1.277 で TaskOutput ツールとともに削除されました",
 }
 # 旧世代モデル向けの書き方(公式 best-practices「What you can stop doing」)。コードスパン・コードブロックの中は数えない
 # (`CRITICAL` は脆弱性・ライセンスの重大度ラベルとして正当に使うので対象外)
@@ -126,7 +129,8 @@ LEGACY_THINK_RE = re.compile(r"(?i)\b(think hard(?:er)?|be thorough)\b")
 
 # ファイルパス権限は Edit(path) / Read(path) だけが参照される。
 # 下記ツールにパス指定を書いても一切参照されず、起動時に警告が出る。
-# ── Codex 側の仕様(developers.openai.com/codex の hooks / config-reference / rules。2026-11-14 / codex-cli 0.162)──
+# ── Codex 側の仕様(developers.openai.com/codex の hooks / config-reference / rules。2026-11-14 / codex-cli 0.162。
+#    2026-11-19 に 0.170.0 のソースと実機で再確認: イベント 14 種・ハーネスが使う config キーに変更なし)──
 CODEX_HOOK_EVENTS = {
     "SessionStart", "SessionEnd", "SubagentStart", "SubagentStop", "PreToolUse", "PermissionRequest",
     "PostToolUse", "PreModelRequest", "PostModelRequest", "PreCompact", "PostCompact",
@@ -142,7 +146,8 @@ CODEX_PROJECT_IGNORED_KEYS = {
     "openai_base_url", "chatgpt_base_url", "apps_mcp_product_sku", "model_provider", "model_providers",
     "notify", "profile", "profiles", "experimental_realtime_ws_base_url", "otel",
 }
-# 権限プロファイルで読取専用にしておくパス(`extends = ":workspace"` だけでは保護が継がれなかった。codex-cli 0.162.1 実測)
+# 権限プロファイルで読取専用にしておくパス(`extends = ":workspace"` だけでは、codex-cli 0.162.1 の実測で保護が継がれなかった。
+# 0.170.0 の実測では継がれたが、対応する最小の版が 0.162 なので明示を要求し続ける)
 CODEX_PROTECTED_PATHS = (".git", ".agents", ".codex", ".claude/settings.json")
 CODEX_ADAPTER_REL = ".agents/hooks/lib/codex-adapter.sh"
 CODEX_ADAPTER_RE = re.compile(r"/\.agents/hooks/lib/codex-adapter\.sh\"?\s+(--fail-closed\s+)?([\w.-]+\.sh)")
@@ -1249,7 +1254,7 @@ def check_codex_config(root: Path, rep: Report) -> dict[str, object]:
     for path in CODEX_PROTECTED_PATHS:
         if roots_table.get(path) not in ("read", "deny"):
             rep.error(where, f"権限プロファイルで `{path}` が読取専用になっていません — Codex がハーネス自体を書き換えられます"
-                             "(`extends = \":workspace\"` だけでは保護が継がれません。codex-cli 0.162.1 実測)")
+                             "(`extends = \":workspace\"` だけでは、codex-cli 0.162 系で保護が継がれません。0.162.1 実測)")
     if tables.get(f"permissions.{profile}.network", {}).get("enabled") is True:
         rep.warn(where, "権限プロファイルがネットワークを常時許可しています — 外向き通信は都度の確認に任せるのが既定です")
     return {k: v for k, v in roots_table.items() if v == "deny"}

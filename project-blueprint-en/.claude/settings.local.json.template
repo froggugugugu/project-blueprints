@@ -42,7 +42,10 @@
     "- Keep \"$defaults\" in every autoMode list (environment / allow / soft_deny). Without it your entries replace the built-in context, exceptions and the default blocks on force pushes / production deploys",
     "- The classifier also reads CLAUDE.md, so project-specific prohibitions belong in CLAUDE.md itself too (not only in the imported AGENTS.md)",
     "- Classifier denials are logged by permission-denied-log.sh under testreport/denials/. Add repeatedly",
-    "  denied legitimate actions to the allow list in this file"
+    "  denied legitimate actions to the allow list in this file",
+    "- On entering auto mode, broad allow rules that can run arbitrary code are dropped (such as `Bash(node *)` and `Bash(npm run *)` below:",
+    "  an interpreter plus a wildcard, package-manager run / dlx commands; v2.1.327 widened the set). The classifier decides those.",
+    "  For an action that has to pass in auto mode too, write a narrow rule with its arguments, such as `Bash(npm test)`"
   ],
   "_comment_stop_gate": [
     "Choosing a verification gate (Stop hook):",

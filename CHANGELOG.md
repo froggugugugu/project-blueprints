@@ -8,6 +8,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (週次見直し: Claude Code 2.1.326〜2.1.328 / codex-cli 0.163〜0.170, 2026-11-19)
+
+- **Codex の `:workspace` 継承の実測を更新(JP/EN)**: codex-cli 0.170.0 で測り直すと、`extends = ":workspace"` だけで `.git` `.agents` `.codex` が
+  読取専用になった(0.162.1 では書込めた。公式ドキュメントの記述と実測が一致した)。`.claude/settings*.json` は組み込みの保護に含まれず、
+  明示が無いと書込めた。対応する最小の版が 0.162 のため権限プロファイルの明示と validator の ERROR は残し、`guardrails.md` の差分表・
+  `.codex/config.toml` のコメント・validator のメッセージ・ルート `CLAUDE.md` を「版に依存する」に書き直した。
+- **`apply_patch` のフック入力形を確認(JP/EN)**: 0.x では公式ドキュメントの記述だけが根拠だった「パッチ本文が `tool_input.command` に入る」を、
+  codex-cli 0.170.0 のソース(`codex-rs/core/src/tools/handlers/apply_patch.rs`)で確認し、`guardrails.md` に記した。
+- **auto mode で外される allow の注記(JP/EN)**: `settings.local.json.template` と `permissions-guide.md` に、auto mode では任意コードを実行できる
+  広い allow(`Bash(node *)` `Bash(npm run *)` など。v2.1.327 で `pnpm dlx *` やパス付きの形にも拡大)が外されて分類器の判定に回ること、
+  確実に通したい操作は引数まで書いた狭いルールにすることを追記。Codex には対応する仕組みが無い旨も同じ節に書いた。
+- **validator**: 削除済み・効果の無い settings キーに `keybindingFlavor`(v2.1.261)と `taskOutputMaxChars`(v2.1.277)を追加(WARN)。
+  settings-reference の索引(v2.1.328 時点)と既知キーの表を機械的に突き合わせ、ほかに差分が無いことを確認した。`--test` 82 → 84。
+- **実機で確かめたこと(codex-cli 0.170.0)**: rules の判定(`codex execpolicy check`)、読取禁止 16 対象・ハーネスの読取専用・ネットワーク遮断
+  (`codex sandbox -- <cmd>`。0.170.0 では `codex sandbox linux` の形は使えない)、`codex doctor` の denied-read rules 16、
+  `AGENTS.md`・`developer_instructions`・skill の読込(`codex debug prompt-input`。手動起動限定の 2 本は一覧に出ない)。
+
 ### ⚠ BREAKING — Claude Code と Codex を対等に扱う 2 本立てへ(1.0 の配置, 2026-11-14)
 
 **次のリリースは 1.0.0 とする**(配置の変更は 0.x と互換が無い)。0.x で導入したプロジェクトは `setup.sh --upgrade` では更新できず、

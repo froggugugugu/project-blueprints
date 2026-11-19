@@ -44,7 +44,8 @@ glob_scan_max_depth = 4
 
 [permissions.blueprint.filesystem.":workspace_roots"]
 # ハーネス自体は読取専用にする。公式ドキュメントは「:workspace を継げば .git / .agents / .codex の保護が残る」と
-# 書いているが、codex-cli 0.162.1 の実測では継承だけでは書込めたため、ここで明示する。
+# 書いている。codex-cli 0.162.1 の実測では継承だけでは書込めた(0.170.0 の実測では継承だけで読取専用になった)。
+# 0.162 系でも保護されるよう、ここで明示する。
 # .claude/settings*.json も止め、Codex が Claude Code 側のフック登録と deny を書き換えられないようにする
 ".git" = "read"
 ".agents" = "read"

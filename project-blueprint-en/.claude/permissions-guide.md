@@ -65,6 +65,13 @@ This template's `settings.json` is designed around that order: outbound operatio
 `git push` / `gh pr merge` / `publish` / `kubectl apply` sit in `ask`, so they always pass
 through a human confirmation even in auto mode.
 
+Not every `allow` rule applies in auto mode. On entering auto mode, broad allow rules that can run arbitrary code
+(`Bash(*)`, an interpreter plus a wildcard such as `Bash(node *)`, package-manager run / dlx commands such as `Bash(npm run *)`,
+`Agent` and so on) are dropped and the classifier decides those actions (official permission-modes; v2.1.327 widened the set).
+They come back when you leave auto mode. For an action that has to pass in auto mode too, write a narrow rule with its
+arguments, such as `Bash(npm test)`.
+Codex has no counterpart (allow rules live in your personal `~/.codex/rules/` and no mode drops them).
+
 ### Where settings go (an official-spec pitfall)
 
 | Setting | Honored in | Ignored in |
