@@ -65,6 +65,12 @@ permissions.ask   → auto mode でも必ず確認ダイアログ(分類器は�
 `git push` / `gh pr merge` / `publish` / `kubectl apply` 等の外向き操作は `ask` に置いてあるため、
 auto mode でも毎回人間の確認を通る。
 
+`allow` は auto mode ですべてが効くわけではない。auto mode に入ると、任意のコードを実行できる広い allow
+(`Bash(*)`、`Bash(node *)` のようなインタプリタ + ワイルドカード、`Bash(npm run *)` のようなパッケージマネージャの run / dlx 系、
+`Agent` など)は外され、分類器の判定に回る(公式 permission-modes。v2.1.327 で対象が広がった)。auto mode を抜けると元に戻る。
+auto mode でも確実に通したい操作は、`Bash(npm test)` のように引数まで書いた狭いルールにする。
+Codex には対応する仕組みが無い(許可は個人の `~/.codex/rules/` に置き、モードによって外されることはない)。
+
 ### 設定の置き場所(公式仕様の落とし穴)
 
 | 書く内容 | 効く場所 | 効かない場所 |

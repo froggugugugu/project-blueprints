@@ -371,6 +371,20 @@ def m_removed_setting(root: Path) -> None:
     p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
 
 
+def m_removed_setting_task_output(root: Path) -> None:
+    p = root / ".claude/settings.local.json.template"
+    cfg = json.loads(p.read_text())
+    cfg["taskOutputMaxChars"] = 20000
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_noeffect_setting_keybinding(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["keybindingFlavor"] = "emacs"
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
 def m_bash_allow_var_wildcard(root: Path) -> None:
     p = root / ".claude/settings.local.json.template"
     cfg = json.loads(p.read_text())
@@ -602,6 +616,8 @@ CASES = [
     ("user / managed 専用キーを project settings に書く", m_user_only_key_in_project, "`permissions.denyInsteadOfPrompting` は ~/.claude/settings.json"),
     ("managed 専用キーを local settings に書く", m_managed_only_key_in_project, "managed settings でしか効きません"),
     ("削除済みの settings キー", m_removed_setting, "v2.1.323 で削除"),
+    ("削除済みの taskOutputMaxChars", m_removed_setting_task_output, "v2.1.277 で TaskOutput"),
+    ("効果の無い keybindingFlavor", m_noeffect_setting_keybinding, "v2.1.261 で deprecated"),
     ("Bash allow ルールの変数の値に *", m_bash_allow_var_wildcard, "変数の値に `*`"),
     ("指示ファイルに IMPORTANT", m_legacy_emphasis, "`IMPORTANT` は現行モデル"),
     ("agent に think harder", m_legacy_think, "推論量を上げません"),

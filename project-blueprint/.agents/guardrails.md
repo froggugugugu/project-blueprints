@@ -39,7 +39,8 @@
 | SessionEnd | — | `session-end.sh` |
 
 Codex のファイル編集は `apply_patch` として届き、パッチ本文が `tool_input.command` に入る。アダプタがパッチの触るファイルごとに
-`tool_input.file_path` を持つ入力へ直してフックを呼ぶので、フック側は Claude Code と同じ形の入力だけを扱えばよい。
+`tool_input.file_path` を持つ入力へ直してフックを呼ぶので、フック側は Claude Code と同じ形の入力だけを扱えばよい
+(この入力形は codex-cli 0.170.0 のソース `codex-rs/core/src/tools/handlers/apply_patch.rs` で確認した)。
 
 アダプタの解析が Codex 本体の解析と食い違うと、見落としたファイルへの編集が検査を通らずに実行される。そのためブロック系(`--fail-closed`)では、
 行の前後の空白と CR を落としてから照合し、次の場合は編集を止める: 指示の語(Add / Update / Delete File、Move to)を含むのに正規の形でない行がある
@@ -48,7 +49,7 @@ Codex のファイル編集は `apply_patch` として届き、パッチ本文�
 この解析はアダプタ独自のもので、Codex 本体の解析と完全に同じである保証は無い。読めない形を止める方向に倒してあるが、秘密情報の保護はフックだけに頼らず、
 権限プロファイルの `deny` と合わせて考える。
 
-### Codex で同じ保証にならない点(公式仕様と実測。2026-11-14 / codex-cli 0.162.1)
+### Codex で同じ保証にならない点(公式仕様と実測。2026-11-14 / codex-cli 0.162.1、2026-11-19 に 0.170.0 で再実測)
 
 | 点 | 内容 | 補い方 |
 | --- | --- | --- |
@@ -58,7 +59,7 @@ Codex のファイル編集は `apply_patch` として届き、パッチ本文�
 | サブエージェント単位の制限が無い | カスタムエージェントは親のサンドボックスと権限を継ぐ。エージェント単位のフックも無い | 読取専用と書込範囲を `.codex/agents/*.toml` の指示文の冒頭に書き下している(強制ではない) |
 | rules は先頭一致だけ | `git push origin main --force` や `<任意> --no-verify` のように、危険なフラグが引数の途中・末尾にある形は書けない | `safety-check.sh` が正規表現で止める |
 | 権限プロファイルは beta | 読み込まれる設定のどこかに `sandbox_mode` があると(`~/.codex/config.toml` や `--sandbox` を含む)旧来の設定が使われ、シークレットの読取禁止が効かなくなる | 個人設定に `sandbox_mode` を書かない。`codex doctor` の `denied-read rules` が 0 でないことを確認する |
-| `:workspace` の継承だけでは保護されない | 公式ドキュメントは「継げば `.git` `.agents` `.codex` が読取専用のまま」と書くが、実測では書込めた | 権限プロファイルで明示している(validator が欠落を ERROR にする) |
+| `:workspace` の継承による保護は版に依存する | 公式ドキュメントは「継げば `.git` `.agents` `.codex` が読取専用のまま」と書く。codex-cli 0.162.1 の実測では継承だけでは書込めた。0.170.0 の実測ではドキュメントどおり継承だけで読取専用になった | 対応する最小の版(0.162)でも保護されるよう、権限プロファイルで明示している(validator が欠落を ERROR にする)。`.claude/settings*.json` は組み込みの保護に含まれないので、版によらず明示が要る |
 | 対応するイベントが無い | `config-guard.sh`(ConfigChange)/ `instructions-log.sh` / `post-failure-log.sh` / `post-compact-restore.sh` / `verify-gate.sh` の task・teammate / 通知(`notify-claude.sh`) | 設定の保護は権限プロファイルが担う。通知は `~/.codex/config.toml` の `notify` |
 | team と saved workflow が無い | Claude Code の拡張 | 同じ skill を順に実行する |
 
