@@ -70,6 +70,7 @@ paths:
 - Do not stop at one side. After adding a skill, a hook or a deny rule, state how the other agent handles it (the counterpart, or why there is none)
 - Write `/name` in skill bodies (Codex reads it as `$name`; `AGENTS.md` says so). Where a step relies on a Claude Code-only feature, add one line with the Codex substitute
 - Write hooks against Claude Code's input shape only (`tool_input.file_path` / `tool_input.command`). The adapter converts Codex's `apply_patch`. Read the project root from `BLUEPRINT_PROJECT_DIR`, then `CLAUDE_PROJECT_DIR`
+- Keep a skill's `name` to lowercase letters, digits and hyphens, at most 64 characters, and always write a `description` (never `when_to_use` alone). Codex silently skips a skill whose name is longer than 64 characters or that has no `description` (Claude Code loads it, so the skill disappears on one side only)
 - A skill with `disable-model-invocation: true` needs `agents/openai.yaml` (`policy.allow_implicit_invocation: false`). Without it Codex invokes the skill implicitly from the prompt
 - Keep deny / ask and the rules, and the `Read()` deny list and the permission profile, at the same intent (the validator reports gaps as ERROR)
 

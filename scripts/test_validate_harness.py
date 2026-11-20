@@ -326,6 +326,25 @@ def m_reserved_skill_name(root: Path) -> None:
     (d / "SKILL.md").write_text("---\nname: claude-ai\ndescription: Reserved-name skill that must not load.\n---\n# x\n")
 
 
+def m_skill_name_too_long(root: Path) -> None:
+    name = "a" * 70
+    d = root / ".agents/skills" / name
+    d.mkdir()
+    (d / "SKILL.md").write_text(f"---\nname: {name}\ndescription: Skill whose name exceeds the 64 character limit.\n---\n# x\n")
+
+
+def m_skill_name_not_spec(root: Path) -> None:
+    d = root / ".agents/skills/My_Skill"
+    d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: My_Skill\ndescription: Skill whose name is outside the Agent Skills spec.\n---\n# x\n")
+
+
+def m_skill_when_to_use_only(root: Path) -> None:
+    d = root / ".agents/skills/no-description"
+    d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: no-description\nwhen_to_use: Use when checking that a description is required.\n---\n# x\n")
+
+
 def m_bad_omit_claude_md(root: Path) -> None:
     p = root / ".claude/agents/explorer.md"
     p.write_text(p.read_text().replace("omitClaudeMd: true", "omitClaudeMd: yes", 1))
@@ -606,6 +625,9 @@ CASES = [
     ("Bash ルールでサブコマンドの前に *", m_rule_wildcard_before_sub, "サブコマンドの前の"),
     ("project settings の env に OTel 変数", m_otel_env_in_project, "project / local settings では読まれません"),
     ("予約名前空間の skill", m_reserved_skill_name, "予約された名前空間"),
+    ("skill の name が 64 字超", m_skill_name_too_long, "文字を超える skill を読み込みません"),
+    ("skill の name が Agent Skills 標準の形でない", m_skill_name_not_spec, "Agent Skills 標準の形ではありません"),
+    ("skill に description が無く when_to_use だけ", m_skill_when_to_use_only, "`when_to_use` だけでは足りません"),
     ("omitClaudeMd の非 boolean 値", m_bad_omit_claude_md, "true / false のみ"),
     ("onFailure に不正な値", m_bad_on_failure, "continue / block のみ"),
     ("prompt 型フックに onFailure", m_on_failure_on_prompt_hook, "command / http 型のフックでしか効きません"),

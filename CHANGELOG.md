@@ -8,6 +8,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added (週次見直し: Claude Code 2.1.329 / codex-cli 0.171.0, 2026-11-20)
+
+- **validator: Codex が黙って読み込まない skill を検出**: `name` が 64 字を超える skill と、`description` が無く `when_to_use` だけの skill を ERROR、
+  `name` が Agent Skills 標準の形(小文字の英数字とハイフン。先頭・末尾・連続のハイフンは不可)でない skill を WARN にする。
+  codex-cli 0.171.0 の実測では、前の 2 つは一覧に出ず、警告も出なかった(`codex-rs/skills/src/parser.rs`)。Claude Code は `description` を
+  「推奨」として扱い本文の先頭行で代用するため、共有の `.agents/skills/` に置いた skill が片方のエージェントでだけ消える。
+  標準の形でない名前(大文字・アンダースコア)は 0.171.0 では読み込まれたので WARN に留めた。`--test` 84 → 87。
+- **`harness-authoring.md`(JP/EN)**: 「2 つのエージェントで共有する」に、上の `name` / `description` の規則を 1 行追加。
+- **実機で確かめたこと(codex-cli 0.171.0)**: 0.170.0 からフック・rules・`apply_patch`・ハーネスが使う設定キーに変更が無いこと(ソースの差分)、
+  `.git` `.agents` `.codex` `.claude/settings.json` の読取専用とネットワーク遮断(`codex sandbox -- <cmd>`)、`codex doctor` の denied-read rules 16、
+  `prompt` 規則の判定(`codex execpolicy check`)、`AGENTS.md`・`developer_instructions`・skill 15 本の読込(`codex debug prompt-input`)。
+
 ### Changed (週次見直し: Claude Code 2.1.326〜2.1.328 / codex-cli 0.163〜0.170, 2026-11-19)
 
 - **Codex の `:workspace` 継承の実測を更新(JP/EN)**: codex-cli 0.170.0 で測り直すと、`extends = ":workspace"` だけで `.git` `.agents` `.codex` が
