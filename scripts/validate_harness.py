@@ -161,6 +161,10 @@ CLAUDE_MD_SOFT_LIMIT = 200   # constitution §6 目安
 CLAUDE_MD_HARD_LIMIT = 220   # constitution §6 ハード上限
 SKILL_DESC_LIMIT = 1536      # description + when_to_use はこの文字数で切り詰められる
 SPEC_DESC_LIMIT = 1024       # Agent Skills 標準(agentskills.io)の description 上限
+# Agent Skills 標準の name: 小文字の英数字とハイフンだけ、先頭・末尾・連続のハイフンは不可、64 字以内。
+# Codex は 64 字を超える name と、description の無い skill を読み込まない(codex-rs/skills/src/parser.rs。0.171.0 で実測)
+SPEC_NAME_LIMIT = 64
+SPEC_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REFERENCE_TOC_LINES = 100    # これを超える参照ファイルは冒頭に目次を置く(skill authoring best practices)
 SKILL_BODY_WARN_LINES = 300  # 公式上限は 500 行。詳細は references/ に分けて 300 行以内を目安にする
 SCOPE_GUARD_SCOPES = {"docs", "output", "tests"}
@@ -585,9 +589,19 @@ def check_skills(root: Path, rep: Report) -> set[str]:
         if p.parent.name in RESERVED_NAMESPACES:
             rep.error(where, f"`{p.parent.name}` は claude.ai 同期用に予約された名前空間です(v2.1.282)。この skill は読み込まれません")
 
+        if len(name) > SPEC_NAME_LIMIT:
+            rep.error(where, f"`name` が {len(name)} 文字です — Codex は {SPEC_NAME_LIMIT} 文字を超える skill を読み込みません"
+                             "(Agent Skills 標準の上限。Claude Code でだけ動く skill になります)")
+        elif name and not SPEC_NAME_RE.match(name):
+            rep.warn(where, f"`name: {name}` が Agent Skills 標準の形ではありません"
+                            "(小文字の英数字とハイフンだけ。先頭・末尾・連続のハイフンは不可)")
+
         desc = str(fm.get("description", "")) + str(fm.get("when_to_use", ""))
         if not desc.strip():
             rep.error(where, "`description` が未設定です")
+        elif not str(fm.get("description") or "").strip():
+            rep.error(where, "`description` がありません(`when_to_use` だけでは足りません) — Codex は description の無い skill を読み込みません"
+                             "(Claude Code でだけ動く skill になります)")
         elif len(desc) > SKILL_DESC_LIMIT:
             rep.warn(where, f"description + when_to_use が {len(desc)} 文字 — 一覧では {SKILL_DESC_LIMIT} 文字で切り詰められます")
 

@@ -70,6 +70,7 @@ paths:
 - 片方にだけ足して終わらせない。skill・フック・禁止ルールを足したら、もう一方での扱い(対応させる、または対応できない理由)まで書く
 - skill 本文は `/name` で書く(Codex は `$name` と読み替える。`AGENTS.md` に明記済み)。Claude Code にしか無い機能に触れる手順には、Codex での代わりを 1 行添える
 - フックは Claude Code の入力形(`tool_input.file_path` / `tool_input.command`)だけを前提に書く。Codex の `apply_patch` はアダプタが直す。プロジェクトルートは `BLUEPRINT_PROJECT_DIR` → `CLAUDE_PROJECT_DIR` の順に読む
+- skill の `name` は小文字の英数字とハイフンで 64 字以内にし、`description` を必ず書く(`when_to_use` だけにしない)。Codex は 64 字を超える名前の skill と `description` の無い skill を黙って読み込まない(Claude Code は読み込むので、片方でだけ消える)
 - `disable-model-invocation: true` の skill には `agents/openai.yaml`(`policy.allow_implicit_invocation: false`)を置く。無いと Codex がプロンプトから自動起動する
 - deny / ask と rules、`Read()` deny と権限プロファイルは同じ意図に保つ(validator が対応漏れを ERROR にする)
 
