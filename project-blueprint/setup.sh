@@ -55,8 +55,8 @@ Agent (--agent, defaults to both):
 
 Profiles (--profile, defaults to full):
   minimal   5 skills / 2 agents / 2 hooks / no teams — fastest way to try it out
-  standard  17 skills / 9 agents / 18 hooks / no teams — everything but team mode
-  full      17 skills / 9 agents / 18 hooks / 6 teams — default (teams are a Claude Code extension)
+  standard  18 skills / 9 agents / 18 hooks / no teams — everything but team mode
+  full      18 skills / 9 agents / 18 hooks / 6 teams — default (teams are a Claude Code extension)
 
   Note: minimal also trims safeguard hooks (e.g. session-start) for a lighter footprint.
   This is a separate axis from the "minimal/recommended/full" guidance in project-config.md.
@@ -109,8 +109,8 @@ EOF
 
 プロファイル(--profile、省略時は full):
   minimal   skills 5 / agents 2 / hooks 2 / teams なし — 最速で試す軽量構成
-  standard  skills 17 / agents 9 / hooks 18 / teams なし — チーム機能以外フル
-  full      skills 17 / agents 9 / hooks 18 / teams 6 — デフォルト(teams は Claude Code の拡張)
+  standard  skills 18 / agents 9 / hooks 18 / teams なし — チーム機能以外フル
+  full      skills 18 / agents 9 / hooks 18 / teams 6 — デフォルト(teams は Claude Code の拡張)
 
   ※ minimal はセーフガード系フック(session-start等)も間引く軽量構成です。
      project-config.md の「ミニマル/推奨/フル」(§記入量の目安)とは別の軸です。

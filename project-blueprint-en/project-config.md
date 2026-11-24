@@ -477,6 +477,7 @@ the cache, so pick it at session start.
 | `/refactoring` | Critical | Structural change risk management |
 | `/adr` | Operational | Templated record keeping |
 | `/review-fix` | Complex | Must correctly understand review intent |
+| `/limit-resume` | Operational | Queue formatting and launch prep (the heavy work happens in each task the runner drives) |
 
 ### 13.3 Team × model recommendations
 

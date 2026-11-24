@@ -49,6 +49,9 @@ jobs:
       - name: migrate.sh の機能テスト（実際の 0.x 導入先を 1.0 へ移行・取り消し・失敗時の自動復元）
         run: bash scripts/validate-harness.sh --migrate
 
+      - name: /limit-resume のランナーの機能テスト（偽の CLI で上限 → 待機 → 再開 → 完了を通す）
+        run: bash scripts/validate-harness.sh --limit-resume
+
   validate-online:
     # npm レジストリに触るため PR ごとには回さない。
     # main への push と手動実行のときだけ、テンプレートが参照するパッケージの実在を確認する。

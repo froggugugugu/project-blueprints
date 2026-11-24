@@ -6,7 +6,7 @@
 <title>Project Blueprints — Claude Code と Codex の開発ハーネステンプレート</title>
 <meta name="description" content="要求メモから PRD・設計・実装・レビューまでを 1 つの型で回すための Claude Code / Codex 用テンプレート。指示書・スキル・サブエージェント・安全機構・検証ゲートを日英ミラーで同梱。">
 <meta property="og:title" content="Project Blueprints">
-<meta property="og:description" content="Claude Code と Codex を開発ハーネスとして立ち上げるテンプレート。スキル 17・サブエージェント 9・チーム 6・フック 18・検証ゲート付き。">
+<meta property="og:description" content="Claude Code と Codex を開発ハーネスとして立ち上げるテンプレート。スキル 18・サブエージェント 9・チーム 6・フック 18・検証ゲート付き。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://froggugugugu.github.io/project-blueprints/">
 <link rel="stylesheet" href="assets/site.css">
@@ -74,7 +74,7 @@
       skill・フック・ルールは共通の <code>.agents/</code> に 1 つだけ置き、エージェント固有の設定は <code>.claude/</code> と <code>.codex/</code> に、ツール共通のルールはルートの <code>AGENTS.md</code> に置きます。どれもそのまま再利用できます。プロジェクト固有の値は <code>project-config.md</code> の 13 セクションに集約します。
     </p>
     <div class="grid grid-4">
-      <div class="card"><div class="num">17</div><div class="label">スキル</div></div>
+      <div class="card"><div class="num">18</div><div class="label">スキル</div></div>
       <div class="card"><div class="num">9</div><div class="label">サブエージェント</div></div>
       <div class="card"><div class="num">6</div><div class="label">チーム編成</div></div>
       <div class="card"><div class="num">18</div><div class="label">フック</div></div>
@@ -87,7 +87,7 @@
     <table>
       <thead><tr><th>層</th><th>役割</th><th>中身</th></tr></thead>
       <tbody>
-        <tr><td>スキル</td><td>手順を持つ単体の仕事</td><td>企画から実装、レビュー、法務チェックまで 17 種。長い詳細は <code>references/</code> に分離</td></tr>
+        <tr><td>スキル</td><td>手順を持つ単体の仕事</td><td>企画から実装、レビュー、法務チェックまで 18 種。長い詳細は <code>references/</code> に分離</td></tr>
         <tr><td>サブエージェント</td><td>文脈を汚さない委譲</td><td>調査、計画、セキュリティ、性能、ドキュメント、テスト作成の 8 種</td></tr>
         <tr><td>チーム</td><td>複数エージェントの編成</td><td>フルライフサイクル用の PJM 以下 6 編成</td></tr>
         <tr><td>フック</td><td>指示ではなく強制</td><td>危険コマンド遮断、保護ファイル、未検証終了の検知など 18 本</td></tr>
@@ -208,7 +208,7 @@ bash scripts/validate-harness.sh --online   <span class="c"># MCP 設定の npm 
       <a href="README-en.html"><strong>README (English)</strong><span>The same content in English</span></a>
       <a href="constitution.html"><strong>不変原則</strong><span>変更してはいけない 7 原則と、その変更プロトコル</span></a>
       <a href="CHANGELOG.html"><strong>変更履歴</strong><span>Keep a Changelog 形式のリリースノート</span></a>
-      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint/.agents/skills"><strong>スキル定義</strong><span>17 スキルの SKILL.md と references と evals</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint/.agents/skills"><strong>スキル定義</strong><span>18 スキルの SKILL.md と references と evals</span></a>
       <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint/.agents/pitfalls.md"><strong>落とし穴集</strong><span>AI 協調開発で繰り返し踏む失敗パターン</span></a>
     </div>
   </div>

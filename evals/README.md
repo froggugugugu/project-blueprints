@@ -32,7 +32,7 @@
 
 ```bash
 python3 scripts/run_skill_evals.py --skill prd --skill plan             # 2 skill、両系統
-python3 scripts/run_skill_evals.py --all --parallel 3                   # 全 17 skill
+python3 scripts/run_skill_evals.py --all --parallel 3                   # 全 18 skill
 python3 scripts/run_skill_evals.py --skill prd --cases 1 --arms with --model haiku --max-turns 10   # 安く試す
 python3 scripts/run_skill_evals.py --skill prd --baseline evals/baseline/latest.json --tolerance 15  # 回帰判定
 ```
