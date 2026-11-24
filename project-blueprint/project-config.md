@@ -472,6 +472,7 @@ Sonnet 主 + Opus advisor、Sonnet 主 + Fable advisor が代表的な組み合�
 | `/refactoring` | Critical | 構造変更のリスク管理 |
 | `/adr` | Operational | 定型フォーマット記録 |
 | `/review-fix` | Complex | 指摘の意図を正しく汲む必要あり |
+| `/limit-resume` | Operational | キューの整形と起動準備(重い作業はランナーが回す各タスク側) |
 
 ### 13.3 チーム × モデル推奨マッピング
 

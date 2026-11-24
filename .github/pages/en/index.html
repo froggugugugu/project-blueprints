@@ -6,7 +6,7 @@
 <title>Project Blueprints — a development harness template for Claude Code and Codex</title>
 <meta name="description" content="A template for Claude Code and Codex that takes a requirement note through PRD, design, implementation and review. Ships instructions, skills, subagents, guardrails and a validation gate in Japanese and English.">
 <meta property="og:title" content="Project Blueprints">
-<meta property="og:description" content="Stand up Claude Code and Codex as a development harness: 17 skills, 9 subagents, 6 teams, 18 hooks, and a deterministic validation gate.">
+<meta property="og:description" content="Stand up Claude Code and Codex as a development harness: 18 skills, 9 subagents, 6 teams, 18 hooks, and a deterministic validation gate.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://froggugugugu.github.io/project-blueprints/en/">
 <link rel="stylesheet" href="../assets/site.css">
@@ -74,7 +74,7 @@
       Skills, hooks and rules live once in the shared <code>.agents/</code>, agent-specific settings in <code>.claude/</code> and <code>.codex/</code>, and the tool-agnostic rules in the root <code>AGENTS.md</code>; all are reusable as is. Project-specific values are collected in the 13 sections of <code>project-config.md</code>.
     </p>
     <div class="grid grid-4">
-      <div class="card"><div class="num">17</div><div class="label">skills</div></div>
+      <div class="card"><div class="num">18</div><div class="label">skills</div></div>
       <div class="card"><div class="num">9</div><div class="label">subagents</div></div>
       <div class="card"><div class="num">6</div><div class="label">team templates</div></div>
       <div class="card"><div class="num">18</div><div class="label">hooks</div></div>
@@ -87,7 +87,7 @@
     <table>
       <thead><tr><th>Layer</th><th>Role</th><th>Contents</th></tr></thead>
       <tbody>
-        <tr><td>Skills</td><td>One job with a procedure</td><td>17 of them, from ideation to implementation, review and legal checks. Long detail moves to <code>references/</code></td></tr>
+        <tr><td>Skills</td><td>One job with a procedure</td><td>18 of them, from ideation to implementation, review and legal checks. Long detail moves to <code>references/</code></td></tr>
         <tr><td>Subagents</td><td>Delegation that keeps the main context clean</td><td>Research, planning, security, performance, documentation and test authoring</td></tr>
         <tr><td>Teams</td><td>Multi-agent formations</td><td>Six templates, with the full-lifecycle one as the default recommendation</td></tr>
         <tr><td>Hooks</td><td>Enforcement rather than instruction</td><td>17 scripts covering dangerous commands, protected files and unverified stops</td></tr>
@@ -208,7 +208,7 @@ bash scripts/validate-harness.sh --online   <span class="c"># resolve the npm pa
       <a href="../README.html"><strong>README（日本語）</strong><span>同じ内容の日本語版</span></a>
       <a href="../constitution.html"><strong>Constitution</strong><span>Seven principles that must not change, and how to change them anyway</span></a>
       <a href="../CHANGELOG.html"><strong>Changelog</strong><span>Release notes in Keep a Changelog format</span></a>
-      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint-en/.agents/skills"><strong>Skill definitions</strong><span>SKILL.md, references and evals for all 17 skills</span></a>
+      <a href="https://github.com/froggugugugu/project-blueprints/tree/main/project-blueprint-en/.agents/skills"><strong>Skill definitions</strong><span>SKILL.md, references and evals for all 18 skills</span></a>
       <a href="https://github.com/froggugugugu/project-blueprints/blob/main/project-blueprint-en/.agents/pitfalls.md"><strong>Pitfalls</strong><span>Failure patterns that keep recurring in AI-assisted development</span></a>
     </div>
   </div>

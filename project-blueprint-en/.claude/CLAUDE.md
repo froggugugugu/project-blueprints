@@ -11,7 +11,7 @@ Tool-agnostic development rules live in `AGENTS.md` (imported on the next line).
 
 - Standard flow: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` →
   `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
-- Auxiliary: `/ui-ux-design` / `/hig-compliance` / `/design-system-audit` / `/adr`. Manual invocation only: `/review-fix <PR#>` / `/harness-refine` (JP-EN mirror parity required)
+- Auxiliary: `/ui-ux-design` / `/hig-compliance` / `/design-system-audit` / `/adr`. Manual invocation only: `/review-fix <PR#>` / `/harness-refine` (JP-EN mirror parity required) / `/limit-resume` (prepares the unattended runner that waits out usage limits; the runner starts outside the session)
 - `/code-review` means this template's read-only skill. Call the bundled version as `/review`
 
 Each skill reads details (`pitfalls.md` etc.) when needed and keeps its expected behavior in `evals/evals.json`. Use the bundled skills alongside them:

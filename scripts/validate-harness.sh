@@ -13,6 +13,7 @@
 #   bash scripts/validate-harness.sh --hooks          # フックスクリプトの機能テスト(要 jq)
 #   bash scripts/validate-harness.sh --setup          # setup.sh の導入 / --upgrade の機能テスト
 #   bash scripts/validate-harness.sh --migrate        # migrate.sh(0.x → 1.0)の機能テスト(git の履歴と jq が必要)
+#   bash scripts/validate-harness.sh --limit-resume   # /limit-resume のランナーの機能テスト(偽の CLI を使う。モデルは呼ばない)
 #
 # 終了コード: 0 = 合格 / 1 = ERROR あり / 2 = 実行環境の不備
 # ==============================================================================
@@ -47,6 +48,9 @@ for arg in "$@"; do
     fi
     if [[ "$arg" == "--migrate" ]]; then
         exec bash "$SCRIPT_DIR/test_migrate.sh"
+    fi
+    if [[ "$arg" == "--limit-resume" ]]; then
+        exec "$PYTHON" "$SCRIPT_DIR/test_limit_resume.py"
     fi
 done
 

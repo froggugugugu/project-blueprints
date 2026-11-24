@@ -92,7 +92,7 @@ $plan 在庫の棚卸し機能の設計      # Codex
 | 5 | `/implementing-features` | TDD で実装。`docs/` と `project-config.md` の更新も引き受ける | 🚏 実装 |
 | 6 | `/code-review` `/security-scan` `/legal-check` `/e2e-testing` `/performance` `/refactoring` | 別コンテキストで検証する | 🚏 検証 |
 
-補助スキル: `/ui-ux-design` `/hig-compliance` `/design-system-audit` `/adr` `/review-fix` `/harness-refine`。
+補助スキル: `/ui-ux-design` `/hig-compliance` `/design-system-audit` `/adr` `/review-fix` `/harness-refine` `/limit-resume`。
 `/harness-refine` はハーネス自身を自己診断して補強するメタスキル。
 
 ---
@@ -102,7 +102,7 @@ $plan 在庫の棚卸し機能の設計      # Codex
 ```text
  2 guides    AGENTS.md(ツール共通ルール。Codex は直接読む)+ CLAUDE.md(Claude Code 固有。AGENTS.md を取り込む)
  2 adapters  .claude/(settings.json・agents・teams)/ .codex/(config.toml・hooks.json・rules・agents)。原本は共通の .agents/
-17 skills    企画・設計・実装・レビュー・セキュリティ・法務・性能・リファクタ
+18 skills    企画・設計・実装・レビュー・セキュリティ・法務・性能・リファクタ
              長い詳細は references/(20 ファイル)に分離し、SKILL.md 本文は手順だけに保つ
  9 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
              doc-synchronizer / doc-writer / test-writer / verifier(完了直前の仕様照合)。Codex 用は同じ定義から生成
@@ -114,7 +114,7 @@ $plan 在庫の棚卸し機能の設計      # Codex
  7 rules     常時 1(git 規約)+ パス限定 3(ドキュメント管理・ワークフロー詳細・ハーネス執筆規約)
              + 言語別サンプル 3(.example を外して有効化)
  2 workflows review-sweep(4 観点並列レビュー + 反証検証)/ skill-eval(evals を with・without で実行)(Claude Code の拡張)
-34 evals     全 17 skill に evals.json(典型 + 境界)、assertions 128 件
+36 evals     全 18 skill に evals.json(典型 + 境界)、assertions 137 件
  1 gate      scripts/validate-harness.sh — ハーネスの仕様乖離を CI で落とす静的検証
  4 CI        claude-review.yml(@claude 対話レビュー)/
              claude-skills-ci.yml・codex-skills-ci.yml(毎 PR に code-review + security-scan。片方でも両方でも)/
@@ -246,11 +246,11 @@ plugin が宣言できるのは `skills` / `agents` / `outputStyles` / `hooks` �
 一方このハーネスは次の状態にある。
 
 ```text
-17 / 17 skill が、plugin 配布では提供されないファイルを参照している
+18 / 18 skill が、plugin 配布では提供されないファイルを参照している
 
-  docs/               16 / 17        project-config.md   14 / 17
-  output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .agents/rules/       3 / 17
+  docs/               16 / 18        project-config.md   14 / 18
+  output/             16 / 18        pitfalls.md         12 / 18
+  quality-gates.md    15 / 18        .agents/rules/       3 / 18
 ```
 
 plugin 単体でインストールしても、**全 skill が前提を欠いた状態で動く**。
@@ -269,7 +269,7 @@ plugin 単体でインストールしても、**全 skill が前提を欠いた�
 - [`project-blueprint/.agents/guardrails.md`](project-blueprint/.agents/guardrails.md) — 安全機構の全体像と、Claude Code / Codex の対応表・同じ保証にならない点
 - [`project-blueprint/.codex/`](project-blueprint/.codex/) — Codex 用アダプタ(config.toml / hooks.json / rules / agents)
 - [`project-blueprint/.agents/pitfalls.md`](project-blueprint/.agents/pitfalls.md) — AI 協調開発の落とし穴
-- [`project-blueprint/.agents/skills/`](project-blueprint/.agents/skills/) — 全 17 skill の SKILL.md
+- [`project-blueprint/.agents/skills/`](project-blueprint/.agents/skills/) — 全 18 skill の SKILL.md
 - [`constitution.md`](constitution.md) — 7 不変原則（変更プロトコル付き）
 - [`CHANGELOG.md`](CHANGELOG.md) — リリースノート（SemVer + Keep a Changelog）
 - [`evals/README.md`](evals/README.md) — skill eval の方法とベースライン（skill あり / なしの pass rate）

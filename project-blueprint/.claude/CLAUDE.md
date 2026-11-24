@@ -11,7 +11,7 @@
 
 - 標準の流れ: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` →
   `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
-- 補助: `/ui-ux-design` / `/hig-compliance` / `/design-system-audit` / `/adr`。手動起動のみ: `/review-fix <PR番号>` / `/harness-refine`(日英ミラー同期必須)
+- 補助: `/ui-ux-design` / `/hig-compliance` / `/design-system-audit` / `/adr`。手動起動のみ: `/review-fix <PR番号>` / `/harness-refine`(日英ミラー同期必須)/ `/limit-resume`(使用上限を待つ無人ランナーの準備。ランナーはセッション外で起動)
 - `/code-review` は本テンプレートの読取専用 skill を指す。同梱の bundled 版は `/review` で呼ぶ
 
 各 skill は詳細(`pitfalls.md` 等)を必要時に Read し、期待動作の基準を `evals/evals.json` に持つ。同梱 skill も併用する:

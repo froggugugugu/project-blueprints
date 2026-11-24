@@ -129,8 +129,8 @@ Claude Code は `.claude/skills/` と `.claude/rules/` しか読まないため�
 | プロファイル | skills | agents | hooks | teams | 用途 |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | なし | まず最速で試す軽量構成 |
-| `standard` | 17 | 9 | 18 | なし | チーム機能以外フル |
-| `full`（デフォルト） | 17 | 9 | 18 | 6 | 現行と同じフル構成 |
+| `standard` | 18 | 9 | 18 | なし | チーム機能以外フル |
+| `full`（デフォルト） | 18 | 9 | 18 | 6 | 現行と同じフル構成 |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -414,7 +414,7 @@ Claude Code と Codex は対等に扱う。どちらも `AGENTS.md`(ツール共
 │  AGENTS.md .................... 共通ルール（ツール非依存）│
 │  .claude/CLAUDE.md ............ 開発ガイド（Claude Code） │
 │  .agents/hooks/ ............... 安全フック（多層防御）    │
-│  .agents/skills/ .............. 17個のスキル定義         │
+│  .agents/skills/ .............. 18個のスキル定義         │
 │  .claude/teams/ ............... 6チーム定義              │
 │  .agents/tasks/ ............... タスク指示書テンプレート  │
 │  .claude/settings.json ........ プラグイン・フック設定   │
@@ -499,7 +499,7 @@ project-blueprint/
 │   ├── scripts/                           ← [汎用] 観測の集計
 │   │   └── harness-stats.sh                 testreport/ の JSONL（拒否・失敗・設定変更・rule の load・subagent）を 1 枚に集計
 │   │
-│   ├── skills/                            ← [汎用] 17スキル定義（各 SKILL.md + evals/evals.json + 必要に応じて references/）
+│   ├── skills/                            ← [汎用] 18スキル定義（各 SKILL.md + evals/evals.json + 必要に応じて references/）
 │   │   ├── brainstorm/SKILL.md              前提整理（/prd前段）
 │   │   ├── prd/SKILL.md                     PRD生成
 │   │   ├── architecture/SKILL.md            アーキテクチャ設計
@@ -520,7 +520,10 @@ project-blueprint/
 │   │   ├── performance/SKILL.md             パフォーマンス最適化
 │   │   ├── refactoring/SKILL.md             リファクタリング
 │   │   ├── review-fix/SKILL.md              PRレビュー指摘自動修正
-│   │   └── harness-refine/SKILL.md          ハーネス自己点検・補正
+│   │   ├── harness-refine/SKILL.md          ハーネス自己点検・補正
+│   │   └── limit-resume/                    使用上限を待って無人で回すランナー
+│   │       ├── SKILL.md
+│   │       └── scripts/limit_resume.py
 │   │
 │   └── tasks/                             ← [汎用] タスクテンプレート
 │       ├── TASK_TEMPLATE.md                 機能開発指示書
@@ -589,7 +592,7 @@ project-blueprint/
 
 | テンプレート | 用途 | メンバー | スキル数 |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **13/17** |
+| **`TEAM_PJM.md`** | **フルライフサイクル管理（推奨）** | **6名** | **13/18** |
 | `TEAM_FEATURE.md` | 機能開発・バグ修正 | 5名 | 5 |
 | `TEAM_QA.md` | 品質保証・監査 | 5名 | 5 |
 | `TEAM_PLANNING.md` | 設計フェーズ | 4名 | 3 |
@@ -598,7 +601,7 @@ project-blueprint/
 
 チーム選定ガイド・ワークフロー詳細・起動パターン・スキルカバレッジは `.claude/teams/README.md` を参照。
 
-### スキル一覧（全17スキル）
+### スキル一覧（全18スキル）
 
 全スキルは引数を省略可能。省略時はユーザーに対話的に確認する。
 読み取り専用スキルは`context: fork`（会話コンテキストのコピーで実行）かつ`allowed-tools`でツール制限済み。
@@ -622,10 +625,11 @@ project-blueprint/
 | Refactoring | `/refactoring <対象ディレクトリ or 指示>` | 読み書き | — |
 | Review Fix | `/review-fix <PR番号>` | 読み書き | — |
 | Harness Refine | `/harness-refine <対象ディレクトリ or 指示>` | 読み書き（`.claude/`骨格のみ） | — |
+| Limit Resume | `/limit-resume [setup \| status \| stop]` | 読み書き（キューのみ。ランナーはセッション外で起動） | — |
 
 スキルパイプライン: `/brainstorm` → `/prd` → `/architecture` → `/plan` → `/implementing-features` → `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
 
-補助スキル（パイプライン外・オンデマンド起動）: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`
+補助スキル（パイプライン外・オンデマンド起動）: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`, `/limit-resume`
 
 ---
 

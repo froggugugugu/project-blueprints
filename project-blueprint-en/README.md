@@ -129,8 +129,8 @@ The `--profile` option controls how many skills, agents and hooks get installed 
 | Profile | skills | agents | hooks | teams | Use case |
 | --- | --- | --- | --- | --- | --- |
 | `minimal` | 5 | 2 | 2 | none | Fastest way to try it out, lightweight |
-| `standard` | 17 | 9 | 18 | none | Everything but team mode |
-| `full` (default) | 17 | 9 | 18 | 6 | Same as the current full setup |
+| `standard` | 18 | 9 | 18 | none | Everything but team mode |
+| `full` (default) | 18 | 9 | 18 | 6 | Same as the current full setup |
 
 ```bash
 bash setup.sh /path/to/your-project --profile minimal
@@ -416,7 +416,7 @@ Teams focused on specific phases are also available. All arguments are optional:
 |  AGENTS.md .................... Shared rules (any agent)  |
 |  .claude/CLAUDE.md ............ Guide (Claude Code only)  |
 |  .agents/hooks/ ............... Safety hooks (defense)    |
-|  .agents/skills/ .............. 17 skill definitions      |
+|  .agents/skills/ .............. 18 skill definitions      |
 |  .claude/teams/ ............... 6 team definitions        |
 |  .agents/tasks/ ............... Task instruction templates |
 |  .claude/settings.json ........ Plugin & hook config      |
@@ -501,7 +501,7 @@ project-blueprint-en/
 |   +-- scripts/                           <-- [Generic] Observability aggregation
 |   |   +-- harness-stats.sh                 One-page summary of the testreport/ JSONL (denials, failures, settings changes, rule loads, subagents)
 |   |
-|   +-- skills/                            <-- [Generic] 17 skill definitions (SKILL.md + evals/evals.json + references/ where needed)
+|   +-- skills/                            <-- [Generic] 18 skill definitions (SKILL.md + evals/evals.json + references/ where needed)
 |   |   +-- brainstorm/SKILL.md              Premise elicitation (pre-/prd)
 |   |   +-- prd/SKILL.md                     PRD generation
 |   |   +-- architecture/SKILL.md            Architecture design
@@ -523,6 +523,9 @@ project-blueprint-en/
 |   |   +-- refactoring/SKILL.md             Refactoring
 |   |   +-- review-fix/SKILL.md              PR review auto-fix
 |   |   +-- harness-refine/SKILL.md          Harness self-audit & refinement
+|   |   +-- limit-resume/                    Unattended runner that waits out usage limits
+|   |   |   +-- SKILL.md
+|   |   |   +-- scripts/limit_resume.py
 |   |
 |   +-- tasks/                             <-- [Generic] Task templates
 |       +-- TASK_TEMPLATE.md                 Feature development instructions
@@ -591,7 +594,7 @@ project-blueprint-en/
 
 | Template | Purpose | Members | Skills |
 | --- | --- | --- | --- |
-| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **13/17** |
+| **`TEAM_PJM.md`** | **Full lifecycle management (recommended)** | **6** | **13/18** |
 | `TEAM_FEATURE.md` | Feature development / bug fixes | 5 | 5 |
 | `TEAM_QA.md` | Quality assurance / audit | 5 | 5 |
 | `TEAM_PLANNING.md` | Design phase | 4 | 3 |
@@ -600,7 +603,7 @@ project-blueprint-en/
 
 For team selection guidance, workflow details, launch patterns, and skill coverage, see `.claude/teams/README.md`.
 
-### Skills (all 17)
+### Skills (all 18)
 
 All skills accept optional arguments. When omitted, the user is prompted interactively.
 Read-only skills use `context: fork` (executed on a copy of the conversation context).
@@ -624,10 +627,11 @@ Read-only skills use `context: fork` (executed on a copy of the conversation con
 | Refactoring | `/refactoring <target-directory or instructions>` | Read/Write | -- |
 | Review Fix | `/review-fix <PR-number>` | Read/Write | -- |
 | Harness Refine | `/harness-refine <target-dir or instruction>` | Read/Write (`.claude/` scaffolding only) | -- |
+| Limit Resume | `/limit-resume [setup \| status \| stop]` | Read/Write (queue only; the runner is started outside the session) | -- |
 
 Skill pipeline: `/brainstorm` -> `/prd` -> `/architecture` -> `/plan` -> `/implementing-features` -> `/code-review` + `/security-scan` + `/legal-check` + `/e2e-testing` + `/performance` + `/refactoring`
 
-Auxiliary skills (outside the pipeline, invoked on demand): `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`
+Auxiliary skills (outside the pipeline, invoked on demand): `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`, `/limit-resume`
 
 ---
 

@@ -93,7 +93,7 @@ You do not have to use all of them. One skill on its own is a valid way to start
 | 5 | `/implementing-features` | Test-driven implementation. It also owns `docs/` and `project-config.md` updates | 🚏 Implementation |
 | 6 | `/code-review` `/security-scan` `/legal-check` `/e2e-testing` `/performance` `/refactoring` | Verification in a fresh context | 🚏 Verification |
 
-Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`.
+Auxiliary skills: `/ui-ux-design`, `/hig-compliance`, `/design-system-audit`, `/adr`, `/review-fix`, `/harness-refine`, `/limit-resume`.
 The last one is a meta-skill that diagnoses and strengthens the harness itself.
 
 ---
@@ -103,7 +103,7 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
 ```text
  2 guides    AGENTS.md (tool-agnostic rules, read directly by Codex) + CLAUDE.md (Claude Code-specific, imports AGENTS.md)
  2 adapters  .claude/ (settings.json, agents, teams) / .codex/ (config.toml, hooks.json, rules, agents). The source is the shared .agents/
-17 skills    ideation, design, implementation, review, security, legal, performance, refactoring
+18 skills    ideation, design, implementation, review, security, legal, performance, refactoring
              long detail moves into references/ (20 files) so SKILL.md keeps only the procedure
  9 agents    explorer / researcher / planner / security-reviewer / performance-analyst /
              doc-synchronizer / doc-writer / test-writer / verifier (spec conformance before completion). The Codex versions are generated from the same definitions
@@ -115,7 +115,7 @@ The last one is a meta-skill that diagnoses and strengthens the harness itself.
  7 rules     1 always-on (git conventions) + 3 path-scoped (document management, workflow detail, harness authoring)
              + 3 language samples (drop the .example suffix to enable)
  2 workflows review-sweep (4-angle parallel review + adversarial verification) / skill-eval (with and without) (Claude Code extensions)
-34 evals     evals.json for all 17 skills (typical + boundary), 128 assertions
+36 evals     evals.json for all 18 skills (typical + boundary), 137 assertions
  1 gate      scripts/validate-harness.sh — a static check that fails CI on spec drift
  4 CI        claude-review.yml (conversational @claude review) /
              claude-skills-ci.yml and codex-skills-ci.yml (code-review + security-scan on every PR; enable one or both) /
@@ -248,11 +248,11 @@ A plugin can declare only `skills`, `agents`, `outputStyles` and `hooks`. It can
 This harness, meanwhile, is in the following state.
 
 ```text
-17 of 17 skills reference files a plugin cannot ship
+18 of 18 skills reference files a plugin cannot ship
 
-  docs/               16 / 17        project-config.md   14 / 17
-  output/             15 / 17        pitfalls.md         12 / 17
-  quality-gates.md    15 / 17        .agents/rules/       3 / 17
+  docs/               16 / 18        project-config.md   14 / 18
+  output/             16 / 18        pitfalls.md         12 / 18
+  quality-gates.md    15 / 18        .agents/rules/       3 / 18
 ```
 
 Installed as a plugin alone, **every skill would run with its premises missing**.
@@ -271,7 +271,7 @@ This is a project scaffold rather than a general-purpose tool collection, and
 - [`project-blueprint-en/.agents/guardrails.md`](project-blueprint-en/.agents/guardrails.md) — the safety mechanisms as a whole, the Claude Code / Codex mapping and where the guarantees differ
 - [`project-blueprint-en/.codex/`](project-blueprint-en/.codex/) — the Codex adapter (config.toml / hooks.json / rules / agents)
 - [`project-blueprint-en/.agents/pitfalls.md`](project-blueprint-en/.agents/pitfalls.md) — recurring failure patterns in AI-assisted development
-- [`project-blueprint-en/.agents/skills/`](project-blueprint-en/.agents/skills/) — SKILL.md for all 17 skills
+- [`project-blueprint-en/.agents/skills/`](project-blueprint-en/.agents/skills/) — SKILL.md for all 18 skills
 - [`constitution.md`](constitution.md) — the seven principles, with the protocol for changing them
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes (SemVer + Keep a Changelog)
 - [`evals/README.md`](evals/README.md) — how the skill evals run, and the baseline (with / without pass rates)

@@ -253,6 +253,7 @@ These skills are designed to be called standalone, outside team contexts:
 
 - **`/adr`**: Records architecture decisions. Called on-demand when a judgment call is made
 - **`/review-fix`**: Auto-fixes CodeRabbit / Copilot review comments on a given PR number
+- **`/limit-resume`**: Prepares the runner that works through a task queue unattended, waiting out usage limits (the runner starts outside the session)
 
 ## Subagent Dispatch Guide
 
