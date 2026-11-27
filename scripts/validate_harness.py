@@ -42,7 +42,7 @@ import sync_codex_agents  # noqa: E402 - .claude/agents/*.md → .codex/agents/*
 # ── 公式仕様の enum(docs.claude.com 準拠) ──────────────────────────────
 HOOK_EVENTS = {
     "SessionStart", "Setup", "InstructionsLoaded", "UserPromptSubmit",
-    "UserPromptExpansion", "MessageDisplay", "PreToolUse", "PermissionRequest",
+    "UserPromptExpansion", "PreSkillShellCommand", "MessageDisplay", "PreToolUse", "PermissionRequest",
     "PostToolUse", "PostToolUseFailure", "PostToolBatch", "PermissionDenied",
     "Notification", "SubagentStart", "SubagentStop", "TaskCreated",
     "TaskCompleted", "Stop", "StopFailure", "TeammateIdle", "ConfigChange",
@@ -52,13 +52,21 @@ HOOK_EVENTS = {
 }
 HOOK_TYPES = {"command", "http", "mcp_tool", "prompt", "agent"}
 # `if`(権限ルール構文でフックの発火を絞る)が効くのはツール系イベントだけ。他に書くとフックが一切走らない。
-HOOK_IF_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionDenied"}
+HOOK_IF_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionDenied",
+                  "PreSkillShellCommand"}
 # Layer 1 のブロック系フック。起動失敗・タイムアウトで操作が素通りしないよう `onFailure: block`(v2.1.295)を要求する
 FAIL_CLOSED_SCRIPTS = {"safety-check.sh", "protect-files.sh", "config-guard.sh", "scope-guard.sh"}
-FAIL_CLOSED_EVENTS = {"PreToolUse", "ConfigChange"}
+# PreSkillShellCommand(v2.1.332): skill の埋め込みシェルコマンド(!`cmd`)の直前。PreToolUse はこのコマンドでは発火しない
+FAIL_CLOSED_EVENTS = {"PreToolUse", "ConfigChange", "PreSkillShellCommand"}
 ON_FAILURE_VALUES = {"continue", "block"}
-# skill / agent / workflow のフォルダ名として予約されている名前空間(v2.1.282)。置いても読み込まれない。
-RESERVED_NAMESPACES = {"anthropic-skills", "claude-ai"}
+# claude.ai 同期用に予約された名前空間(v2.1.282)。この名前か `anthropic-skills:` で始まる skill / agent / workflow は読み込まれない。
+# `claude-ai` の予約は v2.1.283 で取り消された(skills.md の「Names reserved for synced skills」は anthropic-skills だけを挙げる)。
+RESERVED_NAMESPACES = {"anthropic-skills"}
+# skill フォルダ名として予約された名前(大文字小文字を問わない)。`synced` は ~/.claude/skills/synced/(claude.ai から同期した skill)に使われ、
+# 同名の skill は読み込まれない(skills.md)。
+RESERVED_SKILL_FOLDERS = {"synced"}
+# computer use を有効にした Mac でだけ予約される skill 名(v2.1.332)。その環境では読み込まれないため WARN に留める。
+PLATFORM_RESERVED_SKILL_NAMES = {"computer-use"}
 # project / local settings の env から読まれない変数(v2.1.251 / v2.1.282)。書いても効かない。
 PROJECT_IGNORED_ENV = {"CLAUDE_CONFIG_DIR", "CLAUDE_CODE_TMPDIR", "TMPDIR", "CLAUDE_CODE_ENABLE_TELEMETRY"}
 CACHE_TTLS = {"5m", "1h"}
@@ -100,8 +108,8 @@ MANAGED_ONLY_KEYS = {
     "allowManagedHooksOnly", "allowManagedMcpServersOnly", "allowManagedPermissionRulesOnly",
     "availableModelsMatch", "blockedMarketplaces", "browserExternalPageTools", "channelsEnabled", "claudeMd",
     "deniedModels", "disableBrowserExternalNavigation", "disableCommandPluginSources",
-    "disableDesktopLocalSessions", "disableMobileSimulatorTools", "disableRemotePreviewScripts",
-    "disableSideloadFlags", "forceRemoteSettingsRefresh", "gatewayInternalNetworks", "managedMcpServers",
+    "disableDesktopLocalSessions", "disableDirectMcpSkills", "disableMobileSimulatorTools", "disableRemotePreviewScripts",
+    "disableSideloadFlags", "enforceAnthropicSignIn", "forceRemoteSettingsRefresh", "gatewayInternalNetworks", "managedMcpServers",
     "managedSourcesBehavior", "modelPricing", "parentSettingsBehavior", "pluginSuggestionMarketplaces",
     "pluginTrustMessage", "policyHelper", "requiredMaximumVersion", "requiredMinimumVersion",
     "sandbox.bwrapPath", "sandbox.filesystem.allowManagedReadPathsOnly", "sandbox.network.allowManagedDomainsOnly",
@@ -350,6 +358,12 @@ def check_settings(root: Path, rep: Report) -> set[str]:
     return referenced
 
 
+def is_reserved_namespace(name: str) -> bool:
+    """`anthropic-skills` itself or any `anthropic-skills:<x>` name (compared without case)."""
+    n = name.strip().lower()
+    return any(n == r or n.startswith(r + ":") for r in RESERVED_NAMESPACES)
+
+
 def check_hook_handler(where: str, hook: dict, rep: Report, event: str = "") -> None:
     """Validate one hook handler object against the official field list."""
     htype = hook.get("type")
@@ -506,7 +520,7 @@ def check_agents(root: Path, skill_names: set[str], rep: Report) -> None:
             rep.error(where, f"`name: {name}` に `:` が含まれます — プラグイン用に予約されており読み込まれません")
         elif not re.fullmatch(r"[a-z0-9-]+", name):
             rep.error(where, f"`name: {name}` は小文字英数字とハイフンのみ使えます")
-        if name in RESERVED_NAMESPACES or p.stem in RESERVED_NAMESPACES:
+        if is_reserved_namespace(name) or is_reserved_namespace(p.stem):
             rep.error(where, f"`{name}` は claude.ai 同期用に予約された名前空間です(v2.1.282)。ローカル定義は読み込まれません")
 
         if not str(fm.get("description", "")).strip():
@@ -586,8 +600,12 @@ def check_skills(root: Path, rep: Report) -> set[str]:
         name = str(fm.get("name", p.parent.name)).strip()
         if name and name != p.parent.name:
             rep.warn(where, f"`name: {name}` がディレクトリ名 `{p.parent.name}` と異なります")
-        if p.parent.name in RESERVED_NAMESPACES:
+        if is_reserved_namespace(p.parent.name) or is_reserved_namespace(name):
             rep.error(where, f"`{p.parent.name}` は claude.ai 同期用に予約された名前空間です(v2.1.282)。この skill は読み込まれません")
+        if p.parent.name.lower() in RESERVED_SKILL_FOLDERS:
+            rep.error(where, f"`{p.parent.name}` は claude.ai から同期した skill の置き場所として予約された名前です — この skill は読み込まれません")
+        if name.lower() in PLATFORM_RESERVED_SKILL_NAMES or p.parent.name.lower() in PLATFORM_RESERVED_SKILL_NAMES:
+            rep.warn(where, f"`{name}` は computer use を有効にした Mac で予約される skill 名です(v2.1.332) — その環境では読み込まれません")
 
         if len(name) > SPEC_NAME_LIMIT:
             rep.error(where, f"`name` が {len(name)} 文字です — Codex は {SPEC_NAME_LIMIT} 文字を超える skill を読み込みません"

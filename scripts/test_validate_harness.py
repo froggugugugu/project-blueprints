@@ -321,9 +321,44 @@ def m_otel_env_in_project(root: Path) -> None:
 
 
 def m_reserved_skill_name(root: Path) -> None:
-    d = root / ".agents/skills/claude-ai"
+    d = root / ".agents/skills/anthropic-skills"
     d.mkdir()
-    (d / "SKILL.md").write_text("---\nname: claude-ai\ndescription: Reserved-name skill that must not load.\n---\n# x\n")
+    (d / "SKILL.md").write_text("---\nname: anthropic-skills\ndescription: Reserved-name skill that must not load.\n---\n# x\n")
+
+
+def m_reserved_skill_prefix(root: Path) -> None:
+    # 予約は名前空間の中の名前(`anthropic-skills:<x>`)にも及び、大文字小文字を区別しない
+    d = root / ".agents/skills/plan"
+    p = d / "SKILL.md"
+    p.write_text(p.read_text().replace("name: plan\n", "name: Anthropic-Skills:plan\n", 1))
+
+
+def m_synced_skill_folder(root: Path) -> None:
+    d = root / ".agents/skills/Synced"
+    d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: synced\ndescription: Skill placed in the folder name reserved for synced skills.\n---\n# x\n")
+
+
+def m_computer_use_skill(root: Path) -> None:
+    d = root / ".agents/skills/computer-use"
+    d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: computer-use\ndescription: Skill that collides with the name reserved on Macs.\n---\n# x\n")
+
+
+def m_new_managed_only_key(root: Path) -> None:
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["disableDirectMcpSkills"] = True
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+
+def m_skill_shell_if_ok_but_unknown_event(root: Path) -> None:
+    # PreSkillShellCommand は正規のイベント(v2.1.332)で `if` も効く。ここでは onFailure の欠落だけを検出させる
+    p = root / ".claude/settings.json"
+    cfg = json.loads(p.read_text())
+    cfg["hooks"]["PreSkillShellCommand"] = [{"matcher": "Bash|PowerShell", "hooks": [
+        {"type": "command", "if": "Bash(rm *)", "command": "\"$CLAUDE_PROJECT_DIR\"/.agents/hooks/safety-check.sh", "timeout": 10}]}]
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2))
 
 
 def m_skill_name_too_long(root: Path) -> None:
@@ -625,6 +660,11 @@ CASES = [
     ("Bash ルールでサブコマンドの前に *", m_rule_wildcard_before_sub, "サブコマンドの前の"),
     ("project settings の env に OTel 変数", m_otel_env_in_project, "project / local settings では読まれません"),
     ("予約名前空間の skill", m_reserved_skill_name, "予約された名前空間"),
+    ("予約名前空間の中の名前(anthropic-skills:x)", m_reserved_skill_prefix, "予約された名前空間"),
+    ("synced フォルダの skill", m_synced_skill_folder, "同期した skill の置き場所"),
+    ("computer-use という名前の skill", m_computer_use_skill, "computer use を有効にした Mac"),
+    ("managed 専用の disableDirectMcpSkills", m_new_managed_only_key, "`disableDirectMcpSkills`"),
+    ("PreSkillShellCommand の safety-check.sh に onFailure が無い", m_skill_shell_if_ok_but_unknown_event, "PreSkillShellCommand のブロック系フック"),
     ("skill の name が 64 字超", m_skill_name_too_long, "文字を超える skill を読み込みません"),
     ("skill の name が Agent Skills 標準の形でない", m_skill_name_not_spec, "Agent Skills 標準の形ではありません"),
     ("skill に description が無く when_to_use だけ", m_skill_when_to_use_only, "`when_to_use` だけでは足りません"),
