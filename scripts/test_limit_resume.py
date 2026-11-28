@@ -85,6 +85,49 @@ class Classify(unittest.TestCase):
         self.assertEqual(lr.classify(1, "TypeError in test", True), "error")
         self.assertEqual(lr.classify(0, "usage limit", True), "limit")
 
+    def test_claude_model_answer_is_not_a_limit(self) -> None:
+        # max turns で止まった回答に "rate limit" が含まれても、上限とは判定しない(待機と再実行の無限ループを防ぐ)
+        out = json.dumps({"type": "result", "subtype": "error_max_turns", "is_error": True, "session_id": "s",
+                          "result": "rate limit のミドルウェアを途中まで実装しました"})
+        r = lr.parse_claude_output(out, "")
+        self.assertTrue(r.is_error)
+        self.assertEqual(lr.classify(1, r.error_text, r.is_error), "error")
+
+    def test_claude_api_error_result_is_a_limit(self) -> None:
+        out = json.dumps({"type": "result", "subtype": "success", "is_error": True, "result": "Claude AI usage limit reached|1764000000"})
+        r = lr.parse_claude_output(out, "")
+        self.assertEqual(lr.classify(1, r.error_text, r.is_error), "limit")
+        self.assertEqual(int(lr.parse_reset_time(r.error_text, NOW).timestamp()), 1764000000)
+
+    def test_claude_plain_text_error(self) -> None:
+        r = lr.parse_claude_output("5-hour limit reached ∙ resets 3am", "")
+        self.assertEqual(lr.classify(1, r.error_text, r.is_error), "limit")
+
+    def test_codex_events(self) -> None:
+        ev = lambda **k: json.dumps(k)  # noqa: E731
+        failed = "\n".join([ev(type="thread.started", thread_id="t-1"), ev(type="turn.started"),
+                            ev(type="turn.failed", error={"message": "You've hit your usage limit. Try again in 3 hours 5 minutes."})])
+        r = lr.parse_codex_output(failed, "")
+        self.assertEqual((r.session_id, r.is_error), ("t-1", True))
+        self.assertEqual(lr.classify(1, r.error_text, r.is_error), "limit")
+        self.assertEqual(lr.parse_reset_time(r.error_text, NOW), NOW + dt.timedelta(hours=3, minutes=5))
+
+        # 回答に "usage limit" が含まれても、turn.completed で終わっていれば成功(途中の再接続 error も無視)
+        ok = "\n".join([ev(type="thread.started", thread_id="t-2"),
+                        ev(type="error", message="Reconnecting... 1/5"),
+                        ev(type="item.completed", item={"type": "agent_message", "text": "usage limit の表示を直しました"}),
+                        ev(type="turn.completed", usage={"input_tokens": 10, "output_tokens": 2})])
+        r = lr.parse_codex_output(ok, "")
+        self.assertFalse(r.is_error)
+        self.assertEqual(lr.classify(0, r.error_text, r.is_error), "ok")
+        self.assertEqual(r.tokens, {"input_tokens": 10, "output_tokens": 2})
+
+        # 失敗したタスクの回答に "rate limit" があっても、エラー本文に無ければ上限ではない
+        bad = "\n".join([ev(type="item.completed", item={"type": "agent_message", "text": "rate limit を実装できませんでした"}),
+                         ev(type="turn.failed", error={"message": "tool call failed"})])
+        r = lr.parse_codex_output(bad, "")
+        self.assertEqual(lr.classify(1, r.error_text, r.is_error), "error")
+
 
 class Queue(unittest.TestCase):
     def test_parse(self) -> None:
@@ -122,8 +165,37 @@ if "LIMIT_ONCE" in prompt and n == 1:
 if "ALWAYS_FAIL" in prompt:
     print(json.dumps({"type": "result", "subtype": "success", "is_error": True, "session_id": "s-x", "result": "tests failed"}))
     sys.exit(1)
+if "MAX_TURNS_RATE" in prompt:
+    print(json.dumps({"type": "result", "subtype": "error_max_turns", "is_error": True, "session_id": "s-m",
+                      "result": "rate limit の実装が途中です"}))
+    sys.exit(1)
 print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "session_id": "s-2",
                   "result": "done", "total_cost_usd": 0.42}))
+"""
+
+FAKE_CODEX = """#!/usr/bin/env python3
+import json, os, sys, pathlib
+args = sys.argv[1:]
+if args[:2] == ["login", "status"]:
+    print(os.environ.get("FAKE_CODEX_LOGIN", "Logged in using ChatGPT"))
+    sys.exit(0)
+d = pathlib.Path(sys.argv[0]).parent
+calls = d / "calls.jsonl"
+with calls.open("a") as f:
+    f.write(json.dumps(args) + "\\n")
+n = sum(1 for _ in calls.open())
+prompt = args[-1]
+ev = lambda **k: print(json.dumps(k))
+if "resume" in args:
+    ev(type="thread.started", thread_id=args[-2])
+else:
+    ev(type="thread.started", thread_id="t-%d" % n)
+ev(type="turn.started")
+if "LIMIT_ONCE" in prompt and n == 1:
+    ev(type="turn.failed", error={"message": "You've hit your usage limit. Try again in 3 hours 5 minutes."})
+    sys.exit(1)
+ev(type="item.completed", item={"type": "agent_message", "text": "usage limit の文言も含めて完了"})
+ev(type="turn.completed", usage={"input_tokens": 100, "output_tokens": 5})
 """
 
 
@@ -134,7 +206,12 @@ class EndToEnd(unittest.TestCase):
         fake.write_text(FAKE_CLAUDE, encoding="utf-8")
         fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
         os.environ["LIMIT_RESUME_CLAUDE_BIN"] = str(fake)
-        os.environ.pop("ANTHROPIC_API_KEY", None)
+        fake_codex = self.tmp / "codex"
+        fake_codex.write_text(FAKE_CODEX, encoding="utf-8")
+        fake_codex.chmod(fake_codex.stat().st_mode | stat.S_IEXEC)
+        os.environ["LIMIT_RESUME_CODEX_BIN"] = str(fake_codex)
+        for k in ("ANTHROPIC_API_KEY", "CODEX_API_KEY", "OPENAI_API_KEY", "FAKE_CODEX_LOGIN"):
+            os.environ.pop(k, None)
         self.queue = self.tmp / "queue.md"
         self.state = self.tmp / "state"
         self.slept: list[float] = []
@@ -176,6 +253,44 @@ class EndToEnd(unittest.TestCase):
         self.assertTrue(any(x["event"] == "wait" for x in log))
         self.assertTrue(any(x.get("cost_usd_api_equivalent") == 0.42 for x in log))
 
+    def test_codex_limit_then_resume_thread(self) -> None:
+        self.queue.write_text("## a\nLIMIT_ONCE をやる\n## b\n次の作業\n", encoding="utf-8")
+        r = self.runner("--agent", "codex")
+        orig = r.wait_until
+        waits: list[dt.datetime] = []
+        r.wait_until = lambda target, reason: (waits.append(target), orig(self.clock_now, reason))[1]
+        self.assertEqual(r.run(lr.parse_queue(self.queue.read_text())), 0)
+        self.assertEqual(waits[0], NOW + dt.timedelta(hours=3, minutes=5, seconds=120))
+        c = self.calls()
+        self.assertEqual(len(c), 3)
+        self.assertEqual(c[0][:2], ["exec", "--json"])
+        self.assertEqual(c[1][:3], ["exec", "resume", "--json"])
+        self.assertEqual(c[1][-2], "t-1")  # 上限で中断したスレッドを続ける
+        self.assertEqual(c[2][:2], ["exec", "--json"])  # 次のタスクは新しいスレッド
+        st = json.loads((self.state / "state.json").read_text())
+        self.assertEqual({k: v["status"] for k, v in st["tasks"].items()}, {"a": "done", "b": "done"})
+        log = [json.loads(x) for x in (self.state / "runs.jsonl").read_text().splitlines()]
+        self.assertTrue(any(x.get("tokens") == {"input_tokens": 100, "output_tokens": 5} for x in log))
+
+    def test_failed_answer_mentioning_rate_limit_does_not_wait(self) -> None:
+        self.queue.write_text("## a\nMAX_TURNS_RATE\n", encoding="utf-8")
+        r = self.runner()
+        r.wait_until = lambda target, reason: self.fail("上限と誤判定して待機した")
+        self.assertEqual(r.run(lr.parse_queue(self.queue.read_text())), 1)
+        self.assertEqual(len(self.calls()), 2)  # 通常の失敗として --max-attempts 回で打ち切る
+
+    def test_wait_uses_wall_clock(self) -> None:
+        # スリープ復帰で壁時計が大きく進んだら、残りを待たずに再開する(monotonic だとスリープ分だけ遅れる)
+        r = self.runner()
+        calls: list[float] = []
+
+        def jump(s: float) -> None:
+            calls.append(s)
+            self.clock_now += dt.timedelta(hours=2)
+        r.sleep = jump
+        r.wait_until(NOW + dt.timedelta(hours=4), "x")
+        self.assertEqual(len(calls), 2)
+
     def test_rerun_skips_done_and_failure_is_recorded(self) -> None:
         self.queue.write_text("## a\nふつう\n## bad\nALWAYS_FAIL\n", encoding="utf-8")
         self.assertEqual(self.runner().run(lr.parse_queue(self.queue.read_text())), 1)
@@ -206,6 +321,24 @@ class EndToEnd(unittest.TestCase):
             self.assertFalse(lr.preflight(a))
         finally:
             os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def test_preflight_codex(self) -> None:
+        codex = lambda *x: lr.build_parser().parse_args(["--queue", "q", "--agent", "codex", *x])  # noqa: E731
+        self.assertFalse(lr.preflight(codex()))  # ChatGPT でログイン、キー無し
+        for key in ("CODEX_API_KEY", "OPENAI_API_KEY"):
+            os.environ[key] = "dummy"
+            try:
+                self.assertTrue(lr.preflight(codex()), key)
+                self.assertFalse(lr.preflight(codex("--allow-api-key")), key)
+            finally:
+                os.environ.pop(key, None)
+        os.environ["FAKE_CODEX_LOGIN"] = "Logged in using an API key - sk-***"
+        try:
+            self.assertEqual(lr.codex_login_method(), "apikey")
+            self.assertTrue(lr.preflight(codex()))
+            self.assertFalse(lr.preflight(codex("--allow-api-key")))
+        finally:
+            os.environ.pop("FAKE_CODEX_LOGIN", None)
 
 
 class Mirror(unittest.TestCase):

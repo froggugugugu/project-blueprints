@@ -62,7 +62,7 @@ Codex のファイル編集は `apply_patch` として届き、パッチ本文�
 | `:workspace` の継承による保護は版に依存する | 公式ドキュメントは「継げば `.git` `.agents` `.codex` が読取専用のまま」と書く。codex-cli 0.162.1 の実測では継承だけでは書込めた。0.170.0 の実測ではドキュメントどおり継承だけで読取専用になった | 対応する最小の版(0.162)でも保護されるよう、権限プロファイルで明示している(validator が欠落を ERROR にする)。`.claude/settings*.json` は組み込みの保護に含まれないので、版によらず明示が要る |
 | 対応するイベントが無い | `config-guard.sh`(ConfigChange)/ `instructions-log.sh` / `post-failure-log.sh` / `post-compact-restore.sh` / `verify-gate.sh` の task・teammate / 通知(`notify-claude.sh`) | 設定の保護は権限プロファイルが担う。通知は `~/.codex/config.toml` の `notify` |
 | team と saved workflow が無い | Claude Code の拡張 | 同じ skill を順に実行する |
-| `/limit-resume` のセッション再開が無い | ランナーは Claude Code では中断したセッションを `--resume` で続けるが、`codex exec` では使っていない。Codex の使用上限メッセージの文言も実機で未確認 | 同じタスクを最初からやり直す(キューには冪等なタスクだけを入れる)。解除時刻が読めないときは指数バックオフで待つ |
+| `/limit-resume` の上限検知が未実測 | ランナーは `codex exec --json` の `turn.failed` / `error` イベントで上限を検知し `codex exec resume` で続けるが、Codex の使用上限メッセージの文言は実機で未確認。API 換算コストは出ない(トークン数のみ) | 解除時刻が読めないときは指数バックオフで待つ。課金の確認は `CODEX_API_KEY` / `OPENAI_API_KEY` と `codex login status` で行う |
 
 どちらのエージェントにも依存させたくない禁止事項(シークレット、`--no-verify`、`--force` 付きの push)は、git フックと CI にも置く。
 

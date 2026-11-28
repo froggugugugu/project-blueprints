@@ -4,7 +4,7 @@ description: >
   サブスクの使用上限(5 時間・週次)に当たっても、解除時刻まで待ってタスクキューの続きを無人で回すランナーを準備・起動・監視する。
   「上限が解除されたら続けて回したい」「寝ている間に回したい」「無人で回したい」「リミット待ち」の依頼で使う。手動起動のみ。
 argument-hint: "[setup | status | stop](省略時は setup)"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(python3 .agents/skills/limit-resume/scripts/limit_resume.py *), Bash(claude --version), Bash(codex --version), Bash(touch testreport/limit-resume/STOP), Bash(tail *)
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(python3 .agents/skills/limit-resume/scripts/limit_resume.py *), Bash(claude --version), Bash(codex --version), Bash(codex login status), Bash(touch testreport/limit-resume/STOP), Bash(tail *)
 disable-model-invocation: true
 ---
 
@@ -23,14 +23,14 @@ disable-model-invocation: true
 | ランナー | `.agents/skills/limit-resume/scripts/limit_resume.py`(標準ライブラリのみ。Python 3.9 以上) |
 | キュー | `output/tasks/limit-resume-queue.md`(既定の置き場所。`--queue` で変えられる) |
 | 状態 | `testreport/limit-resume/state.json`(タスクごとの `pending` / `done` / `failed` と再開用のセッション ID) |
-| 記録 | `testreport/limit-resume/runs.jsonl`(実行・待機・再開。Claude Code ではタスクごとの API 換算コストも残る) |
+| 記録 | `testreport/limit-resume/runs.jsonl`(実行・待機・再開。Claude Code ではタスクごとの API 換算コスト、Codex ではトークン数も残る) |
 | 停止 | `testreport/limit-resume/STOP` を置くと、待機中か次のタスクの前で止まる |
 
 ランナーの動き:
 
-1. キューのタスクを上から 1 件ずつ、`claude -p --output-format json --permission-mode dontAsk` に渡す(Codex は `codex exec`)
+1. キューのタスクを上から 1 件ずつ、`claude -p --output-format json --permission-mode dontAsk` に渡す(Codex は `codex exec --json`)
 2. 使用上限のメッセージを検知したら、そこから解除時刻を読み取り、解除時刻 + 120 秒まで眠る。読めなければ 15 分から倍々(最大 2 時間)で待つ
-3. 再開時、Claude Code は中断したセッションを `--resume` で続ける。Codex は同じタスクを最初からやり直す
+3. 再開時は中断したセッションを続ける(Claude Code は `--resume <session_id>`、Codex は `codex exec resume <thread_id>`)
 4. 上限による中断は試行回数に数えない。それ以外の失敗は 2 回まで試し、だめなら `failed` にして次へ進む
 5. 状態を毎回保存するので、止めても同じコマンドで続きから再開できる(`done` は飛ばす)
 
@@ -48,7 +48,8 @@ disable-model-invocation: true
 
 1. **課金の確認**: 次の 2 点をユーザーに確認する。ランナーは課金の設定を読めないため、ここで止める理由がある
    - usage credits(上限を超えた分の従量課金)を無効にするか、上限額を決めてあるか。有効なままだと、待たずに課金で走り続けることがある
-   - `ANTHROPIC_API_KEY` を使わないこと。設定されているとサブスクではなく API の従量課金になる(ランナーは `--allow-api-key` が無いと起動しない)
+   - API キーを使わないこと。設定されているとサブスクではなく API の従量課金になる。Claude Code は `ANTHROPIC_API_KEY`、
+     Codex は `CODEX_API_KEY` / `OPENAI_API_KEY` と、`codex login status` が ChatGPT でのログインであること(ランナーはどれかに当たると `--allow-api-key` が無い限り起動しない)
 2. **CLI の確認**: `claude --version`(Codex なら `codex --version`)が通ること
 3. **キューを書く**: ユーザーの依頼をタスクに分け、下の形式で `output/tasks/limit-resume-queue.md` に書く。各タスクは次を満たす
    - 1 タスクだけ読んでも分かる(前のタスクの会話は引き継がれない)。対象ファイル・完了条件・検証コマンドを本文に書く
@@ -115,7 +116,8 @@ touch testreport/limit-resume/STOP
 ## Codex で使うとき
 
 - `--agent codex` で `codex exec` を使う。権限は `.codex/config.toml` の設定に従う(ランナーは危険なフラグを渡さない)
-- 中断したセッションの再開は使わず、タスクを最初からやり直す。冪等に書いたタスクだけを入れる
+- 上限で中断したら `codex exec resume --json <thread_id>` で同じスレッドを続ける。上限以外の失敗のあとは最初からやり直すので、タスクは冪等に書く
+- 上限かどうかは `turn.failed` / `error` イベントのメッセージだけで判定する(モデルの回答は使わない)
 - Codex の上限メッセージの文言は実機で未確認。解除時刻が読めないときは上の指数バックオフで待つ
 
 ## 守ること

@@ -4,7 +4,7 @@ description: >
   Prepares, launches and monitors a runner that works through a task queue unattended and, when a subscription usage limit (5-hour or weekly) is hit, waits until the reset time and continues.
   Use when asked to keep going after the limit resets, run overnight, run unattended, or wait out the limit. Manual invocation only.
 argument-hint: "[setup | status | stop] (default: setup)"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(python3 .agents/skills/limit-resume/scripts/limit_resume.py *), Bash(claude --version), Bash(codex --version), Bash(touch testreport/limit-resume/STOP), Bash(tail *)
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(python3 .agents/skills/limit-resume/scripts/limit_resume.py *), Bash(claude --version), Bash(codex --version), Bash(codex login status), Bash(touch testreport/limit-resume/STOP), Bash(tail *)
 disable-model-invocation: true
 ---
 
@@ -23,14 +23,14 @@ Prepare the queue and the launch command; the user starts it in a separate termi
 | Runner | `.agents/skills/limit-resume/scripts/limit_resume.py` (standard library only, Python 3.9+) |
 | Queue | `output/tasks/limit-resume-queue.md` (default location; change with `--queue`) |
 | State | `testreport/limit-resume/state.json` (per task: `pending` / `done` / `failed` and the session ID used to resume) |
-| Log | `testreport/limit-resume/runs.jsonl` (runs, waits, resumes; with Claude Code also the API-equivalent cost per task) |
+| Log | `testreport/limit-resume/runs.jsonl` (runs, waits, resumes; with Claude Code also the API-equivalent cost per task, with Codex the token counts) |
 | Stop | Creating `testreport/limit-resume/STOP` stops the runner while waiting or before the next task |
 
 What the runner does:
 
-1. Passes the queue's tasks one at a time to `claude -p --output-format json --permission-mode dontAsk` (`codex exec` for Codex)
+1. Passes the queue's tasks one at a time to `claude -p --output-format json --permission-mode dontAsk` (`codex exec --json` for Codex)
 2. On a usage-limit message, reads the reset time from it and sleeps until reset + 120 seconds. If it cannot read one, it waits 15 minutes, doubling up to 2 hours
-3. On resume, Claude Code continues the interrupted session with `--resume`; Codex reruns the task from the start
+3. On resume, the interrupted session continues (Claude Code: `--resume <session_id>`; Codex: `codex exec resume <thread_id>`)
 4. Limit stops do not count as attempts. Other failures are tried twice, then the task is marked `failed` and the runner moves on
 5. State is saved after every step, so the same command resumes after a stop (`done` tasks are skipped)
 
@@ -48,7 +48,8 @@ Go in this order.
 
 1. **Billing check**: confirm these two points with the user. The runner cannot read billing settings, so this is the place to stop if needed
    - Usage credits (pay-per-use beyond the limit) are disabled, or a spend limit is set. Left enabled, the runner may keep going on credits instead of waiting
-   - `ANTHROPIC_API_KEY` is not used. When set, runs bill the API instead of the subscription (the runner refuses to start without `--allow-api-key`)
+   - No API key is used. When one is, runs bill the API instead of the subscription. For Claude Code that is `ANTHROPIC_API_KEY`;
+     for Codex, `CODEX_API_KEY` / `OPENAI_API_KEY`, and `codex login status` must show a ChatGPT login (on any of these the runner refuses to start without `--allow-api-key`)
 2. **CLI check**: `claude --version` (or `codex --version`) works
 3. **Write the queue**: split the request into tasks and write them to `output/tasks/limit-resume-queue.md` in the format below. Each task must
    - Make sense on its own (no conversation carries over from the previous task). State target files, done criteria and the verification command in the body
@@ -115,7 +116,8 @@ Common options:
 ## With Codex
 
 - `--agent codex` uses `codex exec`. Permissions follow `.codex/config.toml` (the runner passes no dangerous flags)
-- Interrupted sessions are not resumed; the task reruns from the start. Queue only idempotent tasks
+- After a limit stop the runner continues the same thread with `codex exec resume --json <thread_id>`. After any other failure it starts over, so write tasks to be idempotent
+- Whether a stop is a usage limit is decided from the `turn.failed` / `error` event messages only (never from the model's answer)
 - Codex's limit message wording has not been verified on the real CLI. When no reset time can be read, the runner falls back to the exponential backoff above
 
 ## Rules

@@ -13,12 +13,12 @@ All notable changes to this project will be documented in this file.
 - **`/limit-resume` skill(JP/EN)**: サブスクの使用上限(5 時間・週次)に当たったら解除時刻まで待ち、タスクキューの続きを無人で回すランナーを足した。
   ランナー本体は `.agents/skills/limit-resume/scripts/limit_resume.py`(標準ライブラリのみ。日英で同一ファイル)。上限メッセージから解除時刻を読み取り
   (エポック秒・`resets 3pm (TZ)`・`resets Mon 10am`・`resets Nov 28, 10am`・`try again in 2 hours` など)、読めなければ 15 分から倍々で待つ。
-  Claude Code は中断したセッションを `--resume` で続け、Codex は同じタスクをやり直す。状態は `testreport/limit-resume/` に残り、同じコマンドで再開でき、
-  `STOP` ファイルで待機中でも止まる。`--permission-mode bypassPermissions` は拒否し、`ANTHROPIC_API_KEY` が設定されていると(API 課金になるため)
-  `--allow-api-key` が無い限り起動しない。skill はキューの整形・課金と許可の確認・dry-run までを行い、ランナーはセッションの外でユーザーが起動する。
+  中断したセッションを Claude Code は `--resume`、Codex は `codex exec resume`(`--json` の `thread_id`)で続ける。状態は `testreport/limit-resume/` に残り、同じコマンドで再開でき、
+  `STOP` ファイルで待機中でも止まる。`--permission-mode bypassPermissions` は拒否し、API キー(`ANTHROPIC_API_KEY`、Codex は `CODEX_API_KEY` / `OPENAI_API_KEY`
+  と `codex login status` の API キーログイン)があると、API 課金になるため `--allow-api-key` が無い限り起動しない。上限かどうかは CLI のエラー本文だけで判定し、モデルの回答は使わない(「rate limit を実装する」タスクの失敗を上限と誤認して待ち続けないため)。待機は壁時計で測る(macOS の monotonic はスリープ中に進まない)。skill はキューの整形・課金と許可の確認・dry-run までを行い、ランナーはセッションの外でユーザーが起動する。
   手動起動のみ(`disable-model-invocation: true` + `agents/openai.yaml`)。Codex で同じ保証にならない点は `guardrails.md` に追記。
-- **`scripts/test_limit_resume.py` / `validate-harness.sh --limit-resume`**: 偽の `claude` で「上限 → 待機 → セッション再開 → 完了」「STOP で停止」
-  「再実行で done を飛ばす」を通し、解除時刻の読み取り 10 形・日英ミラーの同一性を検査する(19 件)。CI に追加。
+- **`scripts/test_limit_resume.py` / `validate-harness.sh --limit-resume`**: 偽の `claude` / `codex` で「上限 → 待機 → セッション再開 → 完了」「STOP で停止」
+  「再実行で done を飛ばす」を通し、解除時刻の読み取り 10 形・回答文による上限の誤判定・Codex の課金チェック・日英ミラーの同一性を検査する(27 件)。CI に追加。
 - skill 数を 17 → 18、evals 34 → 36・assertions 128 → 137 に更新(README・サイト・`setup.sh` のヘルプ・ルート `CLAUDE.md`)。
 
 ### Changed (週次見直し: Claude Code 2.1.326〜2.1.328 / codex-cli 0.163〜0.170, 2026-11-19)

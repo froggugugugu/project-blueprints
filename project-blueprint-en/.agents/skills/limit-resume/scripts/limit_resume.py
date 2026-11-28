@@ -147,15 +147,105 @@ def parse_reset_time(text: str, now: dt.datetime) -> dt.datetime | None:
     return cand
 
 
-def classify(exit_code: int, text: str, is_error: bool | None) -> str:
-    """実行結果を ok / limit / transient / error に分ける。"""
+def classify(exit_code: int, error_text: str, is_error: bool | None) -> str:
+    """実行結果を ok / limit / transient / error に分ける。
+
+    error_text にはエラーの本文(stderr と CLI が返したエラーメッセージ)だけを渡す。モデルの回答を混ぜると、
+    「rate limit を実装する」タスクの失敗が上限と誤判定され、試行回数に数えられないまま待機と再実行を繰り返す。
+    """
     if exit_code == 0 and not is_error:
         return "ok"
-    if LIMIT_RE.search(text):
+    if LIMIT_RE.search(error_text):
         return "limit"
-    if TRANSIENT_RE.search(text):
+    if TRANSIENT_RE.search(error_text):
         return "transient"
     return "error"
+
+
+@dataclass
+class RunResult:
+    """1 回の実行の出力を解釈した結果。"""
+    is_error: bool | None = None
+    session_id: str | None = None
+    error_text: str = ""   # classify に渡す。モデルの回答は含めない
+    summary: str = ""      # 記録用(最後の回答の末尾)
+    cost_usd: float | None = None
+    tokens: dict | None = None
+
+
+# claude -p の JSON で、is_error かつ subtype が success のとき result に入るのは API エラーの本文(上限メッセージなど)。
+# それより長いものはモデルの回答とみなし、分類に使わない
+API_ERROR_MAX_LEN = 2000
+
+
+def parse_claude_output(stdout: str, stderr: str) -> RunResult:
+    """`claude -p --output-format json` の出力を解釈する。"""
+    try:
+        data = json.loads(stdout)
+        if not isinstance(data, dict):
+            raise TypeError
+    except (json.JSONDecodeError, TypeError):
+        # JSON にならないのは CLI 自体のエラー(起動失敗・認証切れ・上限の平文表示)。モデルの回答は含まれない
+        return RunResult(error_text=stdout + "\n" + stderr, summary=stdout)
+    subtype = data.get("subtype", "success")
+    is_error = bool(data.get("is_error")) or subtype != "success"
+    result = str(data.get("result") or "")
+    error_text = stderr
+    if is_error and subtype == "success" and len(result) <= API_ERROR_MAX_LEN:
+        error_text = result + "\n" + stderr
+    return RunResult(is_error=is_error, session_id=data.get("session_id"), error_text=error_text,
+                     summary=result, cost_usd=data.get("total_cost_usd"))
+
+
+def parse_codex_output(stdout: str, stderr: str) -> RunResult:
+    """`codex exec --json` の JSONL イベント列を解釈する。
+
+    thread.started の thread_id を再開用に残す。turn.failed があるか、error イベントがあって turn.completed が無いときを失敗とし、
+    分類にはそのエラーメッセージだけを使う(agent_message の本文は使わない)。途中の再接続などで error が出ても、
+    最後に turn.completed が来れば成功とみなす。
+    """
+    r = RunResult()
+    errors: list[str] = []
+    failed = completed = parsed = False
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(ev, dict):
+            continue
+        parsed = True
+        typ = ev.get("type")
+        if typ == "thread.started" and ev.get("thread_id"):
+            r.session_id = str(ev["thread_id"])
+        elif typ == "error":
+            errors.append(str(ev.get("message", "")))
+        elif typ == "turn.failed":
+            failed = True
+            err = ev.get("error")
+            errors.append(str(err.get("message", "")) if isinstance(err, dict) else str(err or ""))
+        elif typ == "turn.completed":
+            completed = True
+            usage = ev.get("usage")
+            if isinstance(usage, dict):
+                r.tokens = r.tokens or {}
+                for k, v in usage.items():
+                    if isinstance(v, int):
+                        r.tokens[k] = r.tokens.get(k, 0) + v
+        elif typ == "item.completed":
+            item = ev.get("item")
+            if isinstance(item, dict) and item.get("type") == "agent_message":
+                r.summary = str(item.get("text", ""))
+    if not parsed:
+        # JSONL にならないのは CLI 自体のエラー。モデルの回答は含まれない
+        r.error_text = stdout + "\n" + stderr
+        return r
+    r.is_error = failed or (bool(errors) and not completed)
+    r.error_text = ("\n".join(errors) + "\n" + stderr) if r.is_error else stderr
+    return r
 
 
 # ── キューと状態 ──────────────────────────────────────────────
@@ -263,10 +353,11 @@ class Runner:
             ))
         self.log("wait", reason=reason, until=target.isoformat(timespec="seconds"), seconds=int(secs))
         self.say(t(f"{reason}: {target.strftime('%m-%d %H:%M')} まで待機します", f"{reason}: waiting until {target.strftime('%m-%d %H:%M')}"), notify=True)
-        end = time.monotonic() + secs
+        # 残り時間は毎回壁時計で測り直す。macOS の time.monotonic() はスリープ中に進まないため、
+        # それで測るとスリープした分だけ再開が遅れる
         while True:
             self.check_stop()
-            left = end - time.monotonic()
+            left = (target - self.clock()).total_seconds()
             if left <= 0:
                 break
             self.sleep(min(60.0, left))
@@ -285,40 +376,32 @@ class Runner:
                 return cmd + ["--resume", st["session_id"], CONTINUE_PROMPT]
             return cmd + [UNATTENDED_HEADER + task.prompt]
         exe = os.environ.get("LIMIT_RESUME_CODEX_BIN", "codex")
-        cmd = [exe, "exec"]
-        if self.a.model:
-            cmd += ["--model", self.a.model]
-        # Codex は中断したセッションの再開を使わず、最初からやり直す(タスクを冪等に書く前提)
-        return cmd + [UNATTENDED_HEADER + task.prompt]
+        model = ["--model", self.a.model] if self.a.model else []
+        if st.get("session_id"):
+            # 中断したセッションを続ける。作業ディレクトリと sandbox の設定はセッションに保存されたものが使われる
+            return [exe, "exec", "resume", "--json", *model, st["session_id"], CONTINUE_PROMPT]
+        return [exe, "exec", "--json", *model, UNATTENDED_HEADER + task.prompt]
 
     def run_once(self, task: Task, st: dict) -> tuple[str, str]:
+        """1 回実行し、(分類, 解除時刻を読むためのエラー本文)を返す。"""
         cmd = self.command(task, st)
         started = time.monotonic()
         try:
             p = subprocess.run(cmd, capture_output=True, text=True, timeout=self.a.task_timeout_min * 60)
-            out, code = (p.stdout or "") + "\n" + (p.stderr or ""), p.returncode
-        except subprocess.TimeoutExpired as e:
-            out = (e.stdout or "") if isinstance(e.stdout, str) else ""
-            return "error", out + "\n" + t("タスクがタイムアウトしました", "task timed out")
+        except subprocess.TimeoutExpired:
+            return "error", t("タスクがタイムアウトしました", "task timed out")
         except FileNotFoundError:
             raise SystemExit(t(f"{cmd[0]} が見つかりません", f"{cmd[0]} not found"))
 
-        is_error, cost, session = None, None, None
-        if self.a.agent == "claude":
-            try:
-                data = json.loads(p.stdout)
-                is_error = bool(data.get("is_error")) or data.get("subtype", "success") != "success"
-                cost = data.get("total_cost_usd")
-                session = data.get("session_id")
-                out = str(data.get("result", "")) + "\n" + (p.stderr or "")
-            except (json.JSONDecodeError, AttributeError, TypeError):
-                pass
-        if session:
-            st["session_id"] = session
-        kind = classify(code, out, is_error)
-        self.log("run", task=task.id, outcome=kind, exit_code=code, seconds=int(time.monotonic() - started),
-                 cost_usd_api_equivalent=cost, tail=out.strip()[-300:])
-        return kind, out
+        parse = parse_claude_output if self.a.agent == "claude" else parse_codex_output
+        r = parse(p.stdout or "", p.stderr or "")
+        if r.session_id:
+            st["session_id"] = r.session_id
+        kind = classify(p.returncode, r.error_text, r.is_error)
+        tail = (r.error_text if kind != "ok" else r.summary).strip()[-300:]
+        self.log("run", task=task.id, outcome=kind, exit_code=p.returncode, seconds=int(time.monotonic() - started),
+                 cost_usd_api_equivalent=r.cost_usd, tokens=r.tokens, tail=tail)
+        return kind, r.error_text
 
     # 全体
     def run(self, tasks: list[Task]) -> int:
@@ -391,7 +474,34 @@ def preflight(a: argparse.Namespace) -> list[str]:
                               "外すか、従量課金で回すと決めたなら --allow-api-key を付けてください",
                               "ANTHROPIC_API_KEY is set: runs bill the API instead of the subscription, so waiting for limits is pointless. "
                               "Unset it, or pass --allow-api-key if you mean to pay per use"))
+    elif not a.allow_api_key:
+        keys = [k for k in ("CODEX_API_KEY", "OPENAI_API_KEY") if os.environ.get(k)]
+        if keys:
+            problems.append(t(f"{' / '.join(keys)} が設定されています。Codex がこれを使うと、サブスク(ChatGPT)ではなく API の従量課金になり、上限を待つ意味がありません。"
+                              "外すか、従量課金で回すと決めたなら --allow-api-key を付けてください",
+                              f"{' / '.join(keys)} is set: if Codex uses it, runs bill the API instead of the ChatGPT subscription. "
+                              "Unset it, or pass --allow-api-key if you mean to pay per use"))
+        if codex_login_method() == "apikey":
+            problems.append(t("Codex が API キーでログインしています(`codex login status`)。サブスクの上限ではなく従量課金で動きます。"
+                              "`codex logout` のあと `codex login` で ChatGPT にサインインするか、--allow-api-key を付けてください",
+                              "Codex is logged in with an API key (`codex login status`), so runs are billed per use. "
+                              "Run `codex logout` then `codex login` with ChatGPT, or pass --allow-api-key"))
     return problems
+
+
+def codex_login_method() -> str | None:
+    """`codex login status` からログイン方法を返す("apikey" / "chatgpt" / 不明なら None)。モデルは呼ばない。"""
+    exe = os.environ.get("LIMIT_RESUME_CODEX_BIN", "codex")
+    try:
+        p = subprocess.run([exe, "login", "status"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    out = ((p.stdout or "") + (p.stderr or "")).lower()
+    if "api key" in out:
+        return "apikey"
+    if "chatgpt" in out:
+        return "chatgpt"
+    return None
 
 
 def build_parser() -> argparse.ArgumentParser:
