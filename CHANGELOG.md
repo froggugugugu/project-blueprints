@@ -8,6 +8,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (週次見直し: Claude Code 2.1.330〜2.1.332 / codex-cli 0.172.0, 2026-11-27)
+
+- **validator: `PreSkillShellCommand` を正規のフックイベントに追加**(v2.1.332)。skill の埋め込みシェルコマンド(`` !`cmd` ``)の直前に発火し、
+  PreToolUse はこのコマンドでは発火しない。これまでは登録すると「公式のフックイベント名ではありません」の ERROR になっていた。
+  `if` が効くイベントと、ブロック系フックに `onFailure: block` を求めるイベントにも加えた(hooks.md)。
+  テンプレートの `settings.json` への `safety-check.sh` の登録は、このリポジトリの `protect-files.sh` が編集を止めたため入れていない(PR の「要相談」)。
+- **validator: skill の予約名を現行の仕様に合わせた**: `claude-ai` の予約は v2.1.283 で取り消されていたため ERROR の対象から外した(誤検出の削除)。
+  `anthropic-skills:<名前>` の形と大文字小文字の違いも予約として扱い、フォルダ名 `synced`(claude.ai から同期した skill の置き場所)を ERROR、
+  computer use を有効にした Mac で予約される `computer-use`(v2.1.332)を WARN にした(skills.md「Names reserved for synced skills」)。
+- **validator: managed 専用キーに `disableDirectMcpSkills` と `enforceAnthropicSignIn` を追加**(settings-reference の索引、v2.1.332 時点で 251 キー)。
+  project / local settings に書いても効かないことを WARN で知らせる。`--test` 87 → 92。
+- **実機で確かめたこと(codex-cli 0.172.0)**: rules の判定(`codex execpolicy check`。`git push` / `npm publish` / `terraform apply` は `prompt`、`ls` は非該当)、
+  `AGENTS.md` と skill 15 本の読込(`codex debug prompt-input`。手動起動限定の 2 本は出ない)。0.171.0 からフック・execpolicy・`apply_patch`・
+  skill のパーサに変更が無いこと(ソースの差分)。
+
+### Added (週次見直し: Claude Code 2.1.329 / codex-cli 0.171.0, 2026-11-20)
+
+- **validator: Codex が黙って読み込まない skill を検出**: `name` が 64 字を超える skill と、`description` が無く `when_to_use` だけの skill を ERROR、
+  `name` が Agent Skills 標準の形(小文字の英数字とハイフン。先頭・末尾・連続のハイフンは不可)でない skill を WARN にする。
+  codex-cli 0.171.0 の実測では、前の 2 つは一覧に出ず、警告も出なかった(`codex-rs/skills/src/parser.rs`)。Claude Code は `description` を
+  「推奨」として扱い本文の先頭行で代用するため、共有の `.agents/skills/` に置いた skill が片方のエージェントでだけ消える。
+  標準の形でない名前(大文字・アンダースコア)は 0.171.0 では読み込まれたので WARN に留めた。`--test` 84 → 87。
+- **`harness-authoring.md`(JP/EN)**: 「2 つのエージェントで共有する」に、上の `name` / `description` の規則を 1 行追加。
+- **実機で確かめたこと(codex-cli 0.171.0)**: 0.170.0 からフック・rules・`apply_patch`・ハーネスが使う設定キーに変更が無いこと(ソースの差分)、
+  `.git` `.agents` `.codex` `.claude/settings.json` の読取専用とネットワーク遮断(`codex sandbox -- <cmd>`)、`codex doctor` の denied-read rules 16、
+  `prompt` 規則の判定(`codex execpolicy check`)、`AGENTS.md`・`developer_instructions`・skill 15 本の読込(`codex debug prompt-input`)。
+
 ### Changed (週次見直し: Claude Code 2.1.326〜2.1.328 / codex-cli 0.163〜0.170, 2026-11-19)
 
 - **Codex の `:workspace` 継承の実測を更新(JP/EN)**: codex-cli 0.170.0 で測り直すと、`extends = ":workspace"` だけで `.git` `.agents` `.codex` が
